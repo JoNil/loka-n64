@@ -3,5 +3,8 @@
 ```bash
 rustup component add rust-src
 cargo install cargo-xbuild
-cargo install cargo-n64
+```
+
+```bash
+cargo +nightly n64 build --ipl3 bootcode.bin --package .
 ```

@@ -1,0 +1,4 @@
+/target
+**/*.rs.bk
+*.z64
+*.bin
