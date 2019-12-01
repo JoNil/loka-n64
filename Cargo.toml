@@ -2,5 +2,5 @@
 
 members = [
     "extract_boot_code",
-    "loka-n64",
+    "game",
 ]

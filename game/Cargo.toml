@@ -1,5 +1,5 @@
 [package]
-name = "loka-n64"
+name = "game"
 version = "0.1.0"
 authors = ["Jonathan Nilsson <jonathan@voysys.se>"]
 edition = "2018"
