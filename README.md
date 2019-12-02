@@ -1,6 +1,6 @@
 # loka-n64
 
-##Build Environment Setup
+## Build Environment Setup
 
 ```bash
 cargo install cargo-xbuild
@@ -17,13 +17,13 @@ rustup default stable
 
 Place cargo-n64.exe in .cargo/bin
 
-##Extract bootcode
+## Extract bootcode
 
 ```bash
 cargo run --bin extract_boot_code -- roms/mario64.z64
 ```
 
-##Build
+## Build
 
 ```bash
 cargo +nightly n64 build --ipl3 bootcode.bin --package game
