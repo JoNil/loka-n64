@@ -4,4 +4,5 @@ members = [
     "extract_boot_code",
     "game",
     "n64",
+    "n64-sys",
 ]

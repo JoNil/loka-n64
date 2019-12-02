@@ -8,7 +8,6 @@ pub const WIDTH: usize = 320;
 pub const HEIGHT: usize = 240;
 pub const FRAME_BUFFER_SIZE: usize = WIDTH * HEIGHT * 4;
 
-// 0xA010_0000
 const FRAME_BUFFER: *mut u16 = (0xA040_0000 - 2 * FRAME_BUFFER_SIZE - 4) as *mut u16;
 
 const VI_BASE: usize = 0xA440_0000;
@@ -28,8 +27,7 @@ const VI_V_BURST: *mut u32 = (VI_BASE + 0x2C) as *mut u32;
 const VI_X_SCALE: *mut u32 = (VI_BASE + 0x30) as *mut u32;
 const VI_Y_SCALE: *mut u32 = (VI_BASE + 0x34) as *mut u32;
 
-/// Busy-wait for VBlank
-pub fn wait_for_ready() {
+pub fn wait_for_vblank() {
     loop {
         let current_halfline = unsafe { read_volatile(VI_CURRENT) };
         if current_halfline <= 10 {
@@ -38,7 +36,6 @@ pub fn wait_for_ready() {
     }
 }
 
-/// Return a raw pointer to the back buffer
 pub fn next_buffer() -> *mut u16 {
     let current_fb = unsafe { read_volatile(VI_DRAM_ADDR) };
 
@@ -49,16 +46,13 @@ pub fn next_buffer() -> *mut u16 {
     }
 }
 
-/// Swap frame buffers (display the back buffer)
 pub fn swap_buffer() {
     unsafe {
         *VI_DRAM_ADDR = next_buffer() as usize;
     }
 }
 
-/// Initialize Video Interface with 320x240x16 resolution and double buffering
 pub fn init() {
-    // Clear both frame buffers to black, writing two pixels at a time
     let frame_buffer = FRAME_BUFFER as usize;
     for i in 0..WIDTH * HEIGHT {
         let p = (frame_buffer + i * 4) as *mut u32;
@@ -67,7 +61,6 @@ pub fn init() {
         }
     }
 
-    // Initialize VI
     unsafe {
         *VI_STATUS = 0x0000_320E;
         *VI_DRAM_ADDR = frame_buffer;

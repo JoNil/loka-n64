@@ -20,6 +20,13 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "n64"
 version = "0.1.0"
+dependencies = [
+ "n64-sys 0.1.0",
+]
+
+[[package]]
+name = "n64-sys"
+version = "0.1.0"
 
 [[package]]
 name = "rrt0"
