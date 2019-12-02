@@ -27,6 +27,7 @@ const VI_V_BURST: *mut u32 = (VI_BASE + 0x2C) as *mut u32;
 const VI_X_SCALE: *mut u32 = (VI_BASE + 0x30) as *mut u32;
 const VI_Y_SCALE: *mut u32 = (VI_BASE + 0x34) as *mut u32;
 
+#[inline]
 pub fn wait_for_vblank() {
     loop {
         let current_halfline = unsafe { read_volatile(VI_CURRENT) };
@@ -36,6 +37,7 @@ pub fn wait_for_vblank() {
     }
 }
 
+#[inline]
 pub fn next_buffer() -> *mut u16 {
     let current_fb = unsafe { read_volatile(VI_DRAM_ADDR) };
 
@@ -46,12 +48,14 @@ pub fn next_buffer() -> *mut u16 {
     }
 }
 
-pub fn swap_buffer() {
+#[inline]
+pub fn swap_buffers() {
     unsafe {
         *VI_DRAM_ADDR = next_buffer() as usize;
     }
 }
 
+#[inline]
 pub fn init() {
     let frame_buffer = FRAME_BUFFER as usize;
     for i in 0..WIDTH * HEIGHT {

@@ -1,8 +1,8 @@
 #![no_std]
 
-pub mod ipl3font;
 pub mod controller;
 pub mod graphics;
+pub mod ipl3font;
 
 use n64_sys::vi;
 

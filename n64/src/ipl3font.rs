@@ -1,13 +1,14 @@
 use n64_sys::vi;
 
-pub const GLYPH_WIDTH: usize = 13;
-pub const GLYPH_HEIGHT: usize = 14;
+const GLYPH_WIDTH: usize = 13;
+const GLYPH_HEIGHT: usize = 14;
 const GLYPHS: &[u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
 const UNKNOWN: usize = 48;
 const GLYPH_SIZE: usize = 23;
 const GLYPH_ADDR: usize = 0xB000_0B70;
 const KERNING: usize = 1;
 
+#[inline]
 pub fn draw_str_centered(color: u16, string: &str) {
     let x = (vi::WIDTH - string.len() * GLYPH_WIDTH) / 2;
     let y = (vi::HEIGHT - GLYPH_HEIGHT) / 2;
@@ -15,6 +16,7 @@ pub fn draw_str_centered(color: u16, string: &str) {
     draw_str(x, y, color, string);
 }
 
+#[inline]
 pub fn draw_str_centered_offset(x_offset: i16, y_offset: i16, color: u16, string: &str) {
     let y = (vi::HEIGHT - GLYPH_HEIGHT) / 2;
     let x = (vi::WIDTH - string.len() * GLYPH_WIDTH) / 2;
@@ -27,6 +29,7 @@ pub fn draw_str_centered_offset(x_offset: i16, y_offset: i16, color: u16, string
     );
 }
 
+#[inline]
 pub fn draw_str(mut x: usize, y: usize, color: u16, string: &str) {
     for mut ch in string.bytes() {
         if y >= vi::HEIGHT {
@@ -47,6 +50,7 @@ pub fn draw_str(mut x: usize, y: usize, color: u16, string: &str) {
     }
 }
 
+#[inline]
 fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
     let frame_buffer = vi::next_buffer() as usize;
 

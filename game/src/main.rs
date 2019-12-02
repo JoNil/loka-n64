@@ -5,20 +5,10 @@
 #[cfg(all(not(test), not(windows)))]
 pub use rrt0;
 
-use n64::{ipl3font, graphics, self};
+use n64::{self, graphics, ipl3font};
 
 // Colors are 5:5:5:1 RGB with a 16-bit color depth.
 const WHITE: u16 = 0b00001_00001_11100_1;
-
-fn clear_buffer() {
-    let frame_buffer = graphics::next_buffer() as usize;
-    for i in 0..graphics::WIDTH * graphics::HEIGHT {
-        let p = (frame_buffer + i * 4) as *mut u32;
-        unsafe {
-            *p = 0x1001_1001;
-        }
-    }
-}
 
 fn main() {
     n64::init();
@@ -56,11 +46,11 @@ fn main() {
             y_pos = -HALF_HEIGHT;
         }
 
-        clear_buffer();
+        graphics::clear_buffer();
 
         ipl3font::draw_str_centered_offset(x_pos, y_pos, WHITE, "Isafo en prutt!");
 
-        graphics::swap_buffer();
+        graphics::swap_buffers();
 
         graphics::wait_for_vblank();
     }
