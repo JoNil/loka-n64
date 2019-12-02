@@ -37,6 +37,18 @@ pub fn draw_str_centered(color: u16, string: &str) {
     draw_str(x, y, color, string);
 }
 
+pub fn draw_str_centered_offset(x_offset: i16, y_offset: i16, color: u16, string: &str) {
+    let y = (vi::HEIGHT - HEIGHT) / 2;
+    let x = (vi::WIDTH - string.len() * WIDTH) / 2;
+
+    draw_str(
+        (x as i16 + x_offset) as usize,
+        (y as i16 + y_offset) as usize,
+        color,
+        string,
+    );
+}
+
 /// Draw a string using the embedded font.
 /// Only supports a small subset of the ASCII character set.
 pub fn draw_str(mut x: usize, mut y: usize, color: u16, string: &str) {
@@ -49,10 +61,6 @@ pub fn draw_str(mut x: usize, mut y: usize, color: u16, string: &str) {
         // Special handling for space characters
         if ch == b' ' {
             x += WIDTH;
-            if x >= vi::WIDTH {
-                x = 0;
-                y += HEIGHT;
-            }
             continue;
         }
 

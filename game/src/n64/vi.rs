@@ -70,7 +70,7 @@ pub fn wait_for_ready() {
 pub fn next_buffer() -> *mut u16 {
     let current_fb = unsafe { read_volatile(VI_DRAM_ADDR) };
 
-    if current_fb & 0xFFFFF != 0 {
+    if current_fb != FRAME_BUFFER as usize {
         FRAME_BUFFER
     } else {
         (FRAME_BUFFER as usize + FRAME_BUFFER_SIZE) as *mut u16
