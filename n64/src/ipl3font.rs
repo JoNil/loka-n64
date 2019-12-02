@@ -1,7 +1,7 @@
 use n64_sys::vi;
 
-const GLYPH_WIDTH: usize = 13;
-const GLYPH_HEIGHT: usize = 14;
+pub const GLYPH_WIDTH: usize = 13;
+pub const GLYPH_HEIGHT: usize = 14;
 const GLYPHS: &[u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
 const UNKNOWN: usize = 48;
 const GLYPH_SIZE: usize = 23;
