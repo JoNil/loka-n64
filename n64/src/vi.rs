@@ -1,17 +1,15 @@
-#![allow(dead_code)]
-
 //! Video Interface
 //!
 //! Provides low level access to the N64 vi hardware.
 
 use core::ptr::read_volatile;
 
-// TODO: Heap allocate (needs std and global_allocator)
-const FRAME_BUFFER: *mut u16 = 0xA010_0000 as *mut u16;
-
 pub const WIDTH: usize = 320;
 pub const HEIGHT: usize = 240;
-pub const FRAME_BUFFER_SIZE: usize = WIDTH * HEIGHT * 2;
+pub const FRAME_BUFFER_SIZE: usize = WIDTH * HEIGHT * 4;
+
+// 0xA010_0000
+const FRAME_BUFFER: *mut u16 = (0xA040_0000 - 2 * FRAME_BUFFER_SIZE - 2) as *mut u16;
 
 const VI_BASE: usize = 0xA440_0000;
 
@@ -29,32 +27,6 @@ const VI_V_VIDEO: *mut u32 = (VI_BASE + 0x28) as *mut u32;
 const VI_V_BURST: *mut u32 = (VI_BASE + 0x2C) as *mut u32;
 const VI_X_SCALE: *mut u32 = (VI_BASE + 0x30) as *mut u32;
 const VI_Y_SCALE: *mut u32 = (VI_BASE + 0x34) as *mut u32;
-
-const VIDEO_MODE: *const u32 = 0x8000_0300 as *const u32;
-
-pub enum VideoMode {
-    PAL,
-    NTSC,
-    MPAL,
-}
-
-/// Video frequency in Hertz
-pub fn get_video_frequency() -> u32 {
-    match get_video_mode() {
-        VideoMode::PAL => 49_656_530,
-        VideoMode::NTSC => 48_681_812,
-        VideoMode::MPAL => 48_628_316,
-    }
-}
-
-/// Returns the current video mode
-pub fn get_video_mode() -> VideoMode {
-    match unsafe { read_volatile(VIDEO_MODE) } {
-        0 => VideoMode::PAL,
-        1 => VideoMode::NTSC,
-        _ => VideoMode::MPAL,
-    }
-}
 
 /// Busy-wait for VBlank
 pub fn wait_for_ready() {

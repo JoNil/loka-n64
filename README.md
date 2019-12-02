@@ -8,7 +8,7 @@ cargo install cargo-xbuild
 rustup default nightly
 rustup component add rust-src
 
-git checkout https://github.com/JoNil/cargo-n64
+git clone https://github.com/JoNil/cargo-n64
 cd cargo-n64/cargo-n64
 cargo build --release
 
@@ -27,3 +27,4 @@ cargo run --bin extract_boot_code -- roms/mario64.z64
 
 ```bash
 cargo +nightly n64 build --ipl3 bootcode.bin --package game
+```

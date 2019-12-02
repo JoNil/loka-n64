@@ -1,7 +1,5 @@
 #![no_std]
 
-mod n64;
-
 // Pull panic into scope
 // Required by panic_handler
 #[cfg(all(not(test), not(windows)))]
