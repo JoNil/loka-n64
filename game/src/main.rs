@@ -5,7 +5,7 @@
 #[cfg(all(not(test), not(windows)))]
 pub use rrt0;
 
-use n64::{self, graphics, ipl3font, controllers::Controllers};
+use n64::{self, controllers::Controllers, graphics, ipl3font};
 
 // Colors are 5:5:5:1 RGB with a 16-bit color depth.
 const WHITE: u16 = 0b00001_00001_11100_1;
@@ -25,14 +25,12 @@ fn main() {
     const HALF_HEIGHT: i16 = graphics::HEIGHT as i16 / 2;
 
     loop {
-
-         controllers.update();
+        controllers.update();
 
         x_pos += x_speed;
         y_pos += y_speed;
 
         if !controllers.up_pressed() {
-
             if x_pos >= HALF_WIDTH {
                 x_speed = -x_speed;
                 x_pos = HALF_WIDTH;

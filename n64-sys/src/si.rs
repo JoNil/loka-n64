@@ -1,6 +1,9 @@
-use core::ptr::{read_volatile, write_volatile};
+use crate::sys::{
+    data_cache_hit_writeback_invalidate, disable_interrupts, enable_interrupts, memory_barrier,
+    uncached_addr_mut,
+};
 use core::intrinsics::volatile_copy_nonoverlapping_memory;
-use crate::sys::{data_cache_hit_writeback_invalidate, uncached_addr_mut, enable_interrupts, disable_interrupts, memory_barrier};
+use core::ptr::{read_volatile, write_volatile};
 
 const SI_BASE: usize = 0xA480_0000;
 
@@ -25,7 +28,10 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
 
         data_cache_hit_writeback_invalidate(&mut inblock_temp);
         volatile_copy_nonoverlapping_memory(
-            uncached_addr_mut(inblock_temp.as_mut_ptr()), inblock.as_ptr(), inblock.len());
+            uncached_addr_mut(inblock_temp.as_mut_ptr()),
+            inblock.as_ptr(),
+            inblock.len(),
+        );
 
         /* Be sure another thread doesn't get into a resource fight */
         disable_interrupts();
@@ -52,7 +58,10 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
         enable_interrupts();
 
         volatile_copy_nonoverlapping_memory(
-            outblock.as_mut_ptr(), uncached_addr_mut(outblock_temp.as_mut_ptr()), outblock.len());
+            outblock.as_mut_ptr(),
+            uncached_addr_mut(outblock_temp.as_mut_ptr()),
+            outblock.len(),
+        );
     }
 }
 
@@ -65,7 +74,7 @@ pub fn read_controllers(outblock: &mut [u64; 8]) {
         0xfe00000000000000,
         0,
         0,
-        1
+        1,
     ];
 
     dma_pif_block(&READ_CON_BLOCK, outblock);

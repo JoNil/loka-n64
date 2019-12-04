@@ -6,9 +6,9 @@ pub(crate) unsafe fn data_cache_hit_writeback_invalidate(block: &mut [u64]) {
 
     while len > 0 {
         asm!("cache $0, ($1)"
-            :
-            : "i" (0x15), "r" (addr)
-            );
+        :
+        : "i" (0x15), "r" (addr)
+        );
 
         len -= 4;
         addr = addr.offset(4);

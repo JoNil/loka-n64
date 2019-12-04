@@ -5,12 +5,9 @@ pub struct Controllers {
 }
 
 impl Controllers {
-
     #[inline]
     pub fn new() -> Controllers {
-        Controllers {
-            data: [0; 8],
-        }
+        Controllers { data: [0; 8] }
     }
 
     #[inline]
@@ -20,7 +17,6 @@ impl Controllers {
 
     #[inline]
     pub fn up_pressed(&self) -> bool {
-
         let buttons = (self.data[0] >> 32) as u32;
 
         buttons & 0b0000_1000_0000_0000_0000_0000_0000_0000 > 0
