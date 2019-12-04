@@ -28,3 +28,7 @@ cargo run --bin extract_boot_code -- roms/mario64.z64
 ```bash
 cargo +nightly n64 build --ipl3 bootcode.bin --package game
 ```
+
+## Links
+
+http://n64dev.org/

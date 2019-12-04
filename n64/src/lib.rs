@@ -1,6 +1,6 @@
 #![no_std]
 
-pub mod controller;
+pub mod controllers;
 pub mod graphics;
 pub mod ipl3font;
 
