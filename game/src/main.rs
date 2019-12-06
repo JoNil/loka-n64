@@ -1,4 +1,4 @@
-#![cfg_attr(target_vendor = "nintendo64", feature(no_std))]
+#![cfg_attr(target_vendor = "nintendo64", no_std)]
 
 // Pull panic into scope
 // Required by panic_handler
