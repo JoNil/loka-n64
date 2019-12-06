@@ -6,5 +6,5 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-[dependencies.n64-sys]
+[target.mips-nintendo64-none.dependencies.n64-sys]
 path = "../n64-sys"

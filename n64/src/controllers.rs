@@ -1,3 +1,4 @@
+#[cfg(target_vendor = "nintendo64")]
 use n64_sys::si;
 
 pub struct Controllers {
@@ -12,6 +13,7 @@ impl Controllers {
 
     #[inline]
     pub fn update(&mut self) {
+        #[cfg(target_vendor = "nintendo64")]
         si::read_controllers(&mut self.data);
     }
 

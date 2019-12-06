@@ -1,8 +1,8 @@
-#![no_std]
+#![cfg_attr(target_vendor = "nintendo64", feature(no_std))]
 
 // Pull panic into scope
 // Required by panic_handler
-#[cfg(all(not(test), not(windows)))]
+#[cfg(target_vendor = "nintendo64")]
 pub use rrt0;
 
 use n64::{self, controllers::Controllers, graphics, ipl3font};

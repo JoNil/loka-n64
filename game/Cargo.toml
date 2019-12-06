@@ -9,7 +9,7 @@ edition = "2018"
 [dependencies.n64]
 path = "../n64"
 
-[target.'cfg(not(windows))'.dependencies]
+[target.mips-nintendo64-none.dependencies]
 rrt0 = "0.1"
 
 [profile.dev]

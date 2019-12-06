@@ -1,4 +1,7 @@
+#[cfg(target_vendor = "nintendo64")]
 use n64_sys::vi;
+
+use crate::graphics;
 
 pub const GLYPH_WIDTH: usize = 13;
 pub const GLYPH_HEIGHT: usize = 14;
@@ -10,16 +13,16 @@ const KERNING: usize = 1;
 
 #[inline]
 pub fn draw_str_centered(color: u16, string: &[u8]) {
-    let x = (vi::WIDTH - string.len() * GLYPH_WIDTH) / 2;
-    let y = (vi::HEIGHT - GLYPH_HEIGHT) / 2;
+    let x = (graphics::WIDTH - string.len() * GLYPH_WIDTH) / 2;
+    let y = (graphics::HEIGHT - GLYPH_HEIGHT) / 2;
 
     draw_str(x, y, color, string);
 }
 
 #[inline]
 pub fn draw_str_centered_offset(x_offset: i16, y_offset: i16, color: u16, string: &[u8]) {
-    let y = (vi::HEIGHT - GLYPH_HEIGHT) / 2;
-    let x = (vi::WIDTH - string.len() * GLYPH_WIDTH) / 2;
+    let y = (graphics::HEIGHT - GLYPH_HEIGHT) / 2;
+    let x = (graphics::WIDTH - string.len() * GLYPH_WIDTH) / 2;
 
     draw_str(
         (x as i16 + x_offset) as usize,
@@ -104,6 +107,7 @@ pub fn draw_number(mut x: usize, y: usize, color: u16, mut number: i32) {
 }
 
 #[inline]
+#[cfg(target_vendor = "nintendo64")]
 fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
     let frame_buffer = vi::next_buffer() as usize;
 
@@ -138,4 +142,10 @@ fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
             }
         }
     }
+}
+
+#[inline]
+#[cfg(not(target_vendor = "nintendo64"))]
+fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
+    
 }
