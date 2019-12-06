@@ -1,7 +1,7 @@
 use n64_sys::si;
 
 pub struct Controllers {
-    data: [u64; 8],
+    pub data: [u64; 8],
 }
 
 impl Controllers {

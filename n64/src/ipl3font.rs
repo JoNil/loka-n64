@@ -9,7 +9,7 @@ const GLYPH_ADDR: usize = 0xB000_0B70;
 const KERNING: usize = 1;
 
 #[inline]
-pub fn draw_str_centered(color: u16, string: &str) {
+pub fn draw_str_centered(color: u16, string: &[u8]) {
     let x = (vi::WIDTH - string.len() * GLYPH_WIDTH) / 2;
     let y = (vi::HEIGHT - GLYPH_HEIGHT) / 2;
 
@@ -17,7 +17,7 @@ pub fn draw_str_centered(color: u16, string: &str) {
 }
 
 #[inline]
-pub fn draw_str_centered_offset(x_offset: i16, y_offset: i16, color: u16, string: &str) {
+pub fn draw_str_centered_offset(x_offset: i16, y_offset: i16, color: u16, string: &[u8]) {
     let y = (vi::HEIGHT - GLYPH_HEIGHT) / 2;
     let x = (vi::WIDTH - string.len() * GLYPH_WIDTH) / 2;
 
@@ -30,12 +30,8 @@ pub fn draw_str_centered_offset(x_offset: i16, y_offset: i16, color: u16, string
 }
 
 #[inline]
-pub fn draw_str(mut x: usize, y: usize, color: u16, string: &str) {
-    for mut ch in string.bytes() {
-        if y >= vi::HEIGHT {
-            return;
-        }
-
+pub fn draw_str(mut x: usize, y: usize, color: u16, string: &[u8]) {
+    for mut ch in string.iter().copied() {
         if ch == b' ' {
             x += GLYPH_WIDTH;
             continue;
@@ -47,6 +43,63 @@ pub fn draw_str(mut x: usize, y: usize, color: u16, string: &str) {
 
         draw_char(x, y, color, ch);
         x += GLYPH_WIDTH + KERNING;
+    }
+}
+
+#[inline]
+fn digit_to_hex_char(digit: u8) -> u8 {
+    match digit {
+        0..=9 => b'0' + digit,
+        10..=15 => b'A' + (digit - 10),
+        _ => panic!(),
+    }
+}
+
+#[inline]
+pub fn draw_hex(mut x: usize, y: usize, color: u16, mut number: u32) {
+
+    if number == 0 {
+        draw_char(x, y, color, b'0');
+        return;
+    }
+
+    while number > 0 {
+        draw_char(x, y, color, digit_to_hex_char((number & 0xF) as u8));
+        x -= GLYPH_WIDTH + KERNING;
+        number >>= 4;
+    }
+}
+
+#[inline]
+fn digit_to_char(digit: u8) -> u8 {
+    match digit {
+        0..=9 => b'0' + digit,
+        _ => panic!(),
+    }
+}
+
+#[inline]
+pub fn draw_number(mut x: usize, y: usize, color: u16, mut number: i32) {
+    let mut negative = false;
+
+    if number == 0 {
+        draw_char(x, y, color, b'0');
+        return;
+    }
+
+    if number < 0 {
+        number = number.abs();
+        negative = true;
+    }
+
+    while number > 0 {
+        draw_char(x, y, color, digit_to_char((number % 10) as u8));
+        x -= GLYPH_WIDTH + KERNING;
+        number /= 10;
+    }
+
+    if negative {
+        draw_char(x, y, color, b'-');
     }
 }
 
