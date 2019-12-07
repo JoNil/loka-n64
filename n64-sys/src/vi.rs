@@ -28,34 +28,6 @@ const VI_X_SCALE: *mut u32 = (VI_BASE + 0x30) as *mut u32;
 const VI_Y_SCALE: *mut u32 = (VI_BASE + 0x34) as *mut u32;
 
 #[inline]
-pub fn wait_for_vblank() {
-    loop {
-        let current_halfline = unsafe { read_volatile(VI_CURRENT) };
-        if current_halfline <= 10 {
-            break;
-        }
-    }
-}
-
-#[inline]
-pub fn next_buffer() -> *mut u16 {
-    let current_fb = unsafe { read_volatile(VI_DRAM_ADDR) };
-
-    if current_fb != FRAME_BUFFER as usize {
-        FRAME_BUFFER
-    } else {
-        (FRAME_BUFFER as usize + FRAME_BUFFER_SIZE) as *mut u16
-    }
-}
-
-#[inline]
-pub fn swap_buffers() {
-    unsafe {
-        *VI_DRAM_ADDR = next_buffer() as usize;
-    }
-}
-
-#[inline]
 pub fn init() {
     let frame_buffer = FRAME_BUFFER as usize;
     for i in 0..WIDTH * HEIGHT {
@@ -79,5 +51,34 @@ pub fn init() {
         *VI_V_BURST = 0x000E_0204;
         *VI_X_SCALE = 0x0000_0200;
         *VI_Y_SCALE = 0x0000_0400;
+    }
+}
+
+
+#[inline]
+pub fn wait_for_vblank() {
+    loop {
+        let current_halfline = unsafe { read_volatile(VI_CURRENT) };
+        if current_halfline <= 10 {
+            break;
+        }
+    }
+}
+
+#[inline]
+pub unsafe fn next_buffer() -> *mut u16 {
+    let current_fb = read_volatile(VI_DRAM_ADDR);
+
+    if current_fb != FRAME_BUFFER as usize {
+        FRAME_BUFFER
+    } else {
+        (FRAME_BUFFER as usize + FRAME_BUFFER_SIZE) as *mut u16
+    }
+}
+
+#[inline]
+pub fn swap_buffers() {
+    unsafe {
+        *VI_DRAM_ADDR = next_buffer() as usize;
     }
 }

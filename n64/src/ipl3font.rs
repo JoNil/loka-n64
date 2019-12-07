@@ -5,10 +5,7 @@ use crate::graphics;
 
 pub const GLYPH_WIDTH: usize = 13;
 pub const GLYPH_HEIGHT: usize = 14;
-const GLYPHS: &[u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
-const UNKNOWN: usize = 48;
-const GLYPH_SIZE: usize = 23;
-const GLYPH_ADDR: usize = 0xB000_0B70;
+
 const KERNING: usize = 1;
 
 #[inline]
@@ -60,7 +57,6 @@ fn digit_to_hex_char(digit: u8) -> u8 {
 
 #[inline]
 pub fn draw_hex(mut x: usize, y: usize, color: u16, mut number: u32) {
-
     if number == 0 {
         draw_char(x, y, color, b'0');
         return;
@@ -109,7 +105,12 @@ pub fn draw_number(mut x: usize, y: usize, color: u16, mut number: i32) {
 #[inline]
 #[cfg(target_vendor = "nintendo64")]
 fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
-    let frame_buffer = vi::next_buffer() as usize;
+    const GLYPHS: &[u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
+    const UNKNOWN: usize = 48;
+    const GLYPH_SIZE: usize = 23;
+    const GLYPH_ADDR: usize = 0xB000_0B70;
+
+    let frame_buffer = unsafe { vi::next_buffer() as usize };
 
     let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
@@ -146,6 +147,4 @@ fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
 
 #[inline]
 #[cfg(not(target_vendor = "nintendo64"))]
-fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
-    
-}
+fn draw_char(x: usize, y: usize, color: u16, ch: u8) {}

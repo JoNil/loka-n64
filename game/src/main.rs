@@ -61,12 +61,9 @@ fn main() {
         ipl3font::draw_number(120, 40, RED, x_pos as i32);
 
         for (i, value) in controllers.data[0..4].iter().enumerate() {
-
-            ipl3font::draw_hex(280, 20 + 40*i, RED, (value >> 32) as u32);
-            ipl3font::draw_hex(280, 40 + 40*i, RED, (value & 0xffff_ffff) as u32);
+            ipl3font::draw_hex(280, 20 + 40 * i, RED, (value >> 32) as u32);
+            ipl3font::draw_hex(280, 40 + 40 * i, RED, (value & 0xffff_ffff) as u32);
         }
-        
-        graphics::wait_for_vblank();
 
         graphics::swap_buffers();
     }
