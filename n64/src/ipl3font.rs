@@ -148,7 +148,7 @@ fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
         let mut address = (GLYPH_ADDR - 64) + index * GLYPH_SIZE;
         let mut shift = (4 - (address & 3)) * 8 - 1;
         address &= 0x0FFF_FFFC;
-        let mut bits = u32::from_be_bytes((&ipl3[address..(address + 4)]).try_into().unwrap());
+        let mut bits = u32::from_be_bytes(ipl3[address..(address + 4)].try_into().unwrap());
 
         for yy in y..(y + GLYPH_HEIGHT) {
             if yy < 0 {
@@ -166,7 +166,7 @@ fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
 
                 if shift == 0 {
                     address += 4;
-                    bits = u32::from_be_bytes((&ipl3[address..(address + 4)]).try_into().unwrap());
+                    bits = u32::from_be_bytes(ipl3[address..(address + 4)].try_into().unwrap());
                     shift = 31;
                 } else {
                     shift -= 1;
