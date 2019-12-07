@@ -22,12 +22,7 @@ pub fn draw_str_centered_offset(x_offset: i32, y_offset: i32, color: u16, string
     let y = (graphics::HEIGHT - GLYPH_HEIGHT) / 2;
     let x = (graphics::WIDTH - string.len() as i32 * GLYPH_WIDTH) / 2;
 
-    draw_str(
-        x + x_offset,
-        y + y_offset,
-        color,
-        string,
-    );
+    draw_str(x + x_offset, y + y_offset, color, string);
 }
 
 #[inline]
@@ -106,61 +101,58 @@ pub fn draw_number(mut x: i32, y: i32, color: u16, mut number: i32) {
 #[inline]
 #[cfg(target_vendor = "nintendo64")]
 fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
+    
+    graphics::with_framebuffer(|fb| {
 
-    let frame_buffer = unsafe { vi::next_buffer() as usize };
+        let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
-    let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
+        let mut address = GLYPH_ADDR + index * GLYPH_SIZE;
+        let mut shift = (4 - (address & 3)) * 8 - 1;
+        address &= 0xFFFF_FFFC;
+        let mut bits = unsafe { *(address as *const u32) };
 
-    let mut address = GLYPH_ADDR + index * GLYPH_SIZE;
-    let mut shift = (4 - (address & 3)) * 8 - 1;
-    address &= 0xFFFF_FFFC;
-    let mut bits = unsafe { *(address as *const u32) };
+        for yy in y..y + GLYPH_HEIGHT {
+            if yy < 0 {
+                return;
+            }
 
-    for yy in y..y + GLYPH_HEIGHT {
-        if yy >= vi::HEIGHT {
-            return;
-        }
+            if yy >= graphics::HEIGHT {
+                return;
+            }
 
-        for xx in x..x + GLYPH_WIDTH {
-            if (bits >> shift) & 1 == 1 && xx < vi::WIDTH {
-                let offset = (yy * vi::WIDTH + xx) * 2;
-                let p = (frame_buffer + offset) as *mut u16;
+            for xx in x..x + GLYPH_WIDTH {
+                if (bits >> shift) & 1 == 1 && xx < graphics::WIDTH && x >= 0 {
+                    fb[(yy * graphics::WIDTH + xx) as usize] = color;
+                }
 
-                unsafe {
-                    *p = color;
+                if shift == 0 {
+                    address += 4;
+                    bits = unsafe { *(address as *const u32) };
+                    shift = 31;
+                } else {
+                    shift -= 1;
                 }
             }
-
-            if shift == 0 {
-                address += 4;
-                bits = unsafe { *(address as *const u32) };
-                shift = 31;
-            } else {
-                shift -= 1;
-            }
         }
-    }
+    });
 }
 
 #[inline]
 #[cfg(not(target_vendor = "nintendo64"))]
 fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
-
     graphics::with_framebuffer(|fb| {
-
         use core::convert::TryInto;
 
         let ipl3 = std::include_bytes!("../../bootcode.bin");
 
         let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
-        let mut address = (GLYPH_ADDR & 0xffff) + index * GLYPH_SIZE;
+        let mut address = GLYPH_ADDR + index * GLYPH_SIZE;
         let mut shift = (4 - (address & 3)) * 8 - 1;
-        address &= 0xFFFF_FFFC;
+        address &= 0x0FFF_FFFC;
         let mut bits = u32::from_be_bytes((&ipl3[address..(address + 4)]).try_into().unwrap());
 
         for yy in y..(y + GLYPH_HEIGHT) {
-            
             if yy < 0 {
                 return;
             }

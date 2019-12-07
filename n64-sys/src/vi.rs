@@ -54,7 +54,6 @@ pub fn init() {
     }
 }
 
-
 #[inline]
 pub fn wait_for_vblank() {
     loop {
@@ -72,7 +71,7 @@ pub unsafe fn next_buffer() -> *mut u16 {
     if current_fb != FRAME_BUFFER as usize {
         FRAME_BUFFER
     } else {
-        (FRAME_BUFFER as usize + FRAME_BUFFER_SIZE) as *mut u16
+        (FRAME_BUFFER as usize + FRAME_BUFFER_SIZE as usize) as *mut u16
     }
 }
 
