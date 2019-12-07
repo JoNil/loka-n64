@@ -145,7 +145,7 @@ fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
 
         let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
-        let mut address = GLYPH_ADDR + index * GLYPH_SIZE;
+        let mut address = (GLYPH_ADDR - 64) + index * GLYPH_SIZE;
         let mut shift = (4 - (address & 3)) * 8 - 1;
         address &= 0x0FFF_FFFC;
         let mut bits = u32::from_be_bytes((&ipl3[address..(address + 4)]).try_into().unwrap());

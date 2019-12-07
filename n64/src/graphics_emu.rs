@@ -6,7 +6,7 @@ use std::thread_local;
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
 
-const SCALE: i32 = 2;
+const SCALE: i32 = 4;
 
 struct WindowData {
     framebuffer_is_a: bool,
