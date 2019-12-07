@@ -1,7 +1,8 @@
 use core::ffi::c_void;
 
+#[inline]
 pub(crate) unsafe fn data_cache_hit_writeback_invalidate(block: &mut [u64]) {
-    let mut addr = ((block.as_mut_ptr() as usize) & (!3)) as *mut c_void;
+    let mut addr = ((block.as_mut_ptr() as usize) & 0xffff_fffc) as *mut c_void;
     let mut len = block.len() * 8;
 
     while len > 0 {
@@ -17,7 +18,7 @@ pub(crate) unsafe fn data_cache_hit_writeback_invalidate(block: &mut [u64]) {
 
 #[inline]
 pub(crate) unsafe fn uncached_addr_mut<T>(address: *mut T) -> *mut T {
-    ((address as usize) | 0x20000000) as *mut T
+    ((address as usize) | 0x2000_0000) as *mut T
 }
 
 #[inline]

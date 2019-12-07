@@ -5,12 +5,12 @@ use crate::sys::{
 use core::intrinsics::volatile_copy_nonoverlapping_memory;
 use core::ptr::{read_volatile, write_volatile};
 
-const SI_BASE: usize = 0xA480_0000;
+const SI_BASE: usize = 0x0480_0000;
 
-const SI_ADDR: *mut usize = (SI_BASE + 0x00) as *mut usize;
-const SI_START_WRITE: *mut usize = (SI_BASE + 0x04) as *mut usize;
-const SI_START_READ: *mut usize = (SI_BASE + 0x10) as *mut usize;
-const SI_STATUS: *mut usize = (SI_BASE + 0x18) as *mut usize;
+const SI_ADDR: *mut usize = (SI_BASE + 0x00) as _;
+const SI_START_WRITE: *mut usize = (SI_BASE + 0x04) as _;
+const SI_START_READ: *mut usize = (SI_BASE + 0x10) as _;
+const SI_STATUS: *mut usize = (SI_BASE + 0x18) as _;
 
 const SI_STATUS_DMA_BUSY: usize = 1 << 0;
 const SI_STATUS_IO_BUSY: usize = 1 << 1;

@@ -21,9 +21,6 @@ fn main() {
 
     const SPEED: i32 = 2;
 
-    const HALF_WIDTH: i32 = graphics::WIDTH / 2;
-    const HALF_HEIGHT: i32 = graphics::HEIGHT / 2;
-
     loop {
         controllers.update();
 
@@ -50,9 +47,11 @@ fn main() {
         ipl3font::draw_hex(120, 20, RED, x_pos as u32);
         ipl3font::draw_number(120, 40, RED, x_pos);
 
-        for (i, value) in controllers.data[0..4].iter().enumerate() {
-            ipl3font::draw_hex(280, 20 + 40 * (i as i32), RED, (value >> 32) as u32);
-            ipl3font::draw_hex(280, 40 + 40 * (i as i32), RED, (value & 0xffff_ffff) as u32);
+        for j in 0..2 {
+            for (i, value) in controllers.data[(4*j)..(4*(j+1))].iter().enumerate() {
+                ipl3font::draw_hex(200 + 80*j as i32 , 20 + 40 * (i as i32), RED, (value >> 32) as u32);
+                ipl3font::draw_hex(200 + 80*j as i32, 40 + 40 * (i as i32), RED, (value & 0xffff_ffff) as u32);
+            }
         }
 
         graphics::swap_buffers();
