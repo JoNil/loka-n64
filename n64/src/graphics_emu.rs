@@ -1,9 +1,12 @@
 use minifb::Window;
+use rayon;
 use std::cell::RefCell;
 use std::thread_local;
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
+
+const SCALE: i32 = 2;
 
 struct WindowData {
     framebuffer_is_a: bool,
@@ -26,19 +29,31 @@ fn convert_5551_to_8888(input: u16) -> u32 {
 
 fn framebuffer_to_rgba(framebuffer: &[u16]) -> Vec<u32> {
     let mut res = Vec::new();
-    res.resize_with((4 * WIDTH * 4 * HEIGHT) as usize, Default::default);
+    res.resize_with((SCALE * WIDTH * SCALE * HEIGHT) as usize, Default::default);
 
-    for y in 0..HEIGHT {
-        for x in 0..WIDTH {
-            let color = convert_5551_to_8888(framebuffer[(x + y * WIDTH) as usize]);
+    rayon::scope(|s| {
 
-            for i in 0..4 {
-                for j in 0..4 {
-                    res[(4 * x + j + (4 * y + i) * 4 * WIDTH) as usize] = color;
+        let mut rest = &mut res[..];
+
+        for y in 0..HEIGHT {
+
+            let (lines, new_rest) = rest.split_at_mut((SCALE * SCALE * WIDTH) as usize);
+
+            rest = new_rest;
+
+            s.spawn(move |_| {
+                for x in 0..WIDTH {
+                    let color = convert_5551_to_8888(framebuffer[(x + y * WIDTH) as usize]);
+
+                    for i in 0..SCALE {
+                        for j in 0..SCALE {
+                            lines[(SCALE * x + j + i*SCALE*WIDTH) as usize] = color;
+                        }
+                    }
                 }
-            }
+            });
         }
-    }
+    });
 
     res
 }
@@ -54,8 +69,8 @@ pub(crate) fn init() {
             framebuffer_b: vec![0; (WIDTH * HEIGHT) as usize],
             window: Window::new(
                 "Nintendo 64",
-                (4 * WIDTH) as usize,
-                (4 * HEIGHT) as usize,
+                (SCALE * WIDTH) as usize,
+                (SCALE * HEIGHT) as usize,
                 Default::default(),
             )
             .unwrap(),
