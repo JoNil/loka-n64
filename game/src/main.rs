@@ -19,8 +19,7 @@ fn main() {
     let mut x_pos = 0;
     let mut y_pos = 0;
 
-    let mut x_speed = 2;
-    let mut y_speed = 2;
+    const SPEED: i32 = 2;
 
     const HALF_WIDTH: i32 = graphics::WIDTH / 2;
     const HALF_HEIGHT: i32 = graphics::HEIGHT / 2;
@@ -28,29 +27,20 @@ fn main() {
     loop {
         controllers.update();
 
-        x_pos += x_speed;
-        y_pos += y_speed;
+        if controllers.up_pressed() {
+            y_pos -= SPEED;
+        }
 
-        if !controllers.up_pressed() {
-            if x_pos >= HALF_WIDTH {
-                x_speed = -x_speed;
-                x_pos = HALF_WIDTH;
-            }
+        if controllers.down_pressed() {
+            y_pos += SPEED;
+        }
 
-            if x_pos <= -HALF_WIDTH {
-                x_speed = -x_speed;
-                x_pos = -HALF_WIDTH;
-            }
+        if controllers.right_pressed() {
+            x_pos += SPEED;
+        }
 
-            if y_pos >= HALF_HEIGHT {
-                y_speed = -y_speed;
-                y_pos = HALF_HEIGHT;
-            }
-
-            if y_pos <= -HALF_HEIGHT {
-                y_speed = -y_speed;
-                y_pos = -HALF_HEIGHT;
-            }
+        if controllers.left_pressed() {
+            x_pos -= SPEED;
         }
 
         graphics::clear_buffer();
