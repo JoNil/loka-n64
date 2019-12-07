@@ -2,8 +2,8 @@ use minifb::Window;
 use std::cell::RefCell;
 use std::thread_local;
 
-pub const WIDTH: usize = 320;
-pub const HEIGHT: usize = 240;
+pub const WIDTH: i32 = 320;
+pub const HEIGHT: i32 = 240;
 
 struct WindowData {
     framebuffer_is_a: bool,
@@ -17,9 +17,9 @@ thread_local! {
 }
 
 fn convert_5551_to_8888(input: &u16) -> u32 {
-    let r = ((*input >> 11 & 0b11111) + 4) as u8 * 8;
-    let g = ((*input >> 6 & 0b11111) + 4) as u8 * 8;
-    let b = ((*input >> 1 & 0b11111) + 4) as u8 * 8;
+    let r = (*input >> 11 & 0b11111) as u8 * 8 + 4;
+    let g = (*input >> 6 & 0b11111) as u8 * 8 + 4;
+    let b = (*input >> 1 & 0b11111) as u8 * 8 + 4;
 
     (r as u32) << 16 | (g as u32) << 8 | (b as u32)
 }
@@ -35,9 +35,9 @@ pub(crate) fn init() {
 
         *window_data = Some(WindowData {
             framebuffer_is_a: true,
-            framebuffer_a: vec![0; WIDTH * HEIGHT],
-            framebuffer_b: vec![0; WIDTH * HEIGHT],
-            window: Window::new("Nintendo 64", WIDTH, HEIGHT, Default::default()).unwrap(),
+            framebuffer_a: vec![0; (WIDTH * HEIGHT) as usize],
+            framebuffer_b: vec![0; (WIDTH * HEIGHT) as usize],
+            window: Window::new("Nintendo 64", WIDTH as usize, HEIGHT as usize, Default::default()).unwrap(),
         });
     });
 }
@@ -49,15 +49,19 @@ pub fn swap_buffers() {
 
             if window_data.framebuffer_is_a {
                 window_data.window
-                    .update_with_buffer_size(&framebuffer_to_rgba(&window_data.framebuffer_a), WIDTH, HEIGHT)
+                    .update_with_buffer_size(&framebuffer_to_rgba(&window_data.framebuffer_a), WIDTH as usize, HEIGHT as usize)
                     .unwrap();
             } else {
                 window_data.window
-                    .update_with_buffer_size(&framebuffer_to_rgba(&window_data.framebuffer_b), WIDTH, HEIGHT)
+                    .update_with_buffer_size(&framebuffer_to_rgba(&window_data.framebuffer_b), WIDTH as usize, HEIGHT as usize)
                     .unwrap();
             }
 
             window_data.framebuffer_is_a = !window_data.framebuffer_is_a;
+
+            if !window_data.window.is_open() {
+                std::process::exit(0);
+            }
         }
     });
 }

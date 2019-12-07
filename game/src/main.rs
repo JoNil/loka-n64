@@ -22,8 +22,8 @@ fn main() {
     let mut x_speed = 2;
     let mut y_speed = 2;
 
-    const HALF_WIDTH: i16 = graphics::WIDTH as i16 / 2;
-    const HALF_HEIGHT: i16 = graphics::HEIGHT as i16 / 2;
+    const HALF_WIDTH: i32 = graphics::WIDTH / 2;
+    const HALF_HEIGHT: i32 = graphics::HEIGHT / 2;
 
     loop {
         controllers.update();
@@ -58,11 +58,11 @@ fn main() {
         ipl3font::draw_str_centered_offset(x_pos, y_pos, BLUE, b"Isafo en prutt!");
 
         ipl3font::draw_hex(120, 20, RED, x_pos as u32);
-        ipl3font::draw_number(120, 40, RED, x_pos as i32);
+        ipl3font::draw_number(120, 40, RED, x_pos);
 
         for (i, value) in controllers.data[0..4].iter().enumerate() {
-            ipl3font::draw_hex(280, 20 + 40 * i, RED, (value >> 32) as u32);
-            ipl3font::draw_hex(280, 40 + 40 * i, RED, (value & 0xffff_ffff) as u32);
+            ipl3font::draw_hex(280, 20 + 40 * (i as i32), RED, (value >> 32) as u32);
+            ipl3font::draw_hex(280, 40 + 40 * (i as i32), RED, (value & 0xffff_ffff) as u32);
         }
 
         graphics::swap_buffers();

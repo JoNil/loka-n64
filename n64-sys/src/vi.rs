@@ -4,11 +4,11 @@
 
 use core::ptr::read_volatile;
 
-pub const WIDTH: usize = 320;
-pub const HEIGHT: usize = 240;
-pub const FRAME_BUFFER_SIZE: usize = WIDTH * HEIGHT * 4;
+pub const WIDTH: i32 = 320;
+pub const HEIGHT: i32 = 240;
+pub const FRAME_BUFFER_SIZE: i32 = WIDTH * HEIGHT * 4;
 
-const FRAME_BUFFER: *mut u16 = (0xA040_0000 - 2 * FRAME_BUFFER_SIZE - 4) as *mut u16;
+const FRAME_BUFFER: *mut u16 = (0xA040_0000 - 2 * (FRAME_BUFFER_SIZE as usize) - 4) as *mut u16;
 
 const VI_BASE: usize = 0xA440_0000;
 
@@ -31,7 +31,7 @@ const VI_Y_SCALE: *mut u32 = (VI_BASE + 0x34) as *mut u32;
 pub fn init() {
     let frame_buffer = FRAME_BUFFER as usize;
     for i in 0..WIDTH * HEIGHT {
-        let p = (frame_buffer + i * 4) as *mut u32;
+        let p = (frame_buffer + i as usize * 4) as *mut u32;
         unsafe {
             *p = 0x0001_0001;
         }

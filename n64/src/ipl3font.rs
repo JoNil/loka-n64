@@ -1,36 +1,37 @@
-#[cfg(target_vendor = "nintendo64")]
-use n64_sys::vi;
-
 use crate::graphics;
 
-pub const GLYPH_WIDTH: usize = 13;
-pub const GLYPH_HEIGHT: usize = 14;
+pub const GLYPH_WIDTH: i32 = 13;
+pub const GLYPH_HEIGHT: i32 = 14;
+const KERNING: i32 = 1;
 
-const KERNING: usize = 1;
+const GLYPHS: &[u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
+const UNKNOWN: usize = 48;
+const GLYPH_SIZE: usize = 23;
+const GLYPH_ADDR: usize = 0xB000_0B70;
 
 #[inline]
 pub fn draw_str_centered(color: u16, string: &[u8]) {
-    let x = (graphics::WIDTH - string.len() * GLYPH_WIDTH) / 2;
+    let x = (graphics::WIDTH - string.len() as i32 * GLYPH_WIDTH) / 2;
     let y = (graphics::HEIGHT - GLYPH_HEIGHT) / 2;
 
     draw_str(x, y, color, string);
 }
 
 #[inline]
-pub fn draw_str_centered_offset(x_offset: i16, y_offset: i16, color: u16, string: &[u8]) {
+pub fn draw_str_centered_offset(x_offset: i32, y_offset: i32, color: u16, string: &[u8]) {
     let y = (graphics::HEIGHT - GLYPH_HEIGHT) / 2;
-    let x = (graphics::WIDTH - string.len() * GLYPH_WIDTH) / 2;
+    let x = (graphics::WIDTH - string.len() as i32 * GLYPH_WIDTH) / 2;
 
     draw_str(
-        (x as i16 + x_offset) as usize,
-        (y as i16 + y_offset) as usize,
+        x + x_offset,
+        y + y_offset,
         color,
         string,
     );
 }
 
 #[inline]
-pub fn draw_str(mut x: usize, y: usize, color: u16, string: &[u8]) {
+pub fn draw_str(mut x: i32, y: i32, color: u16, string: &[u8]) {
     for mut ch in string.iter().copied() {
         if ch == b' ' {
             x += GLYPH_WIDTH;
@@ -56,7 +57,7 @@ fn digit_to_hex_char(digit: u8) -> u8 {
 }
 
 #[inline]
-pub fn draw_hex(mut x: usize, y: usize, color: u16, mut number: u32) {
+pub fn draw_hex(mut x: i32, y: i32, color: u16, mut number: u32) {
     if number == 0 {
         draw_char(x, y, color, b'0');
         return;
@@ -78,7 +79,7 @@ fn digit_to_char(digit: u8) -> u8 {
 }
 
 #[inline]
-pub fn draw_number(mut x: usize, y: usize, color: u16, mut number: i32) {
+pub fn draw_number(mut x: i32, y: i32, color: u16, mut number: i32) {
     let mut negative = false;
 
     if number == 0 {
@@ -104,11 +105,7 @@ pub fn draw_number(mut x: usize, y: usize, color: u16, mut number: i32) {
 
 #[inline]
 #[cfg(target_vendor = "nintendo64")]
-fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
-    const GLYPHS: &[u8; 50] = br##"ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!"#'*+,-./:=?@"##;
-    const UNKNOWN: usize = 48;
-    const GLYPH_SIZE: usize = 23;
-    const GLYPH_ADDR: usize = 0xB000_0B70;
+fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
 
     let frame_buffer = unsafe { vi::next_buffer() as usize };
 
@@ -147,4 +144,44 @@ fn draw_char(x: usize, y: usize, color: u16, ch: u8) {
 
 #[inline]
 #[cfg(not(target_vendor = "nintendo64"))]
-fn draw_char(x: usize, y: usize, color: u16, ch: u8) {}
+fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
+
+    graphics::with_framebuffer(|fb| {
+
+        use core::convert::TryInto;
+
+        let ipl3 = std::include_bytes!("../../bootcode.bin");
+
+        let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
+
+        let mut address = (GLYPH_ADDR & 0xffff) + index * GLYPH_SIZE;
+        let mut shift = (4 - (address & 3)) * 8 - 1;
+        address &= 0xFFFF_FFFC;
+        let mut bits = u32::from_be_bytes((&ipl3[address..(address + 4)]).try_into().unwrap());
+
+        for yy in y..(y + GLYPH_HEIGHT) {
+            
+            if yy < 0 {
+                return;
+            }
+
+            if yy >= graphics::HEIGHT {
+                return;
+            }
+
+            for xx in x..(x + GLYPH_WIDTH) {
+                if (bits >> shift) & 1 == 1 && xx < graphics::WIDTH && x >= 0 {
+                    fb[(yy * graphics::WIDTH + xx) as usize] = color;
+                }
+
+                if shift == 0 {
+                    address += 4;
+                    bits = u32::from_be_bytes((&ipl3[address..(address + 4)]).try_into().unwrap());
+                    shift = 31;
+                } else {
+                    shift -= 1;
+                }
+            }
+        }
+    });
+}
