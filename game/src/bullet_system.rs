@@ -33,7 +33,7 @@ impl BulletSystem {
 
         self.bullets[self.next_free_index] = Bullet {
             pos: pos,
-            speed: Vec2::new(0.0, speed.y() - 0.75),
+            speed: Vec2::new(0.0, speed.y() - 0.65),
             color: BULLET_COLOR_INIT,
         };
 
