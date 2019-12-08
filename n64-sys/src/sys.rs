@@ -51,3 +51,12 @@ pub(crate) unsafe fn disable_interrupts() {
 pub(crate) unsafe fn memory_barrier() {
     asm!("" ::: "memory" : "volatile");
 }
+
+//volatile unsigned long get_ticks(void)
+//{
+//    unsigned long count;
+//    // reg $9 on COP0 is count
+//    asm volatile("\tmfc0 %0,$9\n\tnop":"=r"(count));
+//
+//    return count;
+//}

@@ -65,7 +65,7 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
 
         volatile_copy_nonoverlapping_memory(
             outblock.as_mut_ptr(),
-            uncached_addr_mut(outblock_temp.as_mut_ptr()),
+            uncached_addr(outblock_temp.as_ptr()),
             outblock.len(),
         );
     }

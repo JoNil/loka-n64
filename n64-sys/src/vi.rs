@@ -1,8 +1,4 @@
-//! Video Interface
-//!
-//! Provides low level access to the N64 vi hardware.
-
-use core::ptr::read_volatile;
+use core::ptr::{read_volatile, write_volatile};
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -33,24 +29,24 @@ pub fn init() {
     for i in 0..WIDTH * HEIGHT {
         let p = (frame_buffer + i as usize * 4) as *mut u32;
         unsafe {
-            *p = 0x0001_0001;
+            write_volatile(p, 0x0001_0001);
         }
     }
 
     unsafe {
-        *VI_STATUS = 0x0000_320E;
-        *VI_DRAM_ADDR = frame_buffer;
-        *VI_H_WIDTH = WIDTH as u32;
-        *VI_V_INTR = 2;
-        *VI_TIMING = 0x03E5_2239;
-        *VI_V_SYNC = 0x0000_020D;
-        *VI_H_SYNC = 0x0000_0C15;
-        *VI_H_SYNC_LEAP = 0x0C15_0C15;
-        *VI_H_VIDEO = 0x006C_02EC;
-        *VI_V_VIDEO = 0x0025_01FF;
-        *VI_V_BURST = 0x000E_0204;
-        *VI_X_SCALE = 0x0000_0200;
-        *VI_Y_SCALE = 0x0000_0400;
+        write_volatile(VI_STATUS, 0x0000_320E);
+        write_volatile(VI_DRAM_ADDR, frame_buffer);
+        write_volatile(VI_H_WIDTH, WIDTH as u32);
+        write_volatile(VI_V_INTR, 2);
+        write_volatile(VI_TIMING, 0x03E5_2239);
+        write_volatile(VI_V_SYNC, 0x0000_020D);
+        write_volatile(VI_H_SYNC, 0x0000_0C15);
+        write_volatile(VI_H_SYNC_LEAP, 0x0C15_0C15);
+        write_volatile(VI_H_VIDEO, 0x006C_02EC);
+        write_volatile(VI_V_VIDEO, 0x0025_01FF);
+        write_volatile(VI_V_BURST, 0x000E_0204);
+        write_volatile(VI_X_SCALE, 0x0000_0200);
+        write_volatile(VI_Y_SCALE, 0x0000_0400);
     }
 }
 
@@ -78,6 +74,6 @@ pub unsafe fn next_buffer() -> *mut u16 {
 #[inline]
 pub fn swap_buffers() {
     unsafe {
-        *VI_DRAM_ADDR = next_buffer() as usize;
+        write_volatile(VI_DRAM_ADDR, next_buffer() as usize);
     }
 }
