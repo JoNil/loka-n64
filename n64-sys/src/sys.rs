@@ -81,6 +81,6 @@ fn get_ticks() -> u32 {
 }
 
 #[inline]
-pub fn get_ticks_us() -> i32 {
+pub fn current_time_us() -> i32 {
     (get_ticks() / (get_tick_rate() / (1000 * 1000))) as i32
 }

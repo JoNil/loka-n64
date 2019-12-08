@@ -17,7 +17,7 @@ pub fn init() {
 #[inline]
 #[cfg(target_vendor = "nintendo64")]
 pub fn current_time_us() -> i32 {
-    n64_sys::sys::get_ticks_us()
+    n64_sys::sys::current_time_us()
 }
 
 #[inline]
