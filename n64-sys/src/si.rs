@@ -21,9 +21,7 @@ fn dma_wait() {
     while unsafe { read_volatile(SI_STATUS) } & (SI_STATUS_DMA_BUSY | SI_STATUS_IO_BUSY) > 0 {}
 }
 
-fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
-    
-    let res;
+fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
 
     unsafe {
         let mut inblock_temp: [u64; 8] = [0; 8];
@@ -40,7 +38,6 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
 
         dma_wait();
 
-        memory_barrier();
         write_volatile(SI_ADDR, virtual_to_physical(inblock_temp.as_ptr()));
         memory_barrier();
         write_volatile(SI_START_WRITE, PIF_RAM);
@@ -50,16 +47,12 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
 
         data_cache_hit_writeback_invalidate(&mut outblock_temp);
 
-        memory_barrier();
         write_volatile(SI_ADDR, virtual_to_physical_mut(outblock_temp.as_mut_ptr()));
         memory_barrier();
         write_volatile(SI_START_READ, PIF_RAM);
         memory_barrier();
 
         dma_wait();
-
-        res = (0..16).fold(0, |count, i| count + read_volatile(uncached_addr_mut((outblock_temp.as_mut_ptr() as *mut u32).offset(i))) as u32) + 1;
-        //res = read_volatile(uncached_addr_mut((outblock_temp.as_mut_ptr() as *mut u32).offset(4))) as u32;
 
         enable_interrupts();
 
@@ -69,15 +62,9 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
             outblock.len(),
         );
     }
-
-    res
 }
 
-pub fn init() {
-    //unsafe { write_volatile(uncached_addr_mut((PIF_RAM + 0x3c) as *mut usize), 0x8) };
-}
-
-pub fn read_controllers(outblock: &mut [u64; 8]) -> u32 {
+pub fn read_controllers(outblock: &mut [u64; 8]){
     static READ_CON_BLOCK: [u64; 8] = [
         0xff010401ffffffff,
         0xff010401ffffffff,
@@ -89,5 +76,5 @@ pub fn read_controllers(outblock: &mut [u64; 8]) -> u32 {
         1,
     ];
 
-    dma_pif_block(&READ_CON_BLOCK, outblock)
+    dma_pif_block(&READ_CON_BLOCK, outblock);
 }

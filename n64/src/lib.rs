@@ -11,6 +11,5 @@ pub mod graphics;
 pub mod controllers;
 
 pub fn init() {
-    controllers::init();
     graphics::init();
 }

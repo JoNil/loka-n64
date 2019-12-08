@@ -21,39 +21,18 @@ fn main() {
     let mut x_pos = 0;
     let mut y_pos = 0;
 
-    const SPEED: i32 = 2;
-
     loop {
-        let count = controllers.update();
+        controllers.update();
 
-        if controllers.up_pressed() {
-            y_pos -= SPEED;
-        }
-
-        if controllers.down_pressed() {
-            y_pos += SPEED;
-        }
-
-        if controllers.right_pressed() {
-            x_pos += SPEED;
-        }
-
-        if controllers.left_pressed() {
-            x_pos -= SPEED;
-        }
+        x_pos += (controllers.x() >> 5) as i32;
+        y_pos -= (controllers.y() >> 5) as i32;
 
         graphics::clear_buffer();
 
-        ipl3font::draw_str_centered_offset(x_pos, y_pos, BLUE, b"Isafo en prutt!");
-
-        ipl3font::draw_hex(120, 20, RED, count);
-        ipl3font::draw_number(120, 40, RED, count as i32);
-
-        for j in 0..2 {
-            for (i, value) in controllers.data[(4*j)..(4*(j+1))].iter().enumerate() {
-                ipl3font::draw_hex(200 + 80*j as i32 , 20 + 40 * (i as i32), RED, (value >> 32) as u32);
-                ipl3font::draw_hex(200 + 80*j as i32, 40 + 40 * (i as i32), RED, (value & 0xffff_ffff) as u32);
-            }
+        if controllers.z() {
+            ipl3font::draw_str_centered_offset(x_pos, y_pos, RED, b"Isafo en prutt!");
+        } else {
+            ipl3font::draw_str_centered_offset(x_pos, y_pos, BLUE, b"Isafo en prutt!");
         }
 
         graphics::swap_buffers();

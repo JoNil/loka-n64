@@ -30,10 +30,10 @@ cargo run --bin extract_boot_code -- "roms/Super Mario 64 (U) [!].z64"
 cargo +nightly n64 build --ipl3 bootcode.bin --package game
 ```
 
-## Build for PC
+## Run for PC
 
 ```bash
-cargo build --bin game
+cargo run --bin game --release
 ```
 
 ## Links

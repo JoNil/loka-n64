@@ -12,7 +12,7 @@ pub(crate) fn init() {
 #[inline]
 pub fn swap_buffers() {
     vi::wait_for_vblank();
-    vi::swap_buffers()
+    vi::swap_buffers();
 }
 
 #[inline]

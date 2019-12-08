@@ -43,8 +43,7 @@ pub(crate) unsafe fn enable_interrupts() {
     asm!("mfc0 $$8,$$12
         ori $$8,1
         mtc0 $$8,$$12
-        nop":::"$$8"
-        : "volatile");
+        nop":::"$$8");
 }
 
 #[inline]
@@ -53,8 +52,7 @@ pub(crate) unsafe fn disable_interrupts() {
         la $$9,~1
         and $$8,$$9
         mtc0 $$8,$$12
-        nop":::"$$8","$$9" 
-        : "volatile");
+        nop":::"$$8","$$9");
 }
 
 #[inline]

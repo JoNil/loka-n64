@@ -1,8 +1,6 @@
 use minifb::Key;
 use crate::graphics;
 
-pub(crate) fn init() {}
-
 pub struct Controllers {
     data: Vec<Key>,
 }
@@ -18,19 +16,46 @@ impl Controllers {
         self.data = graphics::get_keys();
     }
 
-    pub fn up_pressed(&self) -> bool {
-        self.data.contains(&Key::Up)
+    pub fn x(&self) -> i8 {
+        let mut res = 0;
+
+        if self.data.contains(&Key::Right) {
+            res += 127;
+        }
+
+        if self.data.contains(&Key::Left) {
+            res -= 127;
+        }
+
+        res
     }
 
-    pub fn down_pressed(&self) -> bool {
-        self.data.contains(&Key::Down)
+    pub fn y(&self) -> i8 {
+        let mut res = 0;
+
+        if self.data.contains(&Key::Up) {
+            res += 127;
+        }
+
+        if self.data.contains(&Key::Down) {
+            res -= 127;
+        }
+
+        res
     }
 
-    pub fn left_pressed(&self) -> bool {
-        self.data.contains(&Key::Left)
+    #[inline]
+    pub fn a(&self) -> bool {
+        self.data.contains(&Key::X)
     }
 
-    pub fn right_pressed(&self) -> bool {
-        self.data.contains(&Key::Right)
+    #[inline]
+    pub fn b(&self) -> bool {
+        self.data.contains(&Key::C)
+    }
+
+    #[inline]
+    pub fn z(&self) -> bool {
+        self.data.contains(&Key::Space)
     }
 }

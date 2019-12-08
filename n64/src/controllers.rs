@@ -1,11 +1,7 @@
 use n64_sys::si;
 
-pub(crate) fn init() {
-    si::init();
-}
-
 pub struct Controllers {
-    pub data: [u64; 8],
+    data: [u64; 8],
 }
 
 impl Controllers {
@@ -15,29 +11,32 @@ impl Controllers {
     }
 
     #[inline]
-    pub fn update(&mut self) -> u32 {
-        si::read_controllers(&mut self.data)
+    pub fn update(&mut self) {
+        si::read_controllers(&mut self.data);
     }
 
     #[inline]
-    pub fn up_pressed(&self) -> bool {
-        let buttons = (self.data[0] >> 32) as u32;
-
-        buttons & 0b0000_1000_0000_0000_0000_0000_0000_0000 > 0
+    pub fn x(&self) -> i8 {
+        ((self.data[0] >> 8) & 0xff) as i8
     }
 
     #[inline]
-    pub fn down_pressed(&self) -> bool {
-        false
+    pub fn y(&self) -> i8 {
+        ((self.data[0] & 0xff) as i8)
     }
 
     #[inline]
-    pub fn left_pressed(&self) -> bool {
-        false
+    pub fn a(&self) -> bool {
+        self.data[0] & 0x8000_0000 > 0
     }
 
     #[inline]
-    pub fn right_pressed(&self) -> bool {
-        false
+    pub fn b(&self) -> bool {
+        self.data[0] & 0x4000_0000 > 0
+    }
+
+    #[inline]
+    pub fn z(&self) -> bool {
+        self.data[0] & 0x2000_0000 > 0
     }
 }
