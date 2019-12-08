@@ -1,6 +1,8 @@
 use minifb::Key;
 use crate::graphics;
 
+pub(crate) fn init() {}
+
 pub struct Controllers {
     data: Vec<Key>,
 }

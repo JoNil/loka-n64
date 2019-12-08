@@ -1,5 +1,9 @@
 use n64_sys::si;
 
+pub(crate) fn init() {
+    si::init();
+}
+
 pub struct Controllers {
     pub data: [u64; 8],
 }

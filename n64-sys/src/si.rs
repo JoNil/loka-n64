@@ -1,6 +1,6 @@
 use crate::sys::{
     data_cache_hit_writeback_invalidate, disable_interrupts, enable_interrupts, memory_barrier,
-    uncached_addr_mut, uncached_addr,
+    uncached_addr_mut, uncached_addr, virtual_to_physical, virtual_to_physical_mut,
 };
 use core::intrinsics::{volatile_copy_nonoverlapping_memory};
 use core::ptr::{read_volatile, write_volatile};
@@ -41,7 +41,7 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
         dma_wait();
 
         memory_barrier();
-        write_volatile(SI_ADDR, inblock_temp.as_mut_ptr() as usize);
+        write_volatile(SI_ADDR, virtual_to_physical(inblock_temp.as_ptr()));
         memory_barrier();
         write_volatile(SI_START_WRITE, PIF_RAM);
         memory_barrier();
@@ -51,14 +51,14 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
         data_cache_hit_writeback_invalidate(&mut outblock_temp);
 
         memory_barrier();
-        write_volatile(SI_ADDR, uncached_addr_mut(outblock_temp.as_mut_ptr()) as usize);
+        write_volatile(SI_ADDR, virtual_to_physical_mut(outblock_temp.as_mut_ptr()));
         memory_barrier();
         write_volatile(SI_START_READ, PIF_RAM);
         memory_barrier();
 
         dma_wait();
 
-        res = (0..16).fold(0, |count, i| count + read_volatile(uncached_addr_mut((outblock_temp.as_mut_ptr() as *mut u32).offset(i))) as u32);
+        res = (0..16).fold(0, |count, i| count + read_volatile(uncached_addr_mut((outblock_temp.as_mut_ptr() as *mut u32).offset(i))) as u32) + 1;
         //res = read_volatile(uncached_addr_mut((outblock_temp.as_mut_ptr() as *mut u32).offset(4))) as u32;
 
         enable_interrupts();
@@ -71,6 +71,10 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
     }
 
     res
+}
+
+pub fn init() {
+    //unsafe { write_volatile(uncached_addr_mut((PIF_RAM + 0x3c) as *mut usize), 0x8) };
 }
 
 pub fn read_controllers(outblock: &mut [u64; 8]) -> u32 {

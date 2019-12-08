@@ -29,6 +29,16 @@ pub(crate) unsafe fn uncached_addr_mut<T>(address: *mut T) -> *mut T {
 }
 
 #[inline]
+pub(crate) unsafe fn virtual_to_physical<T>(address: *const T) -> usize {
+    (address as usize) & 0x1fffffff
+}
+
+#[inline]
+pub(crate) unsafe fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
+    (address as usize) & 0x1fffffff
+}
+
+#[inline]
 pub(crate) unsafe fn enable_interrupts() {
     asm!("mfc0 $$8,$$12
         ori $$8,1

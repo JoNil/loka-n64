@@ -12,6 +12,8 @@ const BLUE: u16 = 0b00001_00001_11100_1;
 const RED: u16 = 0b10000_00011_00011_1;
 
 fn main() {
+
+    // Todo maybe return n64 object that has funcs
     n64::init();
 
     let mut controllers = Controllers::new();
