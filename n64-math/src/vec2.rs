@@ -8,26 +8,9 @@ pub struct Vec2(f32, f32);
 
 impl Vec2 {
 
-    /// Computes the reciprocal `1.0/n` of each element, returning the
-    /// results in a new `Vec2`.
-    #[inline]
-    pub fn reciprocal(self) -> Self {
-        Self::one() / self
-    }
-
-    /// Performs a linear interpolation between `self` and `other` based on
-    /// the value `s`.
-    ///
-    /// When `s` is `0.0`, the result will be equal to `self`.  When `s`
-    /// is `1.0`, the result will be equal to `other`.
-    #[inline]
-    pub fn lerp(self, other: Self, s: f32) -> Self {
-        self + ((other - self) * s)
-    }
-
     /// Creates a new `Vec2`.
     #[inline]
-    pub fn new(x: f32, y: f32) -> Vec2 {
+    pub const fn new(x: f32, y: f32) -> Vec2 {
         Vec2(x, y)
     }
 
@@ -120,6 +103,23 @@ impl Vec2 {
     #[inline]
     pub fn normalize(self) -> Vec2 {
         self * self.length_reciprocal()
+    }
+
+    /// Computes the reciprocal `1.0/n` of each element, returning the
+    /// results in a new `Vec2`.
+    #[inline]
+    pub fn reciprocal(self) -> Self {
+        Self::one() / self
+    }
+
+    /// Performs a linear interpolation between `self` and `other` based on
+    /// the value `s`.
+    ///
+    /// When `s` is `0.0`, the result will be equal to `self`.  When `s`
+    /// is `1.0`, the result will be equal to `other`.
+    #[inline]
+    pub fn lerp(self, other: Self, s: f32) -> Self {
+        self + ((other - self) * s)
     }
 
     /// Returns the vertical minimum of `self` and `other`.

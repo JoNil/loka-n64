@@ -10,22 +10,6 @@ const GLYPH_SIZE: usize = 23;
 const GLYPH_ADDR: usize = 0xB000_0B70;
 
 #[inline]
-pub fn draw_str_centered(color: u16, string: &[u8]) {
-    let x = (graphics::WIDTH - string.len() as i32 * GLYPH_WIDTH) / 2;
-    let y = (graphics::HEIGHT - GLYPH_HEIGHT) / 2;
-
-    draw_str(x, y, color, string);
-}
-
-#[inline]
-pub fn draw_str_centered_offset(x_offset: i32, y_offset: i32, color: u16, string: &[u8]) {
-    let y = (graphics::HEIGHT - GLYPH_HEIGHT) / 2;
-    let x = (graphics::WIDTH - string.len() as i32 * GLYPH_WIDTH) / 2;
-
-    draw_str(x + x_offset, y + y_offset, color, string);
-}
-
-#[inline]
 pub fn draw_str(mut x: i32, y: i32, color: u16, string: &[u8]) {
     for mut ch in string.iter().copied() {
         if ch == b' ' {

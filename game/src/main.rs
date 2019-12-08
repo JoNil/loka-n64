@@ -1,17 +1,15 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
-// Pull panic into scope
-// Required by panic_handler
+mod bullet_system;
+mod player;
+
 #[cfg(target_vendor = "nintendo64")]
 pub use rrt0;
 
 use n64::{self, controllers::Controllers, graphics, ipl3font, current_time_us};
+use player::Player;
+use bullet_system::BulletSystem;
 
-mod bullets;
-mod enemies;
-mod player;
-
-// Colors are 5:5:5:1 RGB with a 16-bit color depth.
 const BLUE: u16 = 0b00001_00001_11100_1;
 const RED: u16 = 0b10000_00011_00011_1;
 
@@ -21,35 +19,49 @@ fn main() {
     n64::init();
 
     let mut controllers = Controllers::new();
+    let mut player = Player::new();
+    let mut bullet_system = BulletSystem::new();
 
-    let mut x_pos = 0;
-    let mut y_pos = 0;
-
-    let mut start;
+    let mut time_update_and_draw;
+    let mut time_frame = current_time_us();
+    let mut dt;
 
     loop {
 
-        start = current_time_us();
+        {
+            let now = current_time_us();
+            dt = (now - time_frame) as f32 / 1e6;
+            time_frame = now;
+        }
 
-        controllers.update();
+        time_update_and_draw = current_time_us();
 
-        x_pos += (controllers.x() >> 5) as i32;
-        y_pos -= (controllers.y() >> 5) as i32;
+        {
+            // Update
 
-        graphics::clear_buffer();
+            controllers.update();
 
-        if controllers.z() {
-            ipl3font::draw_str_centered_offset(x_pos, y_pos, RED, b"Isafo en prutt!");
-        } else {
-            ipl3font::draw_str_centered_offset(x_pos, y_pos, BLUE, b"Isafo en prutt!");
+            player.update(dt, &controllers, &mut bullet_system);
+
+            bullet_system.update(dt);
         }
 
         {
-            let diff = current_time_us() - start;
+            // Draw
 
-            ipl3font::draw_number(50, 10, RED, diff);
+            graphics::clear_buffer();
+
+            player.draw();
+
+            bullet_system.draw();
+
+            {
+                let used_frame_time = current_time_us() - time_update_and_draw;
+
+                ipl3font::draw_number(50, 10, RED, used_frame_time);
+            }
+
+            graphics::swap_buffers();
         }
-
-        graphics::swap_buffers();
     }
 }
