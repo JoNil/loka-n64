@@ -95,6 +95,7 @@ name = "game"
 version = "0.1.0"
 dependencies = [
  "n64 0.1.0",
+ "n64-math 0.1.0",
  "rrt0 0.1.3 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -119,6 +120,11 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 [[package]]
 name = "libm"
 version = "0.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "libm"
+version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
@@ -155,6 +161,13 @@ dependencies = [
  "minifb 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "n64-sys 0.1.0",
  "rayon 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "n64-math"
+version = "0.1.0"
+dependencies = [
+ "libm 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -473,6 +486,7 @@ dependencies = [
 "checksum lazy_static 1.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "e2abad23fbc42b3700f2f279844dc832adb2b2eb069b2df918f455c4e18cc646"
 "checksum libc 0.2.66 (registry+https://github.com/rust-lang/crates.io-index)" = "d515b1f41455adea1313a4a2ac8a8a477634fbae63cc6100e3aebb207ce61558"
 "checksum libm 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "7fc7aa29613bd6a620df431842069224d8bc9011086b1db4c0e0cd47fa03ec9a"
+"checksum libm 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)" = "c7d73b3f436185384286bd8098d17ec07c9a7d2388a6599f824d8502b529702a"
 "checksum maybe-uninit 2.0.0 (registry+https://github.com/rust-lang/crates.io-index)" = "60302e4db3a61da70c0cb7991976248362f30319e88850c487b9b95bbf059e00"
 "checksum memoffset 0.5.3 (registry+https://github.com/rust-lang/crates.io-index)" = "75189eb85871ea5c2e2c15abbdd541185f63b408415e5051f5cac122d8c774b9"
 "checksum minifb 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)" = "799c20458eb0dd69f48cea5014afe736b363818c86d7ca61dbb56e1c0585014c"

@@ -7,6 +7,10 @@ pub use rrt0;
 
 use n64::{self, controllers::Controllers, graphics, ipl3font, current_time_us};
 
+mod bullets;
+mod enemies;
+mod player;
+
 // Colors are 5:5:5:1 RGB with a 16-bit color depth.
 const BLUE: u16 = 0b00001_00001_11100_1;
 const RED: u16 = 0b10000_00011_00011_1;
