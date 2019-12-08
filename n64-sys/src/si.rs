@@ -2,7 +2,7 @@ use crate::sys::{
     data_cache_hit_writeback_invalidate, disable_interrupts, enable_interrupts, memory_barrier,
     uncached_addr_mut, uncached_addr,
 };
-use core::intrinsics::volatile_copy_nonoverlapping_memory;
+use core::intrinsics::{volatile_copy_nonoverlapping_memory};
 use core::ptr::{read_volatile, write_volatile};
 
 const SI_BASE: usize = 0xA480_0000;
@@ -36,34 +36,32 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) -> u32 {
             inblock.len(),
         );
 
-        //res = read_volatile(uncached_addr_mut((inblock_temp.as_mut_ptr() as *mut u32).offset(1)));
-
-        /* Be sure another thread doesn't get into a resource fight */
-        //disable_interrupts();
+        disable_interrupts();
 
         dma_wait();
 
-        write_volatile(SI_ADDR, uncached_addr_mut(inblock_temp.as_mut_ptr()) as usize);
-        //memory_barrier();
+        memory_barrier();
+        write_volatile(SI_ADDR, inblock_temp.as_mut_ptr() as usize);
+        memory_barrier();
         write_volatile(SI_START_WRITE, PIF_RAM);
-        //memory_barrier();
+        memory_barrier();
 
         dma_wait();
 
         data_cache_hit_writeback_invalidate(&mut outblock_temp);
 
+        memory_barrier();
         write_volatile(SI_ADDR, uncached_addr_mut(outblock_temp.as_mut_ptr()) as usize);
-        //memory_barrier();
+        memory_barrier();
         write_volatile(SI_START_READ, PIF_RAM);
-        //memory_barrier();
+        memory_barrier();
 
         dma_wait();
 
-        //res = (0..8).fold(0, |count, i| count + read_volatile(uncached_addr_mut(outblock_temp.as_mut_ptr().offset(i))) as u32) + 1;
-        res = uncached_addr_mut((outblock_temp.as_mut_ptr() as *mut u32).offset(0)) as u32;
+        res = (0..16).fold(0, |count, i| count + read_volatile(uncached_addr_mut((outblock_temp.as_mut_ptr() as *mut u32).offset(i))) as u32);
+        //res = read_volatile(uncached_addr_mut((outblock_temp.as_mut_ptr() as *mut u32).offset(4))) as u32;
 
-        /* Now that we've copied, its safe to let other threads go */
-        //enable_interrupts();
+        enable_interrupts();
 
         volatile_copy_nonoverlapping_memory(
             outblock.as_mut_ptr(),
