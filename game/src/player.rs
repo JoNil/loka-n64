@@ -5,7 +5,7 @@ use n64::{controllers::Controllers, graphics, ipl3font, current_time_us};
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_COLOR: u16 = 0b10000_00011_00011_1;
 const SHIP_SPEED: f32 = 0.35;
-const SHIP_SHOOT_DELAY_MS: i32 = 750;
+const SHIP_SHOOT_DELAY_MS: i32 = 150;
 
 pub struct Player {
     pos: Vec2,

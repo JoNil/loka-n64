@@ -33,7 +33,7 @@ impl BulletSystem {
 
         self.bullets[self.next_free_index] = Bullet {
             pos: pos,
-            speed: speed + Vec2::new(0.0, -0.75),
+            speed: Vec2::new(0.0, speed.y() - 0.75),
             color: BULLET_COLOR_INIT,
         };
 
@@ -41,20 +41,14 @@ impl BulletSystem {
     }
 
     pub fn update(&mut self, dt: f32) {
-        for (i, bullet) in self.bullets.iter_mut().enumerate() {
-            if i >= self.next_free_index {
-                break;
-            }
+        for bullet in self.bullets[..self.next_free_index].iter_mut() {
 
             bullet.pos += dt * bullet.speed;
         }
     }
 
     pub fn draw(&self) {
-        for (i, bullet) in self.bullets.iter().enumerate() {
-            if i >= self.next_free_index {
-                break;
-            }
+        for bullet in self.bullets[..self.next_free_index].iter() {
 
             let screen_x = (bullet.pos.x() * (graphics::WIDTH as f32)) as i32;
             let screen_y = (bullet.pos.y() * (graphics::HEIGHT as f32)) as i32;
