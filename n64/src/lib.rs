@@ -13,3 +13,24 @@ pub mod controllers;
 pub fn init() {
     graphics::init();
 }
+
+#[inline]
+#[cfg(target_vendor = "nintendo64")]
+pub fn current_time_us() -> i32 {
+    n64_sys::sys::get_ticks_us()
+}
+
+#[inline]
+#[cfg(not(target_vendor = "nintendo64"))]
+pub fn current_time_us() -> i32 {
+
+    use std::time::Instant;
+
+    thread_local! {
+        static BEGINNING: Instant = Instant::now();
+    }
+
+    BEGINNING.with(|beginning| {
+        (beginning.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i32
+    })
+}

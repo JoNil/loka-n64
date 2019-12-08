@@ -43,7 +43,8 @@ pub(crate) unsafe fn enable_interrupts() {
     asm!("mfc0 $$8,$$12
         ori $$8,1
         mtc0 $$8,$$12
-        nop":::"$$8");
+        nop"
+        ::: "$$8");
 }
 
 #[inline]
@@ -52,7 +53,8 @@ pub(crate) unsafe fn disable_interrupts() {
         la $$9,~1
         and $$8,$$9
         mtc0 $$8,$$12
-        nop":::"$$8","$$9");
+        nop"
+        ::: "$$8", "$$9");
 }
 
 #[inline]
@@ -60,11 +62,25 @@ pub(crate) unsafe fn memory_barrier() {
     asm!("" ::: "memory" : "volatile");
 }
 
-//volatile unsigned long get_ticks(void)
-//{
-//    unsigned long count;
-//    // reg $9 on COP0 is count
-//    asm volatile("\tmfc0 %0,$9\n\tnop":"=r"(count));
-//
-//    return count;
-//}
+#[inline]
+fn get_tick_rate() -> u32 {
+    93750000 / 2
+}
+
+#[inline]
+fn get_ticks() -> u32 {
+    let res;
+
+    unsafe {
+        asm!("mfc0 $0,$$9
+            nop"
+            : "=r" (res));
+    }
+
+    res
+}
+
+#[inline]
+pub fn get_ticks_us() -> i32 {
+    (get_ticks() / (get_tick_rate() / (1000 * 1000))) as i32
+}

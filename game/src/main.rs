@@ -5,7 +5,7 @@
 #[cfg(target_vendor = "nintendo64")]
 pub use rrt0;
 
-use n64::{self, controllers::Controllers, graphics, ipl3font};
+use n64::{self, controllers::Controllers, graphics, ipl3font, current_time_us};
 
 // Colors are 5:5:5:1 RGB with a 16-bit color depth.
 const BLUE: u16 = 0b00001_00001_11100_1;
@@ -21,6 +21,8 @@ fn main() {
     let mut x_pos = 0;
     let mut y_pos = 0;
 
+    let mut start = current_time_us();
+
     loop {
         controllers.update();
 
@@ -33,6 +35,14 @@ fn main() {
             ipl3font::draw_str_centered_offset(x_pos, y_pos, RED, b"Isafo en prutt!");
         } else {
             ipl3font::draw_str_centered_offset(x_pos, y_pos, BLUE, b"Isafo en prutt!");
+        }
+
+        {
+            let now = current_time_us();
+            let diff = now - start;
+            start = now;
+
+            ipl3font::draw_number(50, 10, RED, diff);
         }
 
         graphics::swap_buffers();

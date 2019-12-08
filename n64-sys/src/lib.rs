@@ -2,7 +2,6 @@
 #![feature(asm)]
 #![feature(core_intrinsics)]
 
-mod sys;
-
 pub mod si;
+pub mod sys;
 pub mod vi;
