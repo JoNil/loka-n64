@@ -27,6 +27,10 @@ impl BulletSystem {
 
     pub fn shoot_bullet(&mut self, pos: Vec2, speed: Vec2) {
 
+        if self.next_free_index >= MAX_BULLETS {
+            return;
+        }
+
         self.bullets[self.next_free_index] = Bullet {
             pos: pos,
             speed: speed + Vec2::new(0.0, -0.75),
