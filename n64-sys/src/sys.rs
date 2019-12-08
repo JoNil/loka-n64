@@ -17,6 +17,11 @@ pub(crate) unsafe fn data_cache_hit_writeback_invalidate(block: &mut [u64]) {
 }
 
 #[inline]
+pub(crate) unsafe fn uncached_addr<T>(address: *const T) -> *const T {
+    ((address as usize) | 0x2000_0000) as *const T
+}
+
+#[inline]
 pub(crate) unsafe fn uncached_addr_mut<T>(address: *mut T) -> *mut T {
     ((address as usize) | 0x2000_0000) as *mut T
 }

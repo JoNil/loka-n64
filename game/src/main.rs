@@ -22,7 +22,7 @@ fn main() {
     const SPEED: i32 = 2;
 
     loop {
-        controllers.update();
+        let count = controllers.update();
 
         if controllers.up_pressed() {
             y_pos -= SPEED;
@@ -44,8 +44,8 @@ fn main() {
 
         ipl3font::draw_str_centered_offset(x_pos, y_pos, BLUE, b"Isafo en prutt!");
 
-        ipl3font::draw_hex(120, 20, RED, x_pos as u32);
-        ipl3font::draw_number(120, 40, RED, x_pos);
+        ipl3font::draw_hex(120, 20, RED, count);
+        ipl3font::draw_number(120, 40, RED, count as i32);
 
         for j in 0..2 {
             for (i, value) in controllers.data[(4*j)..(4*(j+1))].iter().enumerate() {

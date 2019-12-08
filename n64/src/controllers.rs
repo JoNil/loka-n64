@@ -11,8 +11,8 @@ impl Controllers {
     }
 
     #[inline]
-    pub fn update(&mut self) {
-        si::read_controllers(&mut self.data);
+    pub fn update(&mut self) -> u32 {
+        si::read_controllers(&mut self.data)
     }
 
     #[inline]

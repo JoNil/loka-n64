@@ -30,7 +30,7 @@ cargo run --bin extract_boot_code -- "roms/Super Mario 64 (U) [!].z64"
 cargo +nightly n64 build --ipl3 bootcode.bin --package game
 ```
 
-## Build for Test
+## Build for PC
 
 ```bash
 cargo build --bin game
@@ -39,3 +39,4 @@ cargo build --bin game
 ## Links
 
 http://n64dev.org/
+https://github.com/n64decomp/sm64/
