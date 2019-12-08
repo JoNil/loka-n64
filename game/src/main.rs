@@ -21,9 +21,12 @@ fn main() {
     let mut x_pos = 0;
     let mut y_pos = 0;
 
-    let mut start = current_time_us();
+    let mut start;
 
     loop {
+
+        start = current_time_us();
+
         controllers.update();
 
         x_pos += (controllers.x() >> 5) as i32;
@@ -38,9 +41,7 @@ fn main() {
         }
 
         {
-            let now = current_time_us();
-            let diff = now - start;
-            start = now;
+            let diff = current_time_us() - start;
 
             ipl3font::draw_number(50, 10, RED, diff);
         }
