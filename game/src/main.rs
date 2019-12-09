@@ -7,11 +7,12 @@ mod player;
 pub use rrt0;
 
 use bullet_system::BulletSystem;
-use n64::{self, controllers::Controllers, current_time_us, graphics, ipl3font};
+use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng};
+use n64_math::Color;
 use player::Player;
 
-const BLUE: u16 = 0b00001_00001_11100_1;
-const RED: u16 = 0b10000_00011_00011_1;
+const BLUE: Color = Color::new(0b00001_00001_11100_1);
+const RED: Color = Color::new(0b10000_00011_00011_1);
 
 fn main() {
     // Todo maybe return n64 object that has funcs
@@ -20,6 +21,7 @@ fn main() {
     let mut controllers = Controllers::new();
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
+    let mut random = Rng::new_unseeded();
 
     let mut time_update_and_draw;
     let mut time_frame = current_time_us();
@@ -39,7 +41,7 @@ fn main() {
 
             controllers.update();
 
-            player.update(dt, &controllers, &mut bullet_system);
+            player.update(dt, &controllers, &mut bullet_system, &mut random);
 
             bullet_system.update(dt);
         }
@@ -52,6 +54,10 @@ fn main() {
             player.draw();
 
             bullet_system.draw();
+
+            {
+                ipl3font::draw_number(150, 10, BLUE, bullet_system.active_bullets() as i32);
+            }
 
             {
                 let used_frame_time = current_time_us() - time_update_and_draw;

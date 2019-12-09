@@ -1,6 +1,6 @@
 use crate::Vec2;
 
-#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
+#[derive(Clone, Copy, Debug, Default)]
 #[repr(C)]
 pub struct Aabb2 {
     upper_left: Vec2,

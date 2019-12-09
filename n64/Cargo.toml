@@ -6,6 +6,9 @@ edition = "2018"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
+[dependencies]
+n64-math = { path = "../n64-math" }
+
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
 minifb = "0.14"
 rayon = "1"

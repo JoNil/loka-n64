@@ -1,9 +1,9 @@
 use crate::bullet_system::BulletSystem;
-use n64::{controllers::Controllers, current_time_us, graphics, ipl3font};
-use n64_math::Vec2;
+use n64::{current_time_us, graphics, ipl3font, Controllers, Rng};
+use n64_math::{Color, Aabb2, Vec2};
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
-const SHIP_COLOR: u16 = 0b10000_00011_00011_1;
+const SHIP_COLOR: Color = Color::new(0b10000_00011_00011_1);
 const SHIP_SPEED: f32 = 0.35;
 const SHIP_SHOOT_DELAY_MS: i32 = 150;
 
@@ -20,7 +20,13 @@ impl Player {
         }
     }
 
-    pub fn update(&mut self, dt: f32, controllers: &Controllers, bullet_system: &mut BulletSystem) {
+    pub fn update(
+        &mut self,
+        dt: f32,
+        controllers: &Controllers,
+        bullet_system: &mut BulletSystem,
+        rng: &mut Rng,
+    ) {
         let controller_x = controllers.x();
         let controller_y = controllers.y();
 
@@ -41,7 +47,7 @@ impl Player {
 
             if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS * 1000 {
                 if controllers.z() {
-                    bullet_system.shoot_bullet(self.pos, speed);
+                    bullet_system.shoot_bullet(rng, self.pos, speed);
                     self.last_shoot_time = now;
                 }
             }

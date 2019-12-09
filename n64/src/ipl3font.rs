@@ -1,4 +1,5 @@
 use crate::graphics;
+use n64_math::Color;
 
 pub const GLYPH_WIDTH: i32 = 13;
 pub const GLYPH_HEIGHT: i32 = 14;
@@ -10,7 +11,7 @@ const GLYPH_SIZE: usize = 23;
 const GLYPH_ADDR: usize = 0xB000_0B70;
 
 #[inline]
-pub fn draw_str(mut x: i32, y: i32, color: u16, string: &[u8]) {
+pub fn draw_str(mut x: i32, y: i32, color: Color, string: &[u8]) {
     for mut ch in string.iter().copied() {
         if ch == b' ' {
             x += GLYPH_WIDTH;
@@ -36,7 +37,7 @@ fn digit_to_hex_char(digit: u8) -> u8 {
 }
 
 #[inline]
-pub fn draw_hex(mut x: i32, y: i32, color: u16, mut number: u32) {
+pub fn draw_hex(mut x: i32, y: i32, color: Color, mut number: u32) {
     if number == 0 {
         draw_char(x, y, color, b'0');
         return;
@@ -58,7 +59,7 @@ fn digit_to_char(digit: u8) -> u8 {
 }
 
 #[inline]
-pub fn draw_number(mut x: i32, y: i32, color: u16, mut number: i32) {
+pub fn draw_number(mut x: i32, y: i32, color: Color, mut number: i32) {
     let mut negative = false;
 
     if number == 0 {
@@ -84,7 +85,7 @@ pub fn draw_number(mut x: i32, y: i32, color: u16, mut number: i32) {
 
 #[inline]
 #[cfg(target_vendor = "nintendo64")]
-fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
+fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
     graphics::with_framebuffer(|fb| {
         let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
@@ -121,7 +122,7 @@ fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
 
 #[inline]
 #[cfg(not(target_vendor = "nintendo64"))]
-fn draw_char(x: i32, y: i32, color: u16, ch: u8) {
+fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
     graphics::with_framebuffer(|fb| {
         use core::convert::TryInto;
 

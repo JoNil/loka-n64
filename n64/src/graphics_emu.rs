@@ -1,4 +1,5 @@
 use minifb::{Window, Key};
+use n64_math::Color;
 use rayon;
 use std::cell::RefCell;
 use std::thread_local;
@@ -12,8 +13,8 @@ const SCALE: i32 = 4;
 
 struct WindowData {
     framebuffer_is_a: bool,
-    framebuffer_a: Vec<u16>,
-    framebuffer_b: Vec<u16>,
+    framebuffer_a: Vec<Color>,
+    framebuffer_b: Vec<Color>,
     window: Window,
     frame_start: Instant,
 }
@@ -22,15 +23,7 @@ thread_local! {
     static WINDOW_DATA: RefCell<Option<WindowData>> = RefCell::new(None);
 }
 
-fn convert_5551_to_8888(input: u16) -> u32 {
-    let r = (input >> 11 & 0b11111) as u8 * 8 + 4;
-    let g = (input >> 6 & 0b11111) as u8 * 8 + 4;
-    let b = (input >> 1 & 0b11111) as u8 * 8 + 4;
-
-    (r as u32) << 16 | (g as u32) << 8 | (b as u32)
-}
-
-fn framebuffer_to_rgba(framebuffer: &[u16]) -> Vec<u32> {
+fn framebuffer_to_rgba(framebuffer: &[Color]) -> Vec<u32> {
     let mut res = Vec::new();
     res.resize_with((SCALE * WIDTH * SCALE * HEIGHT) as usize, Default::default);
 
@@ -46,7 +39,7 @@ fn framebuffer_to_rgba(framebuffer: &[u16]) -> Vec<u32> {
 
             s.spawn(move |_| {
                 for x in 0..WIDTH {
-                    let color = convert_5551_to_8888(framebuffer[(x + y * WIDTH) as usize]);
+                    let color = framebuffer[(x + y * WIDTH) as usize].to_u32();
 
                     for i in 0..SCALE {
                         for j in 0..SCALE {
@@ -78,8 +71,8 @@ pub(crate) fn init() {
 
         *window_data = Some(WindowData {
             framebuffer_is_a: true,
-            framebuffer_a: vec![0; (WIDTH * HEIGHT) as usize],
-            framebuffer_b: vec![0; (WIDTH * HEIGHT) as usize],
+            framebuffer_a: vec![Default::default(); (WIDTH * HEIGHT) as usize],
+            framebuffer_b: vec![Default::default(); (WIDTH * HEIGHT) as usize],
             window: Window::new(
                 "Nintendo 64",
                 (SCALE * WIDTH) as usize,
@@ -135,7 +128,7 @@ pub fn swap_buffers() {
     });
 }
 
-pub fn with_framebuffer<F: FnOnce(&mut [u16])>(f: F) {
+pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
     WINDOW_DATA.with(|wd| {
         if let Some(ref mut window_data) = &mut *wd.borrow_mut() {
             if window_data.framebuffer_is_a {
@@ -149,6 +142,6 @@ pub fn with_framebuffer<F: FnOnce(&mut [u16])>(f: F) {
 
 pub fn clear_buffer() {
     with_framebuffer(|fb| {
-        fb.iter_mut().for_each(|v| *v = 0b00001_00001_00001_1);
+        fb.iter_mut().for_each(|v| *v = Color::new(0b00001_00001_00001_1));
     });
 }
