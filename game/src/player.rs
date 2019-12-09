@@ -1,6 +1,6 @@
 use crate::bullet_system::BulletSystem;
+use n64::{controllers::Controllers, current_time_us, graphics, ipl3font};
 use n64_math::Vec2;
-use n64::{controllers::Controllers, graphics, ipl3font, current_time_us};
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_COLOR: u16 = 0b10000_00011_00011_1;
@@ -13,7 +13,6 @@ pub struct Player {
 }
 
 impl Player {
-
     pub fn new() -> Player {
         Player {
             pos: START_POS,
@@ -52,9 +51,9 @@ impl Player {
     }
 
     pub fn draw(&self) {
-
-        let screen_x = (self.pos.x() * (graphics::WIDTH as f32)) as i32 - ipl3font::GLYPH_WIDTH/2;
-        let screen_y = (self.pos.y() * (graphics::HEIGHT as f32)) as i32 + ipl3font::GLYPH_HEIGHT/2;
+        let screen_x = (self.pos.x() * (graphics::WIDTH as f32)) as i32 - ipl3font::GLYPH_WIDTH / 2;
+        let screen_y =
+            (self.pos.y() * (graphics::HEIGHT as f32)) as i32 + ipl3font::GLYPH_HEIGHT / 2;
 
         ipl3font::draw_str(screen_x, screen_y, SHIP_COLOR, b"A");
     }

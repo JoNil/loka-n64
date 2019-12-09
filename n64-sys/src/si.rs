@@ -1,8 +1,8 @@
 use crate::sys::{
     data_cache_hit_writeback_invalidate, disable_interrupts, enable_interrupts, memory_barrier,
-    uncached_addr_mut, uncached_addr, virtual_to_physical, virtual_to_physical_mut,
+    uncached_addr, uncached_addr_mut, virtual_to_physical, virtual_to_physical_mut,
 };
-use core::intrinsics::{volatile_copy_nonoverlapping_memory};
+use core::intrinsics::volatile_copy_nonoverlapping_memory;
 use core::ptr::{read_volatile, write_volatile};
 
 const SI_BASE: usize = 0xA480_0000;
@@ -22,7 +22,6 @@ fn dma_wait() {
 }
 
 fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
-
     unsafe {
         let mut inblock_temp: [u64; 8] = [0; 8];
         let mut outblock_temp: [u64; 8] = [0; 8];
@@ -64,7 +63,7 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
     }
 }
 
-pub fn read_controllers(outblock: &mut [u64; 8]){
+pub fn read_controllers(outblock: &mut [u64; 8]) {
     static READ_CON_BLOCK: [u64; 8] = [
         0xff010401ffffffff,
         0xff010401ffffffff,

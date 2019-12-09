@@ -7,7 +7,6 @@ use libm;
 pub struct Vec2(f32, f32);
 
 impl Vec2 {
-
     /// Creates a new `Vec2`.
     #[inline]
     pub const fn new(x: f32, y: f32) -> Vec2 {

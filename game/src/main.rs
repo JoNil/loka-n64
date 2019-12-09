@@ -6,15 +6,14 @@ mod player;
 #[cfg(target_vendor = "nintendo64")]
 pub use rrt0;
 
-use n64::{self, controllers::Controllers, graphics, ipl3font, current_time_us};
-use player::Player;
 use bullet_system::BulletSystem;
+use n64::{self, controllers::Controllers, current_time_us, graphics, ipl3font};
+use player::Player;
 
 const BLUE: u16 = 0b00001_00001_11100_1;
 const RED: u16 = 0b10000_00011_00011_1;
 
 fn main() {
-
     // Todo maybe return n64 object that has funcs
     n64::init();
 
@@ -27,7 +26,6 @@ fn main() {
     let mut dt;
 
     loop {
-
         {
             let now = current_time_us();
             dt = (now - time_frame) as f32 / 1e6;
