@@ -18,7 +18,9 @@ pub fn swap_buffers() {
 
 #[inline]
 pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
-    let frame_buffer = unsafe { slice::from_raw_parts_mut(vi::next_buffer(), (WIDTH*HEIGHT) as usize) };
+    let frame_buffer = unsafe {
+        slice::from_raw_parts_mut(vi::next_buffer() as *mut Color, (WIDTH*HEIGHT) as usize)
+    };
     f(frame_buffer);
 }
 
