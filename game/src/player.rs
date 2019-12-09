@@ -1,6 +1,6 @@
 use crate::bullet_system::BulletSystem;
 use n64::{current_time_us, graphics, ipl3font, Controllers, Rng};
-use n64_math::{Color, Aabb2, Vec2};
+use n64_math::{Aabb2, Color, Vec2};
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_COLOR: Color = Color::new(0b10000_00011_00011_1);

@@ -1,3 +1,4 @@
+use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
 use n64::{graphics, ipl3font, Rng};
 use n64_math::{Aabb2, Color, Vec2};
 
@@ -26,10 +27,6 @@ impl BulletSystem {
         }
     }
 
-    pub fn active_bullets(&self) -> usize {
-        self.next_free_index
-    }
-
     pub fn shoot_bullet(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
         if self.next_free_index >= MAX_BULLETS {
             return;
@@ -44,16 +41,25 @@ impl BulletSystem {
         self.next_free_index += 1;
     }
 
-    pub fn update(&mut self, dt: f32) {
+    pub fn update(&mut self, dt: f32, enemy_system: &mut EnemySystem, rng: &mut Rng) {
         let mut delete_list = [false; MAX_BULLETS];
 
         for (i, bullet) in self.bullets[..self.next_free_index].iter_mut().enumerate() {
             bullet.pos += dt * bullet.speed;
 
-            let bullet_bb = Aabb2::new_center_size(bullet.pos, BULLET_SIZE);
+            let bullet_bb = Aabb2::from_center_size(bullet.pos, BULLET_SIZE);
 
             if !bullet_bb.collides(&self.screen_bb) {
                 delete_list[i] = true;
+            }
+
+            for enemy in enemy_system.enemies_mut() {
+                let enemy_bb = Aabb2::from_center_size(enemy.pos(), ENEMY_SIZE);
+
+                if bullet_bb.collides(&enemy_bb) {
+                    enemy.damage(50 + (rng.next_f32() * 20.0) as i32);
+                    delete_list[i] = true;
+                }
             }
         }
 

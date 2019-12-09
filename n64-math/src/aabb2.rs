@@ -17,7 +17,7 @@ impl Aabb2 {
     }
 
     #[inline]
-    pub fn new_center_size(center: Vec2, size: Vec2) -> Aabb2 {
+    pub fn from_center_size(center: Vec2, size: Vec2) -> Aabb2 {
         let half_size = size / 2.0;
 
         Aabb2 {

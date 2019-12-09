@@ -1,12 +1,14 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
 mod bullet_system;
+mod enemy_system;
 mod player;
 
 #[cfg(target_vendor = "nintendo64")]
 pub use rrt0;
 
 use bullet_system::BulletSystem;
+use enemy_system::EnemySystem;
 use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng};
 use n64_math::Color;
 use player::Player;
@@ -21,11 +23,17 @@ fn main() {
     let mut controllers = Controllers::new();
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
-    let mut random = Rng::new_unseeded();
+    let mut enemy_system = EnemySystem::new();
+    let mut rng = Rng::new_unseeded();
 
     let mut time_update_and_draw;
     let mut time_frame = current_time_us();
     let mut dt;
+
+    enemy_system.spawn_enemy(&mut rng);
+    enemy_system.spawn_enemy(&mut rng);
+    enemy_system.spawn_enemy(&mut rng);
+    enemy_system.spawn_enemy(&mut rng);
 
     loop {
         {
@@ -41,9 +49,11 @@ fn main() {
 
             controllers.update();
 
-            player.update(dt, &controllers, &mut bullet_system, &mut random);
+            enemy_system.update(&mut bullet_system, &mut rng);
 
-            bullet_system.update(dt);
+            player.update(dt, &controllers, &mut bullet_system, &mut rng);
+
+            bullet_system.update(dt, &mut enemy_system, &mut rng);
         }
 
         {
@@ -52,12 +62,8 @@ fn main() {
             graphics::clear_buffer();
 
             player.draw();
-
+            enemy_system.draw();
             bullet_system.draw();
-
-            {
-                ipl3font::draw_number(150, 10, BLUE, bullet_system.active_bullets() as i32);
-            }
 
             {
                 let used_frame_time = current_time_us() - time_update_and_draw;
