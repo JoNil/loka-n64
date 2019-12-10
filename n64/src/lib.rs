@@ -3,6 +3,10 @@
 pub mod ipl3font;
 pub mod rand;
 
+#[cfg_attr(target_vendor = "nintendo64", path = "audio.rs")]
+#[cfg_attr(not(target_vendor = "nintendo64"), path = "audio_emu.rs")]
+pub mod audio;
+
 #[cfg_attr(target_vendor = "nintendo64", path = "graphics.rs")]
 #[cfg_attr(not(target_vendor = "nintendo64"), path = "graphics_emu.rs")]
 pub mod graphics;
@@ -15,6 +19,7 @@ pub use controllers::Controllers;
 pub use rand::Rng;
 
 pub fn init() {
+    audio::init();
     graphics::init();
 }
 

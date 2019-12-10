@@ -9,7 +9,7 @@ pub use rrt0;
 
 use bullet_system::BulletSystem;
 use enemy_system::EnemySystem;
-use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng};
+use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng, audio};
 use n64_math::Color;
 use player::Player;
 
@@ -55,6 +55,24 @@ fn main() {
 
             bullet_system.update(dt, &mut enemy_system, &mut rng);
         }
+
+        /*{
+            // Audio
+
+            let mut buffer = [0; 2 * 512];
+
+            for (i, chunk) in buffer.chunks_mut(128).enumerate() {
+                for sample in chunk {
+                    if i % 2 == 0 {
+                        *sample = 5000;
+                    } else {
+                        *sample = -5000;
+                    }
+                }
+            }
+
+            audio::write_audio_blocking(&buffer);
+        }*/
 
         {
             // Draw
