@@ -3,6 +3,7 @@
 #![feature(alloc_error_handler)]
 #![feature(global_asm)]
 #![feature(lang_items)]
+#![feature(start)]
 
 extern crate alloc;
 
@@ -110,30 +111,18 @@ fn main() {
     }
 }
 
+#[cfg(target_vendor = "nintendo64")]
 #[global_allocator]
 static ALLOC: n64_alloc::N64Alloc = n64_alloc::N64Alloc::INIT;
 
-#[lang = "start"]
-extern "C" fn start<T>(user_main: fn() -> T, _argc: isize, _argv: *const *const u8) -> isize
-where
-    T: Termination,
-{
-    user_main().report() as isize
+#[cfg(target_vendor = "nintendo64")]
+#[start]
+fn start(_argc: isize, _argv: *const *const u8) -> isize {
+    main();
+    0
 }
 
-/// Termination trait required for the start function.
-#[lang = "termination"]
-trait Termination {
-    fn report(self) -> i32;
-}
-
-/// This implementation does the bare minimum to satisfy the executable start function.
-impl Termination for () {
-    fn report(self) -> i32 {
-        0
-    }
-}
-
+#[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
 fn panic(_info: &core::panic::PanicInfo) -> ! {
 
@@ -144,6 +133,7 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
     loop {}
 }
 
+#[cfg(target_vendor = "nintendo64")]
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
     
@@ -154,7 +144,9 @@ fn oom(_: core::alloc::Layout) -> ! {
     loop {}
 }
 
+#[cfg(target_vendor = "nintendo64")]
 #[lang = "eh_personality"]
 extern fn rust_eh_personality() {}
 
+#[cfg(target_vendor = "nintendo64")]
 global_asm!(include_str!("entrypoint.s"));
