@@ -13,5 +13,5 @@ n64-math = { path = "../n64-math" }
 minifb = "0.14"
 rayon = "1"
 
-[target.'cfg(target_vendor = "nintendo64")'.dependencies.n64-sys]
-path = "../n64-sys"
+[target.'cfg(target_vendor = "nintendo64")'.dependencies]
+n64-sys = { path = "../n64-sys" }

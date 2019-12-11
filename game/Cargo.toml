@@ -9,6 +9,8 @@ edition = "2018"
 [dependencies]
 n64 = { path = "../n64" }
 n64-math = { path = "../n64-math" }
+
+[target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-alloc = { path = "../n64-alloc" }
 
 [profile.dev]

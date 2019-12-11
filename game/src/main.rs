@@ -1,9 +1,9 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
-#![feature(alloc_error_handler)]
-#![feature(global_asm)]
-#![feature(lang_items)]
-#![feature(start)]
+#![cfg_attr(target_vendor = "nintendo64",feature(alloc_error_handler))]
+#![cfg_attr(target_vendor = "nintendo64",feature(global_asm))]
+#![cfg_attr(target_vendor = "nintendo64",feature(lang_items))]
+#![cfg_attr(target_vendor = "nintendo64",feature(start))]
 
 extern crate alloc;
 
