@@ -1,16 +1,21 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
+#![feature(alloc_error_handler)]
+#![feature(global_asm)]
+#![feature(lang_items)]
+
+extern crate alloc;
+
 mod bullet_system;
 mod enemy_system;
 mod player;
 
-#[cfg(target_vendor = "nintendo64")]
-pub use rrt0;
-
+use alloc::boxed::Box;
+use alloc::vec::Vec;
 use bullet_system::BulletSystem;
 use enemy_system::EnemySystem;
-use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng, audio};
 use n64_math::Color;
+use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng, audio};
 use player::Player;
 
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
@@ -35,6 +40,8 @@ fn main() {
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
 
+    let mut audo_dbg = 0;
+
     loop {
         {
             let now = current_time_us();
@@ -57,21 +64,29 @@ fn main() {
         }
 
         /*{
-            // Audio
+            if !audio::all_buffers_are_full() {
+                // Audio
 
-            let mut buffer = [0; 2 * 512];
+                let mut buffer = {
+                    let mut buffer = Vec::new();
+                    buffer.resize_with(2 * 512, Default::default);
+                    buffer.into_boxed_slice()
+                };
 
-            for (i, chunk) in buffer.chunks_mut(128).enumerate() {
-                for sample in chunk {
-                    if i % 2 == 0 {
-                        *sample = 5000;
-                    } else {
-                        *sample = -5000;
+                for (i, chunk) in buffer.chunks_mut(128).enumerate() {
+                    for sample in chunk {
+                        if i % 2 == 0 {
+                            *sample = 5000;
+                        } else {
+                            *sample = -5000;
+                        }
                     }
                 }
+
+                audo_dbg += audio::write_audio_blocking(&buffer);
             }
 
-            audio::write_audio_blocking(&buffer);
+            audio::update();
         }*/
 
         {
@@ -83,9 +98,10 @@ fn main() {
             enemy_system.draw();
             bullet_system.draw();
 
+            ipl3font::draw_number(100, 10, RED, audo_dbg);
+
             {
                 let used_frame_time = current_time_us() - time_update_and_draw;
-
                 ipl3font::draw_number(50, 10, RED, used_frame_time);
             }
 
@@ -93,3 +109,52 @@ fn main() {
         }
     }
 }
+
+#[global_allocator]
+static ALLOC: n64_alloc::N64Alloc = n64_alloc::N64Alloc::INIT;
+
+#[lang = "start"]
+extern "C" fn start<T>(user_main: fn() -> T, _argc: isize, _argv: *const *const u8) -> isize
+where
+    T: Termination,
+{
+    user_main().report() as isize
+}
+
+/// Termination trait required for the start function.
+#[lang = "termination"]
+trait Termination {
+    fn report(self) -> i32;
+}
+
+/// This implementation does the bare minimum to satisfy the executable start function.
+impl Termination for () {
+    fn report(self) -> i32 {
+        0
+    }
+}
+
+#[panic_handler]
+fn panic(_info: &core::panic::PanicInfo) -> ! {
+
+    graphics::clear_buffer();
+    ipl3font::draw_str(50, 10, RED, b"PANIC");
+    graphics::swap_buffers();
+
+    loop {}
+}
+
+#[alloc_error_handler]
+fn oom(_: core::alloc::Layout) -> ! {
+    
+    graphics::clear_buffer();
+    ipl3font::draw_str(50, 10, RED, b"OUT OF MEMORY");
+    graphics::swap_buffers();
+
+    loop {}
+}
+
+#[lang = "eh_personality"]
+extern fn rust_eh_personality() {}
+
+global_asm!(include_str!("entrypoint.s"));

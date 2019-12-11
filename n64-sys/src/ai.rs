@@ -1,5 +1,5 @@
 use crate::sys::{
-    disable_interrupts, enable_interrupts, memory_barrier, uncached_addr, uncached_addr_mut,
+    memory_barrier, uncached_addr, uncached_addr_mut,
     virtual_to_physical,
 };
 use core::intrinsics::volatile_copy_nonoverlapping_memory;
@@ -45,7 +45,6 @@ fn ai_full() -> bool {
 
 fn submit_audio_data_to_dac() {
     unsafe {
-        disable_interrupts();
 
         while !ai_full() {
             // check if next buffer is full
@@ -72,8 +71,6 @@ fn submit_audio_data_to_dac() {
             write_volatile(AI_CONTROL, 1);
             memory_barrier();
         }
-
-        enable_interrupts();
     }
 }
 
@@ -92,15 +89,16 @@ pub fn init() {
     }
 }
 
-pub fn write_audio_blocking(buffer: &[i16; 2 * BUFFER_NO_SAMPLES]) {
+pub fn write_audio_blocking(buffer: &[i16]) -> i32 {
+
+    let mut wait = 10;
+
     unsafe {
-        disable_interrupts();
 
         let next = (NOW_WRITING + 1) % BUFFER_COUNT;
         while BUFFERS_FULL_BITMASK & (1 << next) > 0 {
             submit_audio_data_to_dac();
-            enable_interrupts();
-            disable_interrupts();
+            wait += 1;
         }
 
         BUFFERS_FULL_BITMASK |= 1 << next;
@@ -111,8 +109,19 @@ pub fn write_audio_blocking(buffer: &[i16; 2 * BUFFER_NO_SAMPLES]) {
             buffer.as_ptr(),
             buffer.len(),
         );
-
-        submit_audio_data_to_dac();
-        enable_interrupts();
     }
+
+
+    return wait;
+}
+
+pub fn all_buffers_are_full() -> bool {
+    unsafe {
+        let next = (NOW_WRITING + 1) % BUFFER_COUNT;
+        return BUFFERS_FULL_BITMASK & (1 << next) > 0;
+    }
+}
+
+pub fn submit_buffers_to_dma() {
+    submit_audio_data_to_dac();
 }

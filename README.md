@@ -33,7 +33,7 @@ cargo +nightly n64 build --ipl3 bootcode.bin --package game
 ## Run for PC
 
 ```bash
-cargo run --bin game --release
+cargo +nightly run --bin game --release
 ```
 
 ## Links

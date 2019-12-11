@@ -1,0 +1,18 @@
+[package]
+name = "n64-alloc"
+version = "0.1.0"
+authors = [
+  "Nick Fitzgerald <fitzgen@gmail.com>",
+  "Sergey Pepyakin <s.pepyakin@gmail.com>",
+  "Matt Howell <mjhowell@gmail.com>",
+  "Zack Pierce <zachary.pierce@gmail.com>",
+  "Jonathan Nilsson <lord.jonil@gmail.com>"
+]
+categories = ["memory-management", "no-std", "embedded", "n64", "nintendo-64"]
+description = "n64_alloc: The N64 Allocator"
+license = "MPL-2.0"
+edition = "2018"
+
+[dependencies]
+memory_units = "0.4.0"
+spin = "0.5"

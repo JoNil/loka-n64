@@ -5,4 +5,6 @@ members = [
     "game",
     "n64",
     "n64-sys",
+    "n64-math",
+    "n64-alloc",
 ]
