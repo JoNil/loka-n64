@@ -26,11 +26,11 @@ fn main() {
     // Todo maybe return n64 object that has funcs
     n64::init();
 
-    let mut controllers = Controllers::new();
-    let mut player = Player::new();
-    let mut bullet_system = BulletSystem::new();
-    let mut enemy_system = EnemySystem::new();
-    let mut rng = Rng::new_unseeded();
+    let mut controllers = Box::new(Controllers::new());
+    let mut player = Box::new(Player::new());
+    let mut bullet_system = Box::new(BulletSystem::new());
+    let mut enemy_system = Box::new(EnemySystem::new());
+    let mut rng = Box::new(Rng::new_unseeded());
 
     let mut time_update_and_draw;
     let mut time_frame = current_time_us();
@@ -64,7 +64,7 @@ fn main() {
             bullet_system.update(dt, &mut enemy_system, &mut rng);
         }
 
-        /*{
+        {
             if !audio::all_buffers_are_full() {
                 // Audio
 
@@ -88,7 +88,7 @@ fn main() {
             }
 
             audio::update();
-        }*/
+        }
 
         {
             // Draw
@@ -99,7 +99,7 @@ fn main() {
             enemy_system.draw();
             bullet_system.draw();
 
-            ipl3font::draw_number(100, 10, RED, audo_dbg);
+            ipl3font::draw_number(150, 10, RED, audo_dbg);
 
             {
                 let used_frame_time = current_time_us() - time_update_and_draw;
