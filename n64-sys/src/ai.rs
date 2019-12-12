@@ -1,7 +1,4 @@
-use crate::sys::{
-    memory_barrier, uncached_addr, uncached_addr_mut,
-    virtual_to_physical,
-};
+use crate::sys::{memory_barrier, uncached_addr, uncached_addr_mut, virtual_to_physical};
 use core::intrinsics::volatile_copy_nonoverlapping_memory;
 use core::ptr::{read_volatile, write_volatile};
 
@@ -25,27 +22,73 @@ const TV_TYPE_LOC: usize = 0x80000300;
 
 const FREQUENCY: u32 = 22050;
 const BUFFER_COUNT: usize = 4;
-const BUFFER_NO_SAMPLES: usize = 512;
+
+pub const BUFFER_NO_SAMPLES: usize = 2 * 512;
 
 static mut REAL_FREQUENCY: u32 = 0;
-static mut BUFFERS: [[i16; 2 * BUFFER_NO_SAMPLES]; BUFFER_COUNT] =
-    [[0; 2 * BUFFER_NO_SAMPLES]; BUFFER_COUNT];
+static mut BUFFERS: [[i16; BUFFER_NO_SAMPLES]; BUFFER_COUNT] =
+    [[0; BUFFER_NO_SAMPLES]; BUFFER_COUNT];
 
 static mut NOW_PLAYING: usize = 0;
 static mut NOW_WRITING: usize = 0;
 static mut BUFFERS_FULL_BITMASK: usize = 0;
 
+#[inline]
 fn ai_busy() -> bool {
     unsafe { read_volatile(AI_STATUS) & AI_STATUS_BUSY > 0 }
 }
 
+#[inline]
 fn ai_full() -> bool {
     unsafe { read_volatile(AI_STATUS) & AI_STATUS_FULL > 0 }
 }
 
-fn submit_audio_data_to_dac() {
+pub fn init() {
     unsafe {
+        let clockrate = match read_volatile(TV_TYPE_LOC as *const u32) {
+            0 => AI_PAL_DACRATE,
+            2 => AI_MPAL_DACRATE,
+            _ => AI_NTSC_DACRATE,
+        };
 
+        write_volatile(AI_DACRATE, ((2 * clockrate / FREQUENCY) + 1) / 2 - 1);
+        write_volatile(AI_SAMPLESIZE, 15);
+
+        REAL_FREQUENCY = 2 * clockrate / ((2 * clockrate / FREQUENCY) + 1);
+    }
+}
+
+pub fn write_audio_blocking(buffer: &[i16]) {
+
+    assert_eq!(buffer.len(), BUFFER_NO_SAMPLES);
+
+    unsafe {
+        let next = (NOW_WRITING + 1) % BUFFER_COUNT;
+        while BUFFERS_FULL_BITMASK & (1 << next) > 0 {
+            submit_audio_data_to_dac();
+        }
+
+        BUFFERS_FULL_BITMASK |= 1 << next;
+        NOW_WRITING = next;
+
+        volatile_copy_nonoverlapping_memory(
+            uncached_addr_mut(BUFFERS[NOW_WRITING].as_mut_ptr()),
+            buffer.as_ptr(),
+            buffer.len(),
+        );
+    }
+}
+
+#[inline]
+pub fn all_buffers_are_full() -> bool {
+    unsafe {
+        let next = (NOW_WRITING + 1) % BUFFER_COUNT;
+        return BUFFERS_FULL_BITMASK & (1 << next) > 0;
+    }
+}
+
+pub fn submit_audio_data_to_dac() {
+    unsafe {
         while !ai_full() {
             // check if next buffer is full
             let next = (NOW_PLAYING + 1) % BUFFER_COUNT;
@@ -64,7 +107,7 @@ fn submit_audio_data_to_dac() {
                 virtual_to_physical(uncached_addr(BUFFERS[NOW_PLAYING].as_ptr())),
             );
             memory_barrier();
-            write_volatile(AI_LENGTH, ((BUFFER_NO_SAMPLES * 2 * 2) & !7) as u32);
+            write_volatile(AI_LENGTH, ((BUFFER_NO_SAMPLES * 2) & !7) as u32);
             memory_barrier();
 
             // Start DMA
@@ -72,56 +115,4 @@ fn submit_audio_data_to_dac() {
             memory_barrier();
         }
     }
-}
-
-pub fn init() {
-    unsafe {
-        let clockrate = match read_volatile(TV_TYPE_LOC as *const u32) {
-            0 => AI_PAL_DACRATE,
-            2 => AI_MPAL_DACRATE,
-            _ => AI_NTSC_DACRATE,
-        };
-
-        write_volatile(AI_DACRATE, ((2 * clockrate / FREQUENCY) + 1) / 2 - 1);
-        write_volatile(AI_SAMPLESIZE, 15);
-
-        REAL_FREQUENCY = 2 * clockrate / ((2 * clockrate / FREQUENCY) + 1);
-    }
-}
-
-pub fn write_audio_blocking(buffer: &[i16]) -> i32 {
-
-    let mut wait = 10;
-
-    unsafe {
-
-        let next = (NOW_WRITING + 1) % BUFFER_COUNT;
-        while BUFFERS_FULL_BITMASK & (1 << next) > 0 {
-            submit_audio_data_to_dac();
-            wait += 1;
-        }
-
-        BUFFERS_FULL_BITMASK |= 1 << next;
-        NOW_WRITING = next;
-
-        volatile_copy_nonoverlapping_memory(
-            uncached_addr_mut(BUFFERS[NOW_WRITING].as_mut_ptr()),
-            buffer.as_ptr(),
-            buffer.len(),
-        );
-    }
-
-
-    return wait;
-}
-
-pub fn all_buffers_are_full() -> bool {
-    unsafe {
-        let next = (NOW_WRITING + 1) % BUFFER_COUNT;
-        return BUFFERS_FULL_BITMASK & (1 << next) > 0;
-    }
-}
-
-pub fn submit_buffers_to_dma() {
-    submit_audio_data_to_dac();
 }

@@ -1,6 +1,6 @@
 use crate::sys::{
-    data_cache_hit_writeback_invalidate, memory_barrier,
-    uncached_addr, uncached_addr_mut, virtual_to_physical, virtual_to_physical_mut,
+    data_cache_hit_writeback_invalidate, memory_barrier, uncached_addr, uncached_addr_mut,
+    virtual_to_physical, virtual_to_physical_mut,
 };
 use core::intrinsics::volatile_copy_nonoverlapping_memory;
 use core::ptr::{read_volatile, write_volatile};

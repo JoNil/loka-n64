@@ -1,12 +1,13 @@
 use n64_sys::ai;
 
-#[inline]
+pub use n64_sys::ai::BUFFER_NO_SAMPLES;
+
 pub(crate) fn init() {
     ai::init();
 }
 
-pub fn write_audio_blocking(buffer: &[i16]) -> i32 {
-    ai::write_audio_blocking(buffer)
+pub fn write_audio_blocking(buffer: &[i16]) {
+    ai::write_audio_blocking(buffer);
 }
 
 pub fn all_buffers_are_full() -> bool {
@@ -14,5 +15,5 @@ pub fn all_buffers_are_full() -> bool {
 }
 
 pub fn update() {
-    ai::submit_buffers_to_dma()
+    ai::submit_audio_data_to_dac();
 }

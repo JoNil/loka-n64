@@ -41,8 +41,6 @@ fn main() {
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
 
-    let mut audo_dbg = 0;
-
     loop {
         {
             let now = current_time_us();
@@ -65,12 +63,13 @@ fn main() {
         }
 
         {
+            // Audio
+
             if !audio::all_buffers_are_full() {
-                // Audio
 
                 let mut buffer = {
                     let mut buffer = Vec::new();
-                    buffer.resize_with(2 * 512, Default::default);
+                    buffer.resize_with(audio::BUFFER_NO_SAMPLES, Default::default);
                     buffer.into_boxed_slice()
                 };
 
@@ -84,7 +83,7 @@ fn main() {
                     }
                 }
 
-                audo_dbg += audio::write_audio_blocking(&buffer);
+                audio::write_audio_blocking(&buffer);
             }
 
             audio::update();
@@ -98,8 +97,6 @@ fn main() {
             player.draw();
             enemy_system.draw();
             bullet_system.draw();
-
-            ipl3font::draw_number(150, 10, RED, audo_dbg);
 
             {
                 let used_frame_time = current_time_us() - time_update_and_draw;
