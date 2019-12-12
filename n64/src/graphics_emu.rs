@@ -23,6 +23,7 @@ thread_local! {
     static WINDOW_DATA: RefCell<Option<WindowData>> = RefCell::new(None);
 }
 
+#[inline]
 fn framebuffer_to_rgba(framebuffer: &[Color]) -> Vec<u32> {
     let mut res = Vec::new();
     res.resize_with((SCALE * WIDTH * SCALE * HEIGHT) as usize, Default::default);
@@ -54,6 +55,7 @@ fn framebuffer_to_rgba(framebuffer: &[Color]) -> Vec<u32> {
     res
 }
 
+#[inline]
 pub(crate) fn get_keys() -> Vec<Key> {
     
     WINDOW_DATA.with(|wd| {
@@ -65,6 +67,7 @@ pub(crate) fn get_keys() -> Vec<Key> {
     })
 }
 
+#[inline]
 pub(crate) fn init() {
     WINDOW_DATA.with(|wd| {
         let mut window_data = wd.borrow_mut();
@@ -84,6 +87,7 @@ pub(crate) fn init() {
     });
 }
 
+#[inline]
 pub fn swap_buffers() {
     WINDOW_DATA.with(|window_data| {
         if let Some(ref mut wd) = &mut *window_data.borrow_mut() {
@@ -128,6 +132,7 @@ pub fn swap_buffers() {
     });
 }
 
+#[inline]
 pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
     WINDOW_DATA.with(|wd| {
         if let Some(ref mut window_data) = &mut *wd.borrow_mut() {
@@ -140,6 +145,7 @@ pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
     });
 }
 
+#[inline]
 pub fn clear_buffer() {
     with_framebuffer(|fb| {
         fb.iter_mut().for_each(|v| *v = Color::new(0b00001_00001_00001_1));

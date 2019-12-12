@@ -6,16 +6,19 @@ pub struct Controllers {
 }
 
 impl Controllers {
+    #[inline]
     pub fn new() -> Controllers {
         Controllers {
             data: Vec::new(),
         }
     }
 
+    #[inline]
     pub fn update(&mut self) {
         self.data = graphics::get_keys();
     }
 
+    #[inline]
     pub fn x(&self) -> i8 {
         let mut res = 0;
 
@@ -30,6 +33,7 @@ impl Controllers {
         res
     }
 
+    #[inline]
     pub fn y(&self) -> i8 {
         let mut res = 0;
 

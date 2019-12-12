@@ -17,10 +17,12 @@ const SI_STATUS_IO_BUSY: usize = 0x0002;
 
 const PIF_RAM: usize = 0x1fc007c0;
 
+#[inline]
 fn dma_wait() {
     while unsafe { read_volatile(SI_STATUS) } & (SI_STATUS_DMA_BUSY | SI_STATUS_IO_BUSY) > 0 {}
 }
 
+#[inline]
 fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
     unsafe {
         let mut inblock_temp: [u64; 8] = [0; 8];
@@ -59,6 +61,7 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
     }
 }
 
+#[inline]
 pub fn read_controllers(outblock: &mut [u64; 8]) {
     static READ_CON_BLOCK: [u64; 8] = [
         0xff010401ffffffff,

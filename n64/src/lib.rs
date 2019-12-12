@@ -18,6 +18,7 @@ pub mod controllers;
 pub use controllers::Controllers;
 pub use rand::Rng;
 
+#[inline]
 pub fn init() {
     audio::init();
     graphics::init();

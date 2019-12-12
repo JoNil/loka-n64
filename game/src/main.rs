@@ -32,6 +32,12 @@ fn main() {
     let mut enemy_system = Box::new(EnemySystem::new());
     let mut rng = Box::new(Rng::new_unseeded());
 
+    let mut audio_buffer = {
+        let mut buffer = Vec::new();
+        buffer.resize_with(audio::BUFFER_NO_SAMPLES, Default::default);
+        buffer.into_boxed_slice()
+    };
+
     let mut time_update_and_draw;
     let mut time_frame = current_time_us();
     let mut dt;
@@ -67,13 +73,7 @@ fn main() {
 
             if !audio::all_buffers_are_full() {
 
-                let mut buffer = {
-                    let mut buffer = Vec::new();
-                    buffer.resize_with(audio::BUFFER_NO_SAMPLES, Default::default);
-                    buffer.into_boxed_slice()
-                };
-
-                for (i, chunk) in buffer.chunks_mut(128).enumerate() {
+                for (i, chunk) in audio_buffer.chunks_mut(128).enumerate() {
                     for sample in chunk {
                         if i % 2 == 0 {
                             *sample = 5000;
@@ -83,7 +83,7 @@ fn main() {
                     }
                 }
 
-                audio::write_audio_blocking(&buffer);
+                audio::write_audio_blocking(&audio_buffer);
             }
 
             audio::update();
@@ -100,7 +100,8 @@ fn main() {
 
             {
                 let used_frame_time = current_time_us() - time_update_and_draw;
-                ipl3font::draw_number(50, 10, RED, used_frame_time);
+                ipl3font::draw_number(200, 10, RED, used_frame_time as i32);
+                ipl3font::draw_number(100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
             }
 
             graphics::swap_buffers();

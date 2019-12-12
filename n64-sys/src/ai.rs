@@ -43,6 +43,7 @@ fn ai_full() -> bool {
     unsafe { read_volatile(AI_STATUS) & AI_STATUS_FULL > 0 }
 }
 
+#[inline]
 pub fn init() {
     unsafe {
         let clockrate = match read_volatile(TV_TYPE_LOC as *const u32) {
@@ -58,6 +59,7 @@ pub fn init() {
     }
 }
 
+#[inline]
 pub fn write_audio_blocking(buffer: &[i16]) {
 
     assert_eq!(buffer.len(), BUFFER_NO_SAMPLES);
@@ -87,6 +89,7 @@ pub fn all_buffers_are_full() -> bool {
     }
 }
 
+#[inline]
 pub fn submit_audio_data_to_dac() {
     unsafe {
         while !ai_full() {
