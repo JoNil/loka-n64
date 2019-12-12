@@ -145,7 +145,6 @@ pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
     });
 }
 
-#[inline]
 pub fn clear_buffer() {
     with_framebuffer(|fb| {
         fb.iter_mut().for_each(|v| *v = Color::new(0b00001_00001_00001_1));
