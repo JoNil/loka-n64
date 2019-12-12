@@ -62,7 +62,9 @@ pub fn init() {
 #[inline]
 pub fn write_audio_blocking(buffer: &[i16]) {
 
-    assert_eq!(buffer.len(), BUFFER_NO_SAMPLES);
+    if buffer.len() != BUFFER_NO_SAMPLES {
+        panic!();
+    }
 
     unsafe {
         let next = (NOW_WRITING + 1) % BUFFER_COUNT;
