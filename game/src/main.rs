@@ -38,7 +38,7 @@ fn main() {
         buffer.into_boxed_slice()
     };
 
-    let mut time_update_and_draw;
+    let mut time_used;
     let mut time_frame = current_time_us();
     let mut dt;
 
@@ -54,7 +54,7 @@ fn main() {
             time_frame = now;
         }
 
-        time_update_and_draw = current_time_us();
+        time_used = current_time_us();
 
         {
             // Update
@@ -99,7 +99,7 @@ fn main() {
             bullet_system.draw();
 
             {
-                let used_frame_time = current_time_us() - time_update_and_draw;
+                let used_frame_time = current_time_us() - time_used;
                 ipl3font::draw_number(200, 10, RED, used_frame_time as i32);
                 ipl3font::draw_number(100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
             }
