@@ -68,7 +68,7 @@ fn main() {
             bullet_system.update(dt, &mut enemy_system, &mut rng);
         }
 
-        {
+        /*{
             // Audio
 
             if !audio::all_buffers_are_full() {
@@ -87,7 +87,7 @@ fn main() {
             }
 
             audio::update();
-        }
+        }*/
 
         {
             // Draw
