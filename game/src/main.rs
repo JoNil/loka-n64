@@ -17,7 +17,7 @@ use bullet_system::BulletSystem;
 use enemy_system::EnemySystem;
 use n64_math::Color;
 use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng, audio};
-use player::Player;
+use player::{Player, SHIP_SIZE};
 
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
@@ -32,16 +32,18 @@ fn main() {
     let mut enemy_system = Box::new(EnemySystem::new());
     let mut rng = Box::new(Rng::new_unseeded());
 
-    let mut audio_buffer = {
+    /*let mut audio_buffer = {
         let mut buffer = Vec::new();
         buffer.resize_with(audio::BUFFER_NO_SAMPLES, Default::default);
         buffer.into_boxed_slice()
-    };
+    };*/
 
     let mut time_used;
     let mut time_frame = current_time_us();
     let mut dt;
 
+    enemy_system.spawn_enemy(&mut rng);
+    enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
@@ -61,11 +63,15 @@ fn main() {
 
             controllers.update();
 
-            enemy_system.update(&mut bullet_system, &mut rng);
+            enemy_system.update(&mut bullet_system, &mut player, &mut rng);
 
             player.update(dt, &controllers, &mut bullet_system, &mut rng);
 
-            bullet_system.update(dt, &mut enemy_system, &mut rng);
+            bullet_system.update(dt, &mut enemy_system, &mut player, &mut rng);
+
+            if player.is_dead() {
+                break;
+            }
         }
 
         /*{
@@ -98,6 +104,9 @@ fn main() {
             enemy_system.draw();
             bullet_system.draw();
 
+            ipl3font::draw_number(300, 10, BLUE, player.score());
+            ipl3font::draw_number(300, 215, BLUE, player.health());
+
             {
                 let used_frame_time = current_time_us() - time_used;
                 ipl3font::draw_number(200, 10, RED, used_frame_time as i32);
@@ -106,6 +115,12 @@ fn main() {
 
             graphics::swap_buffers();
         }
+    }
+
+    loop {
+        graphics::clear_buffer();
+        ipl3font::draw_str(50, 10, RED, b"GAME OVER");
+        graphics::swap_buffers();
     }
 }
 

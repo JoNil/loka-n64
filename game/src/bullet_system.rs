@@ -1,4 +1,5 @@
 use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
+use crate::{Player, SHIP_SIZE};
 use n64::{graphics, ipl3font, Rng};
 use n64_math::{Aabb2, Color, Vec2};
 
@@ -10,6 +11,8 @@ struct Bullet {
     pos: Vec2,
     speed: Vec2,
     color: Color,
+    can_hit_player: bool,
+    can_hit_enemy: bool,
 }
 
 pub struct BulletSystem {
@@ -34,14 +37,32 @@ impl BulletSystem {
 
         self.bullets[self.next_free_index] = Bullet {
             pos: pos,
-            speed: Vec2::new(0.0, speed.y() - 0.65),
+            speed: speed,
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+            can_hit_player: false,
+            can_hit_enemy: true,
         };
 
         self.next_free_index += 1;
     }
 
-    pub fn update(&mut self, dt: f32, enemy_system: &mut EnemySystem, rng: &mut Rng) {
+    pub fn shoot_bullet_enemy(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
+        if self.next_free_index >= MAX_BULLETS {
+            return;
+        }
+
+        self.bullets[self.next_free_index] = Bullet {
+            pos: pos,
+            speed: speed,
+            color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+            can_hit_player: true,
+            can_hit_enemy: false,
+        };
+
+        self.next_free_index += 1;
+    }
+
+    pub fn update(&mut self, dt: f32, enemy_system: &mut EnemySystem, player: &mut Player, rng: &mut Rng) {
         let mut delete_list = [false; MAX_BULLETS];
 
         for (i, bullet) in self.bullets[..self.next_free_index].iter_mut().enumerate() {
@@ -53,11 +74,22 @@ impl BulletSystem {
                 delete_list[i] = true;
             }
 
-            for enemy in enemy_system.enemies_mut() {
-                let enemy_bb = Aabb2::from_center_size(enemy.pos(), ENEMY_SIZE);
+            if bullet.can_hit_enemy {
+                for enemy in enemy_system.enemies_mut() {
+                    let enemy_bb = Aabb2::from_center_size(enemy.pos(), ENEMY_SIZE);
 
-                if bullet_bb.collides(&enemy_bb) {
-                    enemy.damage(50 + (rng.next_f32() * 20.0) as i32);
+                    if bullet_bb.collides(&enemy_bb) {
+                        enemy.damage(50 + (rng.next_f32() * 20.0) as i32);
+                        delete_list[i] = true;
+                    }
+                }
+            }
+
+            if bullet.can_hit_player {
+                let player_bb = Aabb2::from_center_size(player.pos(), SHIP_SIZE);
+
+                if bullet_bb.collides(&player_bb) {
+                    player.damage(50 + (rng.next_f32() * 20.0) as i32);
                     delete_list[i] = true;
                 }
             }

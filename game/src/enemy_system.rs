@@ -1,5 +1,6 @@
 use crate::bullet_system::BulletSystem;
-use n64::{graphics, ipl3font, Rng};
+use crate::Player;
+use n64::{current_time_us, graphics, ipl3font, Rng};
 use n64_math::{Color, Vec2};
 
 const MAX_ENEMIES: usize = 128;
@@ -13,6 +14,8 @@ pub struct Enemy {
     pos: Vec2,
     color: Color,
     health: i32,
+    shoot_speed: i32,
+    last_shoot_time: i32,
 }
 
 impl Enemy {
@@ -29,7 +32,6 @@ impl Enemy {
 pub struct EnemySystem {
     enemies: [Enemy; MAX_ENEMIES],
     next_free_index: usize,
-    last_spawn_time: i32,
 }
 
 impl EnemySystem {
@@ -37,7 +39,6 @@ impl EnemySystem {
         EnemySystem {
             enemies: [Default::default(); MAX_ENEMIES],
             next_free_index: 0,
-            last_spawn_time: 0,
         }
     }
 
@@ -50,17 +51,28 @@ impl EnemySystem {
             pos: Vec2::new(rng.next_f32(), rng.next_f32() * 0.6),
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
             health: 100,
+            shoot_speed: 500 + (rng.next_f32() * 200.0) as i32,
+            last_shoot_time: 0,
+
         };
 
         self.next_free_index += 1;
     }
 
-    pub fn update(&mut self, bullet_system: &mut BulletSystem, rng: &mut Rng) {
+    pub fn update(&mut self, bullet_system: &mut BulletSystem, player: &mut Player, rng: &mut Rng) {
         let mut delete_list = [false; MAX_ENEMIES];
+
+        let now = current_time_us();
 
         for (i, enemy) in self.enemies_mut().iter_mut().enumerate() {
             if enemy.health <= 0 {
+                player.add_score(1000);
                 delete_list[i] = true;
+            }
+
+            if now - enemy.last_shoot_time > enemy.shoot_speed * 1000 {
+                bullet_system.shoot_bullet_enemy(rng, enemy.pos, Vec2::new(0.0, 0.65));
+                enemy.last_shoot_time = now;
             }
         }
 

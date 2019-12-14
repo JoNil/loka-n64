@@ -117,11 +117,7 @@ pub fn swap_buffers() {
                 std::process::exit(0);
             }
 
-            {
-                while (wd.frame_start.elapsed() + Duration::from_micros(2500)).as_secs_f64() < 1.0 / 60.0 {
-                    thread::sleep(Duration::from_millis(1));
-                }
-    
+            {    
                 while wd.frame_start.elapsed().as_secs_f64() < 1.0 / 60.0 {
                     thread::yield_now();
                 }
