@@ -10,6 +10,7 @@ extern crate alloc;
 mod bullet_system;
 mod enemy_system;
 mod player;
+mod entity;
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
