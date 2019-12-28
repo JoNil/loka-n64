@@ -1,18 +1,22 @@
-const INDEX_BITS: u16 = 14;
-const INDEX_MASK: u16 = (1 << INDEX_BITS) - 1;
+use alloc::vec::Vec;
+use alloc::collections::VecDeque;
 
-const GENERATION_BITS: u16 = 2;
-const GENERATION_MASK: u16 = (1 << GENERATION_BITS) - 1;
+const INDEX_BITS: u32 = 24;
+const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
 
-const MAX_ENTITYS: usize = 1 << INDEX_BITS;
+const GENERATION_BITS: u32 = 8;
+const GENERATION_MASK: u32 = (1 << GENERATION_BITS) - 1;
 
+const MINIMUM_FREE_INDICES: u32 = 1024;
+
+#[derive(Hash)]
 pub struct Entity {
-    id: u16,
+    id: u32,
 }
 
 impl Entity {
 
-    fn new(index: u16, generation: u16) -> Entity {
+    fn new(index: u32, generation: u32) -> Entity {
 
         assert!(index & !INDEX_MASK == 0);
         assert!(generation & !GENERATION_MASK == 0);
@@ -22,67 +26,51 @@ impl Entity {
         }
     }
 
-    fn index(&self) -> u16 {
+    fn index(&self) -> u32 {
         self.id & INDEX_MASK
     }
 
-    fn generation(&self) -> u8 {
-        ((self.id >> INDEX_BITS) & GENERATION_MASK) as u8
+    fn generation(&self) -> u32 {
+        (self.id >> INDEX_BITS) & GENERATION_MASK
     }
 }
 
 pub struct EntityManager {
-    generation: [u8; MAX_ENTITYS],
-    next_free: u16,
-    next_empty: u16,
-    entities_alive: u16,
-    free_indices: [u16; MAX_ENTITYS],
+    generation: Vec<u8>,
+    free_indices: VecDeque<u32>,
 }
 
 impl EntityManager {
 
     pub fn new() -> EntityManager {
-        let mut manager = EntityManager {
-            generation: [0; MAX_ENTITYS],
-            next_free: 0,
-            next_empty: 0,
-            entities_alive: 0,
-            free_indices: [0; MAX_ENTITYS],
-        };
-
-        for (index, entity_index) in manager.free_indices.iter_mut().enumerate() {
-            *entity_index = index as u16; 
+        EntityManager {
+            generation: Vec::new(),
+            free_indices: VecDeque::new(),
         }
-
-        manager
     }
 
-    pub fn create_entity(&mut self) -> Option<Entity> {
+    pub fn create_entity(&mut self) -> Entity {
 
-        if self.entities_alive == MAX_ENTITYS as u16 {
-            return None;
-        }
+        let index = if self.free_indices.len() as u32 > MINIMUM_FREE_INDICES {
+            self.free_indices.pop_front().unwrap()
+        } else {
+            self.generation.push(0);
+            self.generation.len() as u32 - 1
+        };
 
-        self.entities_alive += 1;
+        assert!(index < (1 << INDEX_BITS));
 
-        let index = self.free_indices[self.next_free as usize];
-
-        self.next_free = (self.next_free + 1) & INDEX_MASK;
-
-        Some(Entity::new(index, self.generation[index as usize] as u16))
+        Entity::new(index, self.generation[index as usize] as u32)
     }
    
     pub fn alive(&self, e: &Entity) -> bool {
-        return self.generation[e.index() as usize] == e.generation();
+        return self.generation[e.index() as usize] as u32 == e.generation();
     }
    
     pub fn destroy(&mut self, e: Entity) {
         let index = e.index();
-        self.generation[index as usize] = (self.generation[index as usize] + 1) & (GENERATION_MASK as u8);
-
-        self.free_indices[self.next_empty as usize] = index;
-        self.next_empty = (self.next_empty + 1) & INDEX_MASK;
-        self.entities_alive -= 1;
+        self.generation[index as usize] += 1;
+        self.free_indices.push_back(index);
     }
 }
 
@@ -92,24 +80,12 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_create_max() {
+    fn test_create() {
         let mut manager = EntityManager::new();
 
-        let a = manager.create_entity().unwrap();
-
-        for i in 1..MAX_ENTITYS {
-            let e = manager.create_entity().unwrap();
-            assert_eq!(e.index(), i as u16);
+        for i in 0..1024 {
+            let e = manager.create_entity();
+            assert_eq!(e.index(), i);
         }
-
-        let e = manager.create_entity();
-        assert!(e.is_none());
-
-        manager.destroy(a);
-
-        let b = manager.create_entity().unwrap();
-
-        assert!(b.index() == 0);
-        assert!(b.generation() == 1);
     }
 }
