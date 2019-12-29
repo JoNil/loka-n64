@@ -1,26 +1,27 @@
 use alloc::vec::Vec;
 use n64_math::Vec2;
 use crate::entity::Entity;
+use hashbrown::HashMap;
 
-struct MovementInstance {
+struct MovableInstance {
     index: u32,
 }
 
-struct MovementComponent {
+struct MovableComponent {
     pos: Vec2,
     speed: Vec2,
 }
 
-struct MovementSystem {
-    components: Vec<MovementComponent>,
-    
-
+struct MovableSystem {
+    components: Vec<MovableComponent>,
+    map: HashMap<Entity, u32>,
 }
 
-impl MovementSystem {
-    fn new() -> MovementSystem {
-        MovementSystem {
+impl MovableSystem {
+    fn new() -> MovableSystem {
+        MovableSystem {
             components: Vec::new(),
+            map: HashMap::new(),
         }
     }
 

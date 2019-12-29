@@ -9,6 +9,7 @@ edition = "2018"
 [dependencies]
 n64 = { path = "../n64" }
 n64-math = { path = "../n64-math" }
+hashbrown = { version = "0.6", default-features = false, features = ["ahash"] }
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-alloc = { path = "../n64-alloc" }
