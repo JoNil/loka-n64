@@ -20,7 +20,7 @@ use enemy_system::EnemySystem;
 use n64_math::Color;
 use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng, audio};
 use player::{Player, SHIP_SIZE};
-use components::movable;
+use components::{movable, char_drawable};
 
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
@@ -68,7 +68,7 @@ fn main() {
 
             enemy_system.update(&mut bullet_system, &mut player, &mut rng);
 
-            player.update(dt, &controllers, &mut bullet_system, &mut rng);
+            player.update(&controllers, &mut bullet_system, &mut rng);
 
             bullet_system.update(dt, &mut enemy_system, &mut player, &mut rng);
 
@@ -105,9 +105,10 @@ fn main() {
 
             graphics::clear_buffer();
 
-            player.draw();
             enemy_system.draw();
             bullet_system.draw();
+
+            char_drawable().draw();
 
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(300, 215, BLUE, player.health());

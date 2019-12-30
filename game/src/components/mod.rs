@@ -3,9 +3,9 @@ use crate::entity::Entity;
 use spin::{Once, Mutex, MutexGuard};
 
 mod movable;
-
+mod char_drawable;
 pub use movable::movable;
-pub use movable::MovableComponent;
+pub use char_drawable::char_drawable;
 
 static SYSTEMS: Once<Mutex<Systems>> = Once::new();
 

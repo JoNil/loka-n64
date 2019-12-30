@@ -1,8 +1,8 @@
 use crate::bullet_system::BulletSystem;
 use n64::{current_time_us, graphics, ipl3font, Controllers, Rng};
-use n64_math::{Aabb2, Color, Vec2};
+use n64_math::{Color, Vec2};
 use crate::entity::{OwnedEntity, es};
-use crate::components::movable;
+use crate::components::{movable, char_drawable};
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_COLOR: Color = Color::new(0b10000_00011_00011_1);
@@ -30,6 +30,7 @@ impl Player {
         };
 
         movable().add(&player.entity, START_POS, Vec2::zero());
+        char_drawable().add(&player.entity, SHIP_COLOR, 'A');
 
         player
     }
@@ -64,7 +65,6 @@ impl Player {
 
     pub fn update(
         &mut self,
-        dt: f32,
         controllers: &Controllers,
         bullet_system: &mut BulletSystem,
         rng: &mut Rng,
@@ -96,16 +96,6 @@ impl Player {
                     }
                 }
             }
-        }
-    }
-
-    pub fn draw(&self) {
-        if let Some(movable) = movable().lookup(&self.entity) {
-            let screen_x = (movable.pos.x() * (graphics::WIDTH as f32)) as i32 - ipl3font::GLYPH_WIDTH / 2;
-            let screen_y =
-                (movable.pos.y() * (graphics::HEIGHT as f32)) as i32 + ipl3font::GLYPH_HEIGHT / 2;
-
-            ipl3font::draw_str(screen_x, screen_y, SHIP_COLOR, b"A");
         }
     }
 }

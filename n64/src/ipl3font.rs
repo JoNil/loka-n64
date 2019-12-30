@@ -83,7 +83,6 @@ pub fn draw_number(mut x: i32, y: i32, color: Color, mut number: i32) {
     }
 }
 
-#[inline]
 #[cfg(target_vendor = "nintendo64")]
 fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
     graphics::with_framebuffer(|fb| {
@@ -94,7 +93,7 @@ fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
         address &= 0xFFFF_FFFC;
         let mut bits = unsafe { *(address as *const u32) };
 
-        for yy in y..y + GLYPH_HEIGHT {
+        for yy in y..(y + GLYPH_HEIGHT) {
             if yy < 0 {
                 return;
             }
@@ -103,7 +102,7 @@ fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
                 return;
             }
 
-            for xx in x..x + GLYPH_WIDTH {
+            for xx in x..(x + GLYPH_WIDTH) {
                 if (bits >> shift) & 1 == 1 && xx < graphics::WIDTH && x >= 0 {
                     fb[(yy * graphics::WIDTH + xx) as usize] = color;
                 }
@@ -120,9 +119,8 @@ fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
     });
 }
 
-#[inline]
 #[cfg(not(target_vendor = "nintendo64"))]
-fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
+pub fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
     graphics::with_framebuffer(|fb| {
         use core::convert::TryInto;
 
