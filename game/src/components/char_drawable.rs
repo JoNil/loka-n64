@@ -8,7 +8,7 @@ use crate::components::{systems, movable};
 pub struct CharDrawableComponent {
     pub entity: Entity,
     pub color: Color,
-    pub chr: char,
+    pub chr: u8,
 }
 
 pub fn draw() {
@@ -18,7 +18,7 @@ pub fn draw() {
             let screen_y =
                 (movable.pos.y() * (graphics::HEIGHT as f32)) as i32 + ipl3font::GLYPH_HEIGHT / 2;
 
-            ipl3font::draw_char(screen_x, screen_y, component.color, component.chr as u8);
+            ipl3font::draw_char(screen_x, screen_y, component.color, component.chr);
         }
     }
 }

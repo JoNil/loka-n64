@@ -38,7 +38,7 @@ impl Player {
         char_drawable::add(CharDrawableComponent {
             entity: player.entity.as_entity(),
             color: SHIP_COLOR,
-            chr: 'A',
+            chr: b'A',
         });
 
         player

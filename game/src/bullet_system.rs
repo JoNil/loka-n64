@@ -35,7 +35,7 @@ impl BulletSystem {
         char_drawable::add(CharDrawableComponent {
             entity: entity.as_entity(), 
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-            chr: '.',
+            chr: b'.',
         });
 
         self.bullets.push(Bullet {
@@ -52,7 +52,7 @@ impl BulletSystem {
         char_drawable::add(CharDrawableComponent {
             entity: entity.as_entity(), 
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-            chr: '.',
+            chr: b'.',
         });
 
         self.bullets.push(Bullet {
