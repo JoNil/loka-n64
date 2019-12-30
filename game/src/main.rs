@@ -20,6 +20,7 @@ use enemy_system::EnemySystem;
 use n64_math::Color;
 use n64::{self, current_time_us, graphics, ipl3font, Controllers, Rng, audio};
 use player::{Player, SHIP_SIZE};
+use components::movable;
 
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
@@ -70,6 +71,8 @@ fn main() {
             player.update(dt, &controllers, &mut bullet_system, &mut rng);
 
             bullet_system.update(dt, &mut enemy_system, &mut player, &mut rng);
+
+            components::movable().update(dt);
 
             if player.is_dead() {
                 break;

@@ -1,5 +1,9 @@
-use alloc::vec::Vec;
 use alloc::collections::VecDeque;
+use alloc::vec::Vec;
+use core::ops::Deref;
+use core::ops::Drop;
+use spin::{Once, Mutex, MutexGuard};
+use crate::components::systems;
 
 const INDEX_BITS: u32 = 24;
 const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
@@ -9,22 +13,20 @@ const GENERATION_MASK: u32 = (1 << GENERATION_BITS) - 1;
 
 const MINIMUM_FREE_INDICES: u32 = 1024;
 
-#[derive(Hash)]
+static ENTITY_SYSTEM: Once<Mutex<EntitySystem>> = Once::new();
+
+pub fn es() -> MutexGuard<'static, EntitySystem> {
+    ENTITY_SYSTEM.call_once(|| {
+        Mutex::new(EntitySystem::new())
+    }).lock()
+}
+
+#[derive(Copy, Clone, Hash, Eq, PartialEq)]
 pub struct Entity {
     id: u32,
 }
 
 impl Entity {
-
-    fn new(index: u32, generation: u32) -> Entity {
-
-        assert!(index & !INDEX_MASK == 0);
-        assert!(generation & !GENERATION_MASK == 0);
-
-        Entity {
-            id: (generation << INDEX_BITS) | index,
-        }
-    }
 
     fn index(&self) -> u32 {
         self.id & INDEX_MASK
@@ -35,21 +37,54 @@ impl Entity {
     }
 }
 
-pub struct EntityManager {
+#[derive(Hash, Eq, PartialEq)]
+pub struct OwnedEntity {
+    e: Entity,
+}
+
+impl OwnedEntity {
+    fn new(index: u32, generation: u32) -> OwnedEntity {
+
+        assert!(index & !INDEX_MASK == 0);
+        assert!(generation & !GENERATION_MASK == 0);
+
+        OwnedEntity {
+            e: Entity {
+                id: (generation << INDEX_BITS) | index,
+            }
+        }
+    }
+}
+
+impl Drop for OwnedEntity {
+    fn drop(&mut self) {
+        es().destroy(self);
+    }
+}
+
+impl Deref for OwnedEntity {
+    type Target = Entity;
+
+    fn deref(&self) -> &Self::Target {
+        &self.e
+    }
+}
+
+pub struct EntitySystem {
     generation: Vec<u8>,
     free_indices: VecDeque<u32>,
 }
 
-impl EntityManager {
+impl EntitySystem {
 
-    pub fn new() -> EntityManager {
-        EntityManager {
+    pub fn new() -> EntitySystem {
+        EntitySystem {
             generation: Vec::new(),
             free_indices: VecDeque::new(),
         }
     }
 
-    pub fn create_entity(&mut self) -> Entity {
+    pub fn create_entity(&mut self) -> OwnedEntity {
 
         let index = if self.free_indices.len() as u32 > MINIMUM_FREE_INDICES {
             self.free_indices.pop_front().unwrap()
@@ -60,20 +95,24 @@ impl EntityManager {
 
         assert!(index < (1 << INDEX_BITS));
 
-        Entity::new(index, self.generation[index as usize] as u32)
+        OwnedEntity::new(index, self.generation[index as usize] as u32)
     }
    
     pub fn alive(&self, e: &Entity) -> bool {
         return self.generation[e.index() as usize] as u32 == e.generation();
     }
    
-    pub fn destroy(&mut self, e: Entity) {
+    fn destroy(&mut self, e: &Entity) {
         let index = e.index();
         self.generation[index as usize] += 1;
         self.free_indices.push_back(index);
+
+        for remove in systems().removers() {
+            remove(e);
+        }
+        
     }
 }
-
 
 #[cfg(test)]
 mod tests {
@@ -81,7 +120,7 @@ mod tests {
 
     #[test]
     fn test_create() {
-        let mut manager = EntityManager::new();
+        let mut manager = EntitySystem::new();
 
         for i in 0..1024 {
             let e = manager.create_entity();
