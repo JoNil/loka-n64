@@ -2,19 +2,29 @@ use alloc::vec::Vec;
 use n64_math::Vec2;
 use crate::entity::Entity;
 use hashbrown::HashMap;
-use spin::{Once, Mutex, MutexGuard};
+use spin::{Once, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use crate::components::systems;
 
-static MOVABLE_SYSTEM: Once<Mutex<MovableSystem>> = Once::new();
+static MOVABLE_SYSTEM: Once<RwLock<MovableSystem>> = Once::new();
 
-pub fn movable() -> MutexGuard<'static, MovableSystem> {
+pub fn movable() -> RwLockReadGuard<'static, MovableSystem> {
     MOVABLE_SYSTEM.call_once(|| {
-        let res = Mutex::new(MovableSystem::new());
+        let res = RwLock::new(MovableSystem::new());
         systems().register_remover(|e| {
-            movable().remove(e)
+            movable_mut().remove(e)
         });
         res
-    }).lock()
+    }).read()
+}
+
+pub fn movable_mut() -> RwLockWriteGuard<'static, MovableSystem> {
+    MOVABLE_SYSTEM.call_once(|| {
+        let res = RwLock::new(MovableSystem::new());
+        systems().register_remover(|e| {
+            movable_mut().remove(e)
+        });
+        res
+    }).write()
 }
 
 #[derive(Copy, Clone)]
@@ -37,8 +47,7 @@ impl MovableSystem {
         }
     }
 
-    pub fn update(&mut self, dt: f32) {
-
+    pub fn simulate(&mut self, dt: f32) {
         for component in &mut self.components {
             component.pos += dt * component.speed;
         }

@@ -1,116 +1,105 @@
-use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
+use alloc::vec::Vec;
 use crate::{Player, SHIP_SIZE};
-use n64::{graphics, ipl3font, Rng};
+use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
+use crate::entity::{OwnedEntity, es};
+use crate::components::{movable, movable_mut, char_drawable_mut};
 use n64_math::{Aabb2, Color, Vec2};
+use n64::Rng;
 
-const MAX_BULLETS: usize = 512;
 const BULLET_SIZE: Vec2 = Vec2::new(2.0 / 320.0, 2.0 / 320.0);
 
-#[derive(Copy, Clone, Default)]
 struct Bullet {
-    pos: Vec2,
-    speed: Vec2,
-    color: Color,
+    entity: OwnedEntity,
     can_hit_player: bool,
     can_hit_enemy: bool,
 }
 
 pub struct BulletSystem {
-    bullets: [Bullet; MAX_BULLETS],
-    next_free_index: usize,
+    bullets: Vec<Bullet>,
     screen_bb: Aabb2,
 }
 
 impl BulletSystem {
     pub fn new() -> BulletSystem {
         BulletSystem {
-            bullets: [Default::default(); MAX_BULLETS],
-            next_free_index: 0,
+            bullets: Vec::new(),
             screen_bb: Aabb2::new(Vec2::zero(), Vec2::new(1.0, 1.0)),
         }
     }
 
     pub fn shoot_bullet(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
-        if self.next_free_index >= MAX_BULLETS {
-            return;
-        }
 
-        self.bullets[self.next_free_index] = Bullet {
-            pos: pos,
-            speed: speed,
-            color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+        let entity = es().create_entity();
+        movable_mut().add(&entity, pos, speed);
+        char_drawable_mut().add(&entity, 
+            Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+            '.');
+
+        self.bullets.push(Bullet {
+            entity: entity,
             can_hit_player: false,
             can_hit_enemy: true,
-        };
-
-        self.next_free_index += 1;
+        });
     }
 
     pub fn shoot_bullet_enemy(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
-        if self.next_free_index >= MAX_BULLETS {
-            return;
-        }
 
-        self.bullets[self.next_free_index] = Bullet {
-            pos: pos,
-            speed: speed,
-            color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+        let entity = es().create_entity();
+        movable_mut().add(&entity, pos, speed);
+        char_drawable_mut().add(&entity, 
+            Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+            '.');
+
+        self.bullets.push(Bullet {
+            entity: entity,
             can_hit_player: true,
             can_hit_enemy: false,
-        };
-
-        self.next_free_index += 1;
+        });
     }
 
-    pub fn update(&mut self, dt: f32, enemy_system: &mut EnemySystem, player: &mut Player, rng: &mut Rng) {
-        let mut delete_list = [false; MAX_BULLETS];
+    pub fn update(&mut self, enemy_system: &mut EnemySystem, player: &mut Player, rng: &mut Rng) {
+        let mut delete_list = Vec::new();
 
-        for (i, bullet) in self.bullets[..self.next_free_index].iter_mut().enumerate() {
-            bullet.pos += dt * bullet.speed;
+        for (i, bullet) in self.bullets.iter_mut().enumerate() {
 
-            let bullet_bb = Aabb2::from_center_size(bullet.pos, BULLET_SIZE);
+            if let Some(movable) = movable().lookup(&bullet.entity) {
 
-            if !bullet_bb.collides(&self.screen_bb) {
-                delete_list[i] = true;
-            }
+                let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 
-            if bullet.can_hit_enemy {
-                for enemy in enemy_system.enemies_mut() {
-                    let enemy_bb = Aabb2::from_center_size(enemy.pos(), ENEMY_SIZE);
+                if !bullet_bb.collides(&self.screen_bb) {
+                    delete_list.push(i);
+                }
 
-                    if bullet_bb.collides(&enemy_bb) {
-                        enemy.damage(50 + (rng.next_f32() * 20.0) as i32);
-                        delete_list[i] = true;
+                if bullet.can_hit_enemy {
+                    for enemy in enemy_system.enemies_mut() {
+                        let enemy_bb = Aabb2::from_center_size(enemy.pos(), ENEMY_SIZE);
+
+                        if bullet_bb.collides(&enemy_bb) {
+                            enemy.damage(50 + (rng.next_f32() * 20.0) as i32);
+                            delete_list.push(i);
+                        }
+                    }
+                }
+
+                if bullet.can_hit_player {
+                    let player_bb = Aabb2::from_center_size(player.pos(), SHIP_SIZE);
+
+                    if bullet_bb.collides(&player_bb) {
+                        player.damage(50 + (rng.next_f32() * 20.0) as i32);
+                        delete_list.push(i);
                     }
                 }
             }
-
-            if bullet.can_hit_player {
-                let player_bb = Aabb2::from_center_size(player.pos(), SHIP_SIZE);
-
-                if bullet_bb.collides(&player_bb) {
-                    player.damage(50 + (rng.next_f32() * 20.0) as i32);
-                    delete_list[i] = true;
-                }
-            }
         }
 
-        for (i, delete) in delete_list[..self.next_free_index].iter().enumerate() {
-            if *delete {
-                if self.next_free_index > 0 {
-                    self.bullets.swap(i, self.next_free_index - 1);
-                }
-                self.next_free_index -= 1;
+        {
+            let len = self.bullets.len();
+
+            for (i, delete_index) in delete_list.iter().enumerate() {    
+                self.bullets.swap(*delete_index, len - 1 - i);
             }
-        }
-    }
 
-    pub fn draw(&self) {
-        for bullet in self.bullets[..self.next_free_index].iter() {
-            let screen_x = (bullet.pos.x() * (graphics::WIDTH as f32)) as i32;
-            let screen_y = (bullet.pos.y() * (graphics::HEIGHT as f32)) as i32;
-
-            ipl3font::draw_str(screen_x, screen_y, bullet.color, b".");
+            self.bullets.drain(..delete_list.len());
         }
     }
 }

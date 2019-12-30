@@ -1,21 +1,31 @@
 use alloc::vec::Vec;
-use n64_math::{Vec2, Color};
+use n64_math::Color;
 use crate::entity::Entity;
 use hashbrown::HashMap;
-use spin::{Once, Mutex, MutexGuard};
+use spin::{Once, RwLock, RwLockReadGuard, RwLockWriteGuard};
 use n64::{graphics, ipl3font};
 use crate::components::{systems, movable};
 
-static CHAR_DRAWABLE_SYSTEM: Once<Mutex<CharDrawableSystem>> = Once::new();
+static CHAR_DRAWABLE_SYSTEM: Once<RwLock<CharDrawableSystem>> = Once::new();
 
-pub fn char_drawable() -> MutexGuard<'static, CharDrawableSystem> {
+pub fn char_drawable() -> RwLockReadGuard<'static, CharDrawableSystem> {
     CHAR_DRAWABLE_SYSTEM.call_once(|| {
-        let res = Mutex::new(CharDrawableSystem::new());
+        let res = RwLock::new(CharDrawableSystem::new());
         systems().register_remover(|e| {
-            char_drawable().remove(e)
+            char_drawable_mut().remove(e)
         });
         res
-    }).lock()
+    }).read()
+}
+
+pub fn char_drawable_mut() -> RwLockWriteGuard<'static, CharDrawableSystem> {
+    CHAR_DRAWABLE_SYSTEM.call_once(|| {
+        let res = RwLock::new(CharDrawableSystem::new());
+        systems().register_remover(|e| {
+            char_drawable_mut().remove(e)
+        });
+        res
+    }).write()
 }
 
 #[derive(Copy, Clone)]
@@ -38,9 +48,9 @@ impl CharDrawableSystem {
         }
     }
 
-    pub fn draw(&mut self) {
+    pub fn draw(&self) {
 
-        for component in &mut self.components {
+        for component in &self.components {
             if let Some(movable) = movable().lookup(&component.entity) {
                 let screen_x = (movable.pos.x() * (graphics::WIDTH as f32)) as i32 - ipl3font::GLYPH_WIDTH / 2;
                 let screen_y =

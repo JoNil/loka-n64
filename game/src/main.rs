@@ -70,9 +70,9 @@ fn main() {
 
             player.update(&controllers, &mut bullet_system, &mut rng);
 
-            bullet_system.update(dt, &mut enemy_system, &mut player, &mut rng);
+            bullet_system.update(&mut enemy_system, &mut player, &mut rng);
 
-            components::movable().update(dt);
+            components::movable_mut().simulate(dt);
 
             if player.is_dead() {
                 break;
@@ -106,7 +106,6 @@ fn main() {
             graphics::clear_buffer();
 
             enemy_system.draw();
-            bullet_system.draw();
 
             char_drawable().draw();
 

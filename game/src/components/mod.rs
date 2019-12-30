@@ -5,7 +5,9 @@ use spin::{Once, Mutex, MutexGuard};
 mod movable;
 mod char_drawable;
 pub use movable::movable;
+pub use movable::movable_mut;
 pub use char_drawable::char_drawable;
+pub use char_drawable::char_drawable_mut;
 
 static SYSTEMS: Once<Mutex<Systems>> = Once::new();
 

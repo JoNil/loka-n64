@@ -2,7 +2,7 @@ use crate::bullet_system::BulletSystem;
 use n64::{current_time_us, graphics, ipl3font, Controllers, Rng};
 use n64_math::{Color, Vec2};
 use crate::entity::{OwnedEntity, es};
-use crate::components::{movable, char_drawable};
+use crate::components::{movable_mut, movable, char_drawable_mut};
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_COLOR: Color = Color::new(0b10000_00011_00011_1);
@@ -29,14 +29,14 @@ impl Player {
             score: 0,
         };
 
-        movable().add(&player.entity, START_POS, Vec2::zero());
-        char_drawable().add(&player.entity, SHIP_COLOR, 'A');
+        movable_mut().add(&player.entity, START_POS, Vec2::zero());
+        char_drawable_mut().add(&player.entity, SHIP_COLOR, 'A');
 
         player
     }
 
     pub fn pos(&self) -> Vec2 {
-        if let Some(movable) = movable().lookup_mut(&self.entity) {
+        if let Some(movable) = movable().lookup(&self.entity) {
             movable.pos
         } else {
             Vec2::zero()
@@ -82,7 +82,7 @@ impl Player {
             controller_dir.set_y(if controller_y > 0 { -1.0 } else { 1.0 });
         }
 
-        if let Some(movable) = movable().lookup_mut(&self.entity) {
+        if let Some(movable) = movable_mut().lookup_mut(&self.entity) {
 
             movable.speed = SHIP_SPEED * controller_dir;
 
