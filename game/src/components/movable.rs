@@ -1,4 +1,3 @@
-use alloc::vec::Vec;
 use n64_math::Vec2;
 use crate::entity::Entity;
 use crate::components::systems;

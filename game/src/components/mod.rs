@@ -47,18 +47,22 @@ macro_rules! impl_system {
             res
         }
 
+        #[allow(dead_code)]
         pub fn lock() -> spin::RwLockReadGuard<'static, System> {
             SYSTEM.call_once(create).read()
         }
 
+        #[allow(dead_code)]
         pub fn lock_mut() -> spin::RwLockWriteGuard<'static, System> {
             SYSTEM.call_once(create).write()
         }
 
+        #[allow(dead_code)]
         pub fn add(component: $component_ident) {
             lock_mut().add(component);
         }
 
+        #[allow(dead_code)]
         pub fn get_component(e: &Entity) -> Option<$component_ident> {
             SYSTEM.call_once(create)
             .read()
@@ -66,24 +70,28 @@ macro_rules! impl_system {
             .map(|c| *c)
         }
 
+        #[allow(dead_code)]
         pub struct System {
             components: alloc::vec::Vec<$component_ident>,
             map: hashbrown::HashMap<Entity, usize>,
         }
 
         impl System {
+            #[allow(dead_code)]
             fn new() -> System {
                 System {
-                    components: Vec::new(),
+                    components: alloc::vec::Vec::new(),
                     map: hashbrown::HashMap::new(),
                 }
             }
 
+            #[allow(dead_code)]
             pub fn add(&mut self, component: $component_ident) {
                 self.components.push(component);
                 self.map.insert(component.entity, self.components.len() - 1);
             }
 
+            #[allow(dead_code)]
             pub fn remove(&mut self, e: &Entity) {
                 if let Some(&index) = self.map.get(e) {
 
@@ -97,6 +105,7 @@ macro_rules! impl_system {
                 }
             }
 
+            #[allow(dead_code)]
             pub fn lookup(&self, e: &Entity) -> Option<&$component_ident> {
                 if let Some(&index) = self.map.get(e) {
                     return Some(&self.components[index]);
@@ -105,6 +114,7 @@ macro_rules! impl_system {
                 None
             }
 
+            #[allow(dead_code)]
             pub fn lookup_mut(&mut self, e: &Entity) -> Option<&mut $component_ident> {
                 if let Some(&mut index) = self.map.get_mut(e) {
                     return Some(&mut self.components[index]);
@@ -113,10 +123,12 @@ macro_rules! impl_system {
                 None
             }
 
+            #[allow(dead_code)]
             pub fn components(&self) -> &[$component_ident] {
                 &self.components
             }
 
+            #[allow(dead_code)]
             pub fn components_mut(&mut self) -> &mut [$component_ident] {
                 &mut self.components
             }

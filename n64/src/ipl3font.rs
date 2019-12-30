@@ -84,7 +84,7 @@ pub fn draw_number(mut x: i32, y: i32, color: Color, mut number: i32) {
 }
 
 #[cfg(target_vendor = "nintendo64")]
-fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
+pub fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
     graphics::with_framebuffer(|fb| {
         let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
