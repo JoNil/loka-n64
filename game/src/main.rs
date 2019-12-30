@@ -73,7 +73,7 @@ fn main() {
 
             bullet_system.update(&mut enemy_system, &mut player, &mut rng);
 
-            movable::lock_mut().simulate(dt);
+            movable::simulate(dt);
 
             if player.is_dead() {
                 break;
@@ -108,7 +108,7 @@ fn main() {
 
             enemy_system.draw();
 
-            char_drawable::lock_mut().draw();
+            char_drawable::draw();
 
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(300, 215, BLUE, player.health());
