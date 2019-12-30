@@ -1,7 +1,7 @@
-use n64_math::Vec2;
-use crate::entity::Entity;
 use crate::components::systems;
+use crate::entity::Entity;
 use crate::impl_system;
+use n64_math::Vec2;
 
 #[derive(Copy, Clone)]
 pub struct MovableComponent {

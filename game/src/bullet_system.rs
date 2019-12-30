@@ -1,11 +1,11 @@
-use alloc::vec::Vec;
-use crate::{Player, SHIP_SIZE};
-use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
-use crate::entity::{OwnedEntity, self};
-use crate::components::movable::{self, MovableComponent};
 use crate::components::char_drawable::{self, CharDrawableComponent};
-use n64_math::{Aabb2, Color, Vec2};
+use crate::components::movable::{self, MovableComponent};
+use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
+use crate::entity::{self, OwnedEntity};
+use crate::{Player, SHIP_SIZE};
+use alloc::vec::Vec;
 use n64::Rng;
+use n64_math::{Aabb2, Color, Vec2};
 
 const BULLET_SIZE: Vec2 = Vec2::new(2.0 / 320.0, 2.0 / 320.0);
 
@@ -30,10 +30,16 @@ impl BulletSystem {
 
     pub fn shoot_bullet(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
 
+        let spread = (rng.next_f32() - 0.5) * 0.05;
+
         let entity = entity::create();
-        movable::add(MovableComponent { entity: entity.as_entity(), pos: pos, speed: speed });
+        movable::add(MovableComponent {
+            entity: entity.as_entity(),
+            pos: pos,
+            speed: Vec2::new(speed.x() + spread, speed.y()),
+        });
         char_drawable::add(CharDrawableComponent {
-            entity: entity.as_entity(), 
+            entity: entity.as_entity(),
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
             chr: b'.',
         });
@@ -46,11 +52,14 @@ impl BulletSystem {
     }
 
     pub fn shoot_bullet_enemy(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
-
         let entity = entity::create();
-        movable::add(MovableComponent { entity: entity.as_entity(), pos: pos, speed: speed });
+        movable::add(MovableComponent {
+            entity: entity.as_entity(),
+            pos: pos,
+            speed: speed,
+        });
         char_drawable::add(CharDrawableComponent {
-            entity: entity.as_entity(), 
+            entity: entity.as_entity(),
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
             chr: b'.',
         });
@@ -66,9 +75,7 @@ impl BulletSystem {
         let mut delete_list = Vec::new();
 
         for (i, bullet) in self.bullets.iter_mut().enumerate() {
-
             if let Some(movable) = movable::get_component(&bullet.entity) {
-
                 let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 
                 if !bullet_bb.collides(&self.screen_bb) {
@@ -100,11 +107,15 @@ impl BulletSystem {
         {
             let len = self.bullets.len();
 
-            for (i, delete_index) in delete_list.iter().enumerate() {    
+            for (i, delete_index) in delete_list.iter().enumerate() {
                 self.bullets.swap(*delete_index, len - 1 - i);
             }
 
             self.bullets.drain((len - delete_list.len())..);
         }
+    }
+
+    pub fn get_count(&self) -> i32 {
+        self.bullets.len() as i32
     }
 }

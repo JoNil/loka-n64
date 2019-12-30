@@ -1,9 +1,9 @@
 use crate::bullet_system::BulletSystem;
+use crate::components::char_drawable::{self, CharDrawableComponent};
+use crate::components::movable::{self, MovableComponent};
+use crate::entity::{self, OwnedEntity};
 use n64::{current_time_us, graphics, ipl3font, Controllers, Rng};
 use n64_math::{Color, Vec2};
-use crate::entity::{OwnedEntity, self};
-use crate::components::movable::{self, MovableComponent};
-use crate::components::char_drawable::{self, CharDrawableComponent};
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_COLOR: Color = Color::new(0b10000_00011_00011_1);
@@ -96,12 +96,15 @@ impl Player {
         }
 
         if let Some(movable) = movable::get_component(&self.entity) {
-
             let now = current_time_us();
 
             if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS * 1000 {
                 if controllers.z() {
-                    bullet_system.shoot_bullet(rng, movable.pos, Vec2::new(0.0, movable.speed.y() - 0.65));
+                    bullet_system.shoot_bullet(
+                        rng,
+                        movable.pos,
+                        Vec2::new(0.0, movable.speed.y() - 0.65),
+                    );
                     self.last_shoot_time = now;
                 }
             }

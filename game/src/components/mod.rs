@@ -1,16 +1,14 @@
-use alloc::vec::Vec;
 use crate::entity::Entity;
-use spin::{Once, Mutex, MutexGuard};
+use alloc::vec::Vec;
+use spin::{Mutex, MutexGuard, Once};
 
-pub mod movable;
 pub mod char_drawable;
+pub mod movable;
 
 static SYSTEMS: Once<Mutex<Systems>> = Once::new();
 
 pub fn systems() -> MutexGuard<'static, Systems> {
-    SYSTEMS.call_once(|| {
-        Mutex::new(Systems::new())
-    }).lock()
+    SYSTEMS.call_once(|| Mutex::new(Systems::new())).lock()
 }
 
 pub struct Systems {
@@ -36,14 +34,11 @@ impl Systems {
 #[macro_export]
 macro_rules! impl_system {
     ($component_ident: ident) => {
-        
         static SYSTEM: spin::Once<spin::RwLock<System>> = spin::Once::new();
 
         fn create() -> spin::RwLock<System> {
             let res = spin::RwLock::new(System::new());
-            systems().register_remover(|e| {
-                lock_mut().remove(e)
-            });
+            systems().register_remover(|e| lock_mut().remove(e));
             res
         }
 
@@ -64,10 +59,7 @@ macro_rules! impl_system {
 
         #[allow(dead_code)]
         pub fn get_component(e: &Entity) -> Option<$component_ident> {
-            SYSTEM.call_once(create)
-            .read()
-            .lookup(e)
-            .map(|c| *c)
+            SYSTEM.call_once(create).read().lookup(e).map(|c| *c)
         }
 
         #[allow(dead_code)]
@@ -94,7 +86,6 @@ macro_rules! impl_system {
             #[allow(dead_code)]
             pub fn remove(&mut self, e: &Entity) {
                 if let Some(&index) = self.map.get(e) {
-
                     let last = self.components.len() - 1;
                     let last_entity = self.components[last].entity;
 
@@ -133,5 +124,5 @@ macro_rules! impl_system {
                 &mut self.components
             }
         }
-    }
+    };
 }
