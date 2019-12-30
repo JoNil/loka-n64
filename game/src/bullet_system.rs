@@ -1,8 +1,9 @@
 use alloc::vec::Vec;
 use crate::{Player, SHIP_SIZE};
 use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
-use crate::entity::{OwnedEntity, es};
-use crate::components::{movable, movable_mut, char_drawable_mut};
+use crate::entity::{OwnedEntity, self};
+use crate::components::movable::{self, MovableComponent};
+use crate::components::char_drawable::{self, CharDrawableComponent};
 use n64_math::{Aabb2, Color, Vec2};
 use n64::Rng;
 
@@ -29,11 +30,13 @@ impl BulletSystem {
 
     pub fn shoot_bullet(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
 
-        let entity = es().create_entity();
-        movable_mut().add(&entity, pos, speed);
-        char_drawable_mut().add(&entity, 
-            Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-            '.');
+        let entity = entity::create();
+        movable::add(MovableComponent { entity: entity.as_entity(), pos: pos, speed: speed });
+        char_drawable::add(CharDrawableComponent {
+            entity: entity.as_entity(), 
+            color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+            chr: '.',
+        });
 
         self.bullets.push(Bullet {
             entity: entity,
@@ -44,11 +47,13 @@ impl BulletSystem {
 
     pub fn shoot_bullet_enemy(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
 
-        let entity = es().create_entity();
-        movable_mut().add(&entity, pos, speed);
-        char_drawable_mut().add(&entity, 
-            Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-            '.');
+        let entity = entity::create();
+        movable::add(MovableComponent { entity: entity.as_entity(), pos: pos, speed: speed });
+        char_drawable::add(CharDrawableComponent {
+            entity: entity.as_entity(), 
+            color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+            chr: '.',
+        });
 
         self.bullets.push(Bullet {
             entity: entity,
@@ -62,7 +67,7 @@ impl BulletSystem {
 
         for (i, bullet) in self.bullets.iter_mut().enumerate() {
 
-            if let Some(movable) = movable().lookup(&bullet.entity) {
+            if let Some(movable) = movable::get_component(&bullet.entity) {
 
                 let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 

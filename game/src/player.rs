@@ -1,8 +1,9 @@
 use crate::bullet_system::BulletSystem;
 use n64::{current_time_us, graphics, ipl3font, Controllers, Rng};
 use n64_math::{Color, Vec2};
-use crate::entity::{OwnedEntity, es};
-use crate::components::{movable_mut, movable, char_drawable_mut};
+use crate::entity::{OwnedEntity, self};
+use crate::components::movable::{self, MovableComponent};
+use crate::components::char_drawable::{self, CharDrawableComponent};
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_COLOR: Color = Color::new(0b10000_00011_00011_1);
@@ -23,20 +24,28 @@ pub struct Player {
 impl Player {
     pub fn new() -> Player {
         let player = Player {
-            entity: es().create_entity(),
+            entity: entity::create(),
             last_shoot_time: 0,
             health: 500,
             score: 0,
         };
 
-        movable_mut().add(&player.entity, START_POS, Vec2::zero());
-        char_drawable_mut().add(&player.entity, SHIP_COLOR, 'A');
+        movable::add(MovableComponent {
+            entity: player.entity.as_entity(),
+            pos: START_POS,
+            speed: Vec2::zero(),
+        });
+        char_drawable::add(CharDrawableComponent {
+            entity: player.entity.as_entity(),
+            color: SHIP_COLOR,
+            chr: 'A',
+        });
 
         player
     }
 
     pub fn pos(&self) -> Vec2 {
-        if let Some(movable) = movable().lookup(&self.entity) {
+        if let Some(movable) = movable::get_component(&self.entity) {
             movable.pos
         } else {
             Vec2::zero()
@@ -82,13 +91,11 @@ impl Player {
             controller_dir.set_y(if controller_y > 0 { -1.0 } else { 1.0 });
         }
 
-        if let Some(movable) = movable_mut().lookup_mut(&self.entity) {
+        if let Some(movable) = movable::lock_mut().lookup_mut(&self.entity) {
             movable.speed = SHIP_SPEED * controller_dir;
         }
 
-        let movable = movable().lookup(&self.entity).map(|m| *m);
-
-        if let Some(movable) = movable {
+        if let Some(movable) = movable::get_component(&self.entity) {
 
             let now = current_time_us();
 

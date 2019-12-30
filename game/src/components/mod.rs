@@ -2,12 +2,8 @@ use alloc::vec::Vec;
 use crate::entity::Entity;
 use spin::{Once, Mutex, MutexGuard};
 
-mod movable;
-mod char_drawable;
-pub use movable::movable;
-pub use movable::movable_mut;
-pub use char_drawable::char_drawable;
-pub use char_drawable::char_drawable_mut;
+pub mod movable;
+pub mod char_drawable;
 
 static SYSTEMS: Once<Mutex<Systems>> = Once::new();
 

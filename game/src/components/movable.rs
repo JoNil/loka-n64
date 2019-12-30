@@ -7,29 +7,36 @@ use crate::components::systems;
 
 static MOVABLE_SYSTEM: Once<RwLock<MovableSystem>> = Once::new();
 
-pub fn movable() -> RwLockReadGuard<'static, MovableSystem> {
-    MOVABLE_SYSTEM.call_once(|| {
-        let res = RwLock::new(MovableSystem::new());
-        systems().register_remover(|e| {
-            movable_mut().remove(e)
-        });
-        res
-    }).read()
+fn create() -> RwLock<MovableSystem> {
+    let res = RwLock::new(MovableSystem::new());
+    systems().register_remover(|e| {
+        lock_mut().remove(e)
+    });
+    res
 }
 
-pub fn movable_mut() -> RwLockWriteGuard<'static, MovableSystem> {
-    MOVABLE_SYSTEM.call_once(|| {
-        let res = RwLock::new(MovableSystem::new());
-        systems().register_remover(|e| {
-            movable_mut().remove(e)
-        });
-        res
-    }).write()
+pub fn lock() -> RwLockReadGuard<'static, MovableSystem> {
+    MOVABLE_SYSTEM.call_once(create).read()
+}
+
+pub fn lock_mut() -> RwLockWriteGuard<'static, MovableSystem> {
+    MOVABLE_SYSTEM.call_once(create).write()
+}
+
+pub fn add(component: MovableComponent) {
+    lock_mut().add(component);
+}
+
+pub fn get_component(e: &Entity) -> Option<MovableComponent> {
+    MOVABLE_SYSTEM.call_once(create)
+    .read()
+    .lookup(e)
+    .map(|c| *c)
 }
 
 #[derive(Copy, Clone)]
 pub struct MovableComponent {
-    entity: Entity,
+    pub entity: Entity,
     pub pos: Vec2,
     pub speed: Vec2,
 }
@@ -53,14 +60,9 @@ impl MovableSystem {
         }
     }
 
-    pub fn add(&mut self, e: &Entity, pos: Vec2, speed: Vec2) {
-        self.components.push(MovableComponent {
-            entity: *e,
-            pos: pos,
-            speed: speed,
-        });
-
-        self.map.insert(*e, self.components.len() - 1);
+    pub fn add(&mut self, component: MovableComponent) {
+        self.components.push(component);
+        self.map.insert(component.entity, self.components.len() - 1);
     }
 
     pub fn remove(&mut self, e: &Entity) {

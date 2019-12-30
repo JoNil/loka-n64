@@ -15,10 +15,14 @@ const MINIMUM_FREE_INDICES: u32 = 1024;
 
 static ENTITY_SYSTEM: Once<Mutex<EntitySystem>> = Once::new();
 
-pub fn es() -> MutexGuard<'static, EntitySystem> {
+pub fn lock() -> MutexGuard<'static, EntitySystem> {
     ENTITY_SYSTEM.call_once(|| {
         Mutex::new(EntitySystem::new())
     }).lock()
+}
+
+pub fn create() -> OwnedEntity {
+    lock().create()
 }
 
 #[derive(Copy, Clone, Hash, Eq, PartialEq)]
@@ -54,11 +58,15 @@ impl OwnedEntity {
             }
         }
     }
+
+    pub fn as_entity(&self) -> Entity {
+        self.e
+    }
 }
 
 impl Drop for OwnedEntity {
     fn drop(&mut self) {
-        es().destroy(self);
+        lock().destroy(self);
     }
 }
 
@@ -84,7 +92,7 @@ impl EntitySystem {
         }
     }
 
-    pub fn create_entity(&mut self) -> OwnedEntity {
+    pub fn create(&mut self) -> OwnedEntity {
 
         let index = if self.free_indices.len() as u32 > MINIMUM_FREE_INDICES {
             self.free_indices.pop_front().unwrap()
@@ -109,21 +117,6 @@ impl EntitySystem {
 
         for remove in systems().removers() {
             remove(e);
-        }
-    }
-}
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn test_create() {
-        let mut manager = EntitySystem::new();
-
-        for i in 0..1024 {
-            let e = manager.create_entity();
-            assert_eq!(e.index(), i);
         }
     }
 }
