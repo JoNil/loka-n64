@@ -29,7 +29,7 @@ pub fn clear_buffer() {
         
         let mut p = fb.as_mut_ptr() as *mut u32;
 
-        for i in 0..(fb.len()/2) {   
+        for _ in 0..(fb.len()/2) {   
             unsafe {
                 *p =  0x0001_0001;
                 p = p.offset(1);
