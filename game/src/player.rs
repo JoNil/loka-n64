@@ -83,17 +83,19 @@ impl Player {
         }
 
         if let Some(movable) = movable_mut().lookup_mut(&self.entity) {
-
             movable.speed = SHIP_SPEED * controller_dir;
+        }
 
-            {
-                let now = current_time_us();
+        let movable = movable().lookup(&self.entity).map(|m| *m);
 
-                if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS * 1000 {
-                    if controllers.z() {
-                        bullet_system.shoot_bullet(rng, movable.pos, Vec2::new(0.0, movable.speed.y() - 0.65));
-                        self.last_shoot_time = now;
-                    }
+        if let Some(movable) = movable {
+
+            let now = current_time_us();
+
+            if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS * 1000 {
+                if controllers.z() {
+                    bullet_system.shoot_bullet(rng, movable.pos, Vec2::new(0.0, movable.speed.y() - 0.65));
+                    self.last_shoot_time = now;
                 }
             }
         }

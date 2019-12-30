@@ -99,7 +99,7 @@ impl BulletSystem {
                 self.bullets.swap(*delete_index, len - 1 - i);
             }
 
-            self.bullets.drain(..delete_list.len());
+            self.bullets.drain((len - delete_list.len())..);
         }
     }
 }

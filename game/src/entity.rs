@@ -110,7 +110,6 @@ impl EntitySystem {
         for remove in systems().removers() {
             remove(e);
         }
-        
     }
 }
 
