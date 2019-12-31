@@ -26,7 +26,7 @@ pub fn create() -> OwnedEntity {
     lock().create()
 }
 
-#[derive(Copy, Clone, Hash, Eq, PartialEq)]
+#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Entity {
     id: u32,
 }
@@ -41,7 +41,7 @@ impl Entity {
     }
 }
 
-#[derive(Hash, Eq, PartialEq)]
+#[derive(Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct OwnedEntity {
     e: Entity,
 }

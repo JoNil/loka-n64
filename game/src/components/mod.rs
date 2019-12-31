@@ -90,6 +90,7 @@ macro_rules! impl_system {
                     let last_entity = self.components[last].entity;
 
                     self.components[index as usize] = self.components[last];
+                    self.components.remove(last);
 
                     self.map.insert(last_entity, index);
                     self.map.remove(e);
