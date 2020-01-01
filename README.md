@@ -38,7 +38,7 @@ cargo run --bin game --release
 
 ## Links
 
-[http://n64dev.50megs.com/n64dox.html]
-[http://n64dev.org/]
-[https://github.com/n64decomp/sm64/]
-[https://github.com/n64decomp/libreultra]
+(http://n64dev.50megs.com/n64dox.html)
+(http://n64dev.org/)
+(https://github.com/n64decomp/sm64/)
+(https://github.com/n64decomp/libreultra)
