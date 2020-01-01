@@ -11,9 +11,23 @@ const GLYPH_SIZE: usize = 23;
 const GLYPH_ADDR: usize = 0xB000_0B70;
 
 #[inline]
-pub fn draw_str(mut x: i32, y: i32, color: Color, string: &[u8]) {
+pub fn draw_str(mut x: i32, mut y: i32, color: Color, string: &[u8]) {
+
+    let start_x = x;
+
     for mut ch in string.iter().copied() {
         if ch == b' ' {
+            x += GLYPH_WIDTH;
+            continue;
+        }
+
+        if ch == b'\n' {
+            y += GLYPH_HEIGHT + 3;
+            x = start_x;
+            continue;
+        }
+
+        if ch == b'{' || ch == b'}' {
             x += GLYPH_WIDTH;
             continue;
         }

@@ -26,8 +26,8 @@ impl Systems {
         self.removers.push(remover);
     }
 
-    pub fn removers(&self) -> impl Iterator<Item = &fn(&Entity)> {
-        self.removers.iter()
+    pub fn removers(&self) -> &[fn(&Entity)] {
+        &self.removers
     }
 }
 
@@ -123,11 +123,6 @@ macro_rules! impl_system {
             #[allow(dead_code)]
             pub fn components_mut(&mut self) -> &mut [$component_ident] {
                 &mut self.components
-            }
-
-            #[allow(dead_code)]
-            pub fn map_len(&self) -> i32 {
-                self.map.len() as i32
             }
         }
     };

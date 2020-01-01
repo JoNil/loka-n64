@@ -20,6 +20,7 @@ use enemy_system::EnemySystem;
 use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, Rng};
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
+use alloc::format;
 
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
@@ -44,12 +45,12 @@ fn main() {
     let mut time_frame = current_time_us();
     let mut dt;
 
-    /*enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);*/
+    enemy_system.spawn_enemy(&mut rng);
+    enemy_system.spawn_enemy(&mut rng);
 
     loop {
         {
@@ -109,8 +110,9 @@ fn main() {
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(300, 215, BLUE, player.health());
 
-            ipl3font::draw_number(100, 215, RED, char_drawable::lock().components().len() as i32);
-            ipl3font::draw_number(200, 215, BLUE, char_drawable::lock().map_len());
+            //ipl3font::draw_str(10, 30, RED, format!("{:#?}", movable::lock().components.len()).as_bytes());
+
+            //println!("{:?}", movable::lock().map);
 
             {
                 let used_frame_time = current_time_us() - time_used;

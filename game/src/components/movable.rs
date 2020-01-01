@@ -3,7 +3,7 @@ use crate::entity::Entity;
 use crate::impl_system;
 use n64_math::Vec2;
 
-#[derive(Copy, Clone)]
+#[derive(Debug, Copy, Clone)]
 pub struct MovableComponent {
     pub entity: Entity,
     pub pos: Vec2,
