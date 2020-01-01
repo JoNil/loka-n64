@@ -22,7 +22,7 @@ const VI_V_BURST: *mut u32 = (VI_BASE + 0x2C) as *mut u32;
 const VI_X_SCALE: *mut u32 = (VI_BASE + 0x30) as *mut u32;
 const VI_Y_SCALE: *mut u32 = (VI_BASE + 0x34) as *mut u32;
 
-const FRAME_BUFFER_SIZE: usize = WIDTH as usize * HEIGHT as usize * 2;
+const FRAME_BUFFER_SIZE: usize = (2 * WIDTH * HEIGHT) as usize;
 static mut FRAME_BUFFER: Option<Box<[u16]>> = None;
 
 pub const WIDTH: i32 = 320;
@@ -57,7 +57,7 @@ pub fn init() {
 pub fn wait_for_vblank() {
     loop {
         let current_halfline = unsafe { read_volatile(VI_CURRENT) };
-        if current_halfline <= 10 {
+        if current_halfline <= 1 {
             break;
         }
     }
@@ -71,7 +71,7 @@ pub unsafe fn next_buffer() -> *mut u16 {
     if current_fb != frame_buffer as usize {
         frame_buffer
     } else {
-        (frame_buffer as usize + size_of::<i16>()*FRAME_BUFFER_SIZE) as *mut u16
+        (frame_buffer as usize + size_of::<i16>()*((WIDTH*HEIGHT) as usize)) as *mut u16
     }
 }
 

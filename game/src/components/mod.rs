@@ -124,6 +124,11 @@ macro_rules! impl_system {
             pub fn components_mut(&mut self) -> &mut [$component_ident] {
                 &mut self.components
             }
+
+            #[allow(dead_code)]
+            pub fn map_len(&self) -> i32 {
+                self.map.len() as i32
+            }
         }
     };
 }

@@ -44,12 +44,12 @@ fn main() {
     let mut time_frame = current_time_us();
     let mut dt;
 
+    /*enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);
+    enemy_system.spawn_enemy(&mut rng);*/
 
     loop {
         {
@@ -109,7 +109,8 @@ fn main() {
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(300, 215, BLUE, player.health());
 
-            ipl3font::draw_number(100, 215, RED, bullet_system.get_count());
+            ipl3font::draw_number(100, 215, RED, char_drawable::lock().components().len() as i32);
+            ipl3font::draw_number(200, 215, BLUE, char_drawable::lock().map_len());
 
             {
                 let used_frame_time = current_time_us() - time_used;

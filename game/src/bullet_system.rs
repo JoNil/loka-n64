@@ -114,8 +114,4 @@ impl BulletSystem {
             self.bullets.drain((len - delete_list.len())..);
         }
     }
-
-    pub fn get_count(&self) -> i32 {
-        self.bullets.len() as i32
-    }
 }
