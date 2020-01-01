@@ -42,3 +42,4 @@ cargo run --bin game --release
 - http://n64dev.org/
 - https://github.com/n64decomp/sm64/
 - https://github.com/n64decomp/libreultra
+- https://www.kth.se/social/files/563c63c9f276547044e8695f/mips-ref-sheet.pdf
