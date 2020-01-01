@@ -53,19 +53,20 @@ macro_rules! impl_system {
         }
 
         #[allow(dead_code)]
-        pub fn add(component: $component_ident) {
-            lock_mut().add(component);
+        pub fn add(entity: &crate::entity::Entity, component: $component_ident) {
+            lock_mut().add(entity, component);
         }
 
         #[allow(dead_code)]
         pub fn get_component(e: &Entity) -> Option<$component_ident> {
-            SYSTEM.call_once(create).read().lookup(e).map(|c| *c)
+            lock().lookup(e).map(|c| *c)
         }
 
         #[allow(dead_code)]
         pub struct System {
-            components: alloc::vec::Vec<$component_ident>,
-            map: hashbrown::HashMap<Entity, usize>,
+            pub components: alloc::vec::Vec<$component_ident>,
+            pub entities: alloc::vec::Vec<crate::entity::Entity>,
+            pub map: hashbrown::HashMap<Entity, usize>,
         }
 
         impl System {
@@ -73,24 +74,29 @@ macro_rules! impl_system {
             fn new() -> System {
                 System {
                     components: alloc::vec::Vec::new(),
+                    entities: alloc::vec::Vec::new(),
                     map: hashbrown::HashMap::new(),
                 }
             }
 
             #[allow(dead_code)]
-            pub fn add(&mut self, component: $component_ident) {
+            pub fn add(&mut self, entity: &crate::entity::Entity, component: $component_ident) {
                 self.components.push(component);
-                self.map.insert(component.entity, self.components.len() - 1);
+                self.entities.push(*entity);
+                self.map.insert(*entity, self.components.len() - 1);
             }
 
             #[allow(dead_code)]
             pub fn remove(&mut self, e: &Entity) {
                 if let Some(&index) = self.map.get(e) {
                     let last = self.components.len() - 1;
-                    let last_entity = self.components[last].entity;
+                    let last_entity = self.entities[last];
 
                     self.components[index as usize] = self.components[last];
                     self.components.remove(last);
+
+                    self.entities[index as usize] = self.entities[last];
+                    self.entities.remove(last);
 
                     self.map.insert(last_entity, index);
                     self.map.remove(e);
@@ -123,6 +129,11 @@ macro_rules! impl_system {
             #[allow(dead_code)]
             pub fn components_mut(&mut self) -> &mut [$component_ident] {
                 &mut self.components
+            }
+
+            #[allow(dead_code)]
+            pub fn components_and_entities(&self) -> impl Iterator<Item = (&$component_ident, crate::entity::Entity)> {
+                self.components.iter().zip(self.entities.iter().copied())
             }
         }
     };

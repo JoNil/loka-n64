@@ -33,13 +33,11 @@ impl BulletSystem {
         let spread = (rng.next_f32() - 0.5) * 0.05;
 
         let entity = entity::create();
-        movable::add(MovableComponent {
-            entity: entity.as_entity(),
+        movable::add(&entity, MovableComponent {
             pos: pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
         });
-        char_drawable::add(CharDrawableComponent {
-            entity: entity.as_entity(),
+        char_drawable::add(&entity, CharDrawableComponent {
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
             chr: b'.',
         });
@@ -53,13 +51,11 @@ impl BulletSystem {
 
     pub fn shoot_bullet_enemy(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
         let entity = entity::create();
-        movable::add(MovableComponent {
-            entity: entity.as_entity(),
+        movable::add(&entity, MovableComponent {
             pos: pos,
             speed: speed,
         });
-        char_drawable::add(CharDrawableComponent {
-            entity: entity.as_entity(),
+        char_drawable::add(&entity, CharDrawableComponent {
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
             chr: b'.',
         });

@@ -6,14 +6,13 @@ use n64_math::Color;
 
 #[derive(Debug, Copy, Clone)]
 pub struct CharDrawableComponent {
-    pub entity: Entity,
     pub color: Color,
     pub chr: u8,
 }
 
 pub fn draw() {
-    for component in lock().components() {
-        if let Some(movable) = movable::lock().lookup(&component.entity) {
+    for (component, entity) in lock().components_and_entities() {
+        if let Some(movable) = movable::lock().lookup(&entity) {
             let screen_x =
                 (movable.pos.x() * (graphics::WIDTH as f32)) as i32 - ipl3font::GLYPH_WIDTH / 2;
             let screen_y =

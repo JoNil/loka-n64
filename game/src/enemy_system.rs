@@ -47,13 +47,11 @@ impl EnemySystem {
 
     pub fn spawn_enemy(&mut self, rng: &mut Rng) {
         let entity = entity::create();
-        movable::add(MovableComponent {
-            entity: entity.as_entity(),
+        movable::add(&entity, MovableComponent {
             pos: Vec2::new(rng.next_f32(), rng.next_f32() * 0.6),
             speed: Vec2::zero(),
         });
-        char_drawable::add(CharDrawableComponent {
-            entity: entity.as_entity(),
+        char_drawable::add(&entity, CharDrawableComponent {
             color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
             chr: b'E',
         });

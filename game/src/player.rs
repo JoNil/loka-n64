@@ -30,13 +30,11 @@ impl Player {
             score: 0,
         };
 
-        movable::add(MovableComponent {
-            entity: player.entity.as_entity(),
+        movable::add(&player.entity, MovableComponent {
             pos: START_POS,
             speed: Vec2::zero(),
         });
-        char_drawable::add(CharDrawableComponent {
-            entity: player.entity.as_entity(),
+        char_drawable::add(&player.entity, CharDrawableComponent {
             color: SHIP_COLOR,
             chr: b'A',
         });

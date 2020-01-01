@@ -5,7 +5,6 @@ use n64_math::Vec2;
 
 #[derive(Debug, Copy, Clone)]
 pub struct MovableComponent {
-    pub entity: Entity,
     pub pos: Vec2,
     pub speed: Vec2,
 }

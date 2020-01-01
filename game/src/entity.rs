@@ -57,10 +57,6 @@ impl OwnedEntity {
             },
         }
     }
-
-    pub fn as_entity(&self) -> Entity {
-        self.e
-    }
 }
 
 impl Drop for OwnedEntity {
