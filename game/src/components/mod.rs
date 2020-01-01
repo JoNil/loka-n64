@@ -135,6 +135,11 @@ macro_rules! impl_system {
             pub fn components_and_entities(&self) -> impl Iterator<Item = (&$component_ident, crate::entity::Entity)> {
                 self.components.iter().zip(self.entities.iter().copied())
             }
+
+            #[allow(dead_code)]
+            pub fn components_and_entities_mut(&mut self) -> impl Iterator<Item = (&mut $component_ident, crate::entity::Entity)> {
+                self.components.iter_mut().zip(self.entities.iter().copied())
+            }
         }
     };
 }
