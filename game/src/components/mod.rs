@@ -2,6 +2,7 @@ use crate::entity::Entity;
 use alloc::vec::Vec;
 use spin::{Mutex, MutexGuard, Once};
 
+mod hash;
 pub mod char_drawable;
 pub mod movable;
 
@@ -64,9 +65,9 @@ macro_rules! impl_system {
 
         #[allow(dead_code)]
         pub struct System {
-            pub components: alloc::vec::Vec<$component_ident>,
-            pub entities: alloc::vec::Vec<crate::entity::Entity>,
-            pub map: hashbrown::HashMap<Entity, usize>,
+            components: alloc::vec::Vec<$component_ident>,
+            entities: alloc::vec::Vec<crate::entity::Entity>,
+            map: hashbrown::HashMap<Entity, usize, crate::components::hash::BuildFnvHasher>,
         }
 
         impl System {
@@ -75,7 +76,7 @@ macro_rules! impl_system {
                 System {
                     components: alloc::vec::Vec::new(),
                     entities: alloc::vec::Vec::new(),
-                    map: hashbrown::HashMap::new(),
+                    map: hashbrown::HashMap::with_hasher(crate::components::hash::BuildFnvHasher),
                 }
             }
 

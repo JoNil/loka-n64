@@ -20,7 +20,6 @@ use enemy_system::EnemySystem;
 use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, Rng};
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
-use alloc::format;
 
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
@@ -45,12 +44,12 @@ fn main() {
     let mut time_frame = current_time_us();
     let mut dt;
 
-    /*enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);*/
+    enemy_system.spawn_enemy(&mut rng);
+    enemy_system.spawn_enemy(&mut rng);
 
     loop {
         {
@@ -110,12 +109,6 @@ fn main() {
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(300, 215, BLUE, player.health());
 
-            let len = movable::lock().components.len();
-
-            //ipl3font::draw_str(10, 30, RED, format!("{:#?}", movable::lock().components[len - 1]).as_bytes());
-
-            //println!("{:?}", movable::lock().map);
-
             {
                 let used_frame_time = current_time_us() - time_used;
                 ipl3font::draw_number(200, 10, RED, used_frame_time as i32);
@@ -146,9 +139,22 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 
 #[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
-fn panic(_info: &core::panic::PanicInfo) -> ! {
+fn panic(info: &core::panic::PanicInfo) -> ! {
     graphics::clear_buffer();
-    ipl3font::draw_str(50, 10, RED, b"PANIC");
+    ipl3font::draw_str(15, 15, RED, b"PANIC!");
+    if let Some(location) = info.location() {
+        ipl3font::draw_str(
+            15,
+            30,
+            RED,
+            alloc::format!(
+                "{}:{}",
+                location.file().rsplit("\\").nth(0).unwrap_or(""),
+                location.line()
+            )
+            .as_bytes(),
+        );
+    }
     graphics::swap_buffers();
 
     loop {}
@@ -158,7 +164,7 @@ fn panic(_info: &core::panic::PanicInfo) -> ! {
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
     graphics::clear_buffer();
-    ipl3font::draw_str(50, 10, RED, b"OUT OF MEMORY");
+    ipl3font::draw_str(50, 15, RED, b"OUT OF MEMORY!");
     graphics::swap_buffers();
 
     loop {}

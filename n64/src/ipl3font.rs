@@ -17,7 +17,7 @@ pub fn draw_str(mut x: i32, mut y: i32, color: Color, string: &[u8]) {
 
     for mut ch in string.iter().copied() {
         if ch == b' ' {
-            x += GLYPH_WIDTH;
+            x += GLYPH_WIDTH + KERNING;
             continue;
         }
 
@@ -28,7 +28,7 @@ pub fn draw_str(mut x: i32, mut y: i32, color: Color, string: &[u8]) {
         }
 
         if ch == b'{' || ch == b'}' {
-            x += GLYPH_WIDTH;
+            x += GLYPH_WIDTH + KERNING;
             continue;
         }
 

@@ -4,7 +4,7 @@ use crate::impl_system;
 use n64::{graphics, ipl3font};
 use n64_math::Color;
 
-#[derive(Debug, Copy, Clone)]
+#[derive(Copy, Clone)]
 pub struct CharDrawableComponent {
     pub color: Color,
     pub chr: u8,
