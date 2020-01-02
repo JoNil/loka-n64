@@ -1,8 +1,8 @@
 use core::ffi::c_void;
 
 #[inline]
-pub(crate) unsafe fn data_cache_hit_writeback_invalidate(block: &mut [u64]) {
-    let mut addr = ((block.as_mut_ptr() as usize) & 0xffff_fffc) as *mut c_void;
+pub(crate) unsafe fn data_cache_hit_writeback_invalidate(block: &[u64]) {
+    let mut addr = ((block.as_ptr() as usize) & 0xffff_fffc) as *const c_void;
     let mut len = block.len() * 8;
 
     while len > 0 {
@@ -19,23 +19,23 @@ pub(crate) unsafe fn data_cache_hit_writeback_invalidate(block: &mut [u64]) {
 }
 
 #[inline]
-pub(crate) unsafe fn uncached_addr<T>(address: *const T) -> *const T {
+pub(crate) fn uncached_addr<T>(address: *const T) -> *const T {
     ((address as usize) | 0x2000_0000) as *const T
 }
 
 #[inline]
-pub(crate) unsafe fn uncached_addr_mut<T>(address: *mut T) -> *mut T {
+pub(crate) fn uncached_addr_mut<T>(address: *mut T) -> *mut T {
     ((address as usize) | 0x2000_0000) as *mut T
 }
 
 #[inline]
-pub(crate) unsafe fn virtual_to_physical<T>(address: *const T) -> usize {
-    (address as usize) & 0x1fffffff
+pub(crate) fn virtual_to_physical<T>(address: *const T) -> usize {
+    (address as usize) & 0x1fff_ffff
 }
 
 #[inline]
-pub(crate) unsafe fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
-    (address as usize) & 0x1fffffff
+pub(crate) fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
+    (address as usize) & 0x1fff_ffff
 }
 
 #[inline]

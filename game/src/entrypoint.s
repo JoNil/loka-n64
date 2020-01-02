@@ -48,11 +48,6 @@ _start:
     la $t0, __rom_end
     sw $t0, FS_START
 
-    // So if we want to get fancy, we can load a second stage here.
-    // The second stage should contain an ELF parser and TLB Initialization.
-    // The ELF (kernel image) should be loaded into virtual memory by the second
-    // stage, and its entry point executed.
-
     // Jump to Rust
     jal main
     nop

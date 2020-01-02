@@ -2,6 +2,8 @@ use core::slice;
 use n64_math::Color;
 use n64_sys::vi;
 
+pub use n64_sys::rdp_command_builder::RdpCommandBuilder;
+pub use n64_sys::rdp;
 pub use n64_sys::vi::HEIGHT;
 pub use n64_sys::vi::WIDTH;
 
@@ -26,6 +28,12 @@ pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
 
 pub fn clear_buffer() {
     with_framebuffer(|fb| {
+
+        let cb = RdpCommandBuilder::new();
+
+        cb.set_color_image(fb.as_mut_ptr() as *mut u16);
+
+        //unsafe { rdp::run_command_buffer(&cb.build()) };
         
         let mut p = fb.as_mut_ptr() as *mut u32;
 
