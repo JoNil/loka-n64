@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::sys::{memory_barrier, uncached_addr, uncached_addr_mut, virtual_to_physical};
 use core::intrinsics::volatile_copy_nonoverlapping_memory;
 use core::ptr::{read_volatile, write_volatile};
