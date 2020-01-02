@@ -1,4 +1,5 @@
 use crate::components::char_drawable::{self, CharDrawableComponent};
+use crate::components::health;
 use crate::components::movable::{self, MovableComponent};
 use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
 use crate::entity::{self, OwnedEntity};
@@ -29,18 +30,23 @@ impl BulletSystem {
     }
 
     pub fn shoot_bullet(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
-
         let spread = (rng.next_f32() - 0.5) * 0.05;
 
         let entity = entity::create();
-        movable::add(&entity, MovableComponent {
-            pos: pos,
-            speed: Vec2::new(speed.x() + spread, speed.y()),
-        });
-        char_drawable::add(&entity, CharDrawableComponent {
-            color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-            chr: b'.',
-        });
+        movable::add(
+            &entity,
+            MovableComponent {
+                pos: pos,
+                speed: Vec2::new(speed.x() + spread, speed.y()),
+            },
+        );
+        char_drawable::add(
+            &entity,
+            CharDrawableComponent {
+                color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+                chr: b'.',
+            },
+        );
 
         self.bullets.push(Bullet {
             entity: entity,
@@ -51,14 +57,20 @@ impl BulletSystem {
 
     pub fn shoot_bullet_enemy(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
         let entity = entity::create();
-        movable::add(&entity, MovableComponent {
-            pos: pos,
-            speed: speed,
-        });
-        char_drawable::add(&entity, CharDrawableComponent {
-            color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-            chr: b'.',
-        });
+        movable::add(
+            &entity,
+            MovableComponent {
+                pos: pos,
+                speed: speed,
+            },
+        );
+        char_drawable::add(
+            &entity,
+            CharDrawableComponent {
+                color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+                chr: b'.',
+            },
+        );
 
         self.bullets.push(Bullet {
             entity: entity,
@@ -80,20 +92,26 @@ impl BulletSystem {
 
                 if bullet.can_hit_enemy {
                     for enemy in enemy_system.enemies_mut() {
-                        let enemy_bb = Aabb2::from_center_size(enemy.pos(), ENEMY_SIZE);
+                        let enemy_bb = Aabb2::from_center_size(
+                            movable::pos(enemy.entity()).unwrap_or(Vec2::zero()),
+                            ENEMY_SIZE,
+                        );
 
                         if bullet_bb.collides(&enemy_bb) {
-                            enemy.damage(50 + (rng.next_f32() * 20.0) as i32);
+                            health::damage(enemy.entity(), 50 + (rng.next_f32() * 20.0) as i32);
                             delete_list.push(i);
                         }
                     }
                 }
 
                 if bullet.can_hit_player {
-                    let player_bb = Aabb2::from_center_size(player.pos(), SHIP_SIZE);
+                    let player_bb = Aabb2::from_center_size(
+                        movable::pos(player.entity()).unwrap_or(Vec2::zero()),
+                        SHIP_SIZE,
+                    );
 
                     if bullet_bb.collides(&player_bb) {
-                        player.damage(50 + (rng.next_f32() * 20.0) as i32);
+                        health::damage(player.entity(), 50 + (rng.next_f32() * 20.0) as i32);
                         delete_list.push(i);
                     }
                 }

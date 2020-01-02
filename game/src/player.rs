@@ -1,7 +1,8 @@
 use crate::bullet_system::BulletSystem;
 use crate::components::char_drawable::{self, CharDrawableComponent};
 use crate::components::movable::{self, MovableComponent};
-use crate::entity::{self, OwnedEntity};
+use crate::components::health::{self, HealthComponent};
+use crate::entity::{self, OwnedEntity, Entity};
 use n64::{current_time_us, graphics, ipl3font, Controllers, Rng};
 use n64_math::{Color, Vec2};
 
@@ -17,7 +18,6 @@ pub const SHIP_SIZE: Vec2 = Vec2::new(
 pub struct Player {
     entity: OwnedEntity,
     last_shoot_time: i32,
-    health: i32,
     score: i32,
 }
 
@@ -26,7 +26,6 @@ impl Player {
         let player = Player {
             entity: entity::create(),
             last_shoot_time: 0,
-            health: 500,
             score: 0,
         };
 
@@ -38,20 +37,15 @@ impl Player {
             color: SHIP_COLOR,
             chr: b'A',
         });
+        health::add(&player.entity, HealthComponent {
+            health: 500,
+        });
 
         player
     }
 
-    pub fn pos(&self) -> Vec2 {
-        if let Some(movable) = movable::get_component(&self.entity) {
-            movable.pos
-        } else {
-            Vec2::zero()
-        }
-    }
-
-    pub fn damage(&mut self, damage: i32) {
-        self.health = 0.max(self.health - damage);
+    pub fn entity(&self) -> &Entity {
+        &self.entity
     }
 
     pub fn add_score(&mut self, score: i32) {
@@ -60,14 +54,6 @@ impl Player {
 
     pub fn score(&self) -> i32 {
         self.score
-    }
-
-    pub fn health(&self) -> i32 {
-        self.health
-    }
-
-    pub fn is_dead(&self) -> bool {
-        self.health <= 0
     }
 
     pub fn update(

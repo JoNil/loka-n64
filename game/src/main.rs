@@ -15,6 +15,7 @@ mod player;
 use alloc::vec::Vec;
 use bullet_system::BulletSystem;
 use components::char_drawable;
+use components::health;
 use components::movable;
 use enemy_system::EnemySystem;
 use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, Rng};
@@ -73,7 +74,7 @@ fn main() {
 
             movable::simulate(dt);
 
-            if player.is_dead() {
+            if !health::is_alive(player.entity()) {
                 break;
             }
         }
@@ -107,7 +108,14 @@ fn main() {
             char_drawable::draw();
 
             ipl3font::draw_number(300, 10, BLUE, player.score());
-            ipl3font::draw_number(300, 215, BLUE, player.health());
+            ipl3font::draw_number(
+                300,
+                215,
+                BLUE,
+                health::get_component(player.entity())
+                    .map(|hc| hc.health)
+                    .unwrap_or(0),
+            );
 
             {
                 let used_frame_time = current_time_us() - time_used;

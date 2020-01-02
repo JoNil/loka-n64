@@ -9,6 +9,14 @@ pub struct MovableComponent {
     pub speed: Vec2,
 }
 
+pub fn pos(entity: &Entity) -> Option<Vec2> {
+    if let Some(movable) = get_component(entity) {
+        Some(movable.pos)
+    } else {
+        None
+    }
+}
+
 pub fn simulate(dt: f32) {
     for component in lock_mut().components_mut() {
         component.pos += dt * component.speed;

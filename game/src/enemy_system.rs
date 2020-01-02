@@ -1,7 +1,8 @@
 use crate::bullet_system::BulletSystem;
 use crate::components::char_drawable::{self, CharDrawableComponent};
+use crate::components::health::{self, HealthComponent};
 use crate::components::movable::{self, MovableComponent};
-use crate::entity::{self, OwnedEntity};
+use crate::entity::{self, Entity, OwnedEntity};
 use crate::Player;
 use alloc::vec::Vec;
 use n64::{current_time_us, graphics, ipl3font, Rng};
@@ -14,23 +15,13 @@ pub const ENEMY_SIZE: Vec2 = Vec2::new(
 
 pub struct Enemy {
     entity: OwnedEntity,
-    health: i32,
     shoot_speed: i32,
     last_shoot_time: i32,
 }
 
 impl Enemy {
-    #[inline]
-    pub fn pos(&self) -> Vec2 {
-        if let Some(movable) = movable::get_component(&self.entity) {
-            movable.pos
-        } else {
-            Vec2::zero()
-        }
-    }
-
-    pub fn damage(&mut self, damage: i32) {
-        self.health = 0.max(self.health - damage);
+    pub fn entity(&self) -> &Entity {
+        &self.entity
     }
 }
 
@@ -47,18 +38,24 @@ impl EnemySystem {
 
     pub fn spawn_enemy(&mut self, rng: &mut Rng) {
         let entity = entity::create();
-        movable::add(&entity, MovableComponent {
-            pos: Vec2::new(rng.next_f32(), rng.next_f32() * 0.6),
-            speed: Vec2::zero(),
-        });
-        char_drawable::add(&entity, CharDrawableComponent {
-            color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-            chr: b'E',
-        });
+        movable::add(
+            &entity,
+            MovableComponent {
+                pos: Vec2::new(rng.next_f32(), rng.next_f32() * 0.6),
+                speed: Vec2::zero(),
+            },
+        );
+        char_drawable::add(
+            &entity,
+            CharDrawableComponent {
+                color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+                chr: b'E',
+            },
+        );
+        health::add(&entity, HealthComponent { health: 100 });
 
         self.enemies.push(Enemy {
             entity: entity,
-            health: 100,
             shoot_speed: 500 + (rng.next_f32() * 200.0) as i32,
             last_shoot_time: 0,
         });
@@ -70,7 +67,7 @@ impl EnemySystem {
         let now = current_time_us();
 
         for (i, enemy) in self.enemies_mut().iter_mut().enumerate() {
-            if enemy.health <= 0 {
+            if !health::is_alive(&enemy.entity) {
                 player.add_score(1000);
                 delete_list.push(i);
             }

@@ -5,6 +5,7 @@ use spin::{Mutex, MutexGuard, Once};
 mod hash;
 pub mod char_drawable;
 pub mod movable;
+pub mod health;
 
 static SYSTEMS: Once<Mutex<Systems>> = Once::new();
 
