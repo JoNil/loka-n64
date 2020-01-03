@@ -3,7 +3,7 @@
 use alloc::boxed::Box;
 use core::ptr::{read_volatile, write_volatile};
 use crate::rdp_command_builder::Command;
-use crate::sys::{data_cache_hit_writeback_invalidate, memory_barrier, virtual_to_physical};
+use crate::sys::{data_cache_hit_writeback_invalidate, memory_barrier};
 
 const RDP_BASE: usize = 0xA410_0000;
 
@@ -68,12 +68,12 @@ pub unsafe fn run_command_buffer(commands_in: Box<[Command]>) {
 
         write_volatile(
             RDP_COMMAND_BUFFER_START,
-            virtual_to_physical(commands.as_ptr()),
+            (commands.as_ptr() as usize) | 0xa000_0000,
         );
         memory_barrier();
         write_volatile(
             RDP_COMMAND_BUFFER_END,
-            virtual_to_physical(commands.as_ptr().offset(commands.len() as isize)),
+            (commands.as_ptr().offset(commands.len() as isize) as usize) | 0xa000_0000,
         );
         memory_barrier();
 

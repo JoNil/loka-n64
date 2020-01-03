@@ -2,7 +2,7 @@ use core::slice;
 use n64_math::{Color, Vec2};
 use n64_sys::vi;
 
-pub use n64_sys::rdp_command_builder::{RdpCommandBuilder, OTHER_MODES_CYCLE_TYPE_FILL};
+pub use n64_sys::rdp_command_builder::{RdpCommandBuilder, other_modes::*};
 pub use n64_sys::rdp;
 pub use n64_sys::vi::HEIGHT;
 pub use n64_sys::vi::WIDTH;
@@ -32,7 +32,10 @@ pub fn clear_buffer() {
         let cb = RdpCommandBuilder::new()
             .set_color_image(fb.as_mut_ptr() as *mut u16)
             .set_scissor(Vec2::zero(), Vec2::new(WIDTH as f32, HEIGHT as f32))
-            .set_other_modes(OTHER_MODES_CYCLE_TYPE_FILL)
+            .set_other_modes(
+                CYCLE_TYPE_FILL | CYCLE_TYPE_COPY | CYCLE_TYPE_2_CYCLE |
+                RGB_DITHER_SEL_NO_DITHER | ALPHA_DITHER_SEL_NO_DITHER |
+                FORCE_BLEND)
             .set_fill_color(Color::new(0b11000_00111_00000_1))
             .fill_rectangle(Vec2::new(10.0, 10.0), Vec2::new(WIDTH as f32 / 2.0, HEIGHT as f32 / 2.0))
             .sync_full()
