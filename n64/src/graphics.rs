@@ -34,7 +34,7 @@ pub fn clear_buffer() {
             .set_scissor(Vec2::zero(), Vec2::new(WIDTH as f32, HEIGHT as f32))
             .set_other_modes(OTHER_MODES_CYCLE_TYPE_FILL)
             .set_fill_color(Color::new(0b11000_00111_00000_1))
-            .fill_rectangle(Vec2::zero(), Vec2::new(WIDTH as f32 / 2.0, HEIGHT as f32))
+            .fill_rectangle(Vec2::new(10.0, 10.0), Vec2::new(WIDTH as f32 / 2.0, HEIGHT as f32 / 2.0))
             .sync_full()
             .build();
 
