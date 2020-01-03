@@ -1,7 +1,9 @@
 #![allow(dead_code)]
 
-use crate::sys::{data_cache_hit_writeback_invalidate, memory_barrier, virtual_to_physical};
+use alloc::boxed::Box;
 use core::ptr::{read_volatile, write_volatile};
+use crate::rdp_command_builder::Command;
+use crate::sys::{data_cache_hit_writeback_invalidate, memory_barrier, virtual_to_physical};
 
 const RDP_BASE: usize = 0xA410_0000;
 
@@ -44,30 +46,37 @@ fn wait_for_done() {
     while unsafe { read_volatile(RDP_COMMAND_BUFFER_BUSY) } > 0 {}
 }
 
+static mut COMMANDS: Option<Box<[Command]>> = None;
+
 #[inline]
-unsafe fn run_command_buffer(commands: &[u64]) {
-    if commands.len() == 0 {
+pub unsafe fn run_command_buffer(commands_in: Box<[Command]>) {
+    if commands_in.len() == 0 {
         return;
     }
 
-    data_cache_hit_writeback_invalidate(commands);
+    COMMANDS = Some(commands_in);
 
-    write_volatile(
-        RDP_STATUS,
-        RDP_STATUS_CLR_XBS | RDP_STATUS_CLR_FRZ | RDP_STATUS_CLR_FLS,
-    );
-    memory_barrier();
+    if let Some(commands) = &COMMANDS {
 
-    write_volatile(
-        RDP_COMMAND_BUFFER_START,
-        virtual_to_physical(commands.as_ptr()),
-    );
-    memory_barrier();
-    write_volatile(
-        RDP_COMMAND_BUFFER_END,
-        virtual_to_physical(commands.as_ptr().offset(commands.len() as isize)),
-    );
-    memory_barrier();
+        data_cache_hit_writeback_invalidate(&commands);
 
-    wait_for_done();
+        write_volatile(
+            RDP_STATUS,
+            RDP_STATUS_CLR_XBS | RDP_STATUS_CLR_FRZ | RDP_STATUS_CLR_FLS,
+        );
+        memory_barrier();
+
+        write_volatile(
+            RDP_COMMAND_BUFFER_START,
+            virtual_to_physical(commands.as_ptr()),
+        );
+        memory_barrier();
+        write_volatile(
+            RDP_COMMAND_BUFFER_END,
+            virtual_to_physical(commands.as_ptr().offset(commands.len() as isize)),
+        );
+        memory_barrier();
+
+        wait_for_done();
+    }
 }

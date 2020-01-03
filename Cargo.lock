@@ -192,6 +192,9 @@ dependencies = [
 [[package]]
 name = "n64-sys"
 version = "0.1.0"
+dependencies = [
+ "n64-math 0.1.0",
+]
 
 [[package]]
 name = "num"
