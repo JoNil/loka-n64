@@ -29,7 +29,7 @@ pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
 pub fn clear_buffer() {
     with_framebuffer(|fb| {
 
-        let cb = RdpCommandBuilder::new()
+        /*let cb = RdpCommandBuilder::new()
             .set_color_image(fb.as_mut_ptr() as *mut u16)
             .set_scissor(Vec2::zero(), Vec2::new(WIDTH as f32, HEIGHT as f32))
             .set_other_modes(
@@ -41,15 +41,15 @@ pub fn clear_buffer() {
             .sync_full()
             .build();
 
-        unsafe { rdp::run_command_buffer(cb) };
+        unsafe { rdp::run_command_buffer(cb) };*/
         
-        /*let mut p = fb.as_mut_ptr() as *mut u32;
+        let mut p = fb.as_mut_ptr() as *mut u32;
 
         for _ in 0..(fb.len()/2) {   
             unsafe {
                 *p =  0x0001_0001;
                 p = p.offset(1);
             }
-        }*/
+        }
     });
 }
