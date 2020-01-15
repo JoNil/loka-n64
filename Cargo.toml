@@ -7,4 +7,5 @@ members = [
     "n64-sys",
     "n64-math",
     "n64-alloc",
+    "byteswap",
 ]
