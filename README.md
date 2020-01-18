@@ -45,3 +45,4 @@ cargo run --bin game --release
 - https://www.kth.se/social/files/563c63c9f276547044e8695f/mips-ref-sheet.pdf
 - https://github.com/PeterLemon/N64/blob/master/RDP/16BPP/Rectangle/FillRectangle/FillRectangle320x240/FillRectangle16BPP320X240.asm
 - http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
+- http://ultra64.ca/files/documentation/silicon-graphics/SGI_Nintendo_64_RSP_Programmers_Guide.pdf
