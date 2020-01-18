@@ -1,5 +1,6 @@
+use crate::gfx::Texture;
 use minifb::{Window, Key};
-use n64_math::Color;
+use n64_math::{Color, Vec2};
 use rayon;
 use std::cell::RefCell;
 use std::thread_local;
@@ -125,6 +126,12 @@ pub fn swap_buffers() {
                 wd.frame_start = Instant::now();
             }
         }
+    });
+}
+
+pub fn draw_sprite(img: &Texture, pos: Vec2) {
+    with_framebuffer(|fb| {
+        
     });
 }
 

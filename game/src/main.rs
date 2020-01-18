@@ -11,12 +11,14 @@ mod components;
 mod enemy_system;
 mod entity;
 mod player;
+mod textures;
 
 use alloc::vec::Vec;
 use bullet_system::BulletSystem;
 use components::char_drawable;
 use components::health;
 use components::movable;
+use components::sprite_drawable;
 use enemy_system::EnemySystem;
 use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, Rng};
 use n64_math::Color;
@@ -106,6 +108,7 @@ fn main() {
             graphics::clear_buffer();
 
             char_drawable::draw();
+            sprite_drawable::draw();
 
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(

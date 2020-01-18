@@ -1,5 +1,6 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
+pub mod gfx;
 pub mod ipl3font;
 pub mod rand;
 

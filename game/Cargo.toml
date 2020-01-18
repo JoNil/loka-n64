@@ -15,8 +15,5 @@ spin = "0.5"
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-alloc = { path = "../n64-alloc" }
 
-[profile.dev]
-panic = "abort"
-
-[profile.release]
-panic = "abort"
+[build-dependencies]
+png = "0.15"
