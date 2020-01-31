@@ -1,10 +1,9 @@
-use core::ffi::c_void;
 use core::mem::size_of;
 
 #[inline]
-pub(crate) unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
-    let mut addr = ((block.as_ptr() as usize) & 0xffff_fffc) as *const c_void;
-    let mut len = block.len() * 8;
+pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
+    let mut addr = (block.as_ptr() as usize) & 0xffff_fffc;
+    let mut len = block.len() * size_of::<T>();
 
     while len > 0 {
         asm!("cache $0, ($1)"
@@ -14,8 +13,8 @@ pub(crate) unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
         : "volatile"
         );
 
-        len -= size_of::<T>();
-        addr = addr.offset(size_of::<T>() as isize);
+        len -= 4;
+        addr += 4;
     }
 }
 

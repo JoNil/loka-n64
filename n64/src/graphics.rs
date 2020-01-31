@@ -14,6 +14,11 @@ pub(crate) fn init() {
 
 #[inline]
 pub fn swap_buffers() {
+
+    with_framebuffer(|fb| {
+        unsafe { n64_sys::sys::data_cache_hit_writeback_invalidate(fb) };
+    });
+
     vi::wait_for_vblank();
     vi::swap_buffers();
 }

@@ -15,7 +15,7 @@ pub fn draw() {
             let screen_x = movable.pos.x() * (graphics::WIDTH as f32);
             let screen_y = movable.pos.y() * (graphics::HEIGHT as f32);
 
-            graphics::draw_sprite(&component.texture, Vec2::new(screen_x, screen_y));
+            //graphics::draw_sprite(&component.texture, Vec2::new(screen_x, screen_y));
         }
     }
 }
