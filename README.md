@@ -38,6 +38,7 @@ cargo run --bin game --release
 
 ## Links
 
+- https://github.com/command-tab/awesome-n64-development
 - http://n64dev.50megs.com/n64dox.html
 - http://n64dev.org/
 - https://github.com/n64decomp/sm64/
