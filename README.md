@@ -18,7 +18,7 @@ Place cargo-n64.exe in .cargo/bin
 
 ## Extract bootcode
 
-Download mario 64: https://edgeemu.net/details-11757.htm
+Download mario 64
 
 ```bash
 cargo run --bin extract_boot_code -- "roms/Super Mario 64 (U) [!].z64"
@@ -47,3 +47,4 @@ cargo run --bin game --release
 - https://github.com/PeterLemon/N64/blob/master/RDP/16BPP/Rectangle/FillRectangle/FillRectangle320x240/FillRectangle16BPP320X240.asm
 - http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
 - http://ultra64.ca/files/documentation/silicon-graphics/SGI_Nintendo_64_RSP_Programmers_Guide.pdf
+- http://krikzz.com/pub/support/everdrive-64/x-series/dev/
