@@ -10,3 +10,5 @@ members = [
     "byteswap",
     "deploy",
 ]
+
+default-members = ["deploy"]

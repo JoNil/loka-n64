@@ -4,7 +4,9 @@ use std::process::{Command, Stdio};
 
 fn main() -> Result<(), Box<dyn Error>> {
 
-    env::set_current_dir("../")?;
+    if !env::current_dir()?.ends_with("loka-n64") {
+        env::set_current_dir("../")?;
+    }
 
     println!("{:?}", env::current_dir()?);
 
