@@ -13,8 +13,8 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
         : "volatile"
         );
 
-        len -= 4;
-        addr += 4;
+        len -= 8;
+        addr += 8;
     }
 }
 
