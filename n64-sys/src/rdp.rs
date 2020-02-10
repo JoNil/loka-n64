@@ -3,7 +3,7 @@
 use alloc::boxed::Box;
 use core::ptr::{read_volatile, write_volatile};
 use crate::rdp_command_builder::Command;
-use crate::sys::{data_cache_hit_writeback_invalidate, memory_barrier};
+use crate::sys::{data_cache_hit_writeback, memory_barrier};
 
 const RDP_BASE: usize = 0xA410_0000;
 
@@ -43,7 +43,7 @@ const RDP_STATUS_CLR_CLK: usize = 0x200; // RDP_STATUS: Clear CLOCK COUNTER (Bit
 
 #[inline]
 fn wait_for_done() {
-    while unsafe { read_volatile(RDP_COMMAND_BUFFER_BUSY) } > 0 {}
+    while unsafe { read_volatile(RDP_STATUS) & RDP_STATUS_CMB } == 0 {}
 }
 
 static mut COMMANDS: Option<Box<[Command]>> = None;
@@ -58,7 +58,7 @@ pub unsafe fn run_command_buffer(commands_in: Box<[Command]>) {
 
     if let Some(commands) = &COMMANDS {
 
-        data_cache_hit_writeback_invalidate(&commands);
+        data_cache_hit_writeback(&commands);
 
         write_volatile(
             RDP_STATUS,

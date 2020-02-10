@@ -21,7 +21,7 @@ Place cargo-n64.exe in .cargo/bin
 Download mario 64
 
 ```bash
-cargo run --bin extract_boot_code -- "roms/Super Mario 64 (U) [!].z64"
+cargo run --package extract_boot_code -- "roms/Super Mario 64 (U) [!].z64"
 ```
 
 ## Build for N64
@@ -48,3 +48,4 @@ cargo run --package game --release
 - http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
 - http://ultra64.ca/files/documentation/silicon-graphics/SGI_Nintendo_64_RSP_Programmers_Guide.pdf
 - http://krikzz.com/pub/support/everdrive-64/x-series/dev/
+- https://dragonminded.com/n64dev/Reality%20Coprocessor.pdf
