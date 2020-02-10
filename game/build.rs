@@ -63,7 +63,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 out_image.extend(&rgba_to_5551(u32_pixel).to_ne_bytes());
             }
 
-            fs::write(&out_path, &out_image);
+            fs::write(&out_path, &out_image)?;
 
             res.push_str(&format!(
                 "static {}: Texture = Texture::from_static({}, {}, include_bytes!({:?}));",

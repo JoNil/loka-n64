@@ -2,7 +2,6 @@
 
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use core::mem::size_of;
 use core::ptr::{read_volatile, write_volatile};
 
 const VI_BASE: usize = 0xA440_0000;

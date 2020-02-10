@@ -19,6 +19,42 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
 }
 
 #[inline]
+pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
+    let mut addr = (block.as_ptr() as usize) & 0xffff_fffc;
+    let mut len = block.len() * size_of::<T>();
+
+    while len > 0 {
+        asm!("cache $0, ($1)"
+        :
+        : "i" (0x19), "r" (addr)
+        :
+        : "volatile"
+        );
+
+        len -= 4;
+        addr += 4;
+    }
+}
+
+#[inline]
+pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
+    let mut addr = (block.as_ptr() as usize) & 0xffff_fffc;
+    let mut len = block.len() * size_of::<T>();
+
+    while len > 0 {
+        asm!("cache $0, ($1)"
+        :
+        : "i" (0x11), "r" (addr)
+        :
+        : "volatile"
+        );
+
+        len -= 4;
+        addr += 4;
+    }
+}
+
+#[inline]
 pub(crate) fn uncached_addr<T>(address: *const T) -> *const T {
     ((address as usize) | 0x2000_0000) as *const T
 }

@@ -16,7 +16,7 @@ pub(crate) fn init() {
 pub fn swap_buffers() {
 
     with_framebuffer(|fb| {
-        unsafe { n64_sys::sys::data_cache_hit_writeback_invalidate(fb) };
+        unsafe { n64_sys::sys::data_cache_hit_writeback(fb) };
     });
 
     vi::wait_for_vblank();
@@ -46,7 +46,9 @@ pub fn clear_buffer() {
             .sync_full()
             .build();
 
-        unsafe { rdp::run_command_buffer(cb) };*/
+        unsafe { rdp::run_command_buffer(cb) };
+
+        unsafe { n64_sys::sys::data_cache_hit_invalidate(fb) };*/
         
         let mut p = fb.as_mut_ptr() as *mut u32;
 
