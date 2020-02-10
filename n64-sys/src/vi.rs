@@ -22,8 +22,10 @@ const VI_V_BURST: *mut usize = (VI_BASE + 0x2C) as _;
 const VI_X_SCALE: *mut usize = (VI_BASE + 0x30) as _;
 const VI_Y_SCALE: *mut usize = (VI_BASE + 0x34) as _;
 
-const FRAME_BUFFER_SIZE: usize = (2 * WIDTH * HEIGHT) as usize;
-static mut FRAME_BUFFER: Option<Box<[u16]>> = None;
+const FRAME_BUFFER_SIZE: usize = (WIDTH * HEIGHT) as usize;
+static mut USING_FRAMEBUFFER_A: bool = false;
+static mut FRAME_BUFFER_A: Option<Box<[u16]>> = None;
+static mut FRAME_BUFFER_B: Option<Box<[u16]>> = None;
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -33,14 +35,20 @@ pub fn init() {
     unsafe {
         let mut buffer = Vec::new();
         buffer.resize_with(FRAME_BUFFER_SIZE, || 0x0001);
-        FRAME_BUFFER = Some(buffer.into_boxed_slice())
+        FRAME_BUFFER_A = Some(buffer.into_boxed_slice())
+    };
+
+    unsafe {
+        let mut buffer = Vec::new();
+        buffer.resize_with(FRAME_BUFFER_SIZE, || 0x0001);
+        FRAME_BUFFER_B = Some(buffer.into_boxed_slice())
     };
 
     unsafe {
         write_volatile(VI_STATUS, 0x0000_320E);
         write_volatile(
             VI_DRAM_ADDR,
-            FRAME_BUFFER.as_mut().unwrap().as_mut_ptr() as usize,
+            FRAME_BUFFER_B.as_mut().unwrap().as_mut_ptr() as usize,
         );
         write_volatile(VI_H_WIDTH, WIDTH as usize);
         write_volatile(VI_V_INTR, 2);
@@ -68,13 +76,10 @@ pub fn wait_for_vblank() {
 
 #[inline]
 pub unsafe fn next_buffer() -> *mut u16 {
-    let current_fb = read_volatile(VI_DRAM_ADDR);
-    let frame_buffer = FRAME_BUFFER.as_mut().unwrap().as_mut_ptr();
-
-    if current_fb != frame_buffer as usize {
-        frame_buffer
+    if USING_FRAMEBUFFER_A {
+        FRAME_BUFFER_A.as_mut().unwrap().as_mut_ptr()
     } else {
-        (frame_buffer as usize + size_of::<i16>() * ((WIDTH * HEIGHT) as usize)) as *mut u16
+        FRAME_BUFFER_B.as_mut().unwrap().as_mut_ptr()
     }
 }
 
@@ -82,5 +87,6 @@ pub unsafe fn next_buffer() -> *mut u16 {
 pub fn swap_buffers() {
     unsafe {
         write_volatile(VI_DRAM_ADDR, next_buffer() as usize);
+        USING_FRAMEBUFFER_A = !USING_FRAMEBUFFER_A;
     }
 }

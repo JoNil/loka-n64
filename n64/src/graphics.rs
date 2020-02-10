@@ -52,7 +52,7 @@ pub fn clear_buffer() {
 
         for _ in 0..(fb.len()/2) {   
             unsafe {
-                *p =  0x0001_0001;
+                *p = 0x0001_0001;
                 p = p.offset(1);
             }
         }
