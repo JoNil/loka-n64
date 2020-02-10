@@ -54,6 +54,8 @@ fn main() {
     enemy_system.spawn_enemy(&mut rng);
     enemy_system.spawn_enemy(&mut rng);
 
+    let mut max = 0;
+
     loop {
         {
             let now = current_time_us();

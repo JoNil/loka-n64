@@ -1,5 +1,8 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
+pub use controllers::Controllers;
+pub use rand::Rng;
+
 pub mod gfx;
 pub mod ipl3font;
 pub mod rand;
@@ -16,9 +19,6 @@ pub mod graphics;
 #[cfg_attr(not(target_vendor = "nintendo64"), path = "controllers_emu.rs")]
 pub mod controllers;
 
-pub use controllers::Controllers;
-pub use rand::Rng;
-
 #[inline]
 pub fn init() {
     audio::init();
@@ -27,13 +27,13 @@ pub fn init() {
 
 #[inline]
 #[cfg(target_vendor = "nintendo64")]
-pub fn current_time_us() -> i32 {
+pub fn current_time_us() -> i64 {
     n64_sys::sys::current_time_us()
 }
 
 #[inline]
 #[cfg(not(target_vendor = "nintendo64"))]
-pub fn current_time_us() -> i32 {
+pub fn current_time_us() -> i64 {
 
     use std::time::Instant;
 
@@ -42,6 +42,6 @@ pub fn current_time_us() -> i32 {
     }
 
     BEGINNING.with(|beginning| {
-        (beginning.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i32
+        (beginning.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i64
     })
 }

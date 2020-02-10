@@ -17,16 +17,16 @@ pub const SHIP_SIZE: Vec2 = Vec2::new(
 
 pub struct Player {
     entity: OwnedEntity,
-    last_shoot_time: i32,
     score: i32,
+    last_shoot_time: i64,
 }
 
 impl Player {
     pub fn new() -> Player {
         let player = Player {
             entity: entity::create(),
-            last_shoot_time: 0,
             score: 0,
+            last_shoot_time: 0,
         };
 
         movable::add(&player.entity, MovableComponent {
@@ -82,7 +82,7 @@ impl Player {
         if let Some(movable) = movable::get_component(&self.entity) {
             let now = current_time_us();
 
-            if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS * 1000 {
+            if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS as i64 * 1000 {
                 if controllers.z() {
                     bullet_system.shoot_bullet(
                         rng,

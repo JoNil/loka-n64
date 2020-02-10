@@ -16,7 +16,7 @@ pub const ENEMY_SIZE: Vec2 = Vec2::new(
 pub struct Enemy {
     entity: OwnedEntity,
     shoot_speed: i32,
-    last_shoot_time: i32,
+    last_shoot_time: i64,
 }
 
 impl Enemy {
@@ -73,7 +73,7 @@ impl EnemySystem {
             }
 
             if let Some(movable) = movable::get_component(&enemy.entity) {
-                if now - enemy.last_shoot_time > enemy.shoot_speed * 1000 {
+                if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
                     bullet_system.shoot_bullet_enemy(rng, movable.pos, Vec2::new(0.0, 0.65));
                     enemy.last_shoot_time = now;
                 }

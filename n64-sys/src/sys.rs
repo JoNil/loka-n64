@@ -44,8 +44,8 @@ pub(crate) unsafe fn memory_barrier() {
 }
 
 #[inline]
-fn get_tick_rate() -> u32 {
-    93750000 / 2
+fn get_tick_rate() -> f32 {
+    93750000.0 / 2.0
 }
 
 #[inline]
@@ -61,7 +61,25 @@ fn get_ticks() -> u32 {
     res
 }
 
+static mut LAST_TICKS: u32 = 0;
+static mut TIME: i64 = 0;
+
 #[inline]
-pub fn current_time_us() -> i32 {
-    (get_ticks() / (get_tick_rate() / (1000 * 1000))) as i32
+pub fn current_time_us() -> i64 {
+
+    unsafe {
+
+        let now_ticks = get_ticks();
+
+        if now_ticks < LAST_TICKS {
+            TIME += 0x1_0000_0000 - LAST_TICKS as i64;
+            TIME += now_ticks as i64;
+        } else {
+            TIME += (now_ticks - LAST_TICKS) as i64;
+        }
+
+        LAST_TICKS = now_ticks;
+
+        (TIME as f32 / (get_tick_rate() / 1_000_000.0)) as i64
+    }
 }
