@@ -8,9 +8,7 @@ fn main() -> Result<(), Box<dyn Error>> {
         env::set_current_dir("../")?;
     }
 
-    println!("{:?}", env::current_dir()?);
-
-    Command::new("cargo")
+    assert!(Command::new("cargo")
         .args(&[
             "+nightly",
             "n64",
@@ -22,16 +20,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         ])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
-        .output()?;
+        .status()?
+        .success());
 
-    Command::new("tools/usb64.exe")
+    assert!(Command::new("tools/usb64.exe")
         .args(&[
             "-rom=target/mips-nintendo64-none/release/game.n64",
             "-start"
         ])
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
-        .output()?;
+        .status()?
+        .success());
 
     Ok(())
 }
