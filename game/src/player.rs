@@ -86,7 +86,7 @@ impl Player {
                 if controllers.z() {
                     bullet_system.shoot_bullet(
                         rng,
-                        movable.pos,
+                        movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                         Vec2::new(0.0, movable.speed.y() - 0.65),
                     );
                     self.last_shoot_time = now;

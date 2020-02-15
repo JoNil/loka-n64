@@ -74,7 +74,11 @@ impl EnemySystem {
 
             if let Some(movable) = movable::get_component(&enemy.entity) {
                 if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
-                    bullet_system.shoot_bullet_enemy(rng, movable.pos, Vec2::new(0.0, 0.65));
+                    bullet_system.shoot_bullet_enemy(
+                        rng,
+                        movable.pos + Vec2::new(0.0, ENEMY_SIZE.y() / 2.0),
+                        Vec2::new(0.0, 0.65),
+                    );
                     enemy.last_shoot_time = now;
                 }
             }
