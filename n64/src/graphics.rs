@@ -56,7 +56,7 @@ impl CommandBuffer {
         rdp.set_color_image(unsafe { vi::next_buffer() })
             .set_scissor(Vec2::zero(), Vec2::new(WIDTH as f32, HEIGHT as f32));
 
-        CommandBuffer { rdp: rdp }
+        CommandBuffer { rdp }
     }
 
     pub fn clear(&mut self) -> &mut Self {
@@ -71,6 +71,23 @@ impl CommandBuffer {
             )
             .set_fill_color(Color::new(0b00000_00000_00000_1))
             .fill_rectangle(Vec2::new(0.0, 0.0), Vec2::new(WIDTH as f32, HEIGHT as f32));
+
+        self
+    }
+
+    pub fn add_rect(&mut self, upper_left: Vec2, lower_right: Vec2, color: Color) -> &mut Self {
+        self.rdp
+            .sync_pipe()
+            .set_other_modes(
+                CYCLE_TYPE_FILL
+                    | CYCLE_TYPE_COPY
+                    | CYCLE_TYPE_2_CYCLE
+                    | RGB_DITHER_SEL_NO_DITHER
+                    | ALPHA_DITHER_SEL_NO_DITHER
+                    | FORCE_BLEND,
+            )
+            .set_fill_color(color)
+            .fill_rectangle(upper_left, lower_right);
 
         self
     }

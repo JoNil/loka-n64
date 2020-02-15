@@ -91,6 +91,7 @@ const COMMAND_SET_OTHER_MODE: u64 = 0xef;
 const COMMAND_SET_FILL_COLOR: u64 = 0xf7;
 const COMMAND_FILL_RECTANGLE: u64 = 0xf6;
 const COMMAND_SYNC_FULL: u64 = 0xe9;
+const COMMAND_SYNC_PIPE: u64 = 0xe7;
 
 #[repr(C, align(8))]
 pub struct Command(u64);
@@ -103,7 +104,7 @@ impl RdpCommandBuilder {
     #[inline]
     pub fn new() -> RdpCommandBuilder {
         RdpCommandBuilder {
-            commands: Vec::new(),
+            commands: Vec::with_capacity(1024),
         }
     }
 
@@ -165,6 +166,12 @@ impl RdpCommandBuilder {
     #[inline]
     pub fn sync_full(&mut self) -> &mut RdpCommandBuilder {
         self.commands.push(Command(COMMAND_SYNC_FULL << 56));
+        self
+    }
+
+    #[inline]
+    pub fn sync_pipe(&mut self) -> &mut RdpCommandBuilder {
+        self.commands.push(Command(COMMAND_SYNC_PIPE << 56));
         self
     }
 

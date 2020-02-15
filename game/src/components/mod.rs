@@ -2,10 +2,11 @@ use crate::entity::Entity;
 use alloc::vec::Vec;
 use spin::{Mutex, MutexGuard, Once};
 
+pub mod box_drawable;
 pub mod char_drawable;
-pub mod sprite_drawable;
-pub mod movable;
 pub mod health;
+pub mod movable;
+pub mod sprite_drawable;
 
 static SYSTEMS: Once<Mutex<Systems>> = Once::new();
 
@@ -134,13 +135,19 @@ macro_rules! impl_system {
             }
 
             #[allow(dead_code)]
-            pub fn components_and_entities(&self) -> impl Iterator<Item = (&$component_ident, crate::entity::Entity)> {
+            pub fn components_and_entities(
+                &self,
+            ) -> impl Iterator<Item = (&$component_ident, crate::entity::Entity)> {
                 self.components.iter().zip(self.entities.iter().copied())
             }
 
             #[allow(dead_code)]
-            pub fn components_and_entities_mut(&mut self) -> impl Iterator<Item = (&mut $component_ident, crate::entity::Entity)> {
-                self.components.iter_mut().zip(self.entities.iter().copied())
+            pub fn components_and_entities_mut(
+                &mut self,
+            ) -> impl Iterator<Item = (&mut $component_ident, crate::entity::Entity)> {
+                self.components
+                    .iter_mut()
+                    .zip(self.entities.iter().copied())
             }
         }
     };

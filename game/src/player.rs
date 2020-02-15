@@ -1,5 +1,5 @@
 use crate::bullet_system::BulletSystem;
-use crate::components::char_drawable::{self, CharDrawableComponent};
+use crate::components::box_drawable::{self, BoxDrawableComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::components::health::{self, HealthComponent};
 use crate::entity::{self, OwnedEntity, Entity};
@@ -33,9 +33,9 @@ impl Player {
             pos: START_POS,
             speed: Vec2::zero(),
         });
-        char_drawable::add(&player.entity, CharDrawableComponent {
+        box_drawable::add(&player.entity, BoxDrawableComponent {
+            size: SHIP_SIZE,
             color: SHIP_COLOR,
-            chr: b'A',
         });
         health::add(&player.entity, HealthComponent {
             health: 500,

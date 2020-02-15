@@ -1,5 +1,5 @@
 use crate::bullet_system::BulletSystem;
-use crate::components::char_drawable::{self, CharDrawableComponent};
+use crate::components::box_drawable::{self, BoxDrawableComponent};
 use crate::components::health::{self, HealthComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
@@ -45,11 +45,11 @@ impl EnemySystem {
                 speed: Vec2::zero(),
             },
         );
-        char_drawable::add(
+        box_drawable::add(
             &entity,
-            CharDrawableComponent {
+            BoxDrawableComponent {
+                size: ENEMY_SIZE,
                 color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-                chr: b'E',
             },
         );
         health::add(&entity, HealthComponent { health: 100 });

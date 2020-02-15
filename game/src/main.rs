@@ -19,6 +19,7 @@ use components::char_drawable;
 use components::health;
 use components::movable;
 use components::sprite_drawable;
+use components::box_drawable;
 use enemy_system::EnemySystem;
 use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, Rng, graphics::CommandBuffer};
 use n64_math::Color;
@@ -108,10 +109,13 @@ fn main() {
             // Draw
 
             cb.clear();
+
+            box_drawable::draw(&mut cb);
+            sprite_drawable::draw();
+
             cb.run();
 
             char_drawable::draw();
-            sprite_drawable::draw();
 
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(
