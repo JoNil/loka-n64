@@ -108,7 +108,7 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_color_image(mut self, image: *mut u16) -> RdpCommandBuilder {
+    pub fn set_color_image(&mut self, image: *mut u16) -> &mut RdpCommandBuilder {
         self.commands.push(Command(
             (COMMAND_SET_COLOR_IMAGE << 56)
                 | (0x2 << 51) // RGBA 16 bits per channel
@@ -120,7 +120,7 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_scissor(mut self, top_left: Vec2, bottom_right: Vec2) -> RdpCommandBuilder {
+    pub fn set_scissor(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
         self.commands.push(Command(
             (COMMAND_SET_SCISSOR << 56)
                 | (to_fixpoint_10_2(top_left.x()) << (32 + 12))
@@ -133,7 +133,7 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_other_modes(mut self, flags: u64) -> RdpCommandBuilder {
+    pub fn set_other_modes(&mut self, flags: u64) -> &mut RdpCommandBuilder {
         self.commands.push(Command(
             (COMMAND_SET_OTHER_MODE << 56) | (flags & ((1 << 56) - 1)) | 0x0000_000F_0000_0000,
         ));
@@ -141,7 +141,7 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_fill_color(mut self, color: Color) -> RdpCommandBuilder {
+    pub fn set_fill_color(&mut self, color: Color) -> &mut RdpCommandBuilder {
         self.commands.push(Command(
             (COMMAND_SET_FILL_COLOR << 56)
                 | ((color.value() as u64) << 16)
@@ -151,7 +151,7 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn fill_rectangle(mut self, top_left: Vec2, bottom_right: Vec2) -> RdpCommandBuilder {
+    pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
         self.commands.push(Command(
             (COMMAND_FILL_RECTANGLE << 56)
                 | (to_fixpoint_10_2(bottom_right.x()) << (32 + 12))
@@ -163,7 +163,7 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn sync_full(mut self) -> RdpCommandBuilder {
+    pub fn sync_full(&mut self) -> &mut RdpCommandBuilder {
         self.commands.push(Command(COMMAND_SYNC_FULL << 56));
         self
     }

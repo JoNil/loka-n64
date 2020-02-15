@@ -22,7 +22,7 @@ impl Controllers {
 
     #[inline]
     pub fn y(&self) -> i8 {
-        ((self.data[0] & 0xff) as i8)
+        (self.data[0] & 0xff) as i8
     }
 
     #[inline]

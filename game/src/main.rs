@@ -20,7 +20,7 @@ use components::health;
 use components::movable;
 use components::sprite_drawable;
 use enemy_system::EnemySystem;
-use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, Rng};
+use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, Rng, graphics::CommandBuffer};
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
 
@@ -103,9 +103,12 @@ fn main() {
         }*/
 
         {
+            let mut cb = CommandBuffer::new();
+
             // Draw
 
-            graphics::clear_buffer();
+            cb.clear();
+            cb.run();
 
             char_drawable::draw();
             sprite_drawable::draw();
@@ -131,7 +134,7 @@ fn main() {
     }
 
     loop {
-        graphics::clear_buffer();
+        graphics::slow_cpu_clear();
         ipl3font::draw_str(50, 10, RED, b"GAME OVER");
         graphics::swap_buffers();
     }
@@ -151,7 +154,7 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    graphics::clear_buffer();
+    graphics::slow_cpu_clear();
     ipl3font::draw_str(15, 15, RED, b"PANIC!");
     if let Some(location) = info.location() {
         ipl3font::draw_str(
@@ -174,7 +177,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[cfg(target_vendor = "nintendo64")]
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
-    graphics::clear_buffer();
+    graphics::slow_cpu_clear();
     ipl3font::draw_str(50, 15, RED, b"OUT OF MEMORY!");
     graphics::swap_buffers();
 
