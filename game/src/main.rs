@@ -15,7 +15,6 @@ mod textures;
 
 use alloc::vec::Vec;
 use bullet_system::BulletSystem;
-use components::char_drawable;
 use components::health;
 use components::movable;
 use components::sprite_drawable;
@@ -114,8 +113,6 @@ fn main() {
             sprite_drawable::draw();
 
             cb.run();
-
-            char_drawable::draw();
 
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(

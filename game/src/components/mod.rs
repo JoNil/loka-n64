@@ -3,7 +3,6 @@ use alloc::vec::Vec;
 use spin::{Mutex, MutexGuard, Once};
 
 pub mod box_drawable;
-pub mod char_drawable;
 pub mod health;
 pub mod movable;
 pub mod sprite_drawable;

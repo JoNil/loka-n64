@@ -1,4 +1,4 @@
-use crate::components::char_drawable::{self, CharDrawableComponent};
+use crate::components::box_drawable::{self, BoxDrawableComponent};
 use crate::components::health;
 use crate::components::movable::{self, MovableComponent};
 use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
@@ -40,16 +40,16 @@ impl BulletSystem {
                 speed: Vec2::new(speed.x() + spread, speed.y()),
             },
         );
-        char_drawable::add(
+        box_drawable::add(
             &entity,
-            CharDrawableComponent {
+            BoxDrawableComponent {
+                size: BULLET_SIZE,
                 color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-                chr: b'.',
             },
         );
 
         self.bullets.push(Bullet {
-            entity: entity,
+            entity,
             can_hit_player: false,
             can_hit_enemy: true,
         });
@@ -57,18 +57,12 @@ impl BulletSystem {
 
     pub fn shoot_bullet_enemy(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
         let entity = entity::create();
-        movable::add(
+        movable::add(&entity, MovableComponent { pos, speed });
+        box_drawable::add(
             &entity,
-            MovableComponent {
-                pos: pos,
-                speed: speed,
-            },
-        );
-        char_drawable::add(
-            &entity,
-            CharDrawableComponent {
+            BoxDrawableComponent {
+                size: BULLET_SIZE,
                 color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
-                chr: b'.',
             },
         );
 
