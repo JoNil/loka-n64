@@ -129,12 +129,6 @@ pub fn swap_buffers() {
     });
 }
 
-pub fn draw_sprite(img: &Texture, pos: Vec2) {
-    with_framebuffer(|fb| {
-        
-    });
-}
-
 #[inline]
 pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
     WINDOW_DATA.with(|wd| {
@@ -148,8 +142,31 @@ pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
     });
 }
 
-pub fn clear_buffer() {
+#[inline]
+pub fn slow_cpu_clear() {
     with_framebuffer(|fb| {
         fb.iter_mut().for_each(|v| *v = Color::new(0b00001_00001_00001_1));
     });
 }
+
+pub struct CommandBuffer {
+}
+
+impl CommandBuffer {
+    pub fn new() -> Self {
+        CommandBuffer { }
+    }
+
+    pub fn clear(&mut self) -> &mut Self {
+        self
+    }
+
+    pub fn add_rect(&mut self, upper_left: Vec2, lower_right: Vec2, color: Color) -> &mut Self {
+        self
+    }
+
+    pub fn run(mut self) {
+        
+    }
+}
+
