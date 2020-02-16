@@ -66,7 +66,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             fs::write(&out_path, &out_image)?;
 
             res.push_str(&format!(
-                "static {}: Texture = Texture::from_static({}, {}, include_bytes!({:?}));",
+                "static {}: Texture = Texture::from_static({}, {}, include_bytes!({:?}));\n",
                 name.to_uppercase(),
                 image.width,
                 image.height,
