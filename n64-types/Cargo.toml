@@ -1,5 +1,5 @@
 [package]
-name = "n64-sys"
+name = "n64-types"
 version = "0.1.0"
 authors = ["Jonathan Nilsson <jonathan@voysys.se>"]
 edition = "2018"
@@ -7,5 +7,3 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-n64-math = { path = "../n64-math" }
-n64-types = { path = "../n64-types" }

@@ -8,9 +8,9 @@ pub struct Texture {
 impl Texture {
     pub const fn from_static(width: i32, height: i32, data: &'static [u8]) -> Texture {
         Texture {
-            width: width,
-            height: height,
-            data: data,
+            width,
+            height,
+            data,
         }
     }
 }

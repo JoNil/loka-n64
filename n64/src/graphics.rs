@@ -1,9 +1,8 @@
 use core::slice;
-use n64_math::{Color, Vec2};
+use n64_math::Color;
 use n64_sys::vi;
 
 pub use n64_sys::rdp;
-pub use n64_sys::rdp_command_builder::{other_modes::*, RdpCommandBuilder};
 pub use n64_sys::vi::HEIGHT;
 pub use n64_sys::vi::WIDTH;
 
@@ -44,62 +43,4 @@ pub fn slow_cpu_clear() {
             }
         }
     });
-}
-
-pub struct CommandBuffer {
-    rdp: RdpCommandBuilder,
-}
-
-impl CommandBuffer {
-    pub fn new() -> Self {
-        let mut rdp = RdpCommandBuilder::new();
-        rdp.set_color_image(unsafe { vi::next_buffer() })
-            .set_scissor(Vec2::zero(), Vec2::new(WIDTH as f32, HEIGHT as f32));
-
-        CommandBuffer { rdp }
-    }
-
-    pub fn clear(&mut self) -> &mut Self {
-        self.rdp
-            .set_other_modes(
-                CYCLE_TYPE_FILL
-                    | CYCLE_TYPE_COPY
-                    | CYCLE_TYPE_2_CYCLE
-                    | RGB_DITHER_SEL_NO_DITHER
-                    | ALPHA_DITHER_SEL_NO_DITHER
-                    | FORCE_BLEND,
-            )
-            .set_fill_color(Color::new(0b00000_00000_00000_1))
-            .fill_rectangle(Vec2::new(0.0, 0.0), Vec2::new(WIDTH as f32, HEIGHT as f32));
-
-        self
-    }
-
-    pub fn add_rect(&mut self, upper_left: Vec2, lower_right: Vec2, color: Color) -> &mut Self {
-        self.rdp
-            .sync_pipe()
-            .set_other_modes(
-                CYCLE_TYPE_FILL
-                    | CYCLE_TYPE_COPY
-                    | CYCLE_TYPE_2_CYCLE
-                    | RGB_DITHER_SEL_NO_DITHER
-                    | ALPHA_DITHER_SEL_NO_DITHER
-                    | FORCE_BLEND,
-            )
-            .set_fill_color(color)
-            .fill_rectangle(upper_left, lower_right);
-
-        self
-    }
-
-    pub fn run(mut self) {
-        self.rdp.sync_full();
-        let commands = self.rdp.build();
-
-        unsafe { rdp::run_command_buffer(commands) };
-
-        with_framebuffer(|fb| {
-            unsafe { n64_sys::sys::data_cache_hit_invalidate(fb) };
-        });
-    }
 }

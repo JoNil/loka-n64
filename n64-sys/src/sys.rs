@@ -55,27 +55,27 @@ pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
 }
 
 #[inline]
-pub(crate) fn uncached_addr<T>(address: *const T) -> *const T {
+pub fn uncached_addr<T>(address: *const T) -> *const T {
     ((address as usize) | 0x2000_0000) as *const T
 }
 
 #[inline]
-pub(crate) fn uncached_addr_mut<T>(address: *mut T) -> *mut T {
+pub fn uncached_addr_mut<T>(address: *mut T) -> *mut T {
     ((address as usize) | 0x2000_0000) as *mut T
 }
 
 #[inline]
-pub(crate) fn virtual_to_physical<T>(address: *const T) -> usize {
+pub fn virtual_to_physical<T>(address: *const T) -> usize {
     (address as usize) & 0x1fff_ffff
 }
 
 #[inline]
-pub(crate) fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
+pub fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
     (address as usize) & 0x1fff_ffff
 }
 
 #[inline]
-pub(crate) unsafe fn memory_barrier() {
+pub unsafe fn memory_barrier() {
     asm!("" ::: "memory" : "volatile");
 }
 

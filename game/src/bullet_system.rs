@@ -5,8 +5,7 @@ use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
 use crate::entity::{self, OwnedEntity};
 use crate::{Player, SHIP_SIZE};
 use alloc::vec::Vec;
-use n64::Rng;
-use n64_math::{Aabb2, Color, Vec2};
+use n64_math::{self, Aabb2, Color, Vec2};
 
 const BULLET_SIZE: Vec2 = Vec2::new(2.0 / 320.0, 2.0 / 320.0);
 
@@ -29,8 +28,8 @@ impl BulletSystem {
         }
     }
 
-    pub fn shoot_bullet(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
-        let spread = (rng.next_f32() - 0.5) * 0.05;
+    pub fn shoot_bullet(&mut self, pos: Vec2, speed: Vec2) {
+        let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
         let entity = entity::create();
         movable::add(
@@ -44,7 +43,7 @@ impl BulletSystem {
             &entity,
             BoxDrawableComponent {
                 size: BULLET_SIZE,
-                color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+                color: Color::from_rgb(n64_math::random_f32(), n64_math::random_f32(), n64_math::random_f32()),
             },
         );
 
@@ -55,14 +54,14 @@ impl BulletSystem {
         });
     }
 
-    pub fn shoot_bullet_enemy(&mut self, rng: &mut Rng, pos: Vec2, speed: Vec2) {
+    pub fn shoot_bullet_enemy(&mut self, pos: Vec2, speed: Vec2) {
         let entity = entity::create();
         movable::add(&entity, MovableComponent { pos, speed });
         box_drawable::add(
             &entity,
             BoxDrawableComponent {
                 size: BULLET_SIZE,
-                color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+                color: Color::from_rgb(n64_math::random_f32(), n64_math::random_f32(), n64_math::random_f32()),
             },
         );
 
@@ -73,7 +72,7 @@ impl BulletSystem {
         });
     }
 
-    pub fn update(&mut self, enemy_system: &mut EnemySystem, player: &mut Player, rng: &mut Rng) {
+    pub fn update(&mut self, enemy_system: &mut EnemySystem, player: &mut Player) {
         let mut delete_list = Vec::new();
 
         for (i, bullet) in self.bullets.iter_mut().enumerate() {
@@ -92,7 +91,7 @@ impl BulletSystem {
                         );
 
                         if bullet_bb.collides(&enemy_bb) {
-                            health::damage(enemy.entity(), 50 + (rng.next_f32() * 20.0) as i32);
+                            health::damage(enemy.entity(), 50 + (n64_math::random_f32() * 20.0) as i32);
                             delete_list.push(i);
                         }
                     }
@@ -105,7 +104,7 @@ impl BulletSystem {
                     );
 
                     if bullet_bb.collides(&player_bb) {
-                        health::damage(player.entity(), 50 + (rng.next_f32() * 20.0) as i32);
+                        health::damage(player.entity(), 50 + (n64_math::random_f32() * 20.0) as i32);
                         delete_list.push(i);
                     }
                 }

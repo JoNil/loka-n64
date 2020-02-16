@@ -5,8 +5,8 @@ use crate::components::movable::{self, MovableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
 use crate::Player;
 use alloc::vec::Vec;
-use n64::{current_time_us, graphics, ipl3font, Rng};
-use n64_math::{Color, Vec2};
+use n64::{current_time_us, graphics, ipl3font};
+use n64_math::{self, Color, Vec2};
 
 pub const ENEMY_SIZE: Vec2 = Vec2::new(
     ipl3font::GLYPH_WIDTH as f32 / graphics::WIDTH as f32,
@@ -36,12 +36,12 @@ impl EnemySystem {
         }
     }
 
-    pub fn spawn_enemy(&mut self, rng: &mut Rng) {
+    pub fn spawn_enemy(&mut self) {
         let entity = entity::create();
         movable::add(
             &entity,
             MovableComponent {
-                pos: Vec2::new(rng.next_f32(), rng.next_f32() * 0.6),
+                pos: Vec2::new(n64_math::random_f32(), n64_math::random_f32() * 0.6),
                 speed: Vec2::zero(),
             },
         );
@@ -49,19 +49,19 @@ impl EnemySystem {
             &entity,
             BoxDrawableComponent {
                 size: ENEMY_SIZE,
-                color: Color::from_rgb(rng.next_f32(), rng.next_f32(), rng.next_f32()),
+                color: Color::from_rgb(n64_math::random_f32(), n64_math::random_f32(), n64_math::random_f32()),
             },
         );
         health::add(&entity, HealthComponent { health: 100 });
 
         self.enemies.push(Enemy {
             entity: entity,
-            shoot_speed: 500 + (rng.next_f32() * 200.0) as i32,
+            shoot_speed: 500 + (n64_math::random_f32() * 200.0) as i32,
             last_shoot_time: 0,
         });
     }
 
-    pub fn update(&mut self, bullet_system: &mut BulletSystem, player: &mut Player, rng: &mut Rng) {
+    pub fn update(&mut self, bullet_system: &mut BulletSystem, player: &mut Player) {
         let mut delete_list = Vec::new();
 
         let now = current_time_us();
@@ -75,7 +75,6 @@ impl EnemySystem {
             if let Some(movable) = movable::get_component(&enemy.entity) {
                 if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
                     bullet_system.shoot_bullet_enemy(
-                        rng,
                         movable.pos + Vec2::new(0.0, ENEMY_SIZE.y() / 2.0),
                         Vec2::new(0.0, 0.65),
                     );

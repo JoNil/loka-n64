@@ -3,7 +3,7 @@ use crate::components::box_drawable::{self, BoxDrawableComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::components::health::{self, HealthComponent};
 use crate::entity::{self, OwnedEntity, Entity};
-use n64::{current_time_us, graphics, ipl3font, Controllers, Rng};
+use n64::{current_time_us, graphics, ipl3font, Controllers};
 use n64_math::{Color, Vec2};
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
@@ -60,7 +60,6 @@ impl Player {
         &mut self,
         controllers: &Controllers,
         bullet_system: &mut BulletSystem,
-        rng: &mut Rng,
     ) {
         let controller_x = controllers.x();
         let controller_y = controllers.y();
@@ -85,7 +84,6 @@ impl Player {
             if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS as i64 * 1000 {
                 if controllers.z() {
                     bullet_system.shoot_bullet(
-                        rng,
                         movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                         Vec2::new(0.0, movable.speed.y() - 0.65),
                     );

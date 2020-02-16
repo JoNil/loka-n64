@@ -20,7 +20,7 @@ use components::movable;
 use components::sprite_drawable;
 use components::box_drawable;
 use enemy_system::EnemySystem;
-use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, Rng, graphics::CommandBuffer};
+use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, gfx::CommandBuffer};
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
 
@@ -35,7 +35,6 @@ fn main() {
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
     let mut enemy_system = EnemySystem::new();
-    let mut rng = Rng::new_unseeded();
 
     /*let mut audio_buffer = {
         let mut buffer = Vec::new();
@@ -47,12 +46,12 @@ fn main() {
     let mut time_frame = current_time_us();
     let mut dt;
 
-    enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);
-    enemy_system.spawn_enemy(&mut rng);
+    enemy_system.spawn_enemy();
+    enemy_system.spawn_enemy();
+    enemy_system.spawn_enemy();
+    enemy_system.spawn_enemy();
+    enemy_system.spawn_enemy();
+    enemy_system.spawn_enemy();
 
     loop {
         {
@@ -68,11 +67,11 @@ fn main() {
 
             controllers.update();
 
-            enemy_system.update(&mut bullet_system, &mut player, &mut rng);
+            enemy_system.update(&mut bullet_system, &mut player);
 
-            player.update(&controllers, &mut bullet_system, &mut rng);
+            player.update(&controllers, &mut bullet_system);
 
-            bullet_system.update(&mut enemy_system, &mut player, &mut rng);
+            bullet_system.update(&mut enemy_system, &mut player);
 
             movable::simulate(dt);
 
@@ -103,16 +102,17 @@ fn main() {
         }*/
 
         {
-            let mut cb = CommandBuffer::new();
 
-            // Draw
+            graphics::with_framebuffer(|fb| {
+                let mut cb = CommandBuffer::new(fb);
 
-            cb.clear();
+                cb.clear();
 
-            box_drawable::draw(&mut cb);
-            sprite_drawable::draw();
+                box_drawable::draw(&mut cb);
+                sprite_drawable::draw();
 
-            cb.run();
+                cb.run();
+            });
 
             ipl3font::draw_number(300, 10, BLUE, player.score());
             ipl3font::draw_number(

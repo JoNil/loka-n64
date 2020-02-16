@@ -1,11 +1,11 @@
 use crate::gfx::Texture;
 use minifb::{Window, Key};
-use n64_math::{Color, Vec2};
+use n64_math::Color;
 use rayon;
 use std::cell::RefCell;
 use std::thread_local;
 use std::thread;
-use std::time::{Instant, Duration};
+use std::time::Instant;
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -148,25 +148,3 @@ pub fn slow_cpu_clear() {
         fb.iter_mut().for_each(|v| *v = Color::new(0b00001_00001_00001_1));
     });
 }
-
-pub struct CommandBuffer {
-}
-
-impl CommandBuffer {
-    pub fn new() -> Self {
-        CommandBuffer { }
-    }
-
-    pub fn clear(&mut self) -> &mut Self {
-        self
-    }
-
-    pub fn add_rect(&mut self, upper_left: Vec2, lower_right: Vec2, color: Color) -> &mut Self {
-        self
-    }
-
-    pub fn run(mut self) {
-        
-    }
-}
-

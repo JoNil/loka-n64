@@ -1,11 +1,11 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
+extern crate alloc;
+
 pub use controllers::Controllers;
-pub use rand::Rng;
 
 pub mod gfx;
 pub mod ipl3font;
-pub mod rand;
 
 #[cfg_attr(target_vendor = "nintendo64", path = "audio.rs")]
 #[cfg_attr(not(target_vendor = "nintendo64"), path = "audio_emu.rs")]

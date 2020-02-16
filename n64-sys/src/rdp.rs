@@ -2,7 +2,7 @@
 
 use alloc::boxed::Box;
 use core::ptr::{read_volatile, write_volatile};
-use crate::rdp_command_builder::Command;
+use n64_types::RdpCommand;
 use crate::sys::{data_cache_hit_writeback, memory_barrier};
 
 const RDP_BASE: usize = 0xA410_0000;
@@ -46,10 +46,10 @@ fn wait_for_done() {
     while unsafe { read_volatile(RDP_STATUS) & RDP_STATUS_CMB } == 0 {}
 }
 
-static mut COMMANDS: Option<Box<[Command]>> = None;
+static mut COMMANDS: Option<Box<[RdpCommand]>> = None;
 
 #[inline]
-pub unsafe fn run_command_buffer(commands_in: Box<[Command]>) {
+pub unsafe fn run_command_buffer(commands_in: Box<[RdpCommand]>) {
     if commands_in.len() == 0 {
         return;
     }

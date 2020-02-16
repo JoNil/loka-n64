@@ -215,6 +215,7 @@ dependencies = [
  "minifb 0.14.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "n64-math 0.1.0",
  "n64-sys 0.1.0",
+ "n64-types 0.1.0",
  "rayon 1.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
@@ -231,6 +232,7 @@ name = "n64-math"
 version = "0.1.0"
 dependencies = [
  "libm 0.2.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
 
 [[package]]
@@ -238,7 +240,12 @@ name = "n64-sys"
 version = "0.1.0"
 dependencies = [
  "n64-math 0.1.0",
+ "n64-types 0.1.0",
 ]
+
+[[package]]
+name = "n64-types"
+version = "0.1.0"
 
 [[package]]
 name = "num"
