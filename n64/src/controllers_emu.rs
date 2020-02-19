@@ -1,8 +1,8 @@
-use minifb::Key;
 use crate::graphics;
+use winit::event::VirtualKeyCode;
 
 pub struct Controllers {
-    data: Vec<Key>,
+    data: Vec<VirtualKeyCode>,
 }
 
 impl Controllers {
@@ -22,11 +22,11 @@ impl Controllers {
     pub fn x(&self) -> i8 {
         let mut res = 0;
 
-        if self.data.contains(&Key::Right) {
+        if self.data.contains(&VirtualKeyCode ::Right) {
             res += 127;
         }
 
-        if self.data.contains(&Key::Left) {
+        if self.data.contains(&VirtualKeyCode ::Left) {
             res -= 127;
         }
 
@@ -37,11 +37,11 @@ impl Controllers {
     pub fn y(&self) -> i8 {
         let mut res = 0;
 
-        if self.data.contains(&Key::Up) {
+        if self.data.contains(&VirtualKeyCode ::Up) {
             res += 127;
         }
 
-        if self.data.contains(&Key::Down) {
+        if self.data.contains(&VirtualKeyCode ::Down) {
             res -= 127;
         }
 
@@ -50,16 +50,16 @@ impl Controllers {
 
     #[inline]
     pub fn a(&self) -> bool {
-        self.data.contains(&Key::X)
+        self.data.contains(&VirtualKeyCode ::X)
     }
 
     #[inline]
     pub fn b(&self) -> bool {
-        self.data.contains(&Key::C)
+        self.data.contains(&VirtualKeyCode ::C)
     }
 
     #[inline]
     pub fn z(&self) -> bool {
-        self.data.contains(&Key::Space)
+        self.data.contains(&VirtualKeyCode ::Space)
     }
 }

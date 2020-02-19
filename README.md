@@ -36,6 +36,13 @@ cargo +nightly n64 build --ipl3 bootcode.bin --package game
 cargo run --package game --release
 ```
 
+## Run on N64 with EverDrive-64 X7
+
+```bash
+cargo run
+```
+
+
 ## Links
 
 - https://github.com/command-tab/awesome-n64-development

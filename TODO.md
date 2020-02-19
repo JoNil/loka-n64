@@ -1,6 +1,6 @@
 # loka-n64
 
-- Render buggar
+- Emu for high level drawing api
+- Stats showing memory usage
 - Draw a textured quad
 - Rotate textured quad
-- Stats showing memory usage
