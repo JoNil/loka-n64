@@ -51,14 +51,68 @@ fn load_glsl(code: &str, stage: glsl_to_spirv::ShaderType) -> Vec<u32> {
     wgpu::read_spirv(glsl_to_spirv::compile(&code, stage).unwrap()).unwrap()
 }
 
+fn render(
+    swap_chain: &mut wgpu::SwapChain,
+    device: &wgpu::Device,
+    queue: &wgpu::Queue,
+    pipeline: &wgpu::RenderPipeline,
+    bind_group: &wgpu::BindGroup,
+    index_buf: &wgpu::Buffer,
+    vertex_buf: &wgpu::Buffer,
+) {
+    let frame = swap_chain
+        .get_next_texture()
+        .expect("Timeout when acquiring next swap chain texture");
+
+    let command_buf = {
+        let mut encoder =
+            device.create_command_encoder(&wgpu::CommandEncoderDescriptor { todo: 0 });
+        {
+            let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
+                    attachment: &frame.view,
+                    resolve_target: None,
+                    load_op: wgpu::LoadOp::Clear,
+                    store_op: wgpu::StoreOp::Store,
+                    clear_color: wgpu::Color {
+                        r: 0.4,
+                        g: 0.2,
+                        b: 0.3,
+                        a: 1.0,
+                    },
+                }],
+                depth_stencil_attachment: None,
+            });
+            rpass.set_pipeline(pipeline);
+            rpass.set_bind_group(0, bind_group, &[]);
+            rpass.set_index_buffer(index_buf, 0);
+            rpass.set_vertex_buffers(0, &[(vertex_buf, 0)]);
+            rpass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
+        }
+
+        encoder.finish()
+    };
+    queue.submit(&[command_buf]);
+}
+
 fn gpu_thread(shared: &Mutex<GfxEmuState>) {
+    let vs_bytes = load_glsl(
+        include_str!("gfx/shaders/colored_rect.vert"),
+        glsl_to_spirv::ShaderType::Vertex,
+    );
+    let fs_bytes = load_glsl(
+        include_str!("gfx/shaders/colored_rect.frag"),
+        glsl_to_spirv::ShaderType::Fragment,
+    );
+
     let event_loop = EventLoop::new();
 
     let window = {
         let mut builder = winit::window::WindowBuilder::new();
         builder = builder.with_title("N64");
-        builder = builder.with_inner_size(winit::dpi::LogicalSize::new(SCALE * WIDTH, SCALE * HEIGHT));
-        builder = builder.with_resizable(false);
+        builder =
+            builder.with_inner_size(winit::dpi::LogicalSize::new(SCALE * WIDTH, SCALE * HEIGHT));
+        builder = builder.with_visible(false);
         builder.build(&event_loop).unwrap()
     };
 
@@ -125,14 +179,6 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
         }],
     });
 
-    let vs_bytes = load_glsl(
-        include_str!("gfx/shaders/colored_rect.vert"),
-        glsl_to_spirv::ShaderType::Vertex,
-    );
-    let fs_bytes = load_glsl(
-        include_str!("gfx/shaders/colored_rect.frag"),
-        glsl_to_spirv::ShaderType::Fragment,
-    );
     let vs_module = device.create_shader_module(&vs_bytes);
     let fs_module = device.create_shader_module(&fs_bytes);
 
@@ -176,70 +222,55 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
         alpha_to_coverage_enabled: false,
     });
 
-    event_loop.run(move |event, _, control_flow| {
-        match event {
-            event::Event::MainEventsCleared => window.request_redraw(),
-            event::Event::WindowEvent {
-                event: WindowEvent::Resized(size),
+    window.set_visible(true);
+
+    render(
+        &mut swap_chain,
+        &device,
+        &queue,
+        &pipeline,
+        &bind_group,
+        &index_buf,
+        &vertex_buf,
+    );
+
+    event_loop.run(move |event, _, control_flow| match event {
+        event::Event::MainEventsCleared => window.request_redraw(),
+        event::Event::WindowEvent {
+            event: WindowEvent::Resized(size),
+            ..
+        } => {
+            sc_desc.width = size.width;
+            sc_desc.height = size.height;
+            swap_chain = device.create_swap_chain(&surface, &sc_desc);
+        }
+        event::Event::WindowEvent { event, .. } => match event {
+            WindowEvent::KeyboardInput {
+                input:
+                    event::KeyboardInput {
+                        virtual_keycode: Some(event::VirtualKeyCode::Escape),
+                        state: event::ElementState::Pressed,
+                        ..
+                    },
                 ..
-            } => {
-                sc_desc.width = size.width;
-                sc_desc.height = size.height;
-                swap_chain = device.create_swap_chain(&surface, &sc_desc);
             }
-            event::Event::WindowEvent { event, .. } => match event {
-                WindowEvent::KeyboardInput {
-                    input:
-                        event::KeyboardInput {
-                            virtual_keycode: Some(event::VirtualKeyCode::Escape),
-                            state: event::ElementState::Pressed,
-                            ..
-                        },
-                    ..
-                }
-                | WindowEvent::CloseRequested => {
-                    *control_flow = ControlFlow::Exit;
-                }
-                _ => {
-                }
-            },
-            event::Event::RedrawRequested(_) => {
-
-                let frame = swap_chain
-                    .get_next_texture()
-                    .expect("Timeout when acquiring next swap chain texture");
-                let command_buf = {
-                    let mut encoder =
-                        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { todo: 0 });
-                    {
-                        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                            color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                                attachment: &frame.view,
-                                resolve_target: None,
-                                load_op: wgpu::LoadOp::Clear,
-                                store_op: wgpu::StoreOp::Store,
-                                clear_color: wgpu::Color {
-                                    r: 0.4,
-                                    g: 0.2,
-                                    b: 0.3,
-                                    a: 1.0,
-                                },
-                            }],
-                            depth_stencil_attachment: None,
-                        });
-                        rpass.set_pipeline(&pipeline);
-                        rpass.set_bind_group(0, &bind_group, &[]);
-                        rpass.set_index_buffer(&index_buf, 0);
-                        rpass.set_vertex_buffers(0, &[(&vertex_buf, 0)]);
-                        rpass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
-                    }
-
-                    encoder.finish()
-                };
-                queue.submit(&[command_buf]);
+            | WindowEvent::CloseRequested => {
+                *control_flow = ControlFlow::Exit;
             }
             _ => {}
+        },
+        event::Event::RedrawRequested(_) => {
+            render(
+                &mut swap_chain,
+                &device,
+                &queue,
+                &pipeline,
+                &bind_group,
+                &index_buf,
+                &vertex_buf,
+            );
         }
+        _ => {}
     });
 }
 
