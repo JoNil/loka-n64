@@ -174,7 +174,7 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
             binding: 0,
             resource: wgpu::BindingResource::Buffer {
                 buffer: &uniform_buf,
-                range: 0..8,
+                range: 0..color.as_bytes().len() as u64,
             },
         }],
     });
