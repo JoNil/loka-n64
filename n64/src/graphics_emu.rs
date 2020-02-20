@@ -87,6 +87,10 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
 
     let index_buf = device.create_buffer_with_data(INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
+    let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+        bind_group_layouts: &[],
+    });
+
     loop {
         thread::yield_now();
     }
