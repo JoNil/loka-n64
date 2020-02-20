@@ -28,7 +28,7 @@ const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
 fn main() {
-    n64::init(|| {
+    n64::run(|| {
 
         let mut controllers = Controllers::new();
         let mut player = Player::new();

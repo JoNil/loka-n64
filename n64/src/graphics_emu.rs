@@ -7,13 +7,8 @@ use std::sync::{
 };
 use std::thread::{self, JoinHandle};
 use std::time::Instant;
-use wgpu::{self, Surface};
-use winit::{
-    event,
-    event::VirtualKeyCode,
-    event_loop::{ControlFlow, EventLoop},
-    window::Window,
-};
+use winit::{event::VirtualKeyCode, event_loop::EventLoop};
+use zerocopy::{AsBytes, FromBytes};
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -21,12 +16,39 @@ pub const HEIGHT: i32 = 240;
 const FRAME_BUFFER_SIZE: usize = (WIDTH * HEIGHT) as usize;
 const SCALE: i32 = 4;
 
+#[repr(C)]
+#[derive(Clone, Copy, AsBytes, FromBytes)]
+struct Vertex {
+    pos: [f32; 3],
+    tex_coord: [f32; 2],
+}
+
+static VERTEX_DATA: &'static [Vertex] = &[
+    Vertex {
+        pos: [-1.0, -1.0, 1.0],
+        tex_coord: [0.0, 0.0],
+    },
+    Vertex {
+        pos: [1.0, -1.0, 1.0],
+        tex_coord: [1.0, 0.0],
+    },
+    Vertex {
+        pos: [1.0, 1.0, 1.0],
+        tex_coord: [1.0, 1.0],
+    },
+    Vertex {
+        pos: [-1.0, 1.0, 1.0],
+        tex_coord: [0.0, 1.0],
+    },
+];
+
+static INDEX_DATA: &'static [u16] = &[0, 1, 2, 2, 3, 0];
+
 lazy_static! {
     static ref GFX_EMU_STATE: Mutex<GfxEmuState> = Mutex::new(GfxEmuState::new());
 }
 
 fn gpu_thread(shared: &Mutex<GfxEmuState>) {
-
     let event_loop = EventLoop::new();
 
     let window = {
@@ -36,6 +58,34 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
     };
 
     let surface = wgpu::Surface::create(&window);
+
+    let adapter = wgpu::Adapter::request(&wgpu::RequestAdapterOptions {
+        power_preference: wgpu::PowerPreference::Default,
+    },
+    wgpu::BackendBit::PRIMARY)
+    .unwrap();
+
+    let (device, queue) = adapter.request_device(&wgpu::DeviceDescriptor {
+        extensions: wgpu::Extensions {
+            anisotropic_filtering: false,
+        },
+        limits: wgpu::Limits::default(),
+    });
+
+    let mut sc_desc = wgpu::SwapChainDescriptor {
+        usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+        format: wgpu::TextureFormat::Bgra8UnormSrgb,
+        width: (SCALE * WIDTH) as u32,
+        height: (SCALE * HEIGHT) as u32,
+        present_mode: wgpu::PresentMode::Vsync,
+    };
+    let mut swap_chain = device.create_swap_chain(&surface, &sc_desc);
+
+    let mut init_encoder = device.create_command_encoder(&Default::default());
+
+    let vertex_buf = device.create_buffer_with_data(VERTEX_DATA.as_bytes(), wgpu::BufferUsage::VERTEX);
+
+    let index_buf = device.create_buffer_with_data(INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
     loop {
         thread::yield_now();
