@@ -96,15 +96,7 @@ fn render(
 }
 
 fn gpu_thread(shared: &Mutex<GfxEmuState>) {
-    let vs_bytes = load_glsl(
-        include_str!("gfx/shaders/colored_rect.vert"),
-        glsl_to_spirv::ShaderType::Vertex,
-    );
-    let fs_bytes = load_glsl(
-        include_str!("gfx/shaders/colored_rect.frag"),
-        glsl_to_spirv::ShaderType::Fragment,
-    );
-
+    
     let event_loop = EventLoop::new();
 
     let window = {
@@ -178,6 +170,15 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
             },
         }],
     });
+
+    let vs_bytes = load_glsl(
+        include_str!("gfx/shaders/colored_rect.vert"),
+        glsl_to_spirv::ShaderType::Vertex,
+    );
+    let fs_bytes = load_glsl(
+        include_str!("gfx/shaders/colored_rect.frag"),
+        glsl_to_spirv::ShaderType::Fragment,
+    );
 
     let vs_module = device.create_shader_module(&vs_bytes);
     let fs_module = device.create_shader_module(&fs_bytes);
