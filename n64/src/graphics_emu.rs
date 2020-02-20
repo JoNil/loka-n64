@@ -25,27 +25,9 @@ lazy_static! {
     static ref GFX_EMU_STATE: Mutex<GfxEmuState> = Mutex::new(GfxEmuState::new());
 }
 
-struct WindowThreadShared {
-    run: AtomicBool,
-}
+fn gpu_thread(shared: &Mutex<GfxEmuState>) {
 
-impl WindowThreadShared {
-    fn new() -> WindowThreadShared {
-        WindowThreadShared {
-            run: AtomicBool::new(true),
-        }
-    }
-}
-
-fn window_thread(shared: Arc<WindowThreadShared>) {
-    #[cfg(not(windows))]
     let event_loop = EventLoop::new();
-
-    #[cfg(windows)]
-    use winit::platform::windows::EventLoopExtWindows;
-
-    #[cfg(windows)]
-    let event_loop = winit::platform::windows::EventLoopExtWindows::new_any_thread();
 
     let window = {
         let mut builder = winit::window::WindowBuilder::new();
@@ -55,14 +37,12 @@ fn window_thread(shared: Arc<WindowThreadShared>) {
 
     let surface = wgpu::Surface::create(&window);
 
-    while shared.run.load(Ordering::SeqCst) {
+    loop {
         thread::yield_now();
     }
 }
 
 struct GfxEmuState {
-    window_shared: Arc<WindowThreadShared>,
-    window_thread: JoinHandle<()>,
     using_framebuffer_a: bool,
     framebuffer_a: Box<[Color]>,
     framebuffer_b: Box<[Color]>,
@@ -70,11 +50,7 @@ struct GfxEmuState {
 
 impl GfxEmuState {
     fn new() -> GfxEmuState {
-        let window_shared = Arc::new(WindowThreadShared::new());
-
         GfxEmuState {
-            window_shared: window_shared.clone(),
-            window_thread: thread::spawn(|| window_thread(window_shared)),
             using_framebuffer_a: false,
             framebuffer_a: {
                 let mut buffer = Vec::new();
@@ -89,8 +65,6 @@ impl GfxEmuState {
         }
     }
 
-    fn init(&mut self) {}
-
     pub fn next_buffer(&mut self) -> &mut [Color] {
         if self.using_framebuffer_a {
             &mut self.framebuffer_a[..]
@@ -100,18 +74,16 @@ impl GfxEmuState {
     }
 }
 
-impl Drop for GfxEmuState {
-    fn drop(&mut self) {
-        self.window_shared.run.store(false, Ordering::SeqCst);
-    }
-}
-
 pub(crate) fn get_keys() -> Vec<VirtualKeyCode> {
     Vec::new()
 }
 
-pub(crate) fn init() {
-    GFX_EMU_STATE.lock().unwrap().init();
+pub(crate) fn init(f: impl FnOnce() + Send + 'static) {
+    let state = GFX_EMU_STATE.lock().unwrap();
+
+    thread::spawn(f);
+
+    gpu_thread(&*GFX_EMU_STATE);
 }
 
 pub fn swap_buffers() {

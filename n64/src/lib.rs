@@ -20,9 +20,9 @@ pub mod graphics;
 pub mod controllers;
 
 #[inline]
-pub fn init() {
+pub fn init(f: impl FnOnce() + Send + 'static) {
     audio::init();
-    graphics::init();
+    graphics::init(f);
 }
 
 #[inline]

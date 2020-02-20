@@ -7,8 +7,9 @@ pub use n64_sys::vi::HEIGHT;
 pub use n64_sys::vi::WIDTH;
 
 #[inline]
-pub(crate) fn init() {
+pub(crate) fn init(f: impl FnOnce() + Send + 'static) {
     vi::init();
+    f();
 }
 
 #[inline]
@@ -22,7 +23,7 @@ pub fn swap_buffers() {
 }
 
 #[inline]
-pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
+pub fn with_framebuffer(f: impl FnOnce(&mut [Color])) {
     let frame_buffer = unsafe {
         slice::from_raw_parts_mut(vi::next_buffer() as *mut Color, (WIDTH * HEIGHT) as usize)
     };

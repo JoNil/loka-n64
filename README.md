@@ -42,7 +42,6 @@ cargo run --package game --release
 cargo run
 ```
 
-
 ## Links
 
 - https://github.com/command-tab/awesome-n64-development
