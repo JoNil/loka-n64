@@ -9,7 +9,7 @@ mod imp_static_array;
 mod neighbors;
 
 use const_init::ConstInit;
-use core::alloc::{Alloc, AllocErr};
+use core::alloc::{AllocRef, AllocErr};
 use core::alloc::{GlobalAlloc, Layout};
 use core::cell::Cell;
 use core::cmp;
@@ -634,7 +634,7 @@ impl<'a> N64Alloc<'a> {
     }
 }
 
-unsafe impl<'a, 'b> Alloc for &'b N64Alloc<'a>
+unsafe impl<'a, 'b> AllocRef for &'b N64Alloc<'a>
 where
     'a: 'b,
 {
