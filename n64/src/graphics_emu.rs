@@ -8,7 +8,10 @@ use std::sync::{
 };
 use std::thread::{self, JoinHandle};
 use std::time::Instant;
-use winit::{event::{self, WindowEvent, VirtualKeyCode}, event_loop::{EventLoop, ControlFlow}};
+use winit::{
+    event::{self, VirtualKeyCode, WindowEvent},
+    event_loop::{ControlFlow, EventLoop},
+};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const WIDTH: i32 = 320;
@@ -25,16 +28,16 @@ struct Vertex {
 
 static VERTEX_DATA: &'static [Vertex] = &[
     Vertex {
-        pos: [-1.0, -1.0, 1.0],
+        pos: [-0.5, -0.5, 1.0],
     },
     Vertex {
-        pos: [1.0, -1.0, 1.0],
+        pos: [0.5, -0.5, 1.0],
     },
     Vertex {
-        pos: [1.0, 1.0, 1.0],
+        pos: [0.5, 0.5, 1.0],
     },
     Vertex {
-        pos: [-1.0, 1.0, 1.0],
+        pos: [-0.5, 0.5, 1.0],
     },
 ];
 
@@ -54,8 +57,12 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
     let window = {
         let mut builder = winit::window::WindowBuilder::new();
         builder = builder.with_title("N64");
+        builder = builder.with_inner_size(winit::dpi::LogicalSize::new(SCALE * WIDTH, SCALE * HEIGHT));
+        builder = builder.with_resizable(false);
         builder.build(&event_loop).unwrap()
     };
+
+    let size = window.inner_size();
 
     let surface = wgpu::Surface::create(&window);
 
@@ -77,8 +84,8 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
     let mut sc_desc = wgpu::SwapChainDescriptor {
         usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
         format: wgpu::TextureFormat::Bgra8UnormSrgb,
-        width: (SCALE * WIDTH) as u32,
-        height: (SCALE * HEIGHT) as u32,
+        width: size.width,
+        height: size.height,
         present_mode: wgpu::PresentMode::Vsync,
     };
     let mut swap_chain = device.create_swap_chain(&surface, &sc_desc);
@@ -100,8 +107,10 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
         bind_group_layouts: &[&bind_group_layout],
     });
 
+    let color: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
+
     let uniform_buf = device.create_buffer_with_data(
-        [1.0, 0.0, 0.0, 1.0].as_bytes(),
+        color.as_bytes(),
         wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
     );
 
@@ -111,7 +120,7 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
             binding: 0,
             resource: wgpu::BindingResource::Buffer {
                 buffer: &uniform_buf,
-                range: 0..16,
+                range: 0..8,
             },
         }],
     });
@@ -139,7 +148,7 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
         }),
         rasterization_state: Some(wgpu::RasterizationStateDescriptor {
             front_face: wgpu::FrontFace::Ccw,
-            cull_mode: wgpu::CullMode::Back,
+            cull_mode: wgpu::CullMode::None,
             depth_bias: 0,
             depth_bias_slope_scale: 0.0,
             depth_bias_clamp: 0.0,
@@ -156,13 +165,11 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
         vertex_buffers: &[wgpu::VertexBufferDescriptor {
             stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
             step_mode: wgpu::InputStepMode::Vertex,
-            attributes: &[
-                wgpu::VertexAttributeDescriptor {
-                    format: wgpu::VertexFormat::Float3,
-                    offset: 0,
-                    shader_location: 0,
-                },
-            ],
+            attributes: &[wgpu::VertexAttributeDescriptor {
+                format: wgpu::VertexFormat::Float3,
+                offset: 0,
+                shader_location: 0,
+            }],
         }],
         sample_count: 1,
         sample_mask: !0,
@@ -170,7 +177,6 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
     });
 
     event_loop.run(move |event, _, control_flow| {
-        
         match event {
             event::Event::MainEventsCleared => window.request_redraw(),
             event::Event::WindowEvent {
@@ -195,15 +201,42 @@ fn gpu_thread(shared: &Mutex<GfxEmuState>) {
                     *control_flow = ControlFlow::Exit;
                 }
                 _ => {
-                    //example.update(event);
                 }
-            }
+            },
             event::Event::RedrawRequested(_) => {
+
                 let frame = swap_chain
                     .get_next_texture()
                     .expect("Timeout when acquiring next swap chain texture");
-                //let command_buf = example.render(&frame, &device);
-                //queue.submit(&[command_buf]);
+                let command_buf = {
+                    let mut encoder =
+                        device.create_command_encoder(&wgpu::CommandEncoderDescriptor { todo: 0 });
+                    {
+                        let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                            color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
+                                attachment: &frame.view,
+                                resolve_target: None,
+                                load_op: wgpu::LoadOp::Clear,
+                                store_op: wgpu::StoreOp::Store,
+                                clear_color: wgpu::Color {
+                                    r: 0.4,
+                                    g: 0.2,
+                                    b: 0.3,
+                                    a: 1.0,
+                                },
+                            }],
+                            depth_stencil_attachment: None,
+                        });
+                        rpass.set_pipeline(&pipeline);
+                        rpass.set_bind_group(0, &bind_group, &[]);
+                        rpass.set_index_buffer(&index_buf, 0);
+                        rpass.set_vertex_buffers(0, &[(&vertex_buf, 0)]);
+                        rpass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
+                    }
+
+                    encoder.finish()
+                };
+                queue.submit(&[command_buf]);
             }
             _ => {}
         }
