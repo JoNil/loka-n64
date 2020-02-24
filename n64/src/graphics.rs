@@ -7,9 +7,8 @@ pub use n64_sys::vi::HEIGHT;
 pub use n64_sys::vi::WIDTH;
 
 #[inline]
-pub(crate) fn init(f: impl FnOnce() + Send + 'static) {
+pub(crate) fn init() {
     vi::init();
-    f();
 }
 
 #[inline]

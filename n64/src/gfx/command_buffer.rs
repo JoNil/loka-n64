@@ -1,11 +1,9 @@
-use n64_math::{Vec2, Color};
-use rdp_command_builder::*;
-use crate::graphics::{WIDTH, HEIGHT};
-
-#[cfg(target_vendor = "nintendo64")]
-use n64_sys::rdp;
-
 mod rdp_command_builder;
+
+use crate::graphics::{WIDTH, HEIGHT};
+use n64_math::{Vec2, Color};
+use n64_sys::rdp;
+use rdp_command_builder::*;
 
 pub struct CommandBuffer<'a> {
     framebuffer: &'a mut [Color],
