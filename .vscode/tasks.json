@@ -3,21 +3,15 @@
     // for the documentation about the tasks.json format
     "version": "2.0.0",
     "tasks": [
-        /*{
-            "label": "format",
-            "type": "shell",
-            "command": "${command:editor.action.formatDocument}",
-        },*/
         {
             "label": "save_all",
             "type": "shell",
             "command": "${command:workbench.action.files.saveAll}",
-            //"dependsOn": "format",
         },
         {
             "label": "build",
             "type": "shell",
-            "command": "cargo build --bin game",
+            "command": "cargo build -p game",
             "problemMatcher": [
                 "$rustc"
             ],
