@@ -1,9 +1,7 @@
-mod rdp_command_builder;
-
-use crate::graphics::{WIDTH, HEIGHT};
-use n64_math::{Vec2, Color};
+use super::rdp_command_builder::*;
+use crate::graphics::{HEIGHT, WIDTH};
+use n64_math::{Color, Vec2};
 use n64_sys::rdp;
-use rdp_command_builder::*;
 
 pub struct CommandBuffer<'a> {
     framebuffer: &'a mut [Color],

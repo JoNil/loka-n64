@@ -281,6 +281,9 @@ impl GfxEmuState {
                         }
                         _ => {}
                     },
+                    event::Event::RedrawRequested(_) => {
+                        self.render_cpu_buffer();
+                    }
                     _ => {}
                 }
             });
