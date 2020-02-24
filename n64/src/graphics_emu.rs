@@ -8,6 +8,7 @@ use std::sync::{
     Arc, Mutex,
 };
 use std::thread::{self, JoinHandle};
+use std::thread_local;
 use std::time::Instant;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
@@ -46,7 +47,9 @@ static VERTEX_DATA: &'static [Vertex] = &[
 
 static INDEX_DATA: &'static [u16] = &[0, 1, 2, 2, 3, 0];
 
-static mut EVENT_LOOP: Option<EventLoop<()>> = None;
+thread_local! {
+    static EVENT_LOOP: Mutex<EventLoop<()>> = Mutex::new(EventLoop::new());
+}
 
 lazy_static! {
     static ref GFX_EMU_STATE: Mutex<GfxEmuState> = Mutex::new(GfxEmuState::new());
@@ -78,17 +81,13 @@ pub(crate) struct GfxEmuState {
 
 impl GfxEmuState {
     fn new() -> GfxEmuState {
-        unsafe { EVENT_LOOP = Some(EventLoop::new()) };
-
         let window = {
             let mut builder = winit::window::WindowBuilder::new();
             builder = builder.with_title("N64");
             builder = builder
                 .with_inner_size(winit::dpi::LogicalSize::new(SCALE * WIDTH, SCALE * HEIGHT));
             builder = builder.with_visible(false);
-            builder
-                .build(unsafe { EVENT_LOOP.as_ref().unwrap() })
-                .unwrap()
+            EVENT_LOOP.with(|event_loop| { builder.build(&event_loop.lock().unwrap()).unwrap() })
         };
 
         let size = window.inner_size();
@@ -219,6 +218,7 @@ impl GfxEmuState {
         window.set_visible(true);
 
         GfxEmuState {
+
             window,
             surface,
             adapter,
@@ -252,36 +252,40 @@ impl GfxEmuState {
     }
 
     pub fn poll_events(&mut self) {
-        unsafe { EVENT_LOOP.as_mut().unwrap() }.run_return(
-            move |event, _, _| match event {
-                event::Event::WindowEvent {
-                    event: WindowEvent::Resized(size),
-                    ..
-                } => {
-                    self.swap_chain_desc.width = size.width;
-                    self.swap_chain_desc.height = size.height;
-                    self.swap_chain = self
-                        .device
-                        .create_swap_chain(&self.surface, &self.swap_chain_desc);
-                }
-                event::Event::WindowEvent { event, .. } => match event {
-                    WindowEvent::KeyboardInput {
-                        input:
-                            event::KeyboardInput {
-                                virtual_keycode: Some(event::VirtualKeyCode::Escape),
-                                state: event::ElementState::Pressed,
-                                ..
-                            },
+        EVENT_LOOP.with(|event_loop| {
+            event_loop.lock().unwrap().run_return(move |event, _, control_flow| {
+                *control_flow = ControlFlow::Exit;
+                match event {
+                    event::Event::WindowEvent {
+                        event: WindowEvent::Resized(size),
                         ..
+                    } => {
+                        self.swap_chain_desc.width = size.width;
+                        self.swap_chain_desc.height = size.height;
+                        self.swap_chain = self
+                            .device
+                            .create_swap_chain(&self.surface, &self.swap_chain_desc);
                     }
-                    | WindowEvent::CloseRequested => {
-                        exit(0);
-                    }
+                    event::Event::WindowEvent { event, .. } => match event {
+                        WindowEvent::KeyboardInput {
+                            input:
+                                event::KeyboardInput {
+                                    virtual_keycode: Some(event::VirtualKeyCode::Escape),
+                                    state: event::ElementState::Pressed,
+                                    ..
+                                },
+                            ..
+                        }
+                        | WindowEvent::CloseRequested => {
+                            exit(0);
+                        }
+                        _ => {}
+                    },
                     _ => {}
-                },
-                _ => {}
-            },
-        );
+                }
+            });
+            
+        });
     }
 
     pub fn render_cpu_buffer(&mut self) {
@@ -348,6 +352,7 @@ pub fn swap_buffers() {
 
     state.poll_events();
     state.render_cpu_buffer();
+    println!("hej");
 }
 
 pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
