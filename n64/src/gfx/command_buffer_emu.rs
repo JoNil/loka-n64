@@ -97,7 +97,7 @@ impl<'a> CommandBuffer<'a> {
                             } => {
                                 let size = lower_right - upper_left;
                                 let scale = size / window_size;
-                                let offset = 2.0 * (upper_left - window_size / 2.0) / window_size;
+                                let offset = 2.0 * (upper_left - window_size / 2.0 + size/2.0) / window_size;
 
                                 let uniforms = ColoredRectUniforms {
                                     color: color.to_rgba(),
