@@ -1,4 +1,4 @@
-use crate::graphics::{ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, HEIGHT, INDEX_DATA, WIDTH};
+use crate::graphics::{ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, INDEX_DATA, WIDTH, HEIGHT};
 use core::marker::PhantomData;
 use core::mem;
 use n64_math::{Color, Vec2};
@@ -47,81 +47,111 @@ impl<'a> CommandBuffer<'a> {
     }
 
     pub fn run(mut self) {
-        /*let state = &mut *GFX_EMU_STATE.lock().unwrap();
+        let state = &mut *GFX_EMU_STATE.lock().unwrap();
 
         let frame = state
             .swap_chain
             .get_next_texture()
             .expect("Timeout when acquiring next swap chain texture");
 
-        let command_buf = {
-            let mut encoder = state.device.create_command_encoder(&Default::default());
+        //let mut uniform_buffers = Vec::new();
+        //let mut bind_groups = Vec::new();
 
-            {
-                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                        attachment: &frame.view,
-                        resolve_target: None,
-                        load_op: if self.clear {
-                            wgpu::LoadOp::Clear
-                        } else {
-                            wgpu::LoadOp::Load
-                        },
-                        store_op: wgpu::StoreOp::Store,
-                        clear_color: wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 1.0,
-                        },
-                    }],
-                    depth_stencil_attachment: None,
-                });
+                            /*for command in self.commands {
+                        match command {
+                            Command::Rect {
+                                upper_left,
+                                lower_right,
+                                color,
+                            } => {*/
 
-                render_pass.set_index_buffer(&state.index_buf, 0);
-                render_pass.set_vertex_buffers(0, &[(&state.vertex_buf, 0)]);
-                render_pass.set_pipeline(&state.colored_rect_pipeline);
+                                //let size = upper_left - lower_right;
+                                //let offset = upper_left + 2.0 * size;
+                                //let scale = 2.0 * size / Vec2::new(WIDTH as f32, HEIGHT as f32);
 
-                for command in self.commands {
-                    match command {
-                        Command::Rect {
-                            upper_left,
-                            lower_right,
-                            color,
-                        } => {
-                            let uniforms = ColoredRectUniforms {
-                                color: color.to_rgba(),
-                                offset: [0.0, 0.0, 0.0],
-                                scale: 1.0,
-                            };
+                                /*let uniforms = ColoredRectUniforms {
+                                    color: color.to_rgba(),
+                                    offset: [offset.x(), offset.y()],
+                                    scale: [scale.x(), scale.y()],
+                                };*/
 
-                            let uniform_buf = state.device.create_buffer_with_data(
-                                uniforms.as_bytes(),
-                                wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-                            );
+                                /*let uniforms = ColoredRectUniforms {
+                                    color: [0.0, 1.0, 0.0, 1.0],
+                                    offset: [0.1, 0.1],
+                                    scale: [0.2, 0.2],
+                                };*/
 
-                            let bind_group =
-                                state.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                                    layout: &state.colored_rect_bind_group_layout,
-                                    bindings: &[wgpu::Binding {
-                                        binding: 0,
-                                        resource: wgpu::BindingResource::Buffer {
-                                            buffer: &uniform_buf,
-                                            range: 0..mem::size_of::<ColoredRectUniforms>() as u64,
-                                        },
-                                    }],
-                                });
+                                //let uniforms_ref: &ColoredRectUniforms = &uniforms;
 
-                            //render_pass.set_bind_group(0, &bind_group, &[]);
-                            render_pass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
+                                //uniform_buffers.push(
+                                    //let buffer = state.device.create_buffer_with_data(
+                                    //uniforms_ref.as_bytes(),
+                                    //wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+                                //);//);
+/*                            }
                         }
-                    }
+                    }*/
+
+                    //println!("{}",uniform_buffers.len());
+
+                    //for uniforms in &uniform_buffers {
+                    //    bind_groups.push(
+                    /*let bind_group = 
+                            state.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                                layout: &state.colored_rect_bind_group_layout,
+                                bindings: &[wgpu::Binding {
+                                    binding: 0,
+                                    resource: wgpu::BindingResource::Buffer {
+                                        buffer: &buffer,
+                                        range: 0..(mem::size_of::<ColoredRectUniforms>() as u64),
+                                    },
+                                }],
+                            });*/
+                        //);
+                    //}
+
+        {
+
+            let command_buf = {
+                let mut encoder = state.device.create_command_encoder(&Default::default());
+                
+                {
+                    let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                        color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
+                            attachment: &frame.view,
+                            resolve_target: None,
+                            load_op: if self.clear {
+                                wgpu::LoadOp::Clear
+                            } else {
+                                wgpu::LoadOp::Load
+                            },
+                            store_op: wgpu::StoreOp::Store,
+                            clear_color: wgpu::Color {
+                                r: 0.0,
+                                g: 0.0,
+                                b: 1.0,
+                                a: 1.0,
+                            },
+                        }],
+                        depth_stencil_attachment: None,
+                    });
+
+                    render_pass.set_index_buffer(&state.index_buf, 0);
+                    render_pass.set_vertex_buffers(0, &[(&state.vertex_buf, 0)]);
+                    render_pass.set_pipeline(&state.colored_rect_pipeline);
+                    
+
+
+                    //for bind_group in &bind_groups {
+                        render_pass.set_bind_group(0, &state.colored_rect_bind_group, &[]);
+                        render_pass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
+                    //}
                 }
-            }
 
-            encoder.finish()
-        };
+                encoder.finish()
+            };
 
-        state.queue.submit(&[command_buf]);*/
+            state.queue.submit(&[command_buf]);
+        }
     }
 }

@@ -2,12 +2,11 @@
 
 layout(location = 0) out vec4 o_color;
 
-layout(std430, set = 0, binding = 0) buffer Locals {
+layout(set = 0, binding = 0) uniform Locals {
     vec4 u_color;
-    vec3 u_offset_and_scale;
-    float u_Scale;
+    vec4 u_offset_and_scale;
 };
 
 void main() {
-    o_color = u_color;
+    o_color = vec4(1.0, 0.0, 0.0, 0.0);//u_color;
 }

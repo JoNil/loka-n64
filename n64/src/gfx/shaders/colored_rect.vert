@@ -2,12 +2,14 @@
 
 layout(location = 0) in vec3 a_pos;
 
-layout(std430, set = 0, binding = 0) buffer Locals {
+layout(set = 0, binding = 0) uniform Locals {
     vec4 u_color;
-    vec3 u_offset_and_scale;
-    float u_Scale;
+    vec4 u_offset_and_scale;
 };
 
 void main() {
-    gl_Position = vec4(a_pos, 1.0);
+    vec2 offset = u_offset_and_scale.xy;
+    vec2 scale = u_offset_and_scale.zw;
+
+    gl_Position = vec4(vec3(scale*a_pos.xy + offset, a_pos.z), 1.0);
 }

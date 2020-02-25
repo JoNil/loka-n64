@@ -28,8 +28,8 @@ const SCALE: i32 = 4;
 #[derive(Clone, Copy, AsBytes, FromBytes)]
 pub(crate) struct ColoredRectUniforms {
     pub color: [f32; 4],
-    pub offset: [f32; 3],
-    pub scale: f32,
+    pub offset: [f32; 2],
+    pub scale: [f32; 2],
 }
 
 #[repr(C)]
@@ -60,6 +60,46 @@ thread_local! {
 }
 
 lazy_static! {
+    pub(crate) static ref FRAMEBUFFER_STATE: Mutex<FramebufferState> = Mutex::new(FramebufferState::new());
+}
+
+pub(crate) struct FramebufferState {
+    pub using_framebuffer_a: bool,
+    pub framebuffer_a: Box<[Color]>,
+    pub framebuffer_b: Box<[Color]>,
+}
+
+impl FramebufferState {
+    fn new() -> FramebufferState {
+        FramebufferState {
+            using_framebuffer_a: false,
+            framebuffer_a: {
+                let mut buffer = Vec::new();
+                buffer.resize_with(FRAME_BUFFER_SIZE, || Color::new(0x0001));
+                buffer.into_boxed_slice()
+            },
+            framebuffer_b: {
+                let mut buffer = Vec::new();
+                buffer.resize_with(FRAME_BUFFER_SIZE, || Color::new(0x0001));
+                buffer.into_boxed_slice()
+            },
+        }
+    }
+
+    pub(crate) fn next_buffer(&mut self) -> &mut [Color] {
+        if self.using_framebuffer_a {
+            &mut self.framebuffer_a[..]
+        } else {
+            &mut self.framebuffer_b[..]
+        }
+    }
+
+    pub(crate) fn swap_buffer(&mut self) {
+        self.using_framebuffer_a = !self.using_framebuffer_a;
+    }
+}
+
+lazy_static! {
     pub(crate) static ref GFX_EMU_STATE: Mutex<GfxEmuState> = Mutex::new(GfxEmuState::new());
 }
 
@@ -75,11 +115,13 @@ pub(crate) struct GfxEmuState {
     pub vertex_buf: wgpu::Buffer,
     pub index_buf: wgpu::Buffer,
 
-    /*pub colored_rect_bind_group_layout: wgpu::BindGroupLayout,
+    pub colored_rect_uniform_buffer: wgpu::Buffer,
+    pub colored_rect_bind_group_layout: wgpu::BindGroupLayout,
+    pub colored_rect_bind_group: wgpu::BindGroup,
     pub colored_rect_pipeline_layout: wgpu::PipelineLayout,
     pub colored_rect_vs_module: wgpu::ShaderModule,
     pub colored_rect_fs_module: wgpu::ShaderModule,
-    pub colored_rect_pipeline: wgpu::RenderPipeline,*/
+    pub colored_rect_pipeline: wgpu::RenderPipeline,
 
     pub copy_tex_src_tex_extent: wgpu::Extent3d,
     pub copy_tex_src_tex: wgpu::Texture,
@@ -91,10 +133,6 @@ pub(crate) struct GfxEmuState {
     pub copy_tex_vs_module: wgpu::ShaderModule,
     pub copy_tex_fs_module: wgpu::ShaderModule,
     pub copy_tex_pipeline: wgpu::RenderPipeline,
-
-    pub using_framebuffer_a: bool,
-    pub framebuffer_a: Box<[Color]>,
-    pub framebuffer_b: Box<[Color]>,
 }
 
 impl GfxEmuState {
@@ -142,12 +180,35 @@ impl GfxEmuState {
         let index_buf =
             device.create_buffer_with_data(INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
-        /*let colored_rect_bind_group_layout =
+        let colored_rect_uniform_buffer_data = ColoredRectUniforms {
+            color: [1.0, 0.0, 0.0, 1.0],
+            offset: [0.1, 0.2],
+            scale: [0.2, 0.2],
+        };
+
+        let colored_rect_uniform_buffer = device.create_buffer_with_data(
+            colored_rect_uniform_buffer_data.as_bytes(),
+            wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+        );
+
+        let colored_rect_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 bindings: &[wgpu::BindGroupLayoutBinding {
                     binding: 0,
                     visibility: wgpu::ShaderStage::FRAGMENT | wgpu::ShaderStage::VERTEX,
                     ty: wgpu::BindingType::UniformBuffer { dynamic: false },
+                }],
+            });
+
+        let colored_rect_bind_group = 
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &colored_rect_bind_group_layout,
+                bindings: &[wgpu::Binding {
+                    binding: 0,
+                    resource: wgpu::BindingResource::Buffer {
+                        buffer: &colored_rect_uniform_buffer,
+                        range: 0..(mem::size_of::<ColoredRectUniforms>() as u64),
+                    },
                 }],
             });
 
@@ -216,7 +277,7 @@ impl GfxEmuState {
                 sample_count: 1,
                 sample_mask: !0,
                 alpha_to_coverage_enabled: false,
-            });*/
+            });
 
         let copy_tex_src_tex_extent = wgpu::Extent3d {
             width: WIDTH as u32,
@@ -359,11 +420,13 @@ impl GfxEmuState {
             vertex_buf,
             index_buf,
 
-            /*colored_rect_bind_group_layout,
+            colored_rect_uniform_buffer,
+            colored_rect_bind_group_layout,
+            colored_rect_bind_group,
             colored_rect_pipeline_layout,
             colored_rect_vs_module,
             colored_rect_fs_module,
-            colored_rect_pipeline,*/
+            colored_rect_pipeline,
 
             copy_tex_src_tex_extent,
             copy_tex_src_tex,
@@ -375,22 +438,10 @@ impl GfxEmuState {
             copy_tex_vs_module,
             copy_tex_fs_module,
             copy_tex_pipeline,
-
-            using_framebuffer_a: false,
-            framebuffer_a: {
-                let mut buffer = Vec::new();
-                buffer.resize_with(FRAME_BUFFER_SIZE, || Color::new(0x0001));
-                buffer.into_boxed_slice()
-            },
-            framebuffer_b: {
-                let mut buffer = Vec::new();
-                buffer.resize_with(FRAME_BUFFER_SIZE, || Color::new(0x0001));
-                buffer.into_boxed_slice()
-            },
         }
     }
 
-    pub(crate) fn poll_events(&mut self) {
+    pub(crate) fn poll_events(&mut self, fb: &mut [Color]) {
         EVENT_LOOP.with(|event_loop| {
             event_loop
                 .lock()
@@ -424,7 +475,7 @@ impl GfxEmuState {
                             _ => {}
                         },
                         event::Event::RedrawRequested(_) => {
-                            self.render_cpu_buffer();
+                            self.render_cpu_buffer(fb);
                         }
                         _ => {}
                     }
@@ -432,11 +483,11 @@ impl GfxEmuState {
         });
     }
 
-    pub(crate) fn render_cpu_buffer(&mut self) {
-        let src_tex_data = {
+    pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
+        /*let src_tex_data = {
             let mut data = Vec::with_capacity((4 * WIDTH * HEIGHT) as usize);
 
-            for pixel in self.next_buffer() {
+            for pixel in fb {
                 let rgba = pixel.to_rgba();
 
                 data.push((rgba[0] * 255.0) as u8);
@@ -501,15 +552,7 @@ impl GfxEmuState {
 
             encoder.finish()
         };
-        self.queue.submit(&[render_command_buf]);
-    }
-
-    pub(crate) fn next_buffer(&mut self) -> &mut [Color] {
-        if self.using_framebuffer_a {
-            &mut self.framebuffer_a[..]
-        } else {
-            &mut self.framebuffer_b[..]
-        }
+        self.queue.submit(&[render_command_buf]);*/
     }
 }
 
@@ -520,14 +563,16 @@ pub(crate) fn init() {
 pub fn swap_buffers() {
     let mut state = GFX_EMU_STATE.lock().unwrap();
 
-    state.poll_events();
-    state.render_cpu_buffer();
+    with_framebuffer(|fb| {
+        state.poll_events(fb);
+        state.render_cpu_buffer(fb);
+    });
 
-    state.using_framebuffer_a = !state.using_framebuffer_a;
+    FRAMEBUFFER_STATE.lock().unwrap().swap_buffer();
 }
 
 pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
-    f(GFX_EMU_STATE.lock().unwrap().next_buffer());
+    f(FRAMEBUFFER_STATE.lock().unwrap().next_buffer());
 }
 
 #[inline]
