@@ -25,7 +25,7 @@ const FRAME_BUFFER_SIZE: usize = (WIDTH * HEIGHT) as usize;
 const SCALE: i32 = 4;
 
 #[repr(C)]
-#[derive(Clone, Copy, AsBytes, FromBytes)]
+#[derive(Clone, Copy, Debug, AsBytes, FromBytes)]
 pub(crate) struct ColoredRectUniforms {
     pub color: [f32; 4],
     pub offset: [f32; 2],
@@ -115,9 +115,7 @@ pub(crate) struct GfxEmuState {
     pub vertex_buf: wgpu::Buffer,
     pub index_buf: wgpu::Buffer,
 
-    pub colored_rect_uniform_buffer: wgpu::Buffer,
     pub colored_rect_bind_group_layout: wgpu::BindGroupLayout,
-    pub colored_rect_bind_group: wgpu::BindGroup,
     pub colored_rect_pipeline_layout: wgpu::PipelineLayout,
     pub colored_rect_vs_module: wgpu::ShaderModule,
     pub colored_rect_fs_module: wgpu::ShaderModule,
@@ -180,35 +178,12 @@ impl GfxEmuState {
         let index_buf =
             device.create_buffer_with_data(INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
-        let colored_rect_uniform_buffer_data = ColoredRectUniforms {
-            color: [1.0, 0.0, 0.0, 1.0],
-            offset: [0.1, 0.2],
-            scale: [0.2, 0.2],
-        };
-
-        let colored_rect_uniform_buffer = device.create_buffer_with_data(
-            colored_rect_uniform_buffer_data.as_bytes(),
-            wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-        );
-
         let colored_rect_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 bindings: &[wgpu::BindGroupLayoutBinding {
                     binding: 0,
                     visibility: wgpu::ShaderStage::FRAGMENT | wgpu::ShaderStage::VERTEX,
                     ty: wgpu::BindingType::UniformBuffer { dynamic: false },
-                }],
-            });
-
-        let colored_rect_bind_group = 
-            device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &colored_rect_bind_group_layout,
-                bindings: &[wgpu::Binding {
-                    binding: 0,
-                    resource: wgpu::BindingResource::Buffer {
-                        buffer: &colored_rect_uniform_buffer,
-                        range: 0..(mem::size_of::<ColoredRectUniforms>() as u64),
-                    },
                 }],
             });
 
@@ -420,9 +395,7 @@ impl GfxEmuState {
             vertex_buf,
             index_buf,
 
-            colored_rect_uniform_buffer,
             colored_rect_bind_group_layout,
-            colored_rect_bind_group,
             colored_rect_pipeline_layout,
             colored_rect_vs_module,
             colored_rect_fs_module,
@@ -484,7 +457,7 @@ impl GfxEmuState {
     }
 
     pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
-        /*let src_tex_data = {
+        let src_tex_data = {
             let mut data = Vec::with_capacity((4 * WIDTH * HEIGHT) as usize);
 
             for pixel in fb {
@@ -552,7 +525,7 @@ impl GfxEmuState {
 
             encoder.finish()
         };
-        self.queue.submit(&[render_command_buf]);*/
+        self.queue.submit(&[render_command_buf]);
     }
 }
 

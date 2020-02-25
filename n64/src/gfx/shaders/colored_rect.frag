@@ -8,5 +8,5 @@ layout(set = 0, binding = 0) uniform Locals {
 };
 
 void main() {
-    o_color = vec4(1.0, 0.0, 0.0, 0.0);//u_color;
+    o_color = u_color;
 }

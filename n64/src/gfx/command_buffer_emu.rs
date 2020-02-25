@@ -54,61 +54,8 @@ impl<'a> CommandBuffer<'a> {
             .get_next_texture()
             .expect("Timeout when acquiring next swap chain texture");
 
-        //let mut uniform_buffers = Vec::new();
-        //let mut bind_groups = Vec::new();
-
-                            /*for command in self.commands {
-                        match command {
-                            Command::Rect {
-                                upper_left,
-                                lower_right,
-                                color,
-                            } => {*/
-
-                                //let size = upper_left - lower_right;
-                                //let offset = upper_left + 2.0 * size;
-                                //let scale = 2.0 * size / Vec2::new(WIDTH as f32, HEIGHT as f32);
-
-                                /*let uniforms = ColoredRectUniforms {
-                                    color: color.to_rgba(),
-                                    offset: [offset.x(), offset.y()],
-                                    scale: [scale.x(), scale.y()],
-                                };*/
-
-                                /*let uniforms = ColoredRectUniforms {
-                                    color: [0.0, 1.0, 0.0, 1.0],
-                                    offset: [0.1, 0.1],
-                                    scale: [0.2, 0.2],
-                                };*/
-
-                                //let uniforms_ref: &ColoredRectUniforms = &uniforms;
-
-                                //uniform_buffers.push(
-                                    //let buffer = state.device.create_buffer_with_data(
-                                    //uniforms_ref.as_bytes(),
-                                    //wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-                                //);//);
-/*                            }
-                        }
-                    }*/
-
-                    //println!("{}",uniform_buffers.len());
-
-                    //for uniforms in &uniform_buffers {
-                    //    bind_groups.push(
-                    /*let bind_group = 
-                            state.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                                layout: &state.colored_rect_bind_group_layout,
-                                bindings: &[wgpu::Binding {
-                                    binding: 0,
-                                    resource: wgpu::BindingResource::Buffer {
-                                        buffer: &buffer,
-                                        range: 0..(mem::size_of::<ColoredRectUniforms>() as u64),
-                                    },
-                                }],
-                            });*/
-                        //);
-                    //}
+        let mut uniform_buffers = Vec::new();
+        let mut bind_groups = Vec::new();
 
         {
 
@@ -129,7 +76,7 @@ impl<'a> CommandBuffer<'a> {
                             clear_color: wgpu::Color {
                                 r: 0.0,
                                 g: 0.0,
-                                b: 1.0,
+                                b: 0.0,
                                 a: 1.0,
                             },
                         }],
@@ -140,12 +87,53 @@ impl<'a> CommandBuffer<'a> {
                     render_pass.set_vertex_buffers(0, &[(&state.vertex_buf, 0)]);
                     render_pass.set_pipeline(&state.colored_rect_pipeline);
                     
+                    let window_size = Vec2::new(WIDTH as f32, HEIGHT as f32);
 
+                    for command in self.commands {
+                        match command {
+                            Command::Rect {
+                                upper_left,
+                                lower_right,
+                                color,
+                            } => {
 
-                    //for bind_group in &bind_groups {
-                        render_pass.set_bind_group(0, &state.colored_rect_bind_group, &[]);
+                                let size = lower_right - upper_left;
+                                let scale = size / window_size;
+                                let offset = 2.0 * (upper_left - window_size / 2.0) / window_size;
+
+                                let uniforms = ColoredRectUniforms {
+                                    color: color.to_rgba(),
+                                    offset: [offset.x(), offset.y()],
+                                    scale: [scale.x(), scale.y()],
+                                };
+
+                                uniform_buffers.push(state.device.create_buffer_with_data(
+                                    uniforms.as_bytes(),
+                                    wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+                                ));
+                            }
+                        }
+                    }
+
+                    for uniforms in &uniform_buffers {
+                        bind_groups.push(
+                            state.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                                layout: &state.colored_rect_bind_group_layout,
+                                bindings: &[wgpu::Binding {
+                                    binding: 0,
+                                    resource: wgpu::BindingResource::Buffer {
+                                        buffer: &uniforms,
+                                        range: 0..(mem::size_of::<ColoredRectUniforms>() as u64),
+                                    },
+                                }],
+                            })
+                        );
+                    }
+
+                    for bind_group in &bind_groups {
+                        render_pass.set_bind_group(0, bind_group, &[]);
                         render_pass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
-                    //}
+                    }
                 }
 
                 encoder.finish()
