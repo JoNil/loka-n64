@@ -26,26 +26,34 @@ const SCALE: i32 = 4;
 
 #[repr(C)]
 #[derive(Clone, Copy, AsBytes, FromBytes)]
+pub(crate) struct ColoredRectUniforms {
+    pub color: [f32; 4],
+    pub offset: [f32; 3],
+    pub scale: f32,
+}
+
+#[repr(C)]
+#[derive(Clone, Copy, AsBytes, FromBytes)]
 struct Vertex {
     pos: [f32; 3],
 }
 
 static VERTEX_DATA: &'static [Vertex] = &[
     Vertex {
-        pos: [-0.5, -0.5, 1.0],
+        pos: [-1.0, -1.0, 1.0],
     },
     Vertex {
-        pos: [0.5, -0.5, 1.0],
+        pos: [1.0, -1.0, 1.0],
     },
     Vertex {
-        pos: [0.5, 0.5, 1.0],
+        pos: [1.0, 1.0, 1.0],
     },
     Vertex {
-        pos: [-0.5, 0.5, 1.0],
+        pos: [-1.0, 1.0, 1.0],
     },
 ];
 
-static INDEX_DATA: &'static [u16] = &[0, 1, 2, 2, 3, 0];
+pub(crate) static INDEX_DATA: &'static [u16] = &[0, 1, 2, 2, 3, 0];
 
 thread_local! {
     static EVENT_LOOP: Mutex<EventLoop<()>> = Mutex::new(EventLoop::new());
@@ -66,13 +74,23 @@ pub(crate) struct GfxEmuState {
 
     pub vertex_buf: wgpu::Buffer,
     pub index_buf: wgpu::Buffer,
-    pub bind_group_layout: wgpu::BindGroupLayout,
-    pub pipeline_layout: wgpu::PipelineLayout,
-    pub uniform_buf: wgpu::Buffer,
-    pub bind_group: wgpu::BindGroup,
-    pub vs_module: wgpu::ShaderModule,
-    pub fs_module: wgpu::ShaderModule,
-    pub pipeline: wgpu::RenderPipeline,
+
+    pub colored_rect_bind_group_layout: wgpu::BindGroupLayout,
+    pub colored_rect_pipeline_layout: wgpu::PipelineLayout,
+    pub colored_rect_vs_module: wgpu::ShaderModule,
+    pub colored_rect_fs_module: wgpu::ShaderModule,
+    pub colored_rect_pipeline: wgpu::RenderPipeline,
+
+    pub copy_tex_src_tex_extent: wgpu::Extent3d,
+    pub copy_tex_src_tex: wgpu::Texture,
+    pub copy_tex_src_tex_view: wgpu::TextureView,
+    pub copy_tex_src_sampler: wgpu::Sampler,
+    pub copy_tex_bind_group_layout: wgpu::BindGroupLayout,
+    pub copy_tex_bind_group: wgpu::BindGroup,
+    pub copy_tex_pipeline_layout: wgpu::PipelineLayout,
+    pub copy_tex_vs_module: wgpu::ShaderModule,
+    pub copy_tex_fs_module: wgpu::ShaderModule,
+    pub copy_tex_pipeline: wgpu::RenderPipeline,
 
     pub using_framebuffer_a: bool,
     pub framebuffer_a: Box<[Color]>,
@@ -124,37 +142,21 @@ impl GfxEmuState {
         let index_buf =
             device.create_buffer_with_data(INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            bindings: &[wgpu::BindGroupLayoutBinding {
-                binding: 0,
-                visibility: wgpu::ShaderStage::FRAGMENT,
-                ty: wgpu::BindingType::UniformBuffer { dynamic: false },
-            }],
-        });
+        let colored_rect_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                bindings: &[wgpu::BindGroupLayoutBinding {
+                    binding: 0,
+                    visibility: wgpu::ShaderStage::FRAGMENT | wgpu::ShaderStage::VERTEX,
+                    ty: wgpu::BindingType::UniformBuffer { dynamic: false },
+                }],
+            });
 
-        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-            bind_group_layouts: &[&bind_group_layout],
-        });
+        let colored_rect_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                bind_group_layouts: &[&colored_rect_bind_group_layout],
+            });
 
-        let color: [f32; 4] = [1.0, 0.0, 0.0, 1.0];
-
-        let uniform_buf = device.create_buffer_with_data(
-            color.as_bytes(),
-            wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-        );
-
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &bind_group_layout,
-            bindings: &[wgpu::Binding {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer {
-                    buffer: &uniform_buf,
-                    range: 0..color.as_bytes().len() as u64,
-                },
-            }],
-        });
-
-        let vs_bytes = wgpu::read_spirv(
+        let colored_rect_vs_bytes = wgpu::read_spirv(
             glsl_to_spirv::compile(
                 include_str!("gfx/shaders/colored_rect.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
@@ -163,7 +165,7 @@ impl GfxEmuState {
         )
         .unwrap();
 
-        let fs_bytes = wgpu::read_spirv(
+        let colored_rect_fs_bytes = wgpu::read_spirv(
             glsl_to_spirv::compile(
                 include_str!("gfx/shaders/colored_rect.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
@@ -172,17 +174,145 @@ impl GfxEmuState {
         )
         .unwrap();
 
-        let vs_module = device.create_shader_module(&vs_bytes);
-        let fs_module = device.create_shader_module(&fs_bytes);
+        let colored_rect_vs_module = device.create_shader_module(&colored_rect_vs_bytes);
+        let colored_rect_fs_module = device.create_shader_module(&colored_rect_fs_bytes);
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            layout: &pipeline_layout,
+        let colored_rect_pipeline =
+            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+                layout: &colored_rect_pipeline_layout,
+                vertex_stage: wgpu::ProgrammableStageDescriptor {
+                    module: &colored_rect_vs_module,
+                    entry_point: "main",
+                },
+                fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
+                    module: &colored_rect_fs_module,
+                    entry_point: "main",
+                }),
+                rasterization_state: Some(wgpu::RasterizationStateDescriptor {
+                    front_face: wgpu::FrontFace::Ccw,
+                    cull_mode: wgpu::CullMode::None,
+                    depth_bias: 0,
+                    depth_bias_slope_scale: 0.0,
+                    depth_bias_clamp: 0.0,
+                }),
+                primitive_topology: wgpu::PrimitiveTopology::TriangleList,
+                color_states: &[wgpu::ColorStateDescriptor {
+                    format: swap_chain_desc.format,
+                    color_blend: wgpu::BlendDescriptor::REPLACE,
+                    alpha_blend: wgpu::BlendDescriptor::REPLACE,
+                    write_mask: wgpu::ColorWrite::ALL,
+                }],
+                depth_stencil_state: None,
+                index_format: wgpu::IndexFormat::Uint16,
+                vertex_buffers: &[wgpu::VertexBufferDescriptor {
+                    stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                    step_mode: wgpu::InputStepMode::Vertex,
+                    attributes: &[wgpu::VertexAttributeDescriptor {
+                        format: wgpu::VertexFormat::Float3,
+                        offset: 0,
+                        shader_location: 0,
+                    }],
+                }],
+                sample_count: 1,
+                sample_mask: !0,
+                alpha_to_coverage_enabled: false,
+            });
+
+        let copy_tex_src_tex_extent = wgpu::Extent3d {
+            width: WIDTH as u32,
+            height: HEIGHT as u32,
+            depth: 1,
+        };
+        let copy_tex_src_tex = device.create_texture(&wgpu::TextureDescriptor {
+            size: copy_tex_src_tex_extent,
+            array_layer_count: 1,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
+        });
+        let copy_tex_src_tex_view = copy_tex_src_tex.create_default_view();
+
+        let copy_tex_src_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Nearest,
+            min_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            lod_min_clamp: -100.0,
+            lod_max_clamp: 100.0,
+            compare_function: wgpu::CompareFunction::Always,
+        });
+
+        let copy_tex_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                bindings: &[
+                    wgpu::BindGroupLayoutBinding {
+                        binding: 0,
+                        visibility: wgpu::ShaderStage::FRAGMENT,
+                        ty: wgpu::BindingType::SampledTexture {
+                            multisampled: false,
+                            dimension: wgpu::TextureViewDimension::D2,
+                        },
+                    },
+                    wgpu::BindGroupLayoutBinding {
+                        binding: 1,
+                        visibility: wgpu::ShaderStage::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler,
+                    },
+                ],
+            });
+
+        let copy_tex_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &copy_tex_bind_group_layout,
+            bindings: &[
+                wgpu::Binding {
+                    binding: 0,
+                    resource: wgpu::BindingResource::TextureView(&copy_tex_src_tex_view),
+                },
+                wgpu::Binding {
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&copy_tex_src_sampler),
+                },
+            ],
+        });
+
+        let copy_tex_pipeline_layout =
+            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+                bind_group_layouts: &[&copy_tex_bind_group_layout],
+            });
+
+        let copy_tex_vs_bytes = wgpu::read_spirv(
+            glsl_to_spirv::compile(
+                include_str!("gfx/shaders/copy_tex.vert"),
+                glsl_to_spirv::ShaderType::Vertex,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+
+        let copy_tex_fs_bytes = wgpu::read_spirv(
+            glsl_to_spirv::compile(
+                include_str!("gfx/shaders/copy_tex.frag"),
+                glsl_to_spirv::ShaderType::Fragment,
+            )
+            .unwrap(),
+        )
+        .unwrap();
+
+        let copy_tex_vs_module = { device.create_shader_module(&copy_tex_vs_bytes) };
+        let copy_tex_fs_module = device.create_shader_module(&copy_tex_fs_bytes);
+
+        let copy_tex_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+            layout: &copy_tex_pipeline_layout,
             vertex_stage: wgpu::ProgrammableStageDescriptor {
-                module: &vs_module,
+                module: &copy_tex_vs_module,
                 entry_point: "main",
             },
             fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
-                module: &fs_module,
+                module: &colored_rect_fs_module,
                 entry_point: "main",
             }),
             rasterization_state: Some(wgpu::RasterizationStateDescriptor {
@@ -228,13 +358,23 @@ impl GfxEmuState {
 
             vertex_buf,
             index_buf,
-            bind_group_layout,
-            pipeline_layout,
-            uniform_buf,
-            bind_group,
-            vs_module,
-            fs_module,
-            pipeline,
+
+            colored_rect_bind_group_layout,
+            colored_rect_pipeline_layout,
+            colored_rect_vs_module,
+            colored_rect_fs_module,
+            colored_rect_pipeline,
+
+            copy_tex_src_tex_extent,
+            copy_tex_src_tex,
+            copy_tex_src_tex_view,
+            copy_tex_src_sampler,
+            copy_tex_bind_group_layout,
+            copy_tex_bind_group,
+            copy_tex_pipeline_layout,
+            copy_tex_vs_module,
+            copy_tex_fs_module,
+            copy_tex_pipeline,
 
             using_framebuffer_a: false,
             framebuffer_a: {
@@ -293,13 +433,49 @@ impl GfxEmuState {
     }
 
     pub(crate) fn render_cpu_buffer(&mut self) {
+        let src_tex_data = {
+            let mut data = Vec::with_capacity((4 * WIDTH * HEIGHT) as usize);
+
+            for pixel in self.next_buffer() {
+                let rgba = pixel.to_rgba();
+
+                data.push((rgba[0] / 255.0) as u8);
+                data.push((rgba[1] / 255.0) as u8);
+                data.push((rgba[2] / 255.0) as u8);
+                data.push((rgba[3] / 255.0) as u8);
+            }
+
+            data.into_boxed_slice()
+        };
+
         let frame = self
             .swap_chain
             .get_next_texture()
             .expect("Timeout when acquiring next swap chain texture");
 
+        let temp_buf = self
+            .device
+            .create_buffer_with_data(&src_tex_data, wgpu::BufferUsage::COPY_SRC);
+
         let command_buf = {
             let mut encoder = self.device.create_command_encoder(&Default::default());
+
+            encoder.copy_buffer_to_texture(
+                wgpu::BufferCopyView {
+                    buffer: &temp_buf,
+                    offset: 0,
+                    row_pitch: 4 * WIDTH as u32,
+                    image_height: HEIGHT as u32,
+                },
+                wgpu::TextureCopyView {
+                    texture: &self.copy_tex_src_tex,
+                    mip_level: 0,
+                    array_layer: 0,
+                    origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
+                },
+                self.copy_tex_src_tex_extent,
+            );
+
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
@@ -308,16 +484,16 @@ impl GfxEmuState {
                         load_op: wgpu::LoadOp::Clear,
                         store_op: wgpu::StoreOp::Store,
                         clear_color: wgpu::Color {
-                            r: 0.4,
-                            g: 0.2,
-                            b: 0.3,
+                            r: 0.0,
+                            g: 0.0,
+                            b: 0.0,
                             a: 1.0,
                         },
                     }],
                     depth_stencil_attachment: None,
                 });
-                render_pass.set_pipeline(&self.pipeline);
-                render_pass.set_bind_group(0, &self.bind_group, &[]);
+                render_pass.set_pipeline(&self.copy_tex_pipeline);
+                render_pass.set_bind_group(0, &self.copy_tex_bind_group, &[]);
                 render_pass.set_index_buffer(&self.index_buf, 0);
                 render_pass.set_vertex_buffers(0, &[(&self.vertex_buf, 0)]);
                 render_pass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
