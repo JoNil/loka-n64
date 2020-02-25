@@ -1,6 +1,7 @@
 use crate::gfx::Texture;
 use lazy_static::lazy_static;
 use n64_math::Color;
+use std::collections::HashSet;
 use std::mem;
 use std::process::exit;
 use std::sync::{
@@ -60,7 +61,8 @@ thread_local! {
 }
 
 lazy_static! {
-    pub(crate) static ref FRAMEBUFFER_STATE: Mutex<FramebufferState> = Mutex::new(FramebufferState::new());
+    pub(crate) static ref FRAMEBUFFER_STATE: Mutex<FramebufferState> =
+        Mutex::new(FramebufferState::new());
 }
 
 pub(crate) struct FramebufferState {
@@ -105,6 +107,8 @@ lazy_static! {
 
 pub(crate) struct GfxEmuState {
     pub window: Window,
+    pub keys_down: HashSet<VirtualKeyCode>,
+
     pub surface: wgpu::Surface,
     pub adapter: wgpu::Adapter,
     pub device: wgpu::Device,
@@ -143,6 +147,8 @@ impl GfxEmuState {
             builder = builder.with_visible(false);
             EVENT_LOOP.with(|event_loop| builder.build(&event_loop.lock().unwrap()).unwrap())
         };
+
+        let keys_down = HashSet::new();
 
         let size = window.inner_size();
 
@@ -385,6 +391,8 @@ impl GfxEmuState {
 
         GfxEmuState {
             window,
+            keys_down,
+
             surface,
             adapter,
             device,
@@ -444,6 +452,28 @@ impl GfxEmuState {
                             }
                             | WindowEvent::CloseRequested => {
                                 exit(0);
+                            }
+                            WindowEvent::KeyboardInput {
+                                input:
+                                    event::KeyboardInput {
+                                        virtual_keycode: Some(keycode),
+                                        state: event::ElementState::Pressed,
+                                        ..
+                                    },
+                                ..
+                            } => {
+                                self.keys_down.insert(keycode);
+                            }
+                            WindowEvent::KeyboardInput {
+                                input:
+                                    event::KeyboardInput {
+                                        virtual_keycode: Some(keycode),
+                                        state: event::ElementState::Released,
+                                        ..
+                                    },
+                                ..
+                            } => {
+                                self.keys_down.remove(&keycode);
                             }
                             _ => {}
                         },

@@ -1,6 +1,8 @@
 # loka-n64
 
-- Emu for high level drawing api
+- Download texture
+- Don't use different paths for emu and real
+
 - Stats showing memory usage
 - Draw a textured quad
 - Rotate textured quad

@@ -1,20 +1,20 @@
 use crate::graphics;
+use std::collections::HashSet;
 use winit::event::VirtualKeyCode;
 
 pub struct Controllers {
-    data: Vec<VirtualKeyCode>,
+    data: HashSet<VirtualKeyCode>,
 }
 
 impl Controllers {
     #[inline]
     pub fn new() -> Controllers {
-        Controllers {
-            data: Vec::new(),
-        }
+        Controllers { data: HashSet::new() }
     }
 
     #[inline]
     pub fn update(&mut self) {
+        self.data = graphics::GFX_EMU_STATE.lock().unwrap().keys_down.clone();
     }
 
     #[inline]
