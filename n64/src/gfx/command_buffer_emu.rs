@@ -47,7 +47,7 @@ impl<'a> CommandBuffer<'a> {
     }
 
     pub fn run(mut self) {
-        let state = &mut *GFX_EMU_STATE.lock().unwrap();
+        /*let state = &mut *GFX_EMU_STATE.lock().unwrap();
 
         let frame = state
             .swap_chain
@@ -122,6 +122,6 @@ impl<'a> CommandBuffer<'a> {
             encoder.finish()
         };
 
-        state.queue.submit(&[command_buf]);
+        state.queue.submit(&[command_buf]);*/
     }
 }

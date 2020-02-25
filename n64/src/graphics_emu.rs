@@ -75,11 +75,11 @@ pub(crate) struct GfxEmuState {
     pub vertex_buf: wgpu::Buffer,
     pub index_buf: wgpu::Buffer,
 
-    pub colored_rect_bind_group_layout: wgpu::BindGroupLayout,
+    /*pub colored_rect_bind_group_layout: wgpu::BindGroupLayout,
     pub colored_rect_pipeline_layout: wgpu::PipelineLayout,
     pub colored_rect_vs_module: wgpu::ShaderModule,
     pub colored_rect_fs_module: wgpu::ShaderModule,
-    pub colored_rect_pipeline: wgpu::RenderPipeline,
+    pub colored_rect_pipeline: wgpu::RenderPipeline,*/
 
     pub copy_tex_src_tex_extent: wgpu::Extent3d,
     pub copy_tex_src_tex: wgpu::Texture,
@@ -142,7 +142,7 @@ impl GfxEmuState {
         let index_buf =
             device.create_buffer_with_data(INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
-        let colored_rect_bind_group_layout =
+        /*let colored_rect_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
                 bindings: &[wgpu::BindGroupLayoutBinding {
                     binding: 0,
@@ -216,7 +216,7 @@ impl GfxEmuState {
                 sample_count: 1,
                 sample_mask: !0,
                 alpha_to_coverage_enabled: false,
-            });
+            });*/
 
         let copy_tex_src_tex_extent = wgpu::Extent3d {
             width: WIDTH as u32,
@@ -312,7 +312,7 @@ impl GfxEmuState {
                 entry_point: "main",
             },
             fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
-                module: &colored_rect_fs_module,
+                module: &copy_tex_fs_module,
                 entry_point: "main",
             }),
             rasterization_state: Some(wgpu::RasterizationStateDescriptor {
@@ -359,11 +359,11 @@ impl GfxEmuState {
             vertex_buf,
             index_buf,
 
-            colored_rect_bind_group_layout,
+            /*colored_rect_bind_group_layout,
             colored_rect_pipeline_layout,
             colored_rect_vs_module,
             colored_rect_fs_module,
-            colored_rect_pipeline,
+            colored_rect_pipeline,*/
 
             copy_tex_src_tex_extent,
             copy_tex_src_tex,
@@ -439,10 +439,10 @@ impl GfxEmuState {
             for pixel in self.next_buffer() {
                 let rgba = pixel.to_rgba();
 
-                data.push((rgba[0] / 255.0) as u8);
-                data.push((rgba[1] / 255.0) as u8);
-                data.push((rgba[2] / 255.0) as u8);
-                data.push((rgba[3] / 255.0) as u8);
+                data.push((rgba[0] * 255.0) as u8);
+                data.push((rgba[1] * 255.0) as u8);
+                data.push((rgba[2] * 255.0) as u8);
+                data.push((rgba[3] * 255.0) as u8);
             }
 
             data.into_boxed_slice()
@@ -457,7 +457,7 @@ impl GfxEmuState {
             .device
             .create_buffer_with_data(&src_tex_data, wgpu::BufferUsage::COPY_SRC);
 
-        let command_buf = {
+        let render_command_buf = {
             let mut encoder = self.device.create_command_encoder(&Default::default());
 
             encoder.copy_buffer_to_texture(
@@ -501,7 +501,7 @@ impl GfxEmuState {
 
             encoder.finish()
         };
-        self.queue.submit(&[command_buf]);
+        self.queue.submit(&[render_command_buf]);
     }
 
     pub(crate) fn next_buffer(&mut self) -> &mut [Color] {
@@ -520,10 +520,10 @@ pub(crate) fn init() {
 pub fn swap_buffers() {
     let mut state = GFX_EMU_STATE.lock().unwrap();
 
-    state.using_framebuffer_a = !state.using_framebuffer_a;
-
     state.poll_events();
     state.render_cpu_buffer();
+
+    state.using_framebuffer_a = !state.using_framebuffer_a;
 }
 
 pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
