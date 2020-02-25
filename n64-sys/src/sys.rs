@@ -102,9 +102,7 @@ static mut TIME: i64 = 0;
 
 #[inline]
 pub fn current_time_us() -> i64 {
-
     unsafe {
-
         let now_ticks = get_ticks();
 
         if now_ticks < LAST_TICKS {

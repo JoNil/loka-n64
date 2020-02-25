@@ -1,8 +1,8 @@
 use crate::bullet_system::BulletSystem;
 use crate::components::box_drawable::{self, BoxDrawableComponent};
-use crate::components::movable::{self, MovableComponent};
 use crate::components::health::{self, HealthComponent};
-use crate::entity::{self, OwnedEntity, Entity};
+use crate::components::movable::{self, MovableComponent};
+use crate::entity::{self, Entity, OwnedEntity};
 use n64::{current_time_us, graphics, ipl3font, Controllers};
 use n64_math::{Color, Vec2};
 
@@ -29,17 +29,21 @@ impl Player {
             last_shoot_time: 0,
         };
 
-        movable::add(&player.entity, MovableComponent {
-            pos: START_POS,
-            speed: Vec2::zero(),
-        });
-        box_drawable::add(&player.entity, BoxDrawableComponent {
-            size: SHIP_SIZE,
-            color: SHIP_COLOR,
-        });
-        health::add(&player.entity, HealthComponent {
-            health: 500,
-        });
+        movable::add(
+            &player.entity,
+            MovableComponent {
+                pos: START_POS,
+                speed: Vec2::zero(),
+            },
+        );
+        box_drawable::add(
+            &player.entity,
+            BoxDrawableComponent {
+                size: SHIP_SIZE,
+                color: SHIP_COLOR,
+            },
+        );
+        health::add(&player.entity, HealthComponent { health: 500 });
 
         player
     }
@@ -56,11 +60,7 @@ impl Player {
         self.score
     }
 
-    pub fn update(
-        &mut self,
-        controllers: &Controllers,
-        bullet_system: &mut BulletSystem,
-    ) {
+    pub fn update(&mut self, controllers: &Controllers, bullet_system: &mut BulletSystem) {
         let controller_x = controllers.x();
         let controller_y = controllers.y();
 

@@ -1,9 +1,9 @@
 #![allow(dead_code)]
 
+use crate::sys::{data_cache_hit_writeback, memory_barrier};
 use alloc::boxed::Box;
 use core::ptr::{read_volatile, write_volatile};
 use n64_types::RdpCommand;
-use crate::sys::{data_cache_hit_writeback, memory_barrier};
 
 const RDP_BASE: usize = 0xA410_0000;
 
@@ -57,7 +57,6 @@ pub unsafe fn run_command_buffer(commands_in: Box<[RdpCommand]>) {
     COMMANDS = Some(commands_in);
 
     if let Some(commands) = &COMMANDS {
-
         data_cache_hit_writeback(&commands);
 
         write_volatile(

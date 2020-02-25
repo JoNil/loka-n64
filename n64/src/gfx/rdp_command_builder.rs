@@ -1,8 +1,8 @@
 #![allow(dead_code)]
 
+use crate::graphics::WIDTH;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
-use crate::graphics::WIDTH;
 use n64_math::{Color, Vec2};
 use n64_types::RdpCommand;
 
@@ -106,7 +106,6 @@ pub struct RdpCommandBuilder {
 }
 
 impl RdpCommandBuilder {
-
     #[inline]
     pub fn new() -> RdpCommandBuilder {
         RdpCommandBuilder {

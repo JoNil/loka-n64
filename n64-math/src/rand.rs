@@ -18,7 +18,7 @@ impl Rng {
 
     #[inline]
     pub fn next_u32(&mut self) -> u32 {
-        self.seed = self.seed*Wrapping(214013) + Wrapping(2531011);
+        self.seed = self.seed * Wrapping(214013) + Wrapping(2531011);
         self.seed.0
     }
 

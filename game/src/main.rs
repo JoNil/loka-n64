@@ -15,12 +15,12 @@ mod textures;
 
 use alloc::vec::Vec;
 use bullet_system::BulletSystem;
+use components::box_drawable;
 use components::health;
 use components::movable;
 use components::sprite_drawable;
-use components::box_drawable;
 use enemy_system::EnemySystem;
-use n64::{self, audio, current_time_us, graphics, ipl3font, Controllers, gfx::CommandBuffer};
+use n64::{self, audio, current_time_us, gfx::CommandBuffer, graphics, ipl3font, Controllers};
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
 
@@ -28,7 +28,6 @@ const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
 fn main() {
-
     n64::init();
 
     let mut controllers = Controllers::new();
@@ -102,7 +101,6 @@ fn main() {
         }*/
 
         {
-
             graphics::with_framebuffer(|fb| {
                 let mut cb = CommandBuffer::new(fb);
 

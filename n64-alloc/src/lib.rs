@@ -1,5 +1,4 @@
 #![no_std]
-
 #![feature(allocator_api)]
 
 extern crate alloc;
@@ -9,7 +8,7 @@ mod imp_static_array;
 mod neighbors;
 
 use const_init::ConstInit;
-use core::alloc::{AllocRef, AllocErr};
+use core::alloc::{AllocErr, AllocRef};
 use core::alloc::{GlobalAlloc, Layout};
 use core::cell::Cell;
 use core::cmp;
@@ -515,7 +514,12 @@ impl<'a> N64Alloc<'a> {
     /// allocator.
     pub const INIT: Self = <Self as ConstInit>::INIT;
 
-    unsafe fn with_free_list_and_policy_for_size<F, T>(&self, _size: Words, _align: Bytes, f: F) -> T
+    unsafe fn with_free_list_and_policy_for_size<F, T>(
+        &self,
+        _size: Words,
+        _align: Bytes,
+        f: F,
+    ) -> T
     where
         F: for<'b> FnOnce(&'b Cell<*const FreeCell<'a>>, &'b dyn AllocPolicy<'a>) -> T,
     {

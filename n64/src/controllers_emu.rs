@@ -9,7 +9,9 @@ pub struct Controllers {
 impl Controllers {
     #[inline]
     pub fn new() -> Controllers {
-        Controllers { data: HashSet::new() }
+        Controllers {
+            data: HashSet::new(),
+        }
     }
 
     #[inline]

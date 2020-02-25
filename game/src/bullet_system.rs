@@ -43,7 +43,11 @@ impl BulletSystem {
             &entity,
             BoxDrawableComponent {
                 size: BULLET_SIZE,
-                color: Color::from_rgb(n64_math::random_f32(), n64_math::random_f32(), n64_math::random_f32()),
+                color: Color::from_rgb(
+                    n64_math::random_f32(),
+                    n64_math::random_f32(),
+                    n64_math::random_f32(),
+                ),
             },
         );
 
@@ -61,7 +65,11 @@ impl BulletSystem {
             &entity,
             BoxDrawableComponent {
                 size: BULLET_SIZE,
-                color: Color::from_rgb(n64_math::random_f32(), n64_math::random_f32(), n64_math::random_f32()),
+                color: Color::from_rgb(
+                    n64_math::random_f32(),
+                    n64_math::random_f32(),
+                    n64_math::random_f32(),
+                ),
             },
         );
 
@@ -91,7 +99,10 @@ impl BulletSystem {
                         );
 
                         if bullet_bb.collides(&enemy_bb) {
-                            health::damage(enemy.entity(), 50 + (n64_math::random_f32() * 20.0) as i32);
+                            health::damage(
+                                enemy.entity(),
+                                50 + (n64_math::random_f32() * 20.0) as i32,
+                            );
                             delete_list.push(i);
                         }
                     }
@@ -104,7 +115,10 @@ impl BulletSystem {
                     );
 
                     if bullet_bb.collides(&player_bb) {
-                        health::damage(player.entity(), 50 + (n64_math::random_f32() * 20.0) as i32);
+                        health::damage(
+                            player.entity(),
+                            50 + (n64_math::random_f32() * 20.0) as i32,
+                        );
                         delete_list.push(i);
                     }
                 }

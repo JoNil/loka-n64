@@ -49,7 +49,11 @@ impl EnemySystem {
             &entity,
             BoxDrawableComponent {
                 size: ENEMY_SIZE,
-                color: Color::from_rgb(n64_math::random_f32(), n64_math::random_f32(), n64_math::random_f32()),
+                color: Color::from_rgb(
+                    n64_math::random_f32(),
+                    n64_math::random_f32(),
+                    n64_math::random_f32(),
+                ),
             },
         );
         health::add(&entity, HealthComponent { health: 100 });

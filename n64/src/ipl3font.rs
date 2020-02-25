@@ -12,7 +12,6 @@ const GLYPH_ADDR: usize = 0xB000_0B70;
 
 #[inline]
 pub fn draw_str(mut x: i32, mut y: i32, color: Color, string: &[u8]) {
-
     let start_x = x;
 
     for mut ch in string.iter().copied() {

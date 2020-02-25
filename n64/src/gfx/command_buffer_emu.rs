@@ -1,4 +1,4 @@
-use crate::graphics::{ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, INDEX_DATA, WIDTH, HEIGHT};
+use crate::graphics::{ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, HEIGHT, INDEX_DATA, WIDTH};
 use core::marker::PhantomData;
 use core::mem;
 use n64_math::{Color, Vec2};
@@ -58,10 +58,9 @@ impl<'a> CommandBuffer<'a> {
         let mut bind_groups = Vec::new();
 
         {
-
             let command_buf = {
                 let mut encoder = state.device.create_command_encoder(&Default::default());
-                
+
                 {
                     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                         color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
@@ -86,7 +85,7 @@ impl<'a> CommandBuffer<'a> {
                     render_pass.set_index_buffer(&state.index_buf, 0);
                     render_pass.set_vertex_buffers(0, &[(&state.vertex_buf, 0)]);
                     render_pass.set_pipeline(&state.colored_rect_pipeline);
-                    
+
                     let window_size = Vec2::new(WIDTH as f32, HEIGHT as f32);
 
                     for command in self.commands {
@@ -96,7 +95,6 @@ impl<'a> CommandBuffer<'a> {
                                 lower_right,
                                 color,
                             } => {
-
                                 let size = lower_right - upper_left;
                                 let scale = size / window_size;
                                 let offset = 2.0 * (upper_left - window_size / 2.0) / window_size;
@@ -116,8 +114,8 @@ impl<'a> CommandBuffer<'a> {
                     }
 
                     for uniforms in &uniform_buffers {
-                        bind_groups.push(
-                            state.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                        bind_groups.push(state.device.create_bind_group(
+                            &wgpu::BindGroupDescriptor {
                                 layout: &state.colored_rect_bind_group_layout,
                                 bindings: &[wgpu::Binding {
                                     binding: 0,
@@ -126,8 +124,8 @@ impl<'a> CommandBuffer<'a> {
                                         range: 0..(mem::size_of::<ColoredRectUniforms>() as u64),
                                     },
                                 }],
-                            })
-                        );
+                            },
+                        ));
                     }
 
                     for bind_group in &bind_groups {
