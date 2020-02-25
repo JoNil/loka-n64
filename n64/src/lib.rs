@@ -7,17 +7,22 @@ pub use controllers::Controllers;
 pub mod gfx;
 pub mod ipl3font;
 
-#[cfg_attr(target_vendor = "nintendo64", path = "audio.rs")]
-#[cfg_attr(not(target_vendor = "nintendo64"), path = "audio_emu.rs")]
-pub mod audio;
+cfg_if::cfg_if! {
 
-#[cfg_attr(target_vendor = "nintendo64", path = "graphics.rs")]
-#[cfg_attr(not(target_vendor = "nintendo64"), path = "graphics_emu.rs")]
-pub mod graphics;
+    if #[cfg(target_vendor = "nintendo64")] {
+        pub mod audio;
+        pub mod graphics;
+        pub mod controllers;
+    } else {
+        pub mod audio_emu;
+        pub mod graphics_emu;
+        pub mod controllers_emu;
 
-#[cfg_attr(target_vendor = "nintendo64", path = "controllers.rs")]
-#[cfg_attr(not(target_vendor = "nintendo64"), path = "controllers_emu.rs")]
-pub mod controllers;
+        pub use audio_emu as audio;
+        pub use graphics_emu as graphics;
+        pub use controllers_emu as controllers;
+    }
+}
 
 #[inline]
 pub fn init() {
