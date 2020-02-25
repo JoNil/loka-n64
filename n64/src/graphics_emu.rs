@@ -52,31 +52,31 @@ thread_local! {
 }
 
 lazy_static! {
-    static ref GFX_EMU_STATE: Mutex<GfxEmuState> = Mutex::new(GfxEmuState::new());
+    pub(crate) static ref GFX_EMU_STATE: Mutex<GfxEmuState> = Mutex::new(GfxEmuState::new());
 }
 
 pub(crate) struct GfxEmuState {
-    window: Window,
-    surface: wgpu::Surface,
-    adapter: wgpu::Adapter,
-    device: wgpu::Device,
-    queue: wgpu::Queue,
-    swap_chain_desc: wgpu::SwapChainDescriptor,
-    swap_chain: wgpu::SwapChain,
+    pub window: Window,
+    pub surface: wgpu::Surface,
+    pub adapter: wgpu::Adapter,
+    pub device: wgpu::Device,
+    pub queue: wgpu::Queue,
+    pub swap_chain_desc: wgpu::SwapChainDescriptor,
+    pub swap_chain: wgpu::SwapChain,
 
-    vertex_buf: wgpu::Buffer,
-    index_buf: wgpu::Buffer,
-    bind_group_layout: wgpu::BindGroupLayout,
-    pipeline_layout: wgpu::PipelineLayout,
-    uniform_buf: wgpu::Buffer,
-    bind_group: wgpu::BindGroup,
-    vs_module: wgpu::ShaderModule,
-    fs_module: wgpu::ShaderModule,
-    pipeline: wgpu::RenderPipeline,
+    pub vertex_buf: wgpu::Buffer,
+    pub index_buf: wgpu::Buffer,
+    pub bind_group_layout: wgpu::BindGroupLayout,
+    pub pipeline_layout: wgpu::PipelineLayout,
+    pub uniform_buf: wgpu::Buffer,
+    pub bind_group: wgpu::BindGroup,
+    pub vs_module: wgpu::ShaderModule,
+    pub fs_module: wgpu::ShaderModule,
+    pub pipeline: wgpu::RenderPipeline,
 
-    using_framebuffer_a: bool,
-    framebuffer_a: Box<[Color]>,
-    framebuffer_b: Box<[Color]>,
+    pub using_framebuffer_a: bool,
+    pub framebuffer_a: Box<[Color]>,
+    pub framebuffer_b: Box<[Color]>,
 }
 
 impl GfxEmuState {
@@ -87,7 +87,7 @@ impl GfxEmuState {
             builder = builder
                 .with_inner_size(winit::dpi::LogicalSize::new(SCALE * WIDTH, SCALE * HEIGHT));
             builder = builder.with_visible(false);
-            EVENT_LOOP.with(|event_loop| { builder.build(&event_loop.lock().unwrap()).unwrap() })
+            EVENT_LOOP.with(|event_loop| builder.build(&event_loop.lock().unwrap()).unwrap())
         };
 
         let size = window.inner_size();
@@ -218,7 +218,6 @@ impl GfxEmuState {
         window.set_visible(true);
 
         GfxEmuState {
-
             window,
             surface,
             adapter,
@@ -251,58 +250,58 @@ impl GfxEmuState {
         }
     }
 
-    pub fn poll_events(&mut self) {
+    pub(crate) fn poll_events(&mut self) {
         EVENT_LOOP.with(|event_loop| {
-            event_loop.lock().unwrap().run_return(move |event, _, control_flow| {
-                *control_flow = ControlFlow::Exit;
-                match event {
-                    event::Event::WindowEvent {
-                        event: WindowEvent::Resized(size),
-                        ..
-                    } => {
-                        self.swap_chain_desc.width = size.width;
-                        self.swap_chain_desc.height = size.height;
-                        self.swap_chain = self
-                            .device
-                            .create_swap_chain(&self.surface, &self.swap_chain_desc);
-                    }
-                    event::Event::WindowEvent { event, .. } => match event {
-                        WindowEvent::KeyboardInput {
-                            input:
-                                event::KeyboardInput {
-                                    virtual_keycode: Some(event::VirtualKeyCode::Escape),
-                                    state: event::ElementState::Pressed,
-                                    ..
-                                },
+            event_loop
+                .lock()
+                .unwrap()
+                .run_return(move |event, _, control_flow| {
+                    *control_flow = ControlFlow::Exit;
+                    match event {
+                        event::Event::WindowEvent {
+                            event: WindowEvent::Resized(size),
                             ..
+                        } => {
+                            self.swap_chain_desc.width = size.width;
+                            self.swap_chain_desc.height = size.height;
+                            self.swap_chain = self
+                                .device
+                                .create_swap_chain(&self.surface, &self.swap_chain_desc);
                         }
-                        | WindowEvent::CloseRequested => {
-                            exit(0);
+                        event::Event::WindowEvent { event, .. } => match event {
+                            WindowEvent::KeyboardInput {
+                                input:
+                                    event::KeyboardInput {
+                                        virtual_keycode: Some(event::VirtualKeyCode::Escape),
+                                        state: event::ElementState::Pressed,
+                                        ..
+                                    },
+                                ..
+                            }
+                            | WindowEvent::CloseRequested => {
+                                exit(0);
+                            }
+                            _ => {}
+                        },
+                        event::Event::RedrawRequested(_) => {
+                            self.render_cpu_buffer();
                         }
                         _ => {}
-                    },
-                    event::Event::RedrawRequested(_) => {
-                        self.render_cpu_buffer();
                     }
-                    _ => {}
-                }
-            });
-            
+                });
         });
     }
 
-    pub fn render_cpu_buffer(&mut self) {
+    pub(crate) fn render_cpu_buffer(&mut self) {
         let frame = self
             .swap_chain
             .get_next_texture()
             .expect("Timeout when acquiring next swap chain texture");
 
         let command_buf = {
-            let mut encoder = self
-                .device
-                .create_command_encoder(&wgpu::CommandEncoderDescriptor { todo: 0 });
+            let mut encoder = self.device.create_command_encoder(&Default::default());
             {
-                let mut rpass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
                         attachment: &frame.view,
                         resolve_target: None,
@@ -317,11 +316,11 @@ impl GfxEmuState {
                     }],
                     depth_stencil_attachment: None,
                 });
-                rpass.set_pipeline(&self.pipeline);
-                rpass.set_bind_group(0, &self.bind_group, &[]);
-                rpass.set_index_buffer(&self.index_buf, 0);
-                rpass.set_vertex_buffers(0, &[(&self.vertex_buf, 0)]);
-                rpass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
+                render_pass.set_pipeline(&self.pipeline);
+                render_pass.set_bind_group(0, &self.bind_group, &[]);
+                render_pass.set_index_buffer(&self.index_buf, 0);
+                render_pass.set_vertex_buffers(0, &[(&self.vertex_buf, 0)]);
+                render_pass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
             }
 
             encoder.finish()
@@ -329,7 +328,7 @@ impl GfxEmuState {
         self.queue.submit(&[command_buf]);
     }
 
-    pub fn next_buffer(&mut self) -> &mut [Color] {
+    pub(crate) fn next_buffer(&mut self) -> &mut [Color] {
         if self.using_framebuffer_a {
             &mut self.framebuffer_a[..]
         } else {
@@ -338,14 +337,8 @@ impl GfxEmuState {
     }
 }
 
-pub(crate) fn get_keys() -> Vec<VirtualKeyCode> {
-    Vec::new()
-}
-
 pub(crate) fn init() {
     let mut state = GFX_EMU_STATE.lock().unwrap();
-
-    state.render_cpu_buffer();
 }
 
 pub fn swap_buffers() {
@@ -355,7 +348,6 @@ pub fn swap_buffers() {
 
     state.poll_events();
     state.render_cpu_buffer();
-    println!("hej");
 }
 
 pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
