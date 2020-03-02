@@ -21,6 +21,16 @@ impl Color {
     }
 
     #[inline]
+    pub fn from_bytes(bytes: &[u8; 4]) -> Color {
+        Color {
+            value: (((bytes[0] as f32 * 31.0) as u16) << 11)
+                | (((bytes[1] as f32 * 31.0) as u16) << 6)
+                | (((bytes[2] as f32 * 31.0) as u16) << 1)
+                | if bytes[3] > 0 { 0b1 } else { 0b0 },
+        }
+    }
+
+    #[inline]
     pub fn r(&self) -> f32 {
         (self.value >> 11 & 0b11111) as f32 / 31.0
     }

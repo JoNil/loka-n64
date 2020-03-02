@@ -12,6 +12,7 @@ n64-math = { path = "../n64-math" }
 n64-types = { path = "../n64-types" }
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
+futures-executor = "0.3"
 glsl-to-spirv = "0.1"
 lazy_static = "1.4.0"
 wgpu = { git = "https://github.com/gfx-rs/wgpu-rs.git" }

@@ -119,6 +119,7 @@ pub(crate) struct GfxEmuState {
     pub vertex_buf: wgpu::Buffer,
     pub index_buf: wgpu::Buffer,
 
+    pub colored_rect_dst_buffer: wgpu::Buffer,
     pub colored_rect_dst_tex_format: wgpu::TextureFormat,
     pub colored_rect_dst_tex_extent: wgpu::Extent3d,
     pub colored_rect_dst_tex: wgpu::Texture,
@@ -188,6 +189,12 @@ impl GfxEmuState {
         let index_buf =
             device.create_buffer_with_data(QUAD_INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
+
+        let colored_rect_dst_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            size: (4 * WIDTH * HEIGHT) as u64,
+            usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
+        });
+
         let colored_rect_dst_tex_format = wgpu::TextureFormat::Rgba8Unorm;
 
         let colored_rect_dst_tex_extent = wgpu::Extent3d {
@@ -202,7 +209,7 @@ impl GfxEmuState {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: colored_rect_dst_tex_format,
-            usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+            usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::COPY_SRC | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
         });
         let colored_rect_dst_tex_view = colored_rect_dst_tex.create_default_view();
 
@@ -425,6 +432,7 @@ impl GfxEmuState {
             vertex_buf,
             index_buf,
 
+            colored_rect_dst_buffer,
             colored_rect_dst_tex_format,
             colored_rect_dst_tex_extent,
             colored_rect_dst_tex,

@@ -1,7 +1,10 @@
-use crate::graphics::{ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH};
-use core::marker::PhantomData;
+use crate::graphics::{
+    ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH,
+};
 use core::mem;
+use futures_executor;
 use n64_math::{Color, Vec2};
+use std::convert::TryInto;
 use std::sync::MutexGuard;
 use zerocopy::{AsBytes, FromBytes};
 
@@ -14,7 +17,7 @@ enum Command {
 }
 
 pub struct CommandBuffer<'a> {
-    marker: PhantomData<&'a mut [Color]>,
+    framebuffer: &'a mut [Color],
 
     clear: bool,
     commands: Vec<Command>,
@@ -23,7 +26,7 @@ pub struct CommandBuffer<'a> {
 impl<'a> CommandBuffer<'a> {
     pub fn new(framebuffer: &'a mut [Color]) -> Self {
         CommandBuffer {
-            marker: PhantomData,
+            framebuffer,
             clear: false,
             commands: Vec::new(),
         }
@@ -83,16 +86,17 @@ impl<'a> CommandBuffer<'a> {
 
                     let window_size = Vec2::new(WIDTH as f32, HEIGHT as f32);
 
-                    for command in self.commands {
+                    for command in &self.commands {
                         match command {
                             Command::Rect {
                                 upper_left,
                                 lower_right,
                                 color,
                             } => {
-                                let size = lower_right - upper_left;
+                                let size = *lower_right - *upper_left;
                                 let scale = size / window_size;
-                                let offset = 2.0 * (upper_left - window_size / 2.0 + size/2.0) / window_size;
+                                let offset = 2.0 * (*upper_left - window_size / 2.0 + size / 2.0)
+                                    / window_size;
 
                                 let uniforms = ColoredRectUniforms {
                                     color: color.to_rgba(),
@@ -129,10 +133,46 @@ impl<'a> CommandBuffer<'a> {
                     }
                 }
 
+                encoder.copy_texture_to_buffer(
+                    wgpu::TextureCopyView {
+                        texture: &state.colored_rect_dst_tex,
+                        mip_level: 0,
+                        array_layer: 0,
+                        origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
+                    },
+                    wgpu::BufferCopyView {
+                        buffer: &state.colored_rect_dst_buffer,
+                        offset: 0,
+                        row_pitch: 4 * WIDTH as u32,
+                        image_height: HEIGHT as u32,
+                    },
+                    state.colored_rect_dst_tex_extent,
+                );
+
                 encoder.finish()
             };
 
             state.queue.submit(&[command_buf]);
+
+            let op = async {
+                let mapped_colored_rect_dst_buffer = state
+                    .colored_rect_dst_buffer
+                    .map_read(0, (4 * WIDTH * HEIGHT) as u64)
+                    .await
+                    .unwrap();
+
+                for (fb_color, mapped_color) in self
+                    .framebuffer
+                    .iter_mut()
+                    .zip(mapped_colored_rect_dst_buffer.as_slice().chunks(4))
+                {
+                    *fb_color = Color::from_bytes(mapped_color.try_into().unwrap());
+                }
+            };
+
+            state.device.poll(true);
+
+            futures_executor::block_on(op);
         }
     }
 }
