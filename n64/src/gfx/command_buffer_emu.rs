@@ -1,4 +1,4 @@
-use crate::graphics::{ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, HEIGHT, INDEX_DATA, WIDTH};
+use crate::graphics::{ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH};
 use core::marker::PhantomData;
 use core::mem;
 use n64_math::{Color, Vec2};
@@ -49,11 +49,6 @@ impl<'a> CommandBuffer<'a> {
     pub fn run(mut self) {
         let state = &mut *GFX_EMU_STATE.lock().unwrap();
 
-        let frame = state
-            .swap_chain
-            .get_next_texture()
-            .expect("Timeout when acquiring next swap chain texture");
-
         let mut uniform_buffers = Vec::new();
         let mut bind_groups = Vec::new();
 
@@ -64,7 +59,7 @@ impl<'a> CommandBuffer<'a> {
                 {
                     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                         color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                            attachment: &frame.view,
+                            attachment: &state.colored_rect_dst_tex_view,
                             resolve_target: None,
                             load_op: if self.clear {
                                 wgpu::LoadOp::Clear
@@ -130,7 +125,7 @@ impl<'a> CommandBuffer<'a> {
 
                     for bind_group in &bind_groups {
                         render_pass.set_bind_group(0, bind_group, &[]);
-                        render_pass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
+                        render_pass.draw_indexed(0..(QUAD_INDEX_DATA.len() as u32), 0, 0..1);
                     }
                 }
 

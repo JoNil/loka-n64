@@ -39,7 +39,7 @@ struct Vertex {
     pos: [f32; 3],
 }
 
-static VERTEX_DATA: &'static [Vertex] = &[
+static QUAD_VERTEX_DATA: &'static [Vertex] = &[
     Vertex {
         pos: [-1.0, -1.0, 1.0],
     },
@@ -54,7 +54,7 @@ static VERTEX_DATA: &'static [Vertex] = &[
     },
 ];
 
-pub(crate) static INDEX_DATA: &'static [u16] = &[0, 1, 2, 2, 3, 0];
+pub(crate) static QUAD_INDEX_DATA: &'static [u16] = &[0, 1, 2, 2, 3, 0];
 
 thread_local! {
     static EVENT_LOOP: Mutex<EventLoop<()>> = Mutex::new(EventLoop::new());
@@ -119,6 +119,10 @@ pub(crate) struct GfxEmuState {
     pub vertex_buf: wgpu::Buffer,
     pub index_buf: wgpu::Buffer,
 
+    pub colored_rect_dst_tex_format: wgpu::TextureFormat,
+    pub colored_rect_dst_tex_extent: wgpu::Extent3d,
+    pub colored_rect_dst_tex: wgpu::Texture,
+    pub colored_rect_dst_tex_view: wgpu::TextureView,
     pub colored_rect_bind_group_layout: wgpu::BindGroupLayout,
     pub colored_rect_pipeline_layout: wgpu::PipelineLayout,
     pub colored_rect_vs_module: wgpu::ShaderModule,
@@ -179,10 +183,28 @@ impl GfxEmuState {
         let mut swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
 
         let vertex_buf =
-            device.create_buffer_with_data(VERTEX_DATA.as_bytes(), wgpu::BufferUsage::VERTEX);
+            device.create_buffer_with_data(QUAD_VERTEX_DATA.as_bytes(), wgpu::BufferUsage::VERTEX);
 
         let index_buf =
-            device.create_buffer_with_data(INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
+            device.create_buffer_with_data(QUAD_INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
+
+        let colored_rect_dst_tex_format = wgpu::TextureFormat::Rgba8Unorm;
+
+        let colored_rect_dst_tex_extent = wgpu::Extent3d {
+            width: WIDTH as u32,
+            height: HEIGHT as u32,
+            depth: 1,
+        };
+        let colored_rect_dst_tex = device.create_texture(&wgpu::TextureDescriptor {
+            size: colored_rect_dst_tex_extent,
+            array_layer_count: 1,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: colored_rect_dst_tex_format,
+            usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+        });
+        let colored_rect_dst_tex_view = colored_rect_dst_tex.create_default_view();
 
         let colored_rect_bind_group_layout =
             device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -239,7 +261,7 @@ impl GfxEmuState {
                 }),
                 primitive_topology: wgpu::PrimitiveTopology::TriangleList,
                 color_states: &[wgpu::ColorStateDescriptor {
-                    format: swap_chain_desc.format,
+                    format: colored_rect_dst_tex_format,
                     color_blend: wgpu::BlendDescriptor::REPLACE,
                     alpha_blend: wgpu::BlendDescriptor::REPLACE,
                     write_mask: wgpu::ColorWrite::ALL,
@@ -271,7 +293,7 @@ impl GfxEmuState {
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8UnormSrgb,
+            format: wgpu::TextureFormat::Rgba8Unorm,
             usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
         });
         let copy_tex_src_tex_view = copy_tex_src_tex.create_default_view();
@@ -403,6 +425,10 @@ impl GfxEmuState {
             vertex_buf,
             index_buf,
 
+            colored_rect_dst_tex_format,
+            colored_rect_dst_tex_extent,
+            colored_rect_dst_tex,
+            colored_rect_dst_tex_view,
             colored_rect_bind_group_layout,
             colored_rect_pipeline_layout,
             colored_rect_vs_module,
@@ -550,7 +576,7 @@ impl GfxEmuState {
                 render_pass.set_bind_group(0, &self.copy_tex_bind_group, &[]);
                 render_pass.set_index_buffer(&self.index_buf, 0);
                 render_pass.set_vertex_buffers(0, &[(&self.vertex_buf, 0)]);
-                render_pass.draw_indexed(0..(INDEX_DATA.len() as u32), 0, 0..1);
+                render_pass.draw_indexed(0..(QUAD_INDEX_DATA.len() as u32), 0, 0..1);
             }
 
             encoder.finish()
