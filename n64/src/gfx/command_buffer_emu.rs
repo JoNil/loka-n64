@@ -170,8 +170,6 @@ impl<'a> CommandBuffer<'a> {
                 }
             };
 
-            state.device.poll(true);
-
             futures_executor::block_on(op);
         }
     }
