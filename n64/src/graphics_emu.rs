@@ -524,7 +524,6 @@ impl GfxEmuState {
     }
 
     pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
-
         for (pixel, data) in fb.iter().zip(self.copy_tex_src_buffer.chunks_mut(4)) {
             let rgba = pixel.to_rgba();
 

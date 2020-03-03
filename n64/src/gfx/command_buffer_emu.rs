@@ -1,6 +1,4 @@
-use crate::graphics::{
-    ColoredRectUniforms, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH,
-};
+use crate::graphics::{ColoredRectUniforms, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH};
 use core::mem;
 use futures_executor;
 use n64_math::{Color, Vec2};

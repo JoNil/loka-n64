@@ -19,6 +19,7 @@ use components::box_drawable;
 use components::health;
 use components::movable;
 use components::sprite_drawable;
+use core::sync::atomic::Ordering;
 use enemy_system::EnemySystem;
 use n64::{self, audio, current_time_us, gfx::CommandBuffer, graphics, ipl3font, Controllers};
 use n64_math::Color;
@@ -83,7 +84,6 @@ fn main() {
             // Audio
 
             if !audio::all_buffers_are_full() {
-
                 for (i, chunk) in audio_buffer.chunks_mut(128).enumerate() {
                     for sample in chunk {
                         if i % 2 == 0 {
@@ -127,6 +127,8 @@ fn main() {
                 ipl3font::draw_number(200, 10, RED, used_frame_time as i32);
                 ipl3font::draw_number(100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
             }
+
+            ipl3font::draw_number(100, 200, RED, n64_alloc::BYTES_LEFT.load(Ordering::SeqCst));
 
             graphics::swap_buffers();
         }
