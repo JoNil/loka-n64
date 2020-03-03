@@ -38,7 +38,7 @@ where
     unsafe fn new_cell_for_free_list(
         &self,
         size: Words,
-        align: Bytes,
+        _align: Bytes,
     ) -> Result<*const FreeCell<'a>, AllocErr> {
         // Need room for at least size^2 allocations.
         let size_of_header: Words = size_of::<CellHeader>().round_up_to();
