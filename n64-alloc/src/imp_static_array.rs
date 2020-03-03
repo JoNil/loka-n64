@@ -10,7 +10,7 @@ pub const SCRATCH_LEN_BYTES: usize = 3 * 1024 * 1024 - 512;
 struct ScratchHeap([u8; SCRATCH_LEN_BYTES]);
 
 static mut SCRATCH_HEAP: ScratchHeap = ScratchHeap([0; SCRATCH_LEN_BYTES]);
-static mut OFFSET: Mutex<usize> = Mutex::new(0);
+pub static OFFSET: Mutex<usize> = Mutex::new(0);
 
 pub(crate) unsafe fn alloc_pages(pages: Pages) -> Result<NonNull<u8>, AllocErr> {
     let bytes: Bytes = pages.into();

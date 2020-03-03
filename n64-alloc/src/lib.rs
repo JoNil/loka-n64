@@ -640,6 +640,7 @@ impl<'a> N64Alloc<'a> {
 }
 
 pub static BYTES_LEFT: AtomicI32 = AtomicI32::new(imp::SCRATCH_LEN_BYTES as i32);
+pub use imp::OFFSET as PAGE_OFFSET;
 
 unsafe impl GlobalAlloc for N64Alloc<'static> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
@@ -647,7 +648,9 @@ unsafe impl GlobalAlloc for N64Alloc<'static> {
 
         match self.alloc_impl(layout) {
             Ok(ptr) => ptr.as_ptr(),
-            Err(AllocErr) => ptr::null_mut(),
+            Err(AllocErr) => {
+                ptr::null_mut()
+            }
         }
     }
 

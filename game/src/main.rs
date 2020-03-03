@@ -25,6 +25,9 @@ use n64::{self, audio, current_time_us, gfx::CommandBuffer, graphics, ipl3font, 
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
 
+#[global_allocator]
+static ALLOC: n64_alloc::N64Alloc = n64_alloc::N64Alloc::INIT;
+
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
@@ -128,7 +131,8 @@ fn main() {
                 ipl3font::draw_number(100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
             }
 
-            ipl3font::draw_number(100, 200, RED, n64_alloc::BYTES_LEFT.load(Ordering::SeqCst));
+            ipl3font::draw_number(100, 180, RED, n64_alloc::BYTES_LEFT.load(Ordering::SeqCst));
+            ipl3font::draw_number(100, 200, RED, *n64_alloc::PAGE_OFFSET.lock() as i32);
 
             graphics::swap_buffers();
         }
@@ -140,9 +144,6 @@ fn main() {
         graphics::swap_buffers();
     }
 }
-
-#[global_allocator]
-static ALLOC: n64_alloc::N64Alloc = n64_alloc::N64Alloc::INIT;
 
 #[cfg(target_vendor = "nintendo64")]
 #[start]
