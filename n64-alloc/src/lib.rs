@@ -5,6 +5,7 @@ extern crate alloc;
 mod const_init;
 mod imp_static_array;
 mod neighbors;
+mod size_classes;
 
 use const_init::ConstInit;
 use core::alloc::{GlobalAlloc, Layout};
@@ -349,7 +350,7 @@ struct LargeAllocPolicy;
 static LARGE_ALLOC_POLICY: LargeAllocPolicy = LargeAllocPolicy;
 
 impl LargeAllocPolicy {
-    const MIN_CELL_SIZE: Words = Words(16);
+    const MIN_CELL_SIZE: Words = Words(size_classes::SizeClasses::NUM_SIZE_CLASSES * 2);
 }
 
 impl<'a> AllocPolicy<'a> for LargeAllocPolicy {
@@ -498,6 +499,7 @@ unsafe fn alloc_with_refill<'a, 'b>(
 /// issue if you're just using this as a `static` global allocator.
 pub struct N64Alloc<'a> {
     head: imp::Exclusive<*const FreeCell<'a>>,
+    size_classes: size_classes::SizeClasses<'a>,
 }
 
 unsafe impl<'a> Sync for N64Alloc<'a> {}
@@ -505,6 +507,7 @@ unsafe impl<'a> Sync for N64Alloc<'a> {}
 impl<'a> ConstInit for N64Alloc<'a> {
     const INIT: N64Alloc<'a> = N64Alloc {
         head: imp::Exclusive::INIT,
+        size_classes: size_classes::SizeClasses::INIT,
     };
 }
 
@@ -515,16 +518,24 @@ impl<'a> N64Alloc<'a> {
     /// allocator.
     pub const INIT: Self = <Self as ConstInit>::INIT;
 
-    unsafe fn with_free_list_and_policy_for_size<F, T>(
-        &self,
-        _size: Words,
-        _align: Bytes,
-        f: F,
-    ) -> T
+    unsafe fn with_free_list_and_policy_for_size<F, T>(&self, size: Words, align: Bytes, f: F) -> T
     where
         F: for<'b> FnOnce(&'b Cell<*const FreeCell<'a>>, &'b dyn AllocPolicy<'a>) -> T,
     {
-        let policy = &LARGE_ALLOC_POLICY as &dyn AllocPolicy;
+        if align <= size_of::<usize>() {
+            if let Some(head) = self.size_classes.get(size) {
+                let policy = size_classes::SizeClassAllocPolicy(&self.head);
+                let policy = &policy as &dyn AllocPolicy<'a>;
+                return head.with_exclusive_access(|head| {
+                    let head_cell = Cell::new(*head);
+                    let result = f(&head_cell, policy);
+                    *head = head_cell.get();
+                    result
+                });
+            }
+        }
+
+        let policy = &LARGE_ALLOC_POLICY as &dyn AllocPolicy<'a>;
         self.head.with_exclusive_access(|head| {
             let head_cell = Cell::new(*head);
             let result = f(&head_cell, policy);
@@ -648,9 +659,7 @@ unsafe impl GlobalAlloc for N64Alloc<'static> {
 
         match self.alloc_impl(layout) {
             Ok(ptr) => ptr.as_ptr(),
-            Err(AllocErr) => {
-                ptr::null_mut()
-            }
+            Err(AllocErr) => ptr::null_mut(),
         }
     }
 
