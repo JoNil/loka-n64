@@ -4,5 +4,6 @@
 - Stats showing memory usage
 - Draw a textured quad
 - Rotate textured quad
+- Audio emu
 
 - Tiled paralax world

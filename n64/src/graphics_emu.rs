@@ -1,16 +1,10 @@
-use crate::gfx::Texture;
 use lazy_static::lazy_static;
 use n64_math::Color;
 use std::collections::HashSet;
 use std::mem;
 use std::process::exit;
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc, Mutex,
-};
-use std::thread::{self, JoinHandle};
+use std::sync::Mutex;
 use std::thread_local;
-use std::time::Instant;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -174,14 +168,14 @@ impl GfxEmuState {
             limits: wgpu::Limits::default(),
         });
 
-        let mut swap_chain_desc = wgpu::SwapChainDescriptor {
+        let swap_chain_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
             format: wgpu::TextureFormat::Bgra8UnormSrgb,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Vsync,
         };
-        let mut swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
+        let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
 
         let vertex_buf =
             device.create_buffer_with_data(QUAD_VERTEX_DATA.as_bytes(), wgpu::BufferUsage::VERTEX);
@@ -594,7 +588,7 @@ impl GfxEmuState {
 }
 
 pub(crate) fn init() {
-    let mut state = GFX_EMU_STATE.lock().unwrap();
+    let _ = GFX_EMU_STATE.lock().unwrap();
 }
 
 pub fn swap_buffers() {

@@ -35,11 +35,11 @@ fn main() {
     let mut bullet_system = BulletSystem::new();
     let mut enemy_system = EnemySystem::new();
 
-    /*let mut audio_buffer = {
+    let mut audio_buffer = {
         let mut buffer = Vec::new();
         buffer.resize_with(audio::BUFFER_NO_SAMPLES, Default::default);
         buffer.into_boxed_slice()
-    };*/
+    };
 
     let mut time_used;
     let mut time_frame = current_time_us();
@@ -79,7 +79,7 @@ fn main() {
             }
         }
 
-        /*{
+        {
             // Audio
 
             if !audio::all_buffers_are_full() {
@@ -98,7 +98,7 @@ fn main() {
             }
 
             audio::update();
-        }*/
+        }
 
         {
             graphics::with_framebuffer(|fb| {

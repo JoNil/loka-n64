@@ -1,12 +1,11 @@
 use crate::graphics::{
-    ColoredRectUniforms, GfxEmuState, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH,
+    ColoredRectUniforms, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH,
 };
 use core::mem;
 use futures_executor;
 use n64_math::{Color, Vec2};
 use std::convert::TryInto;
-use std::sync::MutexGuard;
-use zerocopy::{AsBytes, FromBytes};
+use zerocopy::AsBytes;
 
 enum Command {
     Rect {
@@ -49,7 +48,7 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn run(mut self) {
+    pub fn run(self) {
         let state = &mut *GFX_EMU_STATE.lock().unwrap();
 
         let mut uniform_buffers = Vec::new();

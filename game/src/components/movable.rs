@@ -18,6 +18,7 @@ pub fn pos(entity: &Entity) -> Option<Vec2> {
 }
 
 pub fn simulate(dt: f32) {
+
     for component in lock_mut().components_mut() {
         component.pos += dt * component.speed;
     }

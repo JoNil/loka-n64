@@ -36,6 +36,7 @@ impl Entity {
         self.id & INDEX_MASK
     }
 
+    #[allow(dead_code)]
     fn generation(&self) -> Wrapping<u8> {
         Wrapping(((self.id >> INDEX_BITS) & GENERATION_MASK) as u8)
     }
@@ -99,6 +100,7 @@ impl EntitySystem {
         OwnedEntity::new(index, self.generation[index as usize])
     }
 
+    #[allow(dead_code)]
     pub fn alive(&self, e: &Entity) -> bool {
         return self.generation[e.index() as usize] == e.generation();
     }

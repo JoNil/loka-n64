@@ -4,7 +4,7 @@ use core::ptr::NonNull;
 use memory_units::{Bytes, Pages};
 use spin::Mutex;
 
-const SCRATCH_LEN_BYTES: usize = 3 * 1024 * 1024 - 512;
+const SCRATCH_LEN_BYTES: usize = (3 * 1024 * 1024 - 512);// + 16 * 1024 * 1024;
 
 #[repr(align(4096))]
 struct ScratchHeap([u8; SCRATCH_LEN_BYTES]);
