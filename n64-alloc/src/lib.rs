@@ -1,5 +1,4 @@
 #![no_std]
-#![feature(allocator_api)]
 
 extern crate alloc;
 
@@ -8,7 +7,6 @@ mod imp_static_array;
 mod neighbors;
 
 use const_init::ConstInit;
-use core::alloc::{AllocErr, AllocRef};
 use core::alloc::{GlobalAlloc, Layout};
 use core::cell::Cell;
 use core::cmp;
@@ -18,6 +16,8 @@ use core::ptr::{self, NonNull};
 use imp_static_array as imp;
 use memory_units::{size_of, ByteSize, Bytes, Pages, RoundUpTo, Words};
 use neighbors::Neighbors;
+
+pub(crate) struct AllocErr;
 
 #[inline]
 fn checked_round_up_to<T>(b: Bytes) -> Option<T>
@@ -635,19 +635,6 @@ impl<'a> N64Alloc<'a> {
             // free list.
             let _head = free.insert_into_free_list(head, policy);
         });
-    }
-}
-
-unsafe impl<'a, 'b> AllocRef for &'b N64Alloc<'a>
-where
-    'a: 'b,
-{
-    unsafe fn alloc(&mut self, layout: Layout) -> Result<NonNull<u8>, AllocErr> {
-        self.alloc_impl(layout)
-    }
-
-    unsafe fn dealloc(&mut self, ptr: NonNull<u8>, layout: Layout) {
-        self.dealloc_impl(ptr, layout)
     }
 }
 

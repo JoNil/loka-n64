@@ -139,7 +139,6 @@ fn main() {
     }
 }
 
-#[cfg(target_vendor = "nintendo64")]
 #[global_allocator]
 static ALLOC: n64_alloc::N64Alloc = n64_alloc::N64Alloc::INIT;
 

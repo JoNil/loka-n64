@@ -9,11 +9,9 @@ edition = "2018"
 [dependencies]
 hashbrown = { version = "0.6", default-features = false }
 n64 = { path = "../n64" }
+n64-alloc = { path = "../n64-alloc" }
 n64-math = { path = "../n64-math" }
 spin = "0.5"
-
-[target.'cfg(target_vendor = "nintendo64")'.dependencies]
-n64-alloc = { path = "../n64-alloc" }
 
 [build-dependencies]
 png = "0.15"

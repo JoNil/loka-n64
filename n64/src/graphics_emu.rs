@@ -124,6 +124,7 @@ pub(crate) struct GfxEmuState {
     pub colored_rect_fs_module: wgpu::ShaderModule,
     pub colored_rect_pipeline: wgpu::RenderPipeline,
 
+    pub copy_tex_src_buffer: Box<[u8]>,
     pub copy_tex_src_tex_extent: wgpu::Extent3d,
     pub copy_tex_src_tex: wgpu::Texture,
     pub copy_tex_src_tex_view: wgpu::TextureView,
@@ -183,7 +184,6 @@ impl GfxEmuState {
         let index_buf =
             device.create_buffer_with_data(QUAD_INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
-
         let colored_rect_dst_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             size: (4 * WIDTH * HEIGHT) as u64,
             usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
@@ -203,7 +203,9 @@ impl GfxEmuState {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: colored_rect_dst_tex_format,
-            usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::COPY_SRC | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+            usage: wgpu::TextureUsage::COPY_DST
+                | wgpu::TextureUsage::COPY_SRC
+                | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
         });
         let colored_rect_dst_tex_view = colored_rect_dst_tex.create_default_view();
 
@@ -282,6 +284,12 @@ impl GfxEmuState {
                 sample_mask: !0,
                 alpha_to_coverage_enabled: false,
             });
+
+        let copy_tex_src_buffer = {
+            let mut buffer = Vec::new();
+            buffer.resize_with((4 * WIDTH * HEIGHT) as usize, || 0);
+            buffer.into_boxed_slice()
+        };
 
         let copy_tex_src_tex_extent = wgpu::Extent3d {
             width: WIDTH as u32,
@@ -437,6 +445,7 @@ impl GfxEmuState {
             colored_rect_fs_module,
             colored_rect_pipeline,
 
+            copy_tex_src_buffer,
             copy_tex_src_tex_extent,
             copy_tex_src_tex,
             copy_tex_src_tex_view,
@@ -515,20 +524,15 @@ impl GfxEmuState {
     }
 
     pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
-        let src_tex_data = {
-            let mut data = Vec::with_capacity((4 * WIDTH * HEIGHT) as usize);
 
-            for pixel in fb {
-                let rgba = pixel.to_rgba();
+        for (pixel, data) in fb.iter().zip(self.copy_tex_src_buffer.chunks_mut(4)) {
+            let rgba = pixel.to_rgba();
 
-                data.push((rgba[0] * 255.0) as u8);
-                data.push((rgba[1] * 255.0) as u8);
-                data.push((rgba[2] * 255.0) as u8);
-                data.push((rgba[3] * 255.0) as u8);
-            }
-
-            data.into_boxed_slice()
-        };
+            data[0] = (rgba[0] * 255.0) as u8;
+            data[1] = (rgba[1] * 255.0) as u8;
+            data[2] = (rgba[2] * 255.0) as u8;
+            data[3] = (rgba[3] * 255.0) as u8;
+        }
 
         let frame = self
             .swap_chain
@@ -537,7 +541,7 @@ impl GfxEmuState {
 
         let temp_buf = self
             .device
-            .create_buffer_with_data(&src_tex_data, wgpu::BufferUsage::COPY_SRC);
+            .create_buffer_with_data(&self.copy_tex_src_buffer, wgpu::BufferUsage::COPY_SRC);
 
         let render_command_buf = {
             let mut encoder = self.device.create_command_encoder(&Default::default());
