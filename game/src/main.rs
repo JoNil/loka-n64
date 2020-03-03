@@ -101,6 +101,8 @@ fn main() {
         }
 
         {
+            // Graphics
+
             graphics::with_framebuffer(|fb| {
                 let mut cb = CommandBuffer::new(fb);
 
