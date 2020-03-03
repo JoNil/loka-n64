@@ -21,4 +21,6 @@ pub fn is_alive(entity: &Entity) -> bool {
     }
 }
 
+
+
 impl_system!(HealthComponent);

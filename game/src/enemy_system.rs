@@ -76,8 +76,8 @@ impl EnemySystem {
                 delete_list.push(i);
             }
 
-            if let Some(movable) = movable::get_component(&enemy.entity) {
-                if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
+            if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
+                if let Some(movable) = movable::get_component(&enemy.entity) {
                     bullet_system.shoot_bullet_enemy(
                         movable.pos + Vec2::new(0.0, ENEMY_SIZE.y() / 2.0),
                         Vec2::new(0.0, 0.65),
