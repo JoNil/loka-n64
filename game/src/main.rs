@@ -19,7 +19,6 @@ use components::box_drawable;
 use components::health;
 use components::movable;
 use components::sprite_drawable;
-use core::sync::atomic::Ordering;
 use enemy_system::EnemySystem;
 use n64::{self, audio, current_time_us, gfx::CommandBuffer, graphics, ipl3font, Controllers};
 use n64_math::Color;
@@ -132,7 +131,7 @@ fn main() {
 
             #[cfg(target_vendor = "nintendo64")]
             {
-                ipl3font::draw_number(100, 180, RED, n64_alloc::BYTES_LEFT.load(Ordering::SeqCst));
+                ipl3font::draw_number(100, 180, RED, n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst));
                 ipl3font::draw_number(100, 200, RED, *n64_alloc::PAGE_OFFSET.lock() as i32);
             }
 
