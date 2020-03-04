@@ -108,7 +108,7 @@ fn main() {
                 cb.clear();
 
                 box_drawable::draw(&mut cb);
-                sprite_drawable::draw();
+                sprite_drawable::draw(&mut cb);
 
                 cb.run();
             });
@@ -131,7 +131,12 @@ fn main() {
 
             #[cfg(target_vendor = "nintendo64")]
             {
-                ipl3font::draw_number(100, 180, RED, n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst));
+                ipl3font::draw_number(
+                    100,
+                    180,
+                    RED,
+                    n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
+                );
                 ipl3font::draw_number(100, 200, RED, *n64_alloc::PAGE_OFFSET.lock() as i32);
             }
 

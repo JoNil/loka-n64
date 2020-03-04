@@ -1,4 +1,5 @@
 use super::rdp_command_builder::*;
+use super::texture::Texture;
 use crate::graphics::{HEIGHT, WIDTH};
 use n64_math::{Color, Vec2};
 use n64_sys::rdp;
@@ -33,7 +34,12 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn add_rect(&mut self, upper_left: Vec2, lower_right: Vec2, color: Color) -> &mut Self {
+    pub fn add_colored_rect(
+        &mut self,
+        upper_left: Vec2,
+        lower_right: Vec2,
+        color: Color,
+    ) -> &mut Self {
         self.rdp
             .sync_pipe()
             .set_other_modes(
@@ -47,6 +53,15 @@ impl<'a> CommandBuffer<'a> {
             .set_fill_color(color)
             .fill_rectangle(upper_left, lower_right);
 
+        self
+    }
+
+    pub fn add_textured_rect(
+        &mut self,
+        upper_left: Vec2,
+        lower_right: Vec2,
+        texture: Texture,
+    ) -> &mut Self {
         self
     }
 

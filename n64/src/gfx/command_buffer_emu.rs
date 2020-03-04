@@ -1,3 +1,4 @@
+use super::texture::Texture;
 use crate::graphics::{ColoredRectUniforms, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH};
 use core::mem;
 use futures_executor;
@@ -6,10 +7,15 @@ use std::convert::TryInto;
 use zerocopy::AsBytes;
 
 enum Command {
-    Rect {
+    ColoredRect {
         upper_left: Vec2,
         lower_right: Vec2,
         color: Color,
+    },
+    TexturedRect {
+        upper_left: Vec2,
+        lower_right: Vec2,
+        texture: &'static Texture,
     },
 }
 
@@ -36,13 +42,33 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn add_rect(&mut self, upper_left: Vec2, lower_right: Vec2, color: Color) -> &mut Self {
-        self.commands.push(Command::Rect {
+    pub fn add_colored_rect(
+        &mut self,
+        upper_left: Vec2,
+        lower_right: Vec2,
+        color: Color,
+    ) -> &mut Self {
+        self.commands.push(Command::ColoredRect {
             upper_left,
             lower_right,
             color,
         });
 
+        self
+    }
+
+    pub fn add_textured_rect(
+        &mut self,
+        upper_left: Vec2,
+        lower_right: Vec2,
+        texture: &'static Texture,
+    ) -> &mut Self {
+        self.commands.push(Command::TexturedRect {
+            upper_left,
+            lower_right,
+            texture,
+        });
+        
         self
     }
 
@@ -85,7 +111,7 @@ impl<'a> CommandBuffer<'a> {
 
                     for command in &self.commands {
                         match command {
-                            Command::Rect {
+                            Command::ColoredRect {
                                 upper_left,
                                 lower_right,
                                 color,
@@ -105,6 +131,13 @@ impl<'a> CommandBuffer<'a> {
                                     uniforms.as_bytes(),
                                     wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
                                 ));
+                            }
+                            Command::TexturedRect {
+                                upper_left,
+                                lower_right,
+                                texture,
+                            } => {
+
                             }
                         }
                     }

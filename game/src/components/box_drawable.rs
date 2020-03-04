@@ -20,7 +20,7 @@ pub fn draw(cb: &mut CommandBuffer) {
 
             let screen_size = Vec2::new(graphics::WIDTH as f32, graphics::HEIGHT as f32);
 
-            cb.add_rect(
+            cb.add_colored_rect(
                 upper_left * screen_size,
                 lower_right * screen_size,
                 component.color,
