@@ -7,7 +7,6 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread_local;
-use std::time::Duration;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -452,7 +451,6 @@ impl GfxEmuState {
             Some(thread::spawn(move || {
                 while run.load(Ordering::SeqCst) {
                     device.poll(wgpu::Maintain::Poll);
-                    thread::sleep(Duration::from_millis(1));
                 }
             }))
         };
