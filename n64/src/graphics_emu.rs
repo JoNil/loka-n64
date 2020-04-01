@@ -187,7 +187,7 @@ impl GfxEmuState {
             format: wgpu::TextureFormat::Bgra8UnormSrgb,
             width: size.width,
             height: size.height,
-            present_mode: wgpu::PresentMode::Mailbox,
+            present_mode: wgpu::PresentMode::Fifo,
         };
         let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
 
@@ -564,7 +564,11 @@ impl GfxEmuState {
     }
 
     pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
-        for (row_src, row_dst) in fb.chunks_exact(WIDTH as usize).zip(self.copy_tex_src_buffer.chunks_exact_mut(4 * WIDTH as usize).rev()) {
+        for (row_src, row_dst) in fb.chunks_exact(WIDTH as usize).zip(
+            self.copy_tex_src_buffer
+                .chunks_exact_mut(4 * WIDTH as usize)
+                .rev(),
+        ) {
             for (pixel, data) in row_src.iter().zip(row_dst.chunks_mut(4)) {
                 let rgba = pixel.to_rgba();
 
