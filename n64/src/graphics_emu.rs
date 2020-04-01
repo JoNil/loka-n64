@@ -4,7 +4,8 @@ use std::collections::HashSet;
 use std::mem;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
-use std::sync::{Mutex, Arc};
+use std::sync::{Arc, Mutex};
+use std::thread;
 use std::thread_local;
 use std::time::Duration;
 use winit::{
@@ -14,7 +15,6 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
-use std::thread;
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -103,7 +103,6 @@ lazy_static! {
 }
 
 pub(crate) struct GfxEmuState {
-
     pub window: Window,
     pub keys_down: HashSet<VirtualKeyCode>,
 
@@ -446,7 +445,6 @@ impl GfxEmuState {
         window.set_visible(true);
 
         let device_poll_thread_run = Arc::new(AtomicBool::new(true));
-        
         let device_poll_thread = {
             let run = device_poll_thread_run.clone();
             let device = device.clone();
@@ -497,7 +495,7 @@ impl GfxEmuState {
             copy_tex_pipeline,
 
             device_poll_thread_run,
-            device_poll_thread
+            device_poll_thread,
         }
     }
 
