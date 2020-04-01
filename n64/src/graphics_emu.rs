@@ -667,6 +667,6 @@ pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
 pub fn slow_cpu_clear() {
     with_framebuffer(|fb| {
         fb.iter_mut()
-            .for_each(|v| *v = Color::new(0b00001_00001_00001_1));
+            .for_each(|v| *v = Color::new(0b00000_00000_00000_1));
     });
 }
