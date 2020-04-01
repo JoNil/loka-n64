@@ -1,7 +1,10 @@
 use crate::components::{movable, systems};
 use crate::entity::Entity;
 use crate::impl_system;
-use n64::{gfx::{CommandBuffer, Texture}, graphics};
+use n64::{
+    gfx::{CommandBuffer, Texture},
+    graphics,
+};
 use n64_math::Vec2;
 
 #[derive(Copy, Clone)]

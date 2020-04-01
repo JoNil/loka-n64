@@ -7,7 +7,7 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-hashbrown = { version = "0.6", default-features = false }
+hashbrown = { version = "0.7", default-features = false }
 n64 = { path = "../n64" }
 n64-math = { path = "../n64-math" }
 spin = "0.5"
@@ -16,4 +16,4 @@ spin = "0.5"
 n64-alloc = { path = "../n64-alloc" }
 
 [build-dependencies]
-png = "0.15"
+png = "0.16"

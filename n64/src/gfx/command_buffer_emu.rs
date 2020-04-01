@@ -68,7 +68,7 @@ impl<'a> CommandBuffer<'a> {
             lower_right,
             texture,
         });
-        
+
         self
     }
 
@@ -80,7 +80,9 @@ impl<'a> CommandBuffer<'a> {
 
         {
             let command_buf = {
-                let mut encoder = state.device.create_command_encoder(&Default::default());
+                let mut encoder = state
+                    .device
+                    .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
                 {
                     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
@@ -103,8 +105,8 @@ impl<'a> CommandBuffer<'a> {
                         depth_stencil_attachment: None,
                     });
 
-                    render_pass.set_index_buffer(&state.index_buf, 0);
-                    render_pass.set_vertex_buffers(0, &[(&state.vertex_buf, 0)]);
+                    render_pass.set_index_buffer(&state.index_buf, 0, 0);
+                    render_pass.set_vertex_buffer(0, &state.vertex_buf, 0, 0);
                     render_pass.set_pipeline(&state.colored_rect_pipeline);
 
                     let window_size = Vec2::new(WIDTH as f32, HEIGHT as f32);
@@ -136,9 +138,7 @@ impl<'a> CommandBuffer<'a> {
                                 upper_left,
                                 lower_right,
                                 texture,
-                            } => {
-
-                            }
+                            } => {}
                         }
                     }
 
@@ -153,6 +153,7 @@ impl<'a> CommandBuffer<'a> {
                                         range: 0..(mem::size_of::<ColoredRectUniforms>() as u64),
                                     },
                                 }],
+                                label: None,
                             },
                         ));
                     }
@@ -173,8 +174,8 @@ impl<'a> CommandBuffer<'a> {
                     wgpu::BufferCopyView {
                         buffer: &state.colored_rect_dst_buffer,
                         offset: 0,
-                        row_pitch: 4 * WIDTH as u32,
-                        image_height: HEIGHT as u32,
+                        bytes_per_row: 4 * WIDTH as u32,
+                        rows_per_image: HEIGHT as u32,
                     },
                     state.colored_rect_dst_tex_extent,
                 );
