@@ -564,13 +564,15 @@ impl GfxEmuState {
     }
 
     pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
-        for (pixel, data) in fb.iter().zip(self.copy_tex_src_buffer.chunks_mut(4)) {
-            let rgba = pixel.to_rgba();
+        for (row_src, row_dst) in fb.chunks_exact(WIDTH as usize).zip(self.copy_tex_src_buffer.chunks_exact_mut(4 * WIDTH as usize).rev()) {
+            for (pixel, data) in row_src.iter().zip(row_dst.chunks_mut(4)) {
+                let rgba = pixel.to_rgba();
 
-            data[0] = (rgba[0] * 255.0) as u8;
-            data[1] = (rgba[1] * 255.0) as u8;
-            data[2] = (rgba[2] * 255.0) as u8;
-            data[3] = (rgba[3] * 255.0) as u8;
+                data[0] = (rgba[0] * 255.0) as u8;
+                data[1] = (rgba[1] * 255.0) as u8;
+                data[2] = (rgba[2] * 255.0) as u8;
+                data[3] = (rgba[3] * 255.0) as u8;
+            }
         }
 
         let frame = self
@@ -637,7 +639,7 @@ impl Drop for GfxEmuState {
         self.device_poll_thread_run.store(false, Ordering::SeqCst);
 
         if let Some(join_handle) = self.device_poll_thread.take() {
-            join_handle.join();
+            join_handle.join().unwrap();
         }
     }
 }

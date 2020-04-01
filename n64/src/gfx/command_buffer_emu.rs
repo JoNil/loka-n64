@@ -192,12 +192,14 @@ impl<'a> CommandBuffer<'a> {
                     .await
                     .unwrap();
 
-                for (fb_color, mapped_color) in self
+                for (fb_color_row, mapped_color_row) in self
                     .framebuffer
-                    .iter_mut()
-                    .zip(mapped_colored_rect_dst_buffer.as_slice().chunks(4))
+                    .chunks_exact_mut(WIDTH as usize)
+                    .zip(mapped_colored_rect_dst_buffer.as_slice().chunks_exact(4 * WIDTH as usize).rev())
                 {
-                    *fb_color = Color::from_bytes(mapped_color.try_into().unwrap());
+                    for (fb_color, mapped_color) in fb_color_row.iter_mut().zip(mapped_color_row.chunks(4)) {
+                        *fb_color = Color::from_bytes(mapped_color.try_into().unwrap());
+                    }
                 }
             };
 
