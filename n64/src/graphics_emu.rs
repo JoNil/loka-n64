@@ -3,8 +3,10 @@ use n64_math::Color;
 use std::collections::HashSet;
 use std::mem;
 use std::process::exit;
-use std::sync::Mutex;
+use std::sync::atomic::{AtomicBool, Ordering};
+use std::sync::{Mutex, Arc};
 use std::thread_local;
+use std::time::Duration;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -12,6 +14,7 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
+use std::thread;
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -100,12 +103,13 @@ lazy_static! {
 }
 
 pub(crate) struct GfxEmuState {
+
     pub window: Window,
     pub keys_down: HashSet<VirtualKeyCode>,
 
     pub surface: wgpu::Surface,
     pub adapter: wgpu::Adapter,
-    pub device: wgpu::Device,
+    pub device: Arc<wgpu::Device>,
     pub queue: wgpu::Queue,
     pub swap_chain_desc: wgpu::SwapChainDescriptor,
     pub swap_chain: wgpu::SwapChain,
@@ -135,6 +139,9 @@ pub(crate) struct GfxEmuState {
     pub copy_tex_vs_module: wgpu::ShaderModule,
     pub copy_tex_fs_module: wgpu::ShaderModule,
     pub copy_tex_pipeline: wgpu::RenderPipeline,
+
+    pub device_poll_thread_run: Arc<AtomicBool>,
+    pub device_poll_thread: Option<thread::JoinHandle<()>>,
 }
 
 impl GfxEmuState {
@@ -173,7 +180,7 @@ impl GfxEmuState {
                 })
                 .await;
 
-            (adapter, device, queue)
+            (adapter, Arc::new(device), queue)
         });
 
         let swap_chain_desc = wgpu::SwapChainDescriptor {
@@ -438,6 +445,20 @@ impl GfxEmuState {
 
         window.set_visible(true);
 
+        let device_poll_thread_run = Arc::new(AtomicBool::new(true));
+        
+        let device_poll_thread = {
+            let run = device_poll_thread_run.clone();
+            let device = device.clone();
+
+            Some(thread::spawn(move || {
+                while run.load(Ordering::SeqCst) {
+                    device.poll(wgpu::Maintain::Poll);
+                    thread::sleep(Duration::from_millis(1));
+                }
+            }))
+        };
+
         GfxEmuState {
             window,
             keys_down,
@@ -474,6 +495,9 @@ impl GfxEmuState {
             copy_tex_vs_module,
             copy_tex_fs_module,
             copy_tex_pipeline,
+
+            device_poll_thread_run,
+            device_poll_thread
         }
     }
 
@@ -607,6 +631,16 @@ impl GfxEmuState {
             encoder.finish()
         };
         self.queue.submit(&[render_command_buf]);
+    }
+}
+
+impl Drop for GfxEmuState {
+    fn drop(&mut self) {
+        self.device_poll_thread_run.store(false, Ordering::SeqCst);
+
+        if let Some(join_handle) = self.device_poll_thread.take() {
+            join_handle.join();
+        }
     }
 }
 
