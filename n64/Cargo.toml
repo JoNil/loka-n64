@@ -15,7 +15,7 @@ n64-types = { path = "../n64-types" }
 futures-executor = "0.3"
 glsl-to-spirv = "0.1"
 lazy_static = "1"
-wgpu = { git = "https://github.com/gfx-rs/wgpu-rs.git" }
+wgpu = "0.5"
 winit = "0.22"
 zerocopy = "0.3"
 
