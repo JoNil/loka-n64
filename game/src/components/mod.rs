@@ -60,15 +60,15 @@ macro_rules! impl_system {
         }
 
         #[allow(dead_code)]
-        pub fn get_component(e: &Entity) -> Option<$component_ident> {
-            lock().lookup(e).map(|c| *c)
+        pub fn get_component(entity: &crate::entity::Entity) -> Option<$component_ident> {
+            lock().lookup(entity).map(|c| *c)
         }
 
         #[allow(dead_code)]
         pub struct System {
             components: alloc::vec::Vec<$component_ident>,
             entities: alloc::vec::Vec<crate::entity::Entity>,
-            map: hashbrown::HashMap<Entity, usize, n64_math::BuildFnvHasher>,
+            map: hashbrown::HashMap<crate::entity::Entity, usize, n64_math::BuildFnvHasher>,
         }
 
         impl System {
@@ -89,8 +89,8 @@ macro_rules! impl_system {
             }
 
             #[allow(dead_code)]
-            pub fn remove(&mut self, e: &Entity) {
-                if let Some(&index) = self.map.get(e) {
+            pub fn remove(&mut self, entity: &crate::entity::Entity) {
+                if let Some(&index) = self.map.get(entity) {
                     let last = self.components.len() - 1;
                     let last_entity = self.entities[last];
 
@@ -101,13 +101,13 @@ macro_rules! impl_system {
                     self.entities.remove(last);
 
                     self.map.insert(last_entity, index);
-                    self.map.remove(e);
+                    self.map.remove(entity);
                 }
             }
 
             #[allow(dead_code)]
-            pub fn lookup(&self, e: &Entity) -> Option<&$component_ident> {
-                if let Some(&index) = self.map.get(e) {
+            pub fn lookup(&self, entity: &crate::entity::Entity) -> Option<&$component_ident> {
+                if let Some(&index) = self.map.get(entity) {
                     return Some(&self.components[index]);
                 }
 
@@ -115,8 +115,11 @@ macro_rules! impl_system {
             }
 
             #[allow(dead_code)]
-            pub fn lookup_mut(&mut self, e: &Entity) -> Option<&mut $component_ident> {
-                if let Some(&mut index) = self.map.get_mut(e) {
+            pub fn lookup_mut(
+                &mut self,
+                entity: &crate::entity::Entity,
+            ) -> Option<&mut $component_ident> {
+                if let Some(&index) = self.map.get(entity) {
                     return Some(&mut self.components[index]);
                 }
 

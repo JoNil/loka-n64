@@ -36,7 +36,6 @@ impl Entity {
         self.id & INDEX_MASK
     }
 
-    #[allow(dead_code)]
     fn generation(&self) -> Wrapping<u8> {
         Wrapping(((self.id >> INDEX_BITS) & GENERATION_MASK) as u8)
     }
@@ -100,18 +99,17 @@ impl EntitySystem {
         OwnedEntity::new(index, self.generation[index as usize])
     }
 
-    #[allow(dead_code)]
-    pub fn alive(&self, e: &Entity) -> bool {
-        return self.generation[e.index() as usize] == e.generation();
+    pub fn alive(&self, entity: &Entity) -> bool {
+        return self.generation[entity.index() as usize] == entity.generation();
     }
 
-    fn destroy(&mut self, e: &Entity) {
-        let index = e.index();
+    fn destroy(&mut self, entity: &Entity) {
+        let index = entity.index();
         self.generation[index as usize] += Wrapping(1);
         self.free_indices.push_back(index);
 
         for remove in systems().removers() {
-            remove(e);
+            remove(entity);
         }
     }
 }

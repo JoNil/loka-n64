@@ -1,5 +1,4 @@
 use crate::components::{movable, systems};
-use crate::entity::Entity;
 use crate::impl_system;
 use n64::{
     gfx::{CommandBuffer, Texture},
