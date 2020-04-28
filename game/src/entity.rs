@@ -16,7 +16,7 @@ const MINIMUM_FREE_INDICES: u32 = 1024;
 
 static ENTITY_SYSTEM: Once<Mutex<EntitySystem>> = Once::new();
 
-pub fn lock() -> MutexGuard<'static, EntitySystem> {
+fn lock() -> MutexGuard<'static, EntitySystem> {
     ENTITY_SYSTEM
         .call_once(|| Mutex::new(EntitySystem::new()))
         .lock()
