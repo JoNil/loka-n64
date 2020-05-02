@@ -14,6 +14,7 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
+use crate::gfx::pipelines::{colored_rect::ColoredRect, copy_tex::CopyTex};
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -31,7 +32,7 @@ pub(crate) struct ColoredRectUniforms {
 
 #[repr(C)]
 #[derive(Clone, Copy, AsBytes, FromBytes)]
-struct Vertex {
+pub(crate) struct Vertex {
     pos: [f32; 3],
 }
 
@@ -112,31 +113,11 @@ pub(crate) struct GfxEmuState {
     pub swap_chain_desc: wgpu::SwapChainDescriptor,
     pub swap_chain: wgpu::SwapChain,
 
-    pub vertex_buf: wgpu::Buffer,
-    pub index_buf: wgpu::Buffer,
+    pub quad_vertex_buf: wgpu::Buffer,
+    pub quad_index_buf: wgpu::Buffer,
 
-    pub colored_rect_dst_buffer: wgpu::Buffer,
-    pub colored_rect_dst_tex_format: wgpu::TextureFormat,
-    pub colored_rect_dst_tex_extent: wgpu::Extent3d,
-    pub colored_rect_dst_tex: wgpu::Texture,
-    pub colored_rect_dst_tex_view: wgpu::TextureView,
-    pub colored_rect_bind_group_layout: wgpu::BindGroupLayout,
-    pub colored_rect_pipeline_layout: wgpu::PipelineLayout,
-    pub colored_rect_vs_module: wgpu::ShaderModule,
-    pub colored_rect_fs_module: wgpu::ShaderModule,
-    pub colored_rect_pipeline: wgpu::RenderPipeline,
-
-    pub copy_tex_src_buffer: Box<[u8]>,
-    pub copy_tex_src_tex_extent: wgpu::Extent3d,
-    pub copy_tex_src_tex: wgpu::Texture,
-    pub copy_tex_src_tex_view: wgpu::TextureView,
-    pub copy_tex_src_sampler: wgpu::Sampler,
-    pub copy_tex_bind_group_layout: wgpu::BindGroupLayout,
-    pub copy_tex_bind_group: wgpu::BindGroup,
-    pub copy_tex_pipeline_layout: wgpu::PipelineLayout,
-    pub copy_tex_vs_module: wgpu::ShaderModule,
-    pub copy_tex_fs_module: wgpu::ShaderModule,
-    pub copy_tex_pipeline: wgpu::RenderPipeline,
+    pub copy_tex: CopyTex,
+    pub colored_rect: ColoredRect,
 
     pub device_poll_thread_run: Arc<AtomicBool>,
     pub device_poll_thread: Option<thread::JoinHandle<()>>,
@@ -191,256 +172,14 @@ impl GfxEmuState {
         };
         let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
 
-        let vertex_buf =
+        let quad_vertex_buf =
             device.create_buffer_with_data(QUAD_VERTEX_DATA.as_bytes(), wgpu::BufferUsage::VERTEX);
 
-        let index_buf =
+        let quad_index_buf =
             device.create_buffer_with_data(QUAD_INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
-        let colored_rect_dst_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: (4 * WIDTH * HEIGHT) as u64,
-            usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
-        });
-
-        let colored_rect_dst_tex_format = wgpu::TextureFormat::Rgba8Unorm;
-
-        let colored_rect_dst_tex_extent = wgpu::Extent3d {
-            width: WIDTH as u32,
-            height: HEIGHT as u32,
-            depth: 1,
-        };
-        let colored_rect_dst_tex = device.create_texture(&wgpu::TextureDescriptor {
-            label: None,
-            size: colored_rect_dst_tex_extent,
-            array_layer_count: 1,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: colored_rect_dst_tex_format,
-            usage: wgpu::TextureUsage::COPY_DST
-                | wgpu::TextureUsage::COPY_SRC
-                | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
-        });
-        let colored_rect_dst_tex_view = colored_rect_dst_tex.create_default_view();
-
-        let colored_rect_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                bindings: &[wgpu::BindGroupLayoutEntry {
-                    binding: 0,
-                    visibility: wgpu::ShaderStage::FRAGMENT | wgpu::ShaderStage::VERTEX,
-                    ty: wgpu::BindingType::UniformBuffer { dynamic: false },
-                }],
-                label: None,
-            });
-
-        let colored_rect_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                bind_group_layouts: &[&colored_rect_bind_group_layout],
-            });
-
-        let colored_rect_vs_bytes = wgpu::read_spirv(
-            glsl_to_spirv::compile(
-                include_str!("gfx/shaders/colored_rect.vert"),
-                glsl_to_spirv::ShaderType::Vertex,
-            )
-            .unwrap(),
-        )
-        .unwrap();
-
-        let colored_rect_fs_bytes = wgpu::read_spirv(
-            glsl_to_spirv::compile(
-                include_str!("gfx/shaders/colored_rect.frag"),
-                glsl_to_spirv::ShaderType::Fragment,
-            )
-            .unwrap(),
-        )
-        .unwrap();
-
-        let colored_rect_vs_module = device.create_shader_module(&colored_rect_vs_bytes);
-        let colored_rect_fs_module = device.create_shader_module(&colored_rect_fs_bytes);
-
-        let colored_rect_pipeline =
-            device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-                layout: &colored_rect_pipeline_layout,
-                vertex_stage: wgpu::ProgrammableStageDescriptor {
-                    module: &colored_rect_vs_module,
-                    entry_point: "main",
-                },
-                fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
-                    module: &colored_rect_fs_module,
-                    entry_point: "main",
-                }),
-                rasterization_state: Some(wgpu::RasterizationStateDescriptor {
-                    front_face: wgpu::FrontFace::Ccw,
-                    cull_mode: wgpu::CullMode::None,
-                    depth_bias: 0,
-                    depth_bias_slope_scale: 0.0,
-                    depth_bias_clamp: 0.0,
-                }),
-                primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-                color_states: &[wgpu::ColorStateDescriptor {
-                    format: colored_rect_dst_tex_format,
-                    color_blend: wgpu::BlendDescriptor::REPLACE,
-                    alpha_blend: wgpu::BlendDescriptor::REPLACE,
-                    write_mask: wgpu::ColorWrite::ALL,
-                }],
-                depth_stencil_state: None,
-                vertex_state: wgpu::VertexStateDescriptor {
-                    index_format: wgpu::IndexFormat::Uint16,
-                    vertex_buffers: &[wgpu::VertexBufferDescriptor {
-                        stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                        step_mode: wgpu::InputStepMode::Vertex,
-                        attributes: &[wgpu::VertexAttributeDescriptor {
-                            format: wgpu::VertexFormat::Float3,
-                            offset: 0,
-                            shader_location: 0,
-                        }],
-                    }],
-                },
-                sample_count: 1,
-                sample_mask: !0,
-                alpha_to_coverage_enabled: false,
-            });
-
-        let copy_tex_src_buffer = {
-            let mut buffer = Vec::new();
-            buffer.resize_with((4 * WIDTH * HEIGHT) as usize, || 0);
-            buffer.into_boxed_slice()
-        };
-
-        let copy_tex_src_tex_extent = wgpu::Extent3d {
-            width: WIDTH as u32,
-            height: HEIGHT as u32,
-            depth: 1,
-        };
-        let copy_tex_src_tex = device.create_texture(&wgpu::TextureDescriptor {
-            label: None,
-            size: copy_tex_src_tex_extent,
-            array_layer_count: 1,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: wgpu::TextureFormat::Rgba8Unorm,
-            usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
-        });
-        let copy_tex_src_tex_view = copy_tex_src_tex.create_default_view();
-
-        let copy_tex_src_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Nearest,
-            min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            lod_min_clamp: -100.0,
-            lod_max_clamp: 100.0,
-            compare: wgpu::CompareFunction::Always,
-        });
-
-        let copy_tex_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: None,
-                bindings: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStage::FRAGMENT,
-                        ty: wgpu::BindingType::SampledTexture {
-                            multisampled: false,
-                            component_type: wgpu::TextureComponentType::Uint,
-                            dimension: wgpu::TextureViewDimension::D2,
-                        },
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStage::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler { comparison: false },
-                    },
-                ],
-            });
-
-        let copy_tex_bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: None,
-            layout: &copy_tex_bind_group_layout,
-            bindings: &[
-                wgpu::Binding {
-                    binding: 0,
-                    resource: wgpu::BindingResource::TextureView(&copy_tex_src_tex_view),
-                },
-                wgpu::Binding {
-                    binding: 1,
-                    resource: wgpu::BindingResource::Sampler(&copy_tex_src_sampler),
-                },
-            ],
-        });
-
-        let copy_tex_pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                bind_group_layouts: &[&copy_tex_bind_group_layout],
-            });
-
-        let copy_tex_vs_bytes = wgpu::read_spirv(
-            glsl_to_spirv::compile(
-                include_str!("gfx/shaders/copy_tex.vert"),
-                glsl_to_spirv::ShaderType::Vertex,
-            )
-            .unwrap(),
-        )
-        .unwrap();
-
-        let copy_tex_fs_bytes = wgpu::read_spirv(
-            glsl_to_spirv::compile(
-                include_str!("gfx/shaders/copy_tex.frag"),
-                glsl_to_spirv::ShaderType::Fragment,
-            )
-            .unwrap(),
-        )
-        .unwrap();
-
-        let copy_tex_vs_module = { device.create_shader_module(&copy_tex_vs_bytes) };
-        let copy_tex_fs_module = device.create_shader_module(&copy_tex_fs_bytes);
-
-        let copy_tex_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            layout: &copy_tex_pipeline_layout,
-            vertex_stage: wgpu::ProgrammableStageDescriptor {
-                module: &copy_tex_vs_module,
-                entry_point: "main",
-            },
-            fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
-                module: &copy_tex_fs_module,
-                entry_point: "main",
-            }),
-            rasterization_state: Some(wgpu::RasterizationStateDescriptor {
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: wgpu::CullMode::None,
-                depth_bias: 0,
-                depth_bias_slope_scale: 0.0,
-                depth_bias_clamp: 0.0,
-            }),
-            primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-            color_states: &[wgpu::ColorStateDescriptor {
-                format: swap_chain_desc.format,
-                color_blend: wgpu::BlendDescriptor::REPLACE,
-                alpha_blend: wgpu::BlendDescriptor::REPLACE,
-                write_mask: wgpu::ColorWrite::ALL,
-            }],
-            depth_stencil_state: None,
-            vertex_state: wgpu::VertexStateDescriptor {
-                index_format: wgpu::IndexFormat::Uint16,
-                vertex_buffers: &[wgpu::VertexBufferDescriptor {
-                    stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
-                    step_mode: wgpu::InputStepMode::Vertex,
-                    attributes: &[wgpu::VertexAttributeDescriptor {
-                        format: wgpu::VertexFormat::Float3,
-                        offset: 0,
-                        shader_location: 0,
-                    }],
-                }],
-            },
-            sample_count: 1,
-            sample_mask: !0,
-            alpha_to_coverage_enabled: false,
-        });
+        let copy_tex = CopyTex::new(&device, &swap_chain_desc);
+        let colored_rect = ColoredRect::new(&device);
 
         window.set_visible(true);
 
@@ -467,31 +206,11 @@ impl GfxEmuState {
             swap_chain_desc,
             swap_chain,
 
-            vertex_buf,
-            index_buf,
+            quad_vertex_buf,
+            quad_index_buf,
 
-            colored_rect_dst_buffer,
-            colored_rect_dst_tex_format,
-            colored_rect_dst_tex_extent,
-            colored_rect_dst_tex,
-            colored_rect_dst_tex_view,
-            colored_rect_bind_group_layout,
-            colored_rect_pipeline_layout,
-            colored_rect_vs_module,
-            colored_rect_fs_module,
-            colored_rect_pipeline,
-
-            copy_tex_src_buffer,
-            copy_tex_src_tex_extent,
-            copy_tex_src_tex,
-            copy_tex_src_tex_view,
-            copy_tex_src_sampler,
-            copy_tex_bind_group_layout,
-            copy_tex_bind_group,
-            copy_tex_pipeline_layout,
-            copy_tex_vs_module,
-            copy_tex_fs_module,
-            copy_tex_pipeline,
+            copy_tex,
+            colored_rect,
 
             device_poll_thread_run,
             device_poll_thread,
@@ -564,7 +283,7 @@ impl GfxEmuState {
 
     pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
         for (row_src, row_dst) in fb.chunks_exact(WIDTH as usize).zip(
-            self.copy_tex_src_buffer
+            self.copy_tex.src_buffer
                 .chunks_exact_mut(4 * WIDTH as usize)
                 .rev(),
         ) {
@@ -585,7 +304,7 @@ impl GfxEmuState {
 
         let temp_buf = self
             .device
-            .create_buffer_with_data(&self.copy_tex_src_buffer, wgpu::BufferUsage::COPY_SRC);
+            .create_buffer_with_data(&self.copy_tex.src_buffer, wgpu::BufferUsage::COPY_SRC);
 
         let render_command_buf = {
             let mut encoder = self
@@ -600,12 +319,12 @@ impl GfxEmuState {
                     rows_per_image: HEIGHT as u32,
                 },
                 wgpu::TextureCopyView {
-                    texture: &self.copy_tex_src_tex,
+                    texture: &self.copy_tex.src_tex,
                     mip_level: 0,
                     array_layer: 0,
                     origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
                 },
-                self.copy_tex_src_tex_extent,
+                self.copy_tex.src_tex_extent,
             );
 
             {
@@ -624,10 +343,10 @@ impl GfxEmuState {
                     }],
                     depth_stencil_attachment: None,
                 });
-                render_pass.set_pipeline(&self.copy_tex_pipeline);
-                render_pass.set_bind_group(0, &self.copy_tex_bind_group, &[]);
-                render_pass.set_index_buffer(&self.index_buf, 0, 0);
-                render_pass.set_vertex_buffer(0, &self.vertex_buf, 0, 0);
+                render_pass.set_pipeline(&self.copy_tex.pipeline);
+                render_pass.set_bind_group(0, &self.copy_tex.bind_group, &[]);
+                render_pass.set_index_buffer(&self.quad_index_buf, 0, 0);
+                render_pass.set_vertex_buffer(0, &self.quad_vertex_buf, 0, 0);
                 render_pass.draw_indexed(0..(QUAD_INDEX_DATA.len() as u32), 0, 0..1);
             }
 

@@ -87,7 +87,7 @@ impl<'a> CommandBuffer<'a> {
                 {
                     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                         color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                            attachment: &state.colored_rect_dst_tex_view,
+                            attachment: &state.colored_rect.dst_tex_view,
                             resolve_target: None,
                             load_op: if self.clear {
                                 wgpu::LoadOp::Clear
@@ -105,9 +105,9 @@ impl<'a> CommandBuffer<'a> {
                         depth_stencil_attachment: None,
                     });
 
-                    render_pass.set_index_buffer(&state.index_buf, 0, 0);
-                    render_pass.set_vertex_buffer(0, &state.vertex_buf, 0, 0);
-                    render_pass.set_pipeline(&state.colored_rect_pipeline);
+                    render_pass.set_index_buffer(&state.quad_index_buf, 0, 0);
+                    render_pass.set_vertex_buffer(0, &state.quad_vertex_buf, 0, 0);
+                    render_pass.set_pipeline(&state.colored_rect.pipeline);
 
                     let window_size = Vec2::new(WIDTH as f32, HEIGHT as f32);
 
@@ -145,7 +145,7 @@ impl<'a> CommandBuffer<'a> {
                     for uniforms in &uniform_buffers {
                         bind_groups.push(state.device.create_bind_group(
                             &wgpu::BindGroupDescriptor {
-                                layout: &state.colored_rect_bind_group_layout,
+                                layout: &state.colored_rect.bind_group_layout,
                                 bindings: &[wgpu::Binding {
                                     binding: 0,
                                     resource: wgpu::BindingResource::Buffer {
@@ -166,18 +166,18 @@ impl<'a> CommandBuffer<'a> {
 
                 encoder.copy_texture_to_buffer(
                     wgpu::TextureCopyView {
-                        texture: &state.colored_rect_dst_tex,
+                        texture: &state.colored_rect.dst_tex,
                         mip_level: 0,
                         array_layer: 0,
                         origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
                     },
                     wgpu::BufferCopyView {
-                        buffer: &state.colored_rect_dst_buffer,
+                        buffer: &state.colored_rect.dst_buffer,
                         offset: 0,
                         bytes_per_row: 4 * WIDTH as u32,
                         rows_per_image: HEIGHT as u32,
                     },
-                    state.colored_rect_dst_tex_extent,
+                    state.colored_rect.dst_tex_extent,
                 );
 
                 encoder.finish()
@@ -187,7 +187,7 @@ impl<'a> CommandBuffer<'a> {
 
             let op = async {
                 let mapped_colored_rect_dst_buffer = state
-                    .colored_rect_dst_buffer
+                    .colored_rect.dst_buffer
                     .map_read(0, (4 * WIDTH * HEIGHT) as u64)
                     .await
                     .unwrap();

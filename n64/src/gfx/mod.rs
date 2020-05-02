@@ -8,6 +8,8 @@ cfg_if::cfg_if! {
     } else {
         pub mod command_buffer_emu;
         pub use command_buffer_emu as command_buffer;
+
+        pub(crate) mod pipelines;
     }
 }
 
