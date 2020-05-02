@@ -1,6 +1,92 @@
-use crate::graphics_emu::Vertex;
-use std::mem;
+use crate::{
+    gfx::Texture,
+    graphics_emu::Vertex,
+};
+use n64_math::Color;
+use std::{convert::TryInto, mem};
 use zerocopy::{AsBytes, FromBytes};
+
+pub(crate) struct UploadedTexture {
+    pub tex_format: wgpu::TextureFormat,
+    pub tex_extent: wgpu::Extent3d,
+    pub tex: wgpu::Texture,
+    pub tex_view: wgpu::TextureView,
+}
+
+impl UploadedTexture {
+    pub(crate) fn new(
+        device: &wgpu::Device,
+        encoder: &mut wgpu::CommandEncoder,
+        texture_data: &Texture,
+    ) -> Self {
+        let mut temp_buffer: Box<[u8]> = {
+            let mut temp_buffer = Vec::new();
+            temp_buffer.resize_with(
+                (4 * texture_data.width * texture_data.height) as usize,
+                Default::default,
+            );
+            temp_buffer.into_boxed_slice()
+        };
+
+        for (pixel, data) in texture_data
+            .data
+            .chunks_exact(2)
+            .map(|chunk| Color::new(u16::from_le_bytes(chunk.try_into().unwrap())))
+            .zip(temp_buffer.chunks_exact_mut(4 as usize))
+        {            
+            let rgba = pixel.to_rgba();
+
+            data[0] = (rgba[0] * 255.0) as u8;
+            data[1] = (rgba[1] * 255.0) as u8;
+            data[2] = (rgba[2] * 255.0) as u8;
+            data[3] = (rgba[3] * 255.0) as u8;
+        }
+
+        let temp_buf = device.create_buffer_with_data(&temp_buffer, wgpu::BufferUsage::COPY_SRC);
+
+        let tex_format = wgpu::TextureFormat::Rgba8Unorm;
+
+        let tex_extent = wgpu::Extent3d {
+            width: texture_data.width as u32,
+            height: texture_data.height as u32,
+            depth: 1,
+        };
+        let tex = device.create_texture(&wgpu::TextureDescriptor {
+            label: None,
+            size: tex_extent,
+            array_layer_count: 1,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: tex_format,
+            usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::SAMPLED,
+        });
+        let tex_view = tex.create_default_view();
+
+        encoder.copy_buffer_to_texture(
+            wgpu::BufferCopyView {
+                buffer: &temp_buf,
+                offset: 0,
+                bytes_per_row: 4 * texture_data.width as u32,
+                rows_per_image: texture_data.height as u32,
+            },
+            wgpu::TextureCopyView {
+                texture: &tex,
+                mip_level: 0,
+                array_layer: 0,
+                origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
+            },
+            tex_extent,
+        );
+
+        Self {
+            tex_format,
+            tex_extent,
+            tex,
+            tex_view,
+        }
+    }
+}
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, AsBytes, FromBytes)]

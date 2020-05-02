@@ -5,6 +5,7 @@ use std::error::Error;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
+use n64_math::Color;
 
 struct Image {
     width: i32,
@@ -32,15 +33,6 @@ fn load_png(path: &Path) -> Result<Image, Box<dyn Error>> {
     })
 }
 
-fn rgba_to_5551(rgba: u32) -> u16 {
-    let r = ((rgba >> 24) & 0xff) as f32 / 255.0;
-    let g = ((rgba >> 16) & 0xff) as f32 / 255.0;
-    let b = ((rgba >> 8) & 0xff) as f32 / 255.0;
-    let a = if (rgba >> 0) & 0xff > 0 { 1 } else { 0 };
-
-    (((r * 31.0) as u16) << 11) | (((g * 31.0) as u16) << 6) | (((b * 31.0) as u16) << 1) | a
-}
-
 fn main() -> Result<(), Box<dyn Error>> {
     let out_dir = env::var("OUT_DIR")?;
 
@@ -59,8 +51,8 @@ fn main() -> Result<(), Box<dyn Error>> {
             let mut out_image = Vec::with_capacity((2 * image.width * image.height) as usize);
 
             for pixel in image.data.chunks(4) {
-                let u32_pixel = u32::from_ne_bytes(pixel.try_into()?);
-                out_image.extend(&rgba_to_5551(u32_pixel).to_ne_bytes());
+                let color = Color::from_bytes(pixel.try_into()?);
+                out_image.extend(&color.value().to_le_bytes());
             }
 
             fs::write(&out_path, &out_image)?;

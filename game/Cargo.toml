@@ -17,3 +17,4 @@ n64-alloc = { path = "../n64-alloc" }
 
 [build-dependencies]
 png = "0.16"
+n64-math = { path = "../n64-math" }

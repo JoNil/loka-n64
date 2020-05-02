@@ -51,15 +51,6 @@ impl Color {
     }
 
     #[inline]
-    pub fn to_u32(&self) -> u32 {
-        let r = (self.value >> 11 & 0b11111) as u8 * 8 + 4;
-        let g = (self.value >> 6 & 0b11111) as u8 * 8 + 4;
-        let b = (self.value >> 1 & 0b11111) as u8 * 8 + 4;
-
-        (r as u32) << 16 | (g as u32) << 8 | (b as u32)
-    }
-
-    #[inline]
     pub fn to_rgba(&self) -> [f32; 4] {
         let r = (self.value >> 11 & 0b11111) as f32 / 31.0;
         let g = (self.value >> 6 & 0b11111) as f32 / 31.0;
