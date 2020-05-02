@@ -1,5 +1,5 @@
-use super::texture::Texture;
-use crate::graphics::{ColoredRectUniforms, GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH};
+use super::{pipelines::colored_rect::ColoredRectUniforms, texture::Texture};
+use crate::graphics::{GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH};
 use core::mem;
 use futures_executor;
 use n64_math::{Color, Vec2};
@@ -87,7 +87,7 @@ impl<'a> CommandBuffer<'a> {
                 {
                     let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                         color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                            attachment: &state.colored_rect.dst_tex_view,
+                            attachment: &state.command_buffer_dst.tex_view,
                             resolve_target: None,
                             load_op: if self.clear {
                                 wgpu::LoadOp::Clear
@@ -166,18 +166,18 @@ impl<'a> CommandBuffer<'a> {
 
                 encoder.copy_texture_to_buffer(
                     wgpu::TextureCopyView {
-                        texture: &state.colored_rect.dst_tex,
+                        texture: &state.command_buffer_dst.tex,
                         mip_level: 0,
                         array_layer: 0,
                         origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
                     },
                     wgpu::BufferCopyView {
-                        buffer: &state.colored_rect.dst_buffer,
+                        buffer: &state.command_buffer_dst.buffer,
                         offset: 0,
                         bytes_per_row: 4 * WIDTH as u32,
                         rows_per_image: HEIGHT as u32,
                     },
-                    state.colored_rect.dst_tex_extent,
+                    state.command_buffer_dst.tex_extent,
                 );
 
                 encoder.finish()
@@ -187,7 +187,7 @@ impl<'a> CommandBuffer<'a> {
 
             let op = async {
                 let mapped_colored_rect_dst_buffer = state
-                    .colored_rect.dst_buffer
+                    .command_buffer_dst.buffer
                     .map_read(0, (4 * WIDTH * HEIGHT) as u64)
                     .await
                     .unwrap();

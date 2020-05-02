@@ -1,7 +1,6 @@
 use lazy_static::lazy_static;
 use n64_math::Color;
 use std::collections::HashSet;
-use std::mem;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -14,7 +13,7 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
-use crate::gfx::pipelines::{colored_rect::ColoredRect, copy_tex::CopyTex};
+use crate::gfx::pipelines::{colored_rect::ColoredRect, copy_tex::CopyTex, textured_rect::TexturedRect};
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -23,31 +22,28 @@ const FRAME_BUFFER_SIZE: usize = (WIDTH * HEIGHT) as usize;
 const SCALE: i32 = 4;
 
 #[repr(C)]
-#[derive(Clone, Copy, Debug, AsBytes, FromBytes)]
-pub(crate) struct ColoredRectUniforms {
-    pub color: [f32; 4],
-    pub offset: [f32; 2],
-    pub scale: [f32; 2],
-}
-
-#[repr(C)]
 #[derive(Clone, Copy, AsBytes, FromBytes)]
 pub(crate) struct Vertex {
     pos: [f32; 3],
+    tex_coord: [f32; 2],
 }
 
 static QUAD_VERTEX_DATA: &'static [Vertex] = &[
     Vertex {
         pos: [-1.0, -1.0, 1.0],
+        tex_coord: [0.0, 0.0],
     },
     Vertex {
         pos: [1.0, -1.0, 1.0],
+        tex_coord: [1.0, 0.0],
     },
     Vertex {
         pos: [1.0, 1.0, 1.0],
+        tex_coord: [1.0, 1.0],
     },
     Vertex {
         pos: [-1.0, 1.0, 1.0],
+        tex_coord: [0.0, 1.0],
     },
 ];
 
@@ -102,6 +98,55 @@ lazy_static! {
     pub(crate) static ref GFX_EMU_STATE: Mutex<GfxEmuState> = Mutex::new(GfxEmuState::new());
 }
 
+pub(crate) struct CommandBufferDst {
+    pub buffer: wgpu::Buffer,
+    pub tex_format: wgpu::TextureFormat,
+    pub tex_extent: wgpu::Extent3d,
+    pub tex: wgpu::Texture,
+    pub tex_view: wgpu::TextureView,
+}
+
+impl CommandBufferDst {
+    pub(crate) fn new(device: &wgpu::Device) -> Self {
+
+        let buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: (4 * WIDTH * HEIGHT) as u64,
+            usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
+        });
+
+        let tex_format = wgpu::TextureFormat::Rgba8Unorm;
+
+        let tex_extent = wgpu::Extent3d {
+            width: WIDTH as u32,
+            height: HEIGHT as u32,
+            depth: 1,
+        };
+        let tex = device.create_texture(&wgpu::TextureDescriptor {
+            label: None,
+            size: tex_extent,
+            array_layer_count: 1,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: tex_format,
+            usage: wgpu::TextureUsage::COPY_DST
+                | wgpu::TextureUsage::COPY_SRC
+                | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+        });
+        let tex_view = tex.create_default_view();
+
+        Self {
+            buffer,
+            tex_format,
+            tex_extent,
+            tex,
+            tex_view,
+        }
+    }
+}
+
+
 pub(crate) struct GfxEmuState {
     pub window: Window,
     pub keys_down: HashSet<VirtualKeyCode>,
@@ -117,7 +162,10 @@ pub(crate) struct GfxEmuState {
     pub quad_index_buf: wgpu::Buffer,
 
     pub copy_tex: CopyTex,
+    
+    pub command_buffer_dst: CommandBufferDst,
     pub colored_rect: ColoredRect,
+    pub textured_rect: TexturedRect,
 
     pub device_poll_thread_run: Arc<AtomicBool>,
     pub device_poll_thread: Option<thread::JoinHandle<()>>,
@@ -179,7 +227,9 @@ impl GfxEmuState {
             device.create_buffer_with_data(QUAD_INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
         let copy_tex = CopyTex::new(&device, &swap_chain_desc);
-        let colored_rect = ColoredRect::new(&device);
+        let command_buffer_dst = CommandBufferDst::new(&device);
+        let colored_rect = ColoredRect::new(&device, command_buffer_dst.tex_format);
+        let textured_rect = TexturedRect::new(&device, command_buffer_dst.tex_format);
 
         window.set_visible(true);
 
@@ -210,7 +260,9 @@ impl GfxEmuState {
             quad_index_buf,
 
             copy_tex,
+            command_buffer_dst,
             colored_rect,
+            textured_rect,
 
             device_poll_thread_run,
             device_poll_thread,
