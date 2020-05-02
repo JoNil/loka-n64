@@ -5,7 +5,7 @@ use crate::components::movable::{self, MovableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
 use crate::Player;
 use alloc::vec::Vec;
-use n64::{current_time_us, graphics, ipl3font};
+use n64::{current_time_us, graphics};
 use n64_math::{self, Color, Vec2};
 
 pub const ENEMY_SIZE: Vec2 = Vec2::new(

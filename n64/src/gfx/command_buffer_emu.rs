@@ -1,18 +1,20 @@
 use crate::gfx::Texture;
 use crate::{
     graphics::{GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH},
-    graphics_emu::{colored_rect::ColoredRectUniforms, textured_rect::{TexturedRectUniforms, UploadedTexture}},
+    graphics_emu::{
+        colored_rect::ColoredRectUniforms,
+        textured_rect::{TexturedRectUniforms, UploadedTexture},
+    },
 };
 use core::mem;
 use futures_executor;
 use n64_math::{Color, Vec2};
-use std::convert::TryInto;
+use std::{collections::HashMap, convert::TryInto};
 use zerocopy::AsBytes;
 
 #[derive(Default)]
 struct DrawData {
     uniform_buffer: Option<wgpu::Buffer>,
-    texture: Option<UploadedTexture>,
     bind_group: Option<wgpu::BindGroup>,
 }
 
@@ -90,18 +92,19 @@ impl<'a> CommandBuffer<'a> {
             draw_data.into_boxed_slice()
         };
 
+        let mut texture_data: HashMap<*const Texture, UploadedTexture> = HashMap::new();
+
         let command_buf = {
             let mut encoder = state
                 .device
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
-            for (command, data) in self.commands.iter().zip(draw_data.iter_mut()) {
-                match command {
-                    Command::TexturedRect { texture, .. } => {
-                        data.texture =
-                            Some(UploadedTexture::new(&state.device, &mut encoder, texture));
-                    }
-                    _ => {}
+            for command in &self.commands {
+                if let Command::TexturedRect { texture, .. } = command {
+                    texture_data.insert(
+                        *texture as *const _,
+                        UploadedTexture::new(&state.device, &mut encoder, texture),
+                    );
                 }
             }
 
@@ -176,7 +179,7 @@ impl<'a> CommandBuffer<'a> {
                         Command::TexturedRect {
                             upper_left,
                             lower_right,
-                            ..
+                            texture,
                         } => {
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
@@ -210,7 +213,7 @@ impl<'a> CommandBuffer<'a> {
                                         wgpu::Binding {
                                             binding: 1,
                                             resource: wgpu::BindingResource::TextureView(
-                                                &data.texture.as_ref().unwrap().tex_view,
+                                                &texture_data.get(&(*texture as *const _)).unwrap().tex_view
                                             ),
                                         },
                                         wgpu::Binding {
