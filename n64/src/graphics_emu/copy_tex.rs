@@ -145,11 +145,18 @@ impl CopyTex {
                 vertex_buffers: &[wgpu::VertexBufferDescriptor {
                     stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
                     step_mode: wgpu::InputStepMode::Vertex,
-                    attributes: &[wgpu::VertexAttributeDescriptor {
-                        format: wgpu::VertexFormat::Float3,
-                        offset: 0,
-                        shader_location: 0,
-                    }],
+                    attributes: &[
+                        wgpu::VertexAttributeDescriptor {
+                            format: wgpu::VertexFormat::Float3,
+                            offset: 0,
+                            shader_location: 0,
+                        },
+                        wgpu::VertexAttributeDescriptor {
+                            format: wgpu::VertexFormat::Float2,
+                            offset: 3 * mem::size_of::<f32>() as u64,
+                            shader_location: 1,
+                        },
+                    ],
                 }],
             },
             sample_count: 1,

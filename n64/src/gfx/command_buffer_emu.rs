@@ -143,8 +143,7 @@ impl<'a> CommandBuffer<'a> {
                         } => {
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
-                            let offset =
-                                2.0 * (*upper_left - window_size / 2.0 + size / 2.0) / window_size;
+                            let offset = 2.0 * (*upper_left - window_size / 2.0 + size / 2.0) / window_size;
 
                             let uniforms = ColoredRectUniforms {
                                 color: color.to_rgba(),
@@ -198,8 +197,8 @@ impl<'a> CommandBuffer<'a> {
                                 wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
                             ));
 
-                            data.bind_group =
-                                Some(state.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                            data.bind_group = Some(
+                                state.device.create_bind_group(&wgpu::BindGroupDescriptor {
                                     layout: &state.textured_rect.bind_group_layout,
                                     bindings: &[
                                         wgpu::Binding {
@@ -213,7 +212,10 @@ impl<'a> CommandBuffer<'a> {
                                         wgpu::Binding {
                                             binding: 1,
                                             resource: wgpu::BindingResource::TextureView(
-                                                &texture_data.get(&(*texture as *const _)).unwrap().tex_view
+                                                &texture_data
+                                                    .get(&(*texture as *const _))
+                                                    .unwrap()
+                                                    .tex_view,
                                             ),
                                         },
                                         wgpu::Binding {
@@ -224,7 +226,8 @@ impl<'a> CommandBuffer<'a> {
                                         },
                                     ],
                                     label: None,
-                                }));
+                                }),
+                            );
 
                             render_pass.set_bind_group(0, data.bind_group.as_ref().unwrap(), &[]);
                             render_pass.draw_indexed(0..(QUAD_INDEX_DATA.len() as u32), 0, 0..1);
@@ -254,7 +257,7 @@ impl<'a> CommandBuffer<'a> {
 
         state.queue.submit(&[command_buf]);
 
-        let op = async {
+        futures_executor::block_on(async {
             let mapped_colored_rect_dst_buffer = state
                 .command_buffer_dst
                 .buffer
@@ -262,22 +265,13 @@ impl<'a> CommandBuffer<'a> {
                 .await
                 .unwrap();
 
-            for (fb_color_row, mapped_color_row) in
-                self.framebuffer.chunks_exact_mut(WIDTH as usize).zip(
-                    mapped_colored_rect_dst_buffer
-                        .as_slice()
-                        .chunks_exact(4 * WIDTH as usize)
-                        .rev(),
-                )
+            for (fb_color, mapped_color) in self
+                .framebuffer
+                .iter_mut()
+                .zip(mapped_colored_rect_dst_buffer.as_slice().chunks(4))
             {
-                for (fb_color, mapped_color) in
-                    fb_color_row.iter_mut().zip(mapped_color_row.chunks(4))
-                {
-                    *fb_color = Color::from_bytes(mapped_color.try_into().unwrap());
-                }
+                *fb_color = Color::from_bytes(mapped_color.try_into().unwrap());
             }
-        };
-
-        futures_executor::block_on(op);
+        });
     }
 }

@@ -7,5 +7,5 @@ layout(set = 0, binding = 1) uniform texture2D t_tex;
 layout(set = 0, binding = 2) uniform sampler s_tex;
 
 void main() {
-    o_color = texture(sampler2D(t_tex, s_tex), v_tex_coord);;
+    o_color = texture(sampler2D(t_tex, s_tex), v_tex_coord);
 }
