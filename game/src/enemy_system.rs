@@ -9,8 +9,8 @@ use n64::{current_time_us, graphics, ipl3font};
 use n64_math::{self, Color, Vec2};
 
 pub const ENEMY_SIZE: Vec2 = Vec2::new(
-    ipl3font::GLYPH_WIDTH as f32 / graphics::WIDTH as f32,
-    ipl3font::GLYPH_HEIGHT as f32 / graphics::HEIGHT as f32,
+    16.0 / graphics::WIDTH as f32,
+    16.0 / graphics::HEIGHT as f32,
 );
 
 pub struct Enemy {
@@ -59,7 +59,7 @@ impl EnemySystem {
         health::add(&entity, HealthComponent { health: 100 });
 
         self.enemies.push(Enemy {
-            entity: entity,
+            entity,
             shoot_speed: 500 + (n64_math::random_f32() * 200.0) as i32,
             last_shoot_time: 0,
         });
