@@ -1,11 +1,8 @@
-use super::{
-    pipelines::{
-        colored_rect::ColoredRectUniforms,
-        textured_rect::{TexturedRectUniforms, UploadedTexture},
-    },
-    texture::Texture,
+use crate::gfx::Texture;
+use crate::{
+    graphics::{GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH},
+    graphics_emu::{colored_rect::ColoredRectUniforms, textured_rect::{TexturedRectUniforms, UploadedTexture}},
 };
-use crate::graphics::{GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH};
 use core::mem;
 use futures_executor;
 use n64_math::{Color, Vec2};

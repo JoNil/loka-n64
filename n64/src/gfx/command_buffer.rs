@@ -1,8 +1,10 @@
-use super::rdp_command_builder::*;
-use super::texture::Texture;
 use crate::graphics::{HEIGHT, WIDTH};
 use n64_math::{Color, Vec2};
 use n64_sys::rdp;
+use rdp_command_builder::*;
+use super::texture::Texture;
+
+mod rdp_command_builder;
 
 pub struct CommandBuffer<'a> {
     framebuffer: &'a mut [Color],

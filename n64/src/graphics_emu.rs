@@ -1,3 +1,5 @@
+use colored_rect::ColoredRect;
+use copy_tex::CopyTex;
 use lazy_static::lazy_static;
 use n64_math::Color;
 use std::collections::HashSet;
@@ -6,6 +8,7 @@ use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread_local;
+use textured_rect::TexturedRect;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -13,7 +16,10 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
-use crate::gfx::pipelines::{colored_rect::ColoredRect, copy_tex::CopyTex, textured_rect::TexturedRect};
+
+pub(crate) mod colored_rect;
+pub(crate) mod copy_tex;
+pub(crate) mod textured_rect;
 
 pub const WIDTH: i32 = 320;
 pub const HEIGHT: i32 = 240;
@@ -108,7 +114,6 @@ pub(crate) struct CommandBufferDst {
 
 impl CommandBufferDst {
     pub(crate) fn new(device: &wgpu::Device) -> Self {
-
         let buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: (4 * WIDTH * HEIGHT) as u64,
@@ -146,7 +151,6 @@ impl CommandBufferDst {
     }
 }
 
-
 pub(crate) struct GfxEmuState {
     pub window: Window,
     pub keys_down: HashSet<VirtualKeyCode>,
@@ -162,7 +166,7 @@ pub(crate) struct GfxEmuState {
     pub quad_index_buf: wgpu::Buffer,
 
     pub copy_tex: CopyTex,
-    
+
     pub command_buffer_dst: CommandBufferDst,
     pub colored_rect: ColoredRect,
     pub textured_rect: TexturedRect,
@@ -335,7 +339,8 @@ impl GfxEmuState {
 
     pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
         for (row_src, row_dst) in fb.chunks_exact(WIDTH as usize).zip(
-            self.copy_tex.src_buffer
+            self.copy_tex
+                .src_buffer
                 .chunks_exact_mut(4 * WIDTH as usize)
                 .rev(),
         ) {
