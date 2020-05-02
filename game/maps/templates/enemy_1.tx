@@ -1,9 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <template>
- <object type="enemy_1" width="16" height="16">
+ <tileset firstgid="1" source="../tiles/aircraft.tsx"/>
+ <object type="enemy_aircraft" gid="26" width="57" height="42" rotation="180">
   <properties>
-   <property name="Health" type="float" value="100"/>
-   <property name="color" type="color" value="#ffdd0000"/>
+   <property name="health" type="float" value="100"/>
   </properties>
  </object>
 </template>
