@@ -1,5 +1,13 @@
 use crate::graphics_emu::Vertex;
 use std::mem;
+use zerocopy::{AsBytes, FromBytes};
+
+#[repr(C)]
+#[derive(Clone, Copy, Debug, AsBytes, FromBytes)]
+pub(crate) struct TexturedRectUniforms {
+    pub offset: [f32; 2],
+    pub scale: [f32; 2],
+}
 
 pub(crate) struct TexturedRect {
     pub sampler: wgpu::Sampler,
