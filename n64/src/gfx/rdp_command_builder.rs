@@ -6,13 +6,7 @@ use alloc::vec::Vec;
 use n64_math::{Color, Vec2};
 use n64_types::RdpCommand;
 
-#[cfg(target_vendor = "nintendo64")]
 use n64_sys::sys::virtual_to_physical_mut;
-
-#[cfg(not(target_vendor = "nintendo64"))]
-fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
-    address as usize
-}
 
 // RDP Command Docs: http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
 

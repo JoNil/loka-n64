@@ -1,13 +1,14 @@
 mod texture;
 
-pub(crate) mod rdp_command_builder;
-
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {
-        pub mod command_buffer;
+        mod command_buffer;
+
+        pub(crate) mod rdp_command_builder;
+
     } else {
-        pub mod command_buffer_emu;
-        pub use command_buffer_emu as command_buffer;
+        mod command_buffer_emu;
+        use command_buffer_emu as command_buffer;
 
         pub(crate) mod pipelines;
     }
