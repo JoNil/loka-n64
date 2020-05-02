@@ -143,8 +143,8 @@ impl<'a> CommandBuffer<'a> {
                         } => {
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
-                            let offset_x = 2.0 * (upper_left.x() - window_size.x() / 2.0 + size.x() / 2.0) / window_size.x();
-                            let offset_y = 2.0 - 2.0 * (upper_left.y() + window_size.y() / 2.0 + size.y() / 2.0) / window_size.y();
+                            let offset_x = 2.0*upper_left.x()/window_size.x() - 1.0 + scale.x();
+                            let offset_y = -2.0*upper_left.y()/window_size.y() + 1.0 - scale.y();
 
                             let uniforms = ColoredRectUniforms {
                                 color: color.to_rgba(),
@@ -183,8 +183,8 @@ impl<'a> CommandBuffer<'a> {
                         } => {
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
-                            let offset_x = 2.0 * (upper_left.x() - window_size.x() / 2.0 + size.x() / 2.0) / window_size.x();
-                            let offset_y = 2.0 - 2.0 * (upper_left.y() + window_size.y() / 2.0 + size.y() / 2.0) / window_size.y();
+                            let offset_x = 2.0*upper_left.x()/window_size.x() - 1.0 + scale.x();
+                            let offset_y = -2.0*upper_left.y()/window_size.y() + 1.0 - scale.y();
 
                             let uniforms = TexturedRectUniforms {
                                 offset: [offset_x, offset_y],
