@@ -29,20 +29,24 @@ pub fn init() {
     graphics::init();
 }
 
-#[inline]
-#[cfg(target_vendor = "nintendo64")]
-pub fn current_time_us() -> i64 {
-    n64_sys::sys::current_time_us()
-}
+cfg_if::cfg_if! {
+    if #[cfg(target_vendor = "nintendo64")] {
+        #[inline]
+        pub fn current_time_us() -> i64 {
+            n64_sys::sys::current_time_us()
+        }
+    } else {
 
-#[inline]
-#[cfg(not(target_vendor = "nintendo64"))]
-pub fn current_time_us() -> i64 {
-    use std::time::Instant;
+        use lazy_static::lazy_static;
+        use std::time::Instant;
 
-    thread_local! {
-        static BEGINNING: Instant = Instant::now();
+        lazy_static! {
+            static ref BEGINNING: Instant = Instant::now();
+        }
+
+        #[inline]
+        pub fn current_time_us() -> i64 {
+            (BEGINNING.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i64
+        }
     }
-
-    BEGINNING.with(|beginning| (beginning.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i64)
 }

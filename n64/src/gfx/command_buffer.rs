@@ -60,7 +60,7 @@ impl<'a> CommandBuffer<'a> {
         &mut self,
         upper_left: Vec2,
         lower_right: Vec2,
-        texture: Texture,
+        texture: &'static Texture,
     ) -> &mut Self {
         self
     }

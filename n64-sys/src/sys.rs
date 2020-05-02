@@ -6,7 +6,7 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
     let mut len = block.len() * size_of::<T>();
 
     while len > 0 {
-        asm!("cache $0, ($1)"
+        llvm_asm!("cache $0, ($1)"
         :
         : "i" (0x15), "r" (addr)
         :
@@ -24,7 +24,7 @@ pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
     let mut len = block.len() * size_of::<T>();
 
     while len > 0 {
-        asm!("cache $0, ($1)"
+        llvm_asm!("cache $0, ($1)"
         :
         : "i" (0x19), "r" (addr)
         :
@@ -42,7 +42,7 @@ pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
     let mut len = block.len() * size_of::<T>();
 
     while len > 0 {
-        asm!("cache $0, ($1)"
+        llvm_asm!("cache $0, ($1)"
         :
         : "i" (0x11), "r" (addr)
         :
@@ -76,7 +76,7 @@ pub fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
 
 #[inline]
 pub unsafe fn memory_barrier() {
-    asm!("" ::: "memory" : "volatile");
+    llvm_asm!("" ::: "memory" : "volatile");
 }
 
 #[inline]
@@ -89,7 +89,7 @@ fn get_ticks() -> u32 {
     let res;
 
     unsafe {
-        asm!("mfc0 $0,$$9
+        llvm_asm!("mfc0 $0,$$9
             nop"
             : "=r" (res));
     }

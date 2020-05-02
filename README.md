@@ -3,18 +3,12 @@
 ## Build Environment Setup
 
 ```bash
-cargo install cargo-xbuild
-
-git clone https://github.com/JoNil/cargo-n64
-cd cargo-n64/cargo-n64
-cargo build --release
+cargo +nightly install -f --git https://github.com/JoNil/cargo-n64 cargo-n64
 
 rustup default nightly
 rustup component add rust-src
 rustup default stable
 ```
-
-Place cargo-n64.exe in .cargo/bin
 
 ## Extract bootcode
 
@@ -33,7 +27,7 @@ cargo +nightly n64 build --ipl3 bootcode.bin --package game
 ## Run for PC
 
 ```bash
-cargo run --package game --release
+cargo run -p game --release
 ```
 
 ## Run on N64 with EverDrive-64 X7
