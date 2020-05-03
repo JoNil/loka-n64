@@ -4,6 +4,7 @@
 - Texture quad on console
 
 - Load and draw level
+- Camera with proper coordinate system
 
 - Rotate textured quad
 - Audio emu

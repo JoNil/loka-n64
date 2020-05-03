@@ -7,7 +7,7 @@ use crate::{Player, SHIP_SIZE};
 use alloc::vec::Vec;
 use n64_math::{self, Aabb2, Color, Vec2};
 
-const BULLET_SIZE: Vec2 = Vec2::new(2.0 / 320.0, 2.0 / 320.0);
+const BULLET_SIZE: Vec2 = Vec2::new(0.00625, 0.00625);
 
 struct Bullet {
     entity: OwnedEntity,

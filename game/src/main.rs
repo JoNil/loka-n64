@@ -31,7 +31,8 @@ const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
 fn main() {
-    let mut n64 = N64::new(Ntsc320x240);
+    let video_mode = Ntsc320x240;
+    let mut n64 = N64::new(video_mode);
 
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
@@ -110,8 +111,8 @@ fn main() {
 
                 cb.clear();
 
-                box_drawable::draw(&mut cb);
-                sprite_drawable::draw(&mut cb);
+                box_drawable::draw(&mut cb, video_mode);
+                sprite_drawable::draw(&mut cb, video_mode);
 
                 cb.run(&mut n64.graphics);
             }
