@@ -1,4 +1,5 @@
 use crate::{gfx::TextureMut, VideoMode};
+use alloc::{boxed::Box, vec::Vec};
 use n64_math::Color;
 
 pub struct Framebuffer {
@@ -9,7 +10,6 @@ pub struct Framebuffer {
 }
 
 impl Framebuffer {
-
     #[inline]
     pub(crate) fn new(video_mode: VideoMode) -> Self {
         Self {
@@ -38,20 +38,21 @@ impl Framebuffer {
         if self.using_framebuffer_a {
             TextureMut::new(
                 self.video_mode.width(),
-                self.video_mode.height(), 
-                &mut self.framebuffer_a[..])
+                self.video_mode.height(),
+                &mut self.framebuffer_a[..],
+            )
         } else {
             TextureMut::new(
                 self.video_mode.width(),
-                self.video_mode.height(), 
-                &mut self.framebuffer_b[..])
+                self.video_mode.height(),
+                &mut self.framebuffer_b[..],
+            )
         }
     }
 }
 
 #[inline]
 pub fn slow_cpu_clear(fb: &mut [Color]) {
-    
     let mut p = fb.as_mut_ptr() as *mut u32;
 
     for _ in 0..(fb.len() / 2) {

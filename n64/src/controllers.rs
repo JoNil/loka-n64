@@ -1,3 +1,4 @@
+use crate::graphics::Graphics;
 use n64_sys::si;
 
 pub struct Controllers {
@@ -11,7 +12,7 @@ impl Controllers {
     }
 
     #[inline]
-    pub fn update(&mut self) {
+    pub fn update(&mut self, _graphics: &Graphics) {
         si::read_controllers(&mut self.data);
     }
 

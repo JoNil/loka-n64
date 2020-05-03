@@ -1,8 +1,6 @@
 use crate::components::{movable, systems};
 use crate::impl_system;
-use n64::{
-    gfx::{CommandBuffer, Texture},
-};
+use n64::gfx::{CommandBuffer, Texture};
 use n64_math::Vec2;
 
 #[derive(Copy, Clone)]

@@ -1,7 +1,6 @@
-use crate::graphics;
 use std::collections::HashSet;
 use winit::event::VirtualKeyCode;
-use graphics::Graphics;
+use crate::graphics::Graphics;
 
 pub struct Controllers {
     data: HashSet<VirtualKeyCode>,

@@ -1,23 +1,26 @@
-use crate::graphics::{HEIGHT, WIDTH};
+use super::{Texture, TextureMut};
+use crate::graphics::Graphics;
 use n64_math::{Color, Vec2};
 use n64_sys::rdp;
 use rdp_command_builder::*;
-use super::texture::Texture;
 
 mod rdp_command_builder;
 
 pub struct CommandBuffer<'a> {
-    framebuffer: &'a mut [Color],
+    out_tex: &'a mut TextureMut<'a>,
     rdp: RdpCommandBuilder,
 }
 
 impl<'a> CommandBuffer<'a> {
-    pub fn new(framebuffer: &'a mut [Color]) -> Self {
+    pub fn new(out_tex: &'a mut TextureMut<'a>) -> Self {
         let mut rdp = RdpCommandBuilder::new();
-        rdp.set_color_image(framebuffer.as_mut_ptr() as *mut u16)
-            .set_scissor(Vec2::zero(), Vec2::new(WIDTH as f32, HEIGHT as f32));
+        rdp.set_color_image(out_tex.data.as_mut_ptr() as *mut u16, out_tex.width)
+            .set_scissor(
+                Vec2::zero(),
+                Vec2::new(out_tex.width as f32, out_tex.height as f32),
+            );
 
-        CommandBuffer { framebuffer, rdp }
+        CommandBuffer { out_tex, rdp }
     }
 
     pub fn clear(&mut self) -> &mut Self {
@@ -31,7 +34,10 @@ impl<'a> CommandBuffer<'a> {
                     | OTHER_MODE_FORCE_BLEND,
             )
             .set_fill_color(Color::new(0b00000_00000_00000_1))
-            .fill_rectangle(Vec2::new(0.0, 0.0), Vec2::new(WIDTH as f32, HEIGHT as f32));
+            .fill_rectangle(
+                Vec2::new(0.0, 0.0),
+                Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32),
+            );
 
         self
     }
@@ -62,12 +68,12 @@ impl<'a> CommandBuffer<'a> {
         &mut self,
         upper_left: Vec2,
         lower_right: Vec2,
-        texture: &'static Texture,
+        texture: Texture<'static>,
     ) -> &mut Self {
         self
     }
 
-    pub fn run(mut self) {
+    pub fn run(mut self, _graphics: &mut Graphics) {
         self.rdp.sync_full();
         let commands = self.rdp.build();
 
@@ -75,7 +81,7 @@ impl<'a> CommandBuffer<'a> {
         {
             unsafe { rdp::run_command_buffer(commands) };
 
-            unsafe { n64_sys::sys::data_cache_hit_invalidate(self.framebuffer) };
+            unsafe { n64_sys::sys::data_cache_hit_invalidate(self.out_tex.data) };
         }
     }
 }

@@ -1,6 +1,5 @@
 #![allow(dead_code)]
 
-use crate::graphics::WIDTH;
 use alloc::boxed::Box;
 use alloc::vec::Vec;
 use n64_math::{Color, Vec2};
@@ -108,11 +107,11 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_color_image(&mut self, image: *mut u16) -> &mut RdpCommandBuilder {
+    pub fn set_color_image(&mut self, image: *mut u16, width: i32) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(
             (COMMAND_SET_COLOR_IMAGE << 56)
                 | (0x2 << 51) // RGBA 16 bits per channel
-                | ((WIDTH as u64 - 1) << 32)
+                | ((width as u64 - 1) << 32)
                 | (virtual_to_physical_mut(image) as u64),
         ));
 

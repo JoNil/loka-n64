@@ -13,10 +13,13 @@ use components::health;
 use components::movable;
 use components::sprite_drawable;
 use enemy_system::EnemySystem;
+use n64::{
+    self, current_time_us, gfx::CommandBuffer, ipl3font, slow_cpu_clear, Controllers,
+    VideoMode::Ntsc320x240, BUFFER_NO_SAMPLES, N64,
+};
 use n64_math::Color;
-use n64::{self, current_time_us, BUFFER_NO_SAMPLES, VideoMode::Ntsc320x240, gfx::CommandBuffer, ipl3font, Controllers, N64, slow_cpu_clear};
 use player::{Player, SHIP_SIZE};
-use spin::{Mutex, Once, MutexGuard};
+use spin::{Mutex, MutexGuard, Once};
 
 mod bullet_system;
 mod components;
@@ -35,7 +38,6 @@ fn n64() -> MutexGuard<'static, N64> {
 }
 
 fn main() {
-
     GLOBAL_N64.call_once(|| Mutex::new(n64::N64::new(Ntsc320x240)));
 
     let mut controllers = Controllers::new();
@@ -126,7 +128,6 @@ fn main() {
             }
 
             {
-
                 let mut fb = framebuffer.next_buffer();
 
                 ipl3font::draw_number(&mut fb, 300, 10, BLUE, player.score());
@@ -142,8 +143,8 @@ fn main() {
 
                 {
                     let used_frame_time = current_time_us() - time_used;
-                    ipl3font::draw_number(&mut fb,200, 10, RED, used_frame_time as i32);
-                    ipl3font::draw_number(&mut fb,100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
+                    ipl3font::draw_number(&mut fb, 200, 10, RED, used_frame_time as i32);
+                    ipl3font::draw_number(&mut fb, 100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
                 }
 
                 #[cfg(target_vendor = "nintendo64")]
@@ -155,7 +156,13 @@ fn main() {
                         RED,
                         n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
                     );
-                    ipl3font::draw_number(&mut fb,100, 200, RED, *n64_alloc::PAGE_OFFSET.lock() as i32);
+                    ipl3font::draw_number(
+                        &mut fb,
+                        100,
+                        200,
+                        RED,
+                        *n64_alloc::PAGE_OFFSET.lock() as i32,
+                    );
                 }
             }
 
@@ -192,22 +199,33 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    graphics::slow_cpu_clear();
-    ipl3font::draw_str(15, 15, RED, b"PANIC!");
-    if let Some(location) = info.location() {
-        ipl3font::draw_str(
-            15,
-            30,
-            RED,
-            alloc::format!(
-                "{}:{}",
-                location.file().rsplit("\\").nth(0).unwrap_or(""),
-                location.line()
-            )
-            .as_bytes(),
-        );
+    {
+        let mut n64 = n64();
+        let mut out_tex = n64.framebuffer.next_buffer();
+        slow_cpu_clear(out_tex.data);
+
+        ipl3font::draw_str(&mut out_tex, 15, 15, RED, b"PANIC!");
+        if let Some(location) = info.location() {
+            ipl3font::draw_str(
+                &mut out_tex,
+                15,
+                30,
+                RED,
+                alloc::format!(
+                    "{}:{}",
+                    location.file().rsplit("\\").nth(0).unwrap_or(""),
+                    location.line()
+                )
+                .as_bytes(),
+            );
+        }
     }
-    graphics::swap_buffers();
+
+    {
+        let mut n64 = n64();
+        let (_, framebuffer, graphics) = n64.split_mut();
+        graphics.swap_buffers(framebuffer);
+    }
 
     loop {}
 }
@@ -215,9 +233,18 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[cfg(target_vendor = "nintendo64")]
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
-    graphics::slow_cpu_clear();
-    ipl3font::draw_str(50, 15, RED, b"OUT OF MEMORY!");
-    graphics::swap_buffers();
+    {
+        let mut n64 = n64();
+        let mut out_tex = n64.framebuffer.next_buffer();
+        slow_cpu_clear(out_tex.data);
+        ipl3font::draw_str(&mut out_tex, 50, 15, RED, b"OUT OF MEMORY!");
+    }
+
+    {
+        let mut n64 = n64();
+        let (_, framebuffer, graphics) = n64.split_mut();
+        graphics.swap_buffers(framebuffer);
+    }
 
     loop {}
 }

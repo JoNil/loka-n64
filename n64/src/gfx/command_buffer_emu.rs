@@ -1,9 +1,12 @@
+use super::TextureMut;
 use crate::gfx::Texture;
 use crate::{
-    graphics::{QUAD_INDEX_DATA},
+    graphics::QUAD_INDEX_DATA,
     graphics_emu::{
         colored_rect::ColoredRectUniforms,
-        textured_rect::{TexturedRectUniforms, UploadedTexture}, Graphics, dst_texture::DstTexture,
+        dst_texture::DstTexture,
+        textured_rect::{TexturedRectUniforms, UploadedTexture},
+        Graphics,
     },
 };
 use core::mem;
@@ -11,7 +14,6 @@ use futures_executor;
 use n64_math::{Color, Vec2};
 use std::{collections::HashMap, convert::TryInto};
 use zerocopy::AsBytes;
-use super::TextureMut;
 
 #[derive(Default)]
 struct DrawData {
@@ -41,7 +43,7 @@ pub struct CommandBuffer<'a> {
 impl<'a> CommandBuffer<'a> {
     pub fn new(out_tex: &'a mut TextureMut<'a>) -> Self {
         CommandBuffer {
-            out_tex, 
+            out_tex,
             clear: false,
             commands: Vec::new(),
         }
@@ -85,7 +87,6 @@ impl<'a> CommandBuffer<'a> {
     }
 
     pub fn run(self, graphics: &mut Graphics) {
-
         let dst = DstTexture::new(&graphics.device, self.out_tex.width, self.out_tex.height);
 
         let mut draw_data: Box<[DrawData]> = {
@@ -145,8 +146,9 @@ impl<'a> CommandBuffer<'a> {
                         } => {
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
-                            let offset_x = 2.0*upper_left.x()/window_size.x() - 1.0 + scale.x();
-                            let offset_y = -2.0*upper_left.y()/window_size.y() + 1.0 - scale.y();
+                            let offset_x = 2.0 * upper_left.x() / window_size.x() - 1.0 + scale.x();
+                            let offset_y =
+                                -2.0 * upper_left.y() / window_size.y() + 1.0 - scale.y();
 
                             let uniforms = ColoredRectUniforms {
                                 color: color.to_rgba(),
@@ -161,8 +163,8 @@ impl<'a> CommandBuffer<'a> {
                                 wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
                             ));
 
-                            data.bind_group =
-                                Some(graphics.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                            data.bind_group = Some(graphics.device.create_bind_group(
+                                &wgpu::BindGroupDescriptor {
                                     layout: &graphics.colored_rect.bind_group_layout,
                                     bindings: &[wgpu::Binding {
                                         binding: 0,
@@ -173,7 +175,8 @@ impl<'a> CommandBuffer<'a> {
                                         },
                                     }],
                                     label: None,
-                                }));
+                                },
+                            ));
 
                             render_pass.set_bind_group(0, &data.bind_group.as_ref().unwrap(), &[]);
                             render_pass.draw_indexed(0..(QUAD_INDEX_DATA.len() as u32), 0, 0..1);
@@ -185,8 +188,9 @@ impl<'a> CommandBuffer<'a> {
                         } => {
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
-                            let offset_x = 2.0*upper_left.x()/window_size.x() - 1.0 + scale.x();
-                            let offset_y = -2.0*upper_left.y()/window_size.y() + 1.0 - scale.y();
+                            let offset_x = 2.0 * upper_left.x() / window_size.x() - 1.0 + scale.x();
+                            let offset_y =
+                                -2.0 * upper_left.y() / window_size.y() + 1.0 - scale.y();
 
                             let uniforms = TexturedRectUniforms {
                                 offset: [offset_x, offset_y],
@@ -201,35 +205,38 @@ impl<'a> CommandBuffer<'a> {
                             ));
 
                             data.bind_group = Some(
-                                graphics.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                                    layout: &graphics.textured_rect.bind_group_layout,
-                                    bindings: &[
-                                        wgpu::Binding {
-                                            binding: 0,
-                                            resource: wgpu::BindingResource::Buffer {
-                                                buffer: data.uniform_buffer.as_ref().unwrap(),
-                                                range: 0..(mem::size_of::<TexturedRectUniforms>()
-                                                    as u64),
+                                graphics
+                                    .device
+                                    .create_bind_group(&wgpu::BindGroupDescriptor {
+                                        layout: &graphics.textured_rect.bind_group_layout,
+                                        bindings: &[
+                                            wgpu::Binding {
+                                                binding: 0,
+                                                resource: wgpu::BindingResource::Buffer {
+                                                    buffer: data.uniform_buffer.as_ref().unwrap(),
+                                                    range: 0
+                                                        ..(mem::size_of::<TexturedRectUniforms>()
+                                                            as u64),
+                                                },
                                             },
-                                        },
-                                        wgpu::Binding {
-                                            binding: 1,
-                                            resource: wgpu::BindingResource::TextureView(
-                                                &texture_data
-                                                    .get(&(texture.data as *const _))
-                                                    .unwrap()
-                                                    .tex_view,
-                                            ),
-                                        },
-                                        wgpu::Binding {
-                                            binding: 2,
-                                            resource: wgpu::BindingResource::Sampler(
-                                                &graphics.textured_rect.sampler,
-                                            ),
-                                        },
-                                    ],
-                                    label: None,
-                                }),
+                                            wgpu::Binding {
+                                                binding: 1,
+                                                resource: wgpu::BindingResource::TextureView(
+                                                    &texture_data
+                                                        .get(&(texture.data as *const _))
+                                                        .unwrap()
+                                                        .tex_view,
+                                                ),
+                                            },
+                                            wgpu::Binding {
+                                                binding: 2,
+                                                resource: wgpu::BindingResource::Sampler(
+                                                    &graphics.textured_rect.sampler,
+                                                ),
+                                            },
+                                        ],
+                                        label: None,
+                                    }),
                             );
 
                             render_pass.set_bind_group(0, data.bind_group.as_ref().unwrap(), &[]);

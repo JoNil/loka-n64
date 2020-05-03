@@ -4,7 +4,7 @@ extern crate alloc;
 
 pub use audio::{Audio, BUFFER_NO_SAMPLES};
 pub use controllers::Controllers;
-pub use framebuffer::{Framebuffer, slow_cpu_clear};
+pub use framebuffer::{slow_cpu_clear, Framebuffer};
 pub use graphics::Graphics;
 pub use video_mode::VideoMode;
 
@@ -39,7 +39,6 @@ pub struct N64 {
 impl N64 {
     #[inline]
     pub fn new(video_mode: VideoMode) -> N64 {
-
         let audio = Audio::new();
         let mut framebuffer = Framebuffer::new(video_mode);
         let graphics = Graphics::new(video_mode, &mut framebuffer);
@@ -52,14 +51,15 @@ impl N64 {
     }
 
     pub fn split_mut(&mut self) -> (&mut Audio, &mut Framebuffer, &mut Graphics) {
-
         let this: *mut Self = self as *mut _;
 
-        unsafe {(
-            &mut (*this).audio,
-            &mut (*this).framebuffer,
-            &mut (*this).graphics,
-        )}
+        unsafe {
+            (
+                &mut (*this).audio,
+                &mut (*this).framebuffer,
+                &mut (*this).graphics,
+            )
+        }
     }
 }
 

@@ -2,13 +2,13 @@ use n64_sys::ai;
 
 pub use n64_sys::ai::BUFFER_NO_SAMPLES;
 
-struct Audio {}
+pub struct Audio {}
 
 impl Audio {
     #[inline]
     pub(crate) fn new() -> Self {
         ai::init();
-        Self
+        Self {}
     }
 
     #[inline]

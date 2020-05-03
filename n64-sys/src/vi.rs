@@ -22,13 +22,9 @@ const VI_Y_SCALE: *mut usize = (VI_BASE + 0x34) as _;
 
 #[inline]
 pub fn init(width: i32, fb: &mut [Color]) {
-
     unsafe {
         write_volatile(VI_STATUS, 0x0000_320E);
-        write_volatile(
-            VI_DRAM_ADDR,
-            fb.as_mut_ptr() as usize,
-        );
+        write_volatile(VI_DRAM_ADDR, fb.as_mut_ptr() as usize);
         write_volatile(VI_H_WIDTH, width as usize);
         write_volatile(VI_V_INTR, 2);
         write_volatile(VI_TIMING, 0x03E5_2239);

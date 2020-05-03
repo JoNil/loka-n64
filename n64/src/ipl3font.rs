@@ -1,5 +1,5 @@
-use n64_math::Color;
 use crate::gfx::TextureMut;
+use n64_math::Color;
 
 pub const GLYPH_WIDTH: i32 = 13;
 pub const GLYPH_HEIGHT: i32 = 14;
@@ -57,7 +57,13 @@ pub fn draw_hex(out_tex: &mut TextureMut, mut x: i32, y: i32, color: Color, mut 
     }
 
     while number > 0 {
-        draw_char(out_tex, x, y, color, digit_to_hex_char((number & 0xF) as u8));
+        draw_char(
+            out_tex,
+            x,
+            y,
+            color,
+            digit_to_hex_char((number & 0xF) as u8),
+        );
         x -= GLYPH_WIDTH + KERNING;
         number >>= 4;
     }
@@ -132,7 +138,6 @@ pub fn draw_char(out_tex: &mut TextureMut, x: i32, y: i32, color: Color, ch: u8)
 
 #[cfg(not(target_vendor = "nintendo64"))]
 pub fn draw_char(out_tex: &mut TextureMut, x: i32, y: i32, color: Color, ch: u8) {
-    
     use core::convert::TryInto;
 
     let ipl3 = std::include_bytes!("../../bootcode.bin");

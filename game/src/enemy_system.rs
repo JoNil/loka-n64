@@ -8,10 +8,7 @@ use alloc::vec::Vec;
 use n64::current_time_us;
 use n64_math::{self, Color, Vec2};
 
-pub const ENEMY_SIZE: Vec2 = Vec2::new(
-    16.0 / 320.0 as f32,
-    16.0 / 240.0 as f32,
-);
+pub const ENEMY_SIZE: Vec2 = Vec2::new(16.0 / 320.0 as f32, 16.0 / 240.0 as f32);
 
 pub struct Enemy {
     entity: OwnedEntity,

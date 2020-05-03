@@ -1,3 +1,4 @@
+use n64_math::Color;
 use png;
 use std::convert::TryInto;
 use std::env;
@@ -5,7 +6,6 @@ use std::error::Error;
 use std::ffi::OsStr;
 use std::fs;
 use std::path::Path;
-use n64_math::Color;
 
 struct Image {
     width: i32,
