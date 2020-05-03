@@ -17,5 +17,6 @@ n64-alloc = { path = "../n64-alloc" }
 n64-sys = { path = "../n64-sys" }
 
 [build-dependencies]
-png = "0.16"
 n64-math = { path = "../n64-math" }
+png = "0.16"
+tiled = { git = "https://github.com/JoNil/rs-tiled.git" }
