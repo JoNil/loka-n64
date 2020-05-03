@@ -1,6 +1,5 @@
 # loka-n64
 
-- Console in 640x480 pal
 - Texture quad on console
 
 - Load and draw level
