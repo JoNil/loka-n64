@@ -1,8 +1,7 @@
 #![allow(dead_code)]
 
-use alloc::boxed::Box;
-use alloc::vec::Vec;
 use core::ptr::{read_volatile, write_volatile};
+use n64_math::Color;
 
 const VI_BASE: usize = 0xA440_0000;
 
@@ -21,35 +20,16 @@ const VI_V_BURST: *mut usize = (VI_BASE + 0x2C) as _;
 const VI_X_SCALE: *mut usize = (VI_BASE + 0x30) as _;
 const VI_Y_SCALE: *mut usize = (VI_BASE + 0x34) as _;
 
-const FRAME_BUFFER_SIZE: usize = (WIDTH * HEIGHT) as usize;
-static mut USING_FRAMEBUFFER_A: bool = false;
-static mut FRAME_BUFFER_A: Option<Box<[u16]>> = None;
-static mut FRAME_BUFFER_B: Option<Box<[u16]>> = None;
-
-pub const WIDTH: i32 = 320;
-pub const HEIGHT: i32 = 240;
-
 #[inline]
-pub fn init() {
-    unsafe {
-        let mut buffer = Vec::new();
-        buffer.resize_with(FRAME_BUFFER_SIZE, || 0x0001);
-        FRAME_BUFFER_A = Some(buffer.into_boxed_slice())
-    };
-
-    unsafe {
-        let mut buffer = Vec::new();
-        buffer.resize_with(FRAME_BUFFER_SIZE, || 0x0001);
-        FRAME_BUFFER_B = Some(buffer.into_boxed_slice())
-    };
+pub fn init(width: i32, fb: &mut [Color]) {
 
     unsafe {
         write_volatile(VI_STATUS, 0x0000_320E);
         write_volatile(
             VI_DRAM_ADDR,
-            FRAME_BUFFER_B.as_mut().unwrap().as_mut_ptr() as usize,
+            fb.as_mut_ptr() as usize,
         );
-        write_volatile(VI_H_WIDTH, WIDTH as usize);
+        write_volatile(VI_H_WIDTH, width as usize);
         write_volatile(VI_V_INTR, 2);
         write_volatile(VI_TIMING, 0x03E5_2239);
         write_volatile(VI_V_SYNC, 0x0000_020D);
@@ -74,18 +54,8 @@ pub fn wait_for_vblank() {
 }
 
 #[inline]
-pub unsafe fn next_buffer() -> *mut u16 {
-    if USING_FRAMEBUFFER_A {
-        FRAME_BUFFER_A.as_mut().unwrap().as_mut_ptr()
-    } else {
-        FRAME_BUFFER_B.as_mut().unwrap().as_mut_ptr()
-    }
-}
-
-#[inline]
-pub fn swap_buffers() {
+pub fn set_vi_buffers(fb: &mut [Color]) {
     unsafe {
-        write_volatile(VI_DRAM_ADDR, next_buffer() as usize);
-        USING_FRAMEBUFFER_A = !USING_FRAMEBUFFER_A;
+        write_volatile(VI_DRAM_ADDR, fb.as_mut_ptr() as usize);
     }
 }

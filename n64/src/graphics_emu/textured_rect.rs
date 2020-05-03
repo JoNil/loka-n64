@@ -2,8 +2,7 @@ use crate::{
     gfx::Texture,
     graphics_emu::Vertex,
 };
-use n64_math::Color;
-use std::{convert::TryInto, mem};
+use std::mem;
 use zerocopy::{AsBytes, FromBytes};
 
 pub(crate) struct UploadedTexture {
@@ -30,8 +29,7 @@ impl UploadedTexture {
 
         for (pixel, data) in texture_data
             .data
-            .chunks_exact(2)
-            .map(|chunk| Color::new(u16::from_le_bytes(chunk.try_into().unwrap())))
+            .iter()
             .zip(temp_buffer.chunks_exact_mut(4 as usize))
         {            
             let rgba = pixel.to_rgba();

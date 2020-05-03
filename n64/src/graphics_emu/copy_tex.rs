@@ -1,4 +1,4 @@
-use crate::graphics_emu::{HEIGHT, WIDTH, Vertex};
+use crate::{VideoMode, graphics_emu::{Vertex}};
 use std::mem;
 
 pub(crate) struct CopyTex {
@@ -16,17 +16,17 @@ pub(crate) struct CopyTex {
 }
 
 impl CopyTex {
-    pub(crate) fn new(device: &wgpu::Device, swap_chain_desc: &wgpu::SwapChainDescriptor) -> Self {
+    pub(crate) fn new(device: &wgpu::Device, swap_chain_desc: &wgpu::SwapChainDescriptor, video_mode: VideoMode) -> Self {
 
         let src_buffer = {
             let mut buffer = Vec::new();
-            buffer.resize_with((4 * WIDTH * HEIGHT) as usize, || 0);
+            buffer.resize_with((4 * video_mode.width() * video_mode.height()) as usize, || 0);
             buffer.into_boxed_slice()
         };
 
         let src_tex_extent = wgpu::Extent3d {
-            width: WIDTH as u32,
-            height: HEIGHT as u32,
+            width: video_mode.width() as u32,
+            height: video_mode.height() as u32,
             depth: 1,
         };
         let src_tex = device.create_texture(&wgpu::TextureDescriptor {

@@ -58,11 +58,11 @@ fn main() -> Result<(), Box<dyn Error>> {
             fs::write(&out_path, &out_image)?;
 
             res.push_str(&format!(
-                "pub static {}: Texture = Texture::from_static({}, {}, include_bytes!({:?}));\n",
-                name.to_uppercase(),
-                image.width,
-                image.height,
-                out_path
+                "pub static {name}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes!({path:?}));\n",
+                name = name.to_uppercase(),
+                width = image.width,
+                height = image.height,
+                path = out_path
             ));
 
             println!("rerun-if-changed={}", path.to_string_lossy());

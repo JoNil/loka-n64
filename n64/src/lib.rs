@@ -2,31 +2,65 @@
 
 extern crate alloc;
 
+pub use audio::{Audio, BUFFER_NO_SAMPLES};
 pub use controllers::Controllers;
+pub use framebuffer::{Framebuffer, slow_cpu_clear};
+pub use graphics::Graphics;
+pub use video_mode::VideoMode;
 
 pub mod gfx;
 pub mod ipl3font;
 
+mod framebuffer;
+mod video_mode;
+
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {
-        pub mod audio;
-        pub mod graphics;
-        pub mod controllers;
+        mod audio;
+        mod graphics;
+        mod controllers;
     } else {
         pub mod audio_emu;
         pub mod graphics_emu;
         pub mod controllers_emu;
 
-        pub use audio_emu as audio;
-        pub use graphics_emu as graphics;
-        pub use controllers_emu as controllers;
+        use audio_emu as audio;
+        use graphics_emu as graphics;
+        use controllers_emu as controllers;
     }
 }
 
-#[inline]
-pub fn init() {
-    audio::init();
-    graphics::init();
+pub struct N64 {
+    pub audio: Audio,
+    pub framebuffer: Framebuffer,
+    pub graphics: Graphics,
+}
+
+impl N64 {
+    #[inline]
+    pub fn new(video_mode: VideoMode) -> N64 {
+
+        let audio = Audio::new();
+        let mut framebuffer = Framebuffer::new(video_mode);
+        let graphics = Graphics::new(video_mode, &mut framebuffer);
+
+        N64 {
+            audio,
+            framebuffer,
+            graphics,
+        }
+    }
+
+    pub fn split_mut(&mut self) -> (&mut Audio, &mut Framebuffer, &mut Graphics) {
+
+        let this: *mut Self = self as *mut _;
+
+        unsafe {(
+            &mut (*this).audio,
+            &mut (*this).framebuffer,
+            &mut (*this).graphics,
+        )}
+    }
 }
 
 cfg_if::cfg_if! {

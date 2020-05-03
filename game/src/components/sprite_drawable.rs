@@ -2,14 +2,13 @@ use crate::components::{movable, systems};
 use crate::impl_system;
 use n64::{
     gfx::{CommandBuffer, Texture},
-    graphics,
 };
 use n64_math::Vec2;
 
 #[derive(Copy, Clone)]
 pub struct SpriteDrawableComponent {
     pub size: Vec2,
-    pub texture: &'static Texture,
+    pub texture: Texture<'static>,
 }
 
 pub fn draw(cb: &mut CommandBuffer) {
@@ -20,12 +19,12 @@ pub fn draw(cb: &mut CommandBuffer) {
             let upper_left = movable.pos - half_size;
             let lower_right = movable.pos + half_size;
 
-            let screen_size = Vec2::new(graphics::WIDTH as f32, graphics::HEIGHT as f32);
+            let screen_size = Vec2::new(320.0, 240.0);
 
             cb.add_textured_rect(
                 upper_left * screen_size,
                 lower_right * screen_size,
-                &component.texture,
+                component.texture,
             );
         }
     }

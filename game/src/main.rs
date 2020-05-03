@@ -6,13 +6,6 @@
 
 extern crate alloc;
 
-mod bullet_system;
-mod components;
-mod enemy_system;
-mod entity;
-mod player;
-mod textures;
-
 use alloc::vec::Vec;
 use bullet_system::BulletSystem;
 use components::box_drawable;
@@ -20,15 +13,30 @@ use components::health;
 use components::movable;
 use components::sprite_drawable;
 use enemy_system::EnemySystem;
-use n64::{self, audio, current_time_us, gfx::CommandBuffer, graphics, ipl3font, Controllers};
 use n64_math::Color;
+use n64::{self, current_time_us, BUFFER_NO_SAMPLES, VideoMode::Ntsc320x240, gfx::CommandBuffer, ipl3font, Controllers, N64, slow_cpu_clear};
 use player::{Player, SHIP_SIZE};
+use spin::{Mutex, Once, MutexGuard};
+
+mod bullet_system;
+mod components;
+mod enemy_system;
+mod entity;
+mod player;
+mod textures;
 
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
+static GLOBAL_N64: Once<Mutex<n64::N64>> = Once::new();
+
+fn n64() -> MutexGuard<'static, N64> {
+    GLOBAL_N64.wait().unwrap().lock()
+}
+
 fn main() {
-    n64::init();
+
+    GLOBAL_N64.call_once(|| Mutex::new(n64::N64::new(Ntsc320x240)));
 
     let mut controllers = Controllers::new();
     let mut player = Player::new();
@@ -37,7 +45,7 @@ fn main() {
 
     let mut audio_buffer = {
         let mut buffer = Vec::new();
-        buffer.resize_with(audio::BUFFER_NO_SAMPLES, Default::default);
+        buffer.resize_with(BUFFER_NO_SAMPLES, Default::default);
         buffer.into_boxed_slice()
     };
 
@@ -64,7 +72,7 @@ fn main() {
         {
             // Update
 
-            controllers.update();
+            controllers.update(&n64().graphics);
 
             enemy_system.update(&mut bullet_system, &mut player);
 
@@ -82,7 +90,7 @@ fn main() {
         {
             // Audio
 
-            if !audio::all_buffers_are_full() {
+            if !n64().audio.all_buffers_are_full() {
                 for (i, chunk) in audio_buffer.chunks_mut(128).enumerate() {
                     for sample in chunk {
                         if i % 2 == 0 {
@@ -93,61 +101,80 @@ fn main() {
                     }
                 }
 
-                audio::write_audio_blocking(&audio_buffer);
+                n64().audio.write_audio_blocking(&audio_buffer);
             }
 
-            audio::update();
+            n64().audio.update();
         }
 
         {
             // Graphics
 
-            graphics::with_framebuffer(|fb| {
-                let mut cb = CommandBuffer::new(fb);
+            let mut n64 = n64();
+            let (_, framebuffer, graphics) = n64.split_mut();
+
+            {
+                let mut fb = framebuffer.next_buffer();
+                let mut cb = CommandBuffer::new(&mut fb);
 
                 cb.clear();
 
                 box_drawable::draw(&mut cb);
                 sprite_drawable::draw(&mut cb);
 
-                cb.run();
-            });
-
-            ipl3font::draw_number(300, 10, BLUE, player.score());
-            ipl3font::draw_number(
-                300,
-                215,
-                BLUE,
-                health::get_component(player.entity())
-                    .map(|hc| hc.health)
-                    .unwrap_or(0),
-            );
-
-            {
-                let used_frame_time = current_time_us() - time_used;
-                ipl3font::draw_number(200, 10, RED, used_frame_time as i32);
-                ipl3font::draw_number(100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
+                cb.run(graphics);
             }
 
-            #[cfg(target_vendor = "nintendo64")]
             {
+
+                let mut fb = framebuffer.next_buffer();
+
+                ipl3font::draw_number(&mut fb, 300, 10, BLUE, player.score());
                 ipl3font::draw_number(
-                    100,
-                    180,
-                    RED,
-                    n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
+                    &mut fb,
+                    300,
+                    215,
+                    BLUE,
+                    health::get_component(player.entity())
+                        .map(|hc| hc.health)
+                        .unwrap_or(0),
                 );
-                ipl3font::draw_number(100, 200, RED, *n64_alloc::PAGE_OFFSET.lock() as i32);
+
+                {
+                    let used_frame_time = current_time_us() - time_used;
+                    ipl3font::draw_number(&mut fb,200, 10, RED, used_frame_time as i32);
+                    ipl3font::draw_number(&mut fb,100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
+                }
+
+                #[cfg(target_vendor = "nintendo64")]
+                {
+                    ipl3font::draw_number(
+                        &mut fb,
+                        100,
+                        180,
+                        RED,
+                        n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
+                    );
+                    ipl3font::draw_number(&mut fb,100, 200, RED, *n64_alloc::PAGE_OFFSET.lock() as i32);
+                }
             }
 
-            graphics::swap_buffers();
+            graphics.swap_buffers(framebuffer);
         }
     }
 
     loop {
-        graphics::slow_cpu_clear();
-        ipl3font::draw_str(50, 10, RED, b"GAME OVER");
-        graphics::swap_buffers();
+        {
+            let mut n64 = n64();
+            let mut out_tex = n64.framebuffer.next_buffer();
+            slow_cpu_clear(out_tex.data);
+            ipl3font::draw_str(&mut out_tex, 50, 10, RED, b"GAME OVER");
+        }
+        {
+            let mut n64 = n64();
+            let (_, framebuffer, graphics) = n64.split_mut();
+            graphics.swap_buffers(framebuffer);
+        }
     }
 }
 

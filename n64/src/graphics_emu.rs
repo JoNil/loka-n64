@@ -1,7 +1,5 @@
 use colored_rect::ColoredRect;
 use copy_tex::CopyTex;
-use lazy_static::lazy_static;
-use n64_math::Color;
 use std::collections::HashSet;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -16,15 +14,13 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
+use crate::{framebuffer::Framebuffer, VideoMode};
 
 pub(crate) mod colored_rect;
 pub(crate) mod copy_tex;
+pub(crate) mod dst_texture;
 pub(crate) mod textured_rect;
 
-pub const WIDTH: i32 = 320;
-pub const HEIGHT: i32 = 240;
-
-const FRAME_BUFFER_SIZE: usize = (WIDTH * HEIGHT) as usize;
 const SCALE: i32 = 4;
 
 #[repr(C)]
@@ -59,129 +55,36 @@ thread_local! {
     static EVENT_LOOP: Mutex<EventLoop<()>> = Mutex::new(EventLoop::new());
 }
 
-lazy_static! {
-    pub(crate) static ref FRAMEBUFFER_STATE: Mutex<FramebufferState> =
-        Mutex::new(FramebufferState::new());
+pub struct Graphics {
+    pub(crate) video_mode: VideoMode,
+    pub(crate) window: Window,
+    pub(crate) keys_down: HashSet<VirtualKeyCode>,
+
+    pub(crate) surface: wgpu::Surface,
+    pub(crate) adapter: wgpu::Adapter,
+    pub(crate) device: Arc<wgpu::Device>,
+    pub(crate) queue: wgpu::Queue,
+    pub(crate) swap_chain_desc: wgpu::SwapChainDescriptor,
+    pub(crate) swap_chain: wgpu::SwapChain,
+
+    pub(crate) quad_vertex_buf: wgpu::Buffer,
+    pub(crate) quad_index_buf: wgpu::Buffer,
+
+    pub(crate) copy_tex: CopyTex,
+    pub(crate) colored_rect: ColoredRect,
+    pub(crate) textured_rect: TexturedRect,
+
+    pub(crate) device_poll_thread_run: Arc<AtomicBool>,
+    pub(crate) device_poll_thread: Option<thread::JoinHandle<()>>,
 }
 
-pub(crate) struct FramebufferState {
-    pub using_framebuffer_a: bool,
-    pub framebuffer_a: Box<[Color]>,
-    pub framebuffer_b: Box<[Color]>,
-}
-
-impl FramebufferState {
-    fn new() -> FramebufferState {
-        FramebufferState {
-            using_framebuffer_a: false,
-            framebuffer_a: {
-                let mut buffer = Vec::new();
-                buffer.resize_with(FRAME_BUFFER_SIZE, || Color::new(0x0001));
-                buffer.into_boxed_slice()
-            },
-            framebuffer_b: {
-                let mut buffer = Vec::new();
-                buffer.resize_with(FRAME_BUFFER_SIZE, || Color::new(0x0001));
-                buffer.into_boxed_slice()
-            },
-        }
-    }
-
-    pub(crate) fn next_buffer(&mut self) -> &mut [Color] {
-        if self.using_framebuffer_a {
-            &mut self.framebuffer_a[..]
-        } else {
-            &mut self.framebuffer_b[..]
-        }
-    }
-
-    pub(crate) fn swap_buffer(&mut self) {
-        self.using_framebuffer_a = !self.using_framebuffer_a;
-    }
-}
-
-lazy_static! {
-    pub(crate) static ref GFX_EMU_STATE: Mutex<GfxEmuState> = Mutex::new(GfxEmuState::new());
-}
-
-pub(crate) struct CommandBufferDst {
-    pub buffer: wgpu::Buffer,
-    pub tex_format: wgpu::TextureFormat,
-    pub tex_extent: wgpu::Extent3d,
-    pub tex: wgpu::Texture,
-    pub tex_view: wgpu::TextureView,
-}
-
-impl CommandBufferDst {
-    pub(crate) fn new(device: &wgpu::Device) -> Self {
-        let buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: (4 * WIDTH * HEIGHT) as u64,
-            usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
-        });
-
-        let tex_format = wgpu::TextureFormat::Rgba8Unorm;
-
-        let tex_extent = wgpu::Extent3d {
-            width: WIDTH as u32,
-            height: HEIGHT as u32,
-            depth: 1,
-        };
-        let tex = device.create_texture(&wgpu::TextureDescriptor {
-            label: None,
-            size: tex_extent,
-            array_layer_count: 1,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: tex_format,
-            usage: wgpu::TextureUsage::COPY_DST
-                | wgpu::TextureUsage::COPY_SRC
-                | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
-        });
-        let tex_view = tex.create_default_view();
-
-        Self {
-            buffer,
-            tex_format,
-            tex_extent,
-            tex,
-            tex_view,
-        }
-    }
-}
-
-pub(crate) struct GfxEmuState {
-    pub window: Window,
-    pub keys_down: HashSet<VirtualKeyCode>,
-
-    pub surface: wgpu::Surface,
-    pub adapter: wgpu::Adapter,
-    pub device: Arc<wgpu::Device>,
-    pub queue: wgpu::Queue,
-    pub swap_chain_desc: wgpu::SwapChainDescriptor,
-    pub swap_chain: wgpu::SwapChain,
-
-    pub quad_vertex_buf: wgpu::Buffer,
-    pub quad_index_buf: wgpu::Buffer,
-
-    pub copy_tex: CopyTex,
-
-    pub command_buffer_dst: CommandBufferDst,
-    pub colored_rect: ColoredRect,
-    pub textured_rect: TexturedRect,
-
-    pub device_poll_thread_run: Arc<AtomicBool>,
-    pub device_poll_thread: Option<thread::JoinHandle<()>>,
-}
-
-impl GfxEmuState {
-    fn new() -> GfxEmuState {
+impl Graphics {
+    pub(crate) fn new(video_mode: VideoMode, _framebuffer: &mut Framebuffer) -> Self {
         let window = {
             let mut builder = winit::window::WindowBuilder::new();
             builder = builder.with_title("N64");
             builder = builder
-                .with_inner_size(winit::dpi::LogicalSize::new(SCALE * WIDTH, SCALE * HEIGHT));
+                .with_inner_size(winit::dpi::LogicalSize::new(SCALE * video_mode.width(), SCALE * video_mode.height()));
             builder = builder.with_visible(false);
             EVENT_LOOP.with(|event_loop| builder.build(&event_loop.lock().unwrap()).unwrap())
         };
@@ -230,10 +133,9 @@ impl GfxEmuState {
         let quad_index_buf =
             device.create_buffer_with_data(QUAD_INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
 
-        let copy_tex = CopyTex::new(&device, &swap_chain_desc);
-        let command_buffer_dst = CommandBufferDst::new(&device);
-        let colored_rect = ColoredRect::new(&device, command_buffer_dst.tex_format);
-        let textured_rect = TexturedRect::new(&device, command_buffer_dst.tex_format);
+        let copy_tex = CopyTex::new(&device, &swap_chain_desc, video_mode);
+        let colored_rect = ColoredRect::new(&device, dst_texture::TEXUTRE_FORMAT);
+        let textured_rect = TexturedRect::new(&device, dst_texture::TEXUTRE_FORMAT);
 
         window.set_visible(true);
 
@@ -249,7 +151,8 @@ impl GfxEmuState {
             }))
         };
 
-        GfxEmuState {
+        Self {
+            video_mode,
             window,
             keys_down,
 
@@ -264,7 +167,6 @@ impl GfxEmuState {
             quad_index_buf,
 
             copy_tex,
-            command_buffer_dst,
             colored_rect,
             textured_rect,
 
@@ -273,7 +175,7 @@ impl GfxEmuState {
         }
     }
 
-    pub(crate) fn poll_events(&mut self, fb: &mut [Color]) {
+    pub(crate) fn poll_events(&mut self, framebuffer: &mut Framebuffer) {
         EVENT_LOOP.with(|event_loop| {
             event_loop
                 .lock()
@@ -329,7 +231,7 @@ impl GfxEmuState {
                             _ => {}
                         },
                         event::Event::RedrawRequested(_) => {
-                            self.render_cpu_buffer(fb);
+                            self.render_cpu_buffer(framebuffer);
                         }
                         _ => {}
                     }
@@ -337,8 +239,11 @@ impl GfxEmuState {
         });
     }
 
-    pub(crate) fn render_cpu_buffer(&mut self, fb: &mut [Color]) {
-        for (pixel, data) in fb.iter().zip(self.copy_tex.src_buffer.chunks_mut(4)) {
+    pub(crate) fn render_cpu_buffer(&mut self, framebuffer: &mut Framebuffer) {
+
+        let fb = framebuffer.next_buffer();
+
+        for (pixel, data) in fb.data.iter().zip(self.copy_tex.src_buffer.chunks_mut(4)) {
             let rgba = pixel.to_rgba();
 
             data[0] = (rgba[0] * 255.0) as u8;
@@ -365,8 +270,8 @@ impl GfxEmuState {
                 wgpu::BufferCopyView {
                     buffer: &temp_buf,
                     offset: 0,
-                    bytes_per_row: 4 * WIDTH as u32,
-                    rows_per_image: HEIGHT as u32,
+                    bytes_per_row: 4 * self.video_mode.width() as u32,
+                    rows_per_image: self.video_mode.height() as u32,
                 },
                 wgpu::TextureCopyView {
                     texture: &self.copy_tex.src_tex,
@@ -404,9 +309,16 @@ impl GfxEmuState {
         };
         self.queue.submit(&[render_command_buf]);
     }
+
+    pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) {
+
+        self.poll_events(framebuffer);
+        self.render_cpu_buffer(framebuffer);
+        framebuffer.swap_buffer();
+    }
 }
 
-impl Drop for GfxEmuState {
+impl Drop for Graphics {
     fn drop(&mut self) {
         self.device_poll_thread_run.store(false, Ordering::SeqCst);
 
@@ -414,31 +326,4 @@ impl Drop for GfxEmuState {
             join_handle.join().unwrap();
         }
     }
-}
-
-pub(crate) fn init() {
-    let _ = GFX_EMU_STATE.lock().unwrap();
-}
-
-pub fn swap_buffers() {
-    let mut state = GFX_EMU_STATE.lock().unwrap();
-
-    with_framebuffer(|fb| {
-        state.poll_events(fb);
-        state.render_cpu_buffer(fb);
-    });
-
-    FRAMEBUFFER_STATE.lock().unwrap().swap_buffer();
-}
-
-pub fn with_framebuffer<F: FnOnce(&mut [Color])>(f: F) {
-    f(FRAMEBUFFER_STATE.lock().unwrap().next_buffer());
-}
-
-#[inline]
-pub fn slow_cpu_clear() {
-    with_framebuffer(|fb| {
-        fb.iter_mut()
-            .for_each(|v| *v = Color::new(0b00000_00000_00000_1));
-    });
 }

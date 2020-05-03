@@ -1,9 +1,9 @@
 use crate::gfx::Texture;
 use crate::{
-    graphics::{GFX_EMU_STATE, HEIGHT, QUAD_INDEX_DATA, WIDTH},
+    graphics::{QUAD_INDEX_DATA},
     graphics_emu::{
         colored_rect::ColoredRectUniforms,
-        textured_rect::{TexturedRectUniforms, UploadedTexture},
+        textured_rect::{TexturedRectUniforms, UploadedTexture}, Graphics, dst_texture::DstTexture,
     },
 };
 use core::mem;
@@ -11,6 +11,7 @@ use futures_executor;
 use n64_math::{Color, Vec2};
 use std::{collections::HashMap, convert::TryInto};
 use zerocopy::AsBytes;
+use super::TextureMut;
 
 #[derive(Default)]
 struct DrawData {
@@ -27,20 +28,20 @@ enum Command {
     TexturedRect {
         upper_left: Vec2,
         lower_right: Vec2,
-        texture: &'static Texture,
+        texture: Texture<'static>,
     },
 }
 
 pub struct CommandBuffer<'a> {
-    framebuffer: &'a mut [Color],
+    out_tex: &'a mut TextureMut<'a>,
     clear: bool,
     commands: Vec<Command>,
 }
 
 impl<'a> CommandBuffer<'a> {
-    pub fn new(framebuffer: &'a mut [Color]) -> Self {
+    pub fn new(out_tex: &'a mut TextureMut<'a>) -> Self {
         CommandBuffer {
-            framebuffer,
+            out_tex, 
             clear: false,
             commands: Vec::new(),
         }
@@ -72,7 +73,7 @@ impl<'a> CommandBuffer<'a> {
         &mut self,
         upper_left: Vec2,
         lower_right: Vec2,
-        texture: &'static Texture,
+        texture: Texture<'static>,
     ) -> &mut Self {
         self.commands.push(Command::TexturedRect {
             upper_left,
@@ -83,8 +84,9 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn run(self) {
-        let state = &mut *GFX_EMU_STATE.lock().unwrap();
+    pub fn run(self, graphics: &mut Graphics) {
+
+        let dst = DstTexture::new(&graphics.device, self.out_tex.width, self.out_tex.height);
 
         let mut draw_data: Box<[DrawData]> = {
             let mut draw_data = Vec::new();
@@ -92,18 +94,18 @@ impl<'a> CommandBuffer<'a> {
             draw_data.into_boxed_slice()
         };
 
-        let mut texture_data: HashMap<*const Texture, UploadedTexture> = HashMap::new();
+        let mut texture_data: HashMap<*const [Color], UploadedTexture> = HashMap::new();
 
         let command_buf = {
-            let mut encoder = state
+            let mut encoder = graphics
                 .device
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
             for command in &self.commands {
                 if let Command::TexturedRect { texture, .. } = command {
                     texture_data.insert(
-                        *texture as *const _,
-                        UploadedTexture::new(&state.device, &mut encoder, texture),
+                        texture.data as *const _,
+                        UploadedTexture::new(&graphics.device, &mut encoder, texture),
                     );
                 }
             }
@@ -111,7 +113,7 @@ impl<'a> CommandBuffer<'a> {
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                        attachment: &state.command_buffer_dst.tex_view,
+                        attachment: &dst.tex_view,
                         resolve_target: None,
                         load_op: if self.clear {
                             wgpu::LoadOp::Clear
@@ -129,10 +131,10 @@ impl<'a> CommandBuffer<'a> {
                     depth_stencil_attachment: None,
                 });
 
-                render_pass.set_index_buffer(&state.quad_index_buf, 0, 0);
-                render_pass.set_vertex_buffer(0, &state.quad_vertex_buf, 0, 0);
+                render_pass.set_index_buffer(&graphics.quad_index_buf, 0, 0);
+                render_pass.set_vertex_buffer(0, &graphics.quad_vertex_buf, 0, 0);
 
-                let window_size = Vec2::new(WIDTH as f32, HEIGHT as f32);
+                let window_size = Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32);
 
                 for (command, data) in self.commands.iter().zip(draw_data.iter_mut()) {
                     match command {
@@ -152,16 +154,16 @@ impl<'a> CommandBuffer<'a> {
                                 scale: [scale.x(), scale.y()],
                             };
 
-                            render_pass.set_pipeline(&state.colored_rect.pipeline);
+                            render_pass.set_pipeline(&graphics.colored_rect.pipeline);
 
-                            data.uniform_buffer = Some(state.device.create_buffer_with_data(
+                            data.uniform_buffer = Some(graphics.device.create_buffer_with_data(
                                 uniforms.as_bytes(),
                                 wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
                             ));
 
                             data.bind_group =
-                                Some(state.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                                    layout: &state.colored_rect.bind_group_layout,
+                                Some(graphics.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                                    layout: &graphics.colored_rect.bind_group_layout,
                                     bindings: &[wgpu::Binding {
                                         binding: 0,
                                         resource: wgpu::BindingResource::Buffer {
@@ -191,16 +193,16 @@ impl<'a> CommandBuffer<'a> {
                                 scale: [scale.x(), scale.y()],
                             };
 
-                            render_pass.set_pipeline(&state.textured_rect.pipeline);
+                            render_pass.set_pipeline(&graphics.textured_rect.pipeline);
 
-                            data.uniform_buffer = Some(state.device.create_buffer_with_data(
+                            data.uniform_buffer = Some(graphics.device.create_buffer_with_data(
                                 uniforms.as_bytes(),
                                 wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
                             ));
 
                             data.bind_group = Some(
-                                state.device.create_bind_group(&wgpu::BindGroupDescriptor {
-                                    layout: &state.textured_rect.bind_group_layout,
+                                graphics.device.create_bind_group(&wgpu::BindGroupDescriptor {
+                                    layout: &graphics.textured_rect.bind_group_layout,
                                     bindings: &[
                                         wgpu::Binding {
                                             binding: 0,
@@ -214,7 +216,7 @@ impl<'a> CommandBuffer<'a> {
                                             binding: 1,
                                             resource: wgpu::BindingResource::TextureView(
                                                 &texture_data
-                                                    .get(&(*texture as *const _))
+                                                    .get(&(texture.data as *const _))
                                                     .unwrap()
                                                     .tex_view,
                                             ),
@@ -222,7 +224,7 @@ impl<'a> CommandBuffer<'a> {
                                         wgpu::Binding {
                                             binding: 2,
                                             resource: wgpu::BindingResource::Sampler(
-                                                &state.textured_rect.sampler,
+                                                &graphics.textured_rect.sampler,
                                             ),
                                         },
                                     ],
@@ -239,35 +241,35 @@ impl<'a> CommandBuffer<'a> {
 
             encoder.copy_texture_to_buffer(
                 wgpu::TextureCopyView {
-                    texture: &state.command_buffer_dst.tex,
+                    texture: &dst.tex,
                     mip_level: 0,
                     array_layer: 0,
                     origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
                 },
                 wgpu::BufferCopyView {
-                    buffer: &state.command_buffer_dst.buffer,
+                    buffer: &dst.buffer,
                     offset: 0,
-                    bytes_per_row: 4 * WIDTH as u32,
-                    rows_per_image: HEIGHT as u32,
+                    bytes_per_row: 4 * self.out_tex.width as u32,
+                    rows_per_image: self.out_tex.height as u32,
                 },
-                state.command_buffer_dst.tex_extent,
+                dst.tex_extent,
             );
 
             encoder.finish()
         };
 
-        state.queue.submit(&[command_buf]);
+        graphics.queue.submit(&[command_buf]);
 
         futures_executor::block_on(async {
-            let mapped_colored_rect_dst_buffer = state
-                .command_buffer_dst
+            let mapped_colored_rect_dst_buffer = dst
                 .buffer
-                .map_read(0, (4 * WIDTH * HEIGHT) as u64)
+                .map_read(0, (4 * self.out_tex.width * self.out_tex.height) as u64)
                 .await
                 .unwrap();
 
             for (fb_color, mapped_color) in self
-                .framebuffer
+                .out_tex
+                .data
                 .iter_mut()
                 .zip(mapped_colored_rect_dst_buffer.as_slice().chunks(4))
             {

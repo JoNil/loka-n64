@@ -1,5 +1,5 @@
-use crate::graphics;
 use n64_math::Color;
+use crate::gfx::TextureMut;
 
 pub const GLYPH_WIDTH: i32 = 13;
 pub const GLYPH_HEIGHT: i32 = 14;
@@ -11,7 +11,7 @@ const GLYPH_SIZE: usize = 23;
 const GLYPH_ADDR: usize = 0xB000_0B70;
 
 #[inline]
-pub fn draw_str(mut x: i32, mut y: i32, color: Color, string: &[u8]) {
+pub fn draw_str(out_tex: &mut TextureMut, mut x: i32, mut y: i32, color: Color, string: &[u8]) {
     let start_x = x;
 
     for mut ch in string.iter().copied() {
@@ -35,7 +35,7 @@ pub fn draw_str(mut x: i32, mut y: i32, color: Color, string: &[u8]) {
             ch -= b'a' - b'A';
         }
 
-        draw_char(x, y, color, ch);
+        draw_char(out_tex, x, y, color, ch);
         x += GLYPH_WIDTH + KERNING;
     }
 }
@@ -50,14 +50,14 @@ fn digit_to_hex_char(digit: u8) -> u8 {
 }
 
 #[inline]
-pub fn draw_hex(mut x: i32, y: i32, color: Color, mut number: u32) {
+pub fn draw_hex(out_tex: &mut TextureMut, mut x: i32, y: i32, color: Color, mut number: u32) {
     if number == 0 {
-        draw_char(x, y, color, b'0');
+        draw_char(out_tex, x, y, color, b'0');
         return;
     }
 
     while number > 0 {
-        draw_char(x, y, color, digit_to_hex_char((number & 0xF) as u8));
+        draw_char(out_tex, x, y, color, digit_to_hex_char((number & 0xF) as u8));
         x -= GLYPH_WIDTH + KERNING;
         number >>= 4;
     }
@@ -72,11 +72,11 @@ fn digit_to_char(digit: u8) -> u8 {
 }
 
 #[inline]
-pub fn draw_number(mut x: i32, y: i32, color: Color, mut number: i32) {
+pub fn draw_number(out_tex: &mut TextureMut, mut x: i32, y: i32, color: Color, mut number: i32) {
     let mut negative = false;
 
     if number == 0 {
-        draw_char(x, y, color, b'0');
+        draw_char(out_tex, x, y, color, b'0');
         return;
     }
 
@@ -86,88 +86,85 @@ pub fn draw_number(mut x: i32, y: i32, color: Color, mut number: i32) {
     }
 
     while number > 0 {
-        draw_char(x, y, color, digit_to_char((number % 10) as u8));
+        draw_char(out_tex, x, y, color, digit_to_char((number % 10) as u8));
         x -= GLYPH_WIDTH + KERNING;
         number /= 10;
     }
 
     if negative {
-        draw_char(x, y, color, b'-');
+        draw_char(out_tex, x, y, color, b'-');
     }
 }
 
 #[cfg(target_vendor = "nintendo64")]
-pub fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
-    graphics::with_framebuffer(|fb| {
-        let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
+pub fn draw_char(out_tex: &mut TextureMut, x: i32, y: i32, color: Color, ch: u8) {
+    let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
-        let mut address = GLYPH_ADDR + index * GLYPH_SIZE;
-        let mut shift = (4 - (address & 3)) * 8 - 1;
-        address &= 0xFFFF_FFFC;
-        let mut bits = unsafe { *(address as *const u32) };
+    let mut address = GLYPH_ADDR + index * GLYPH_SIZE;
+    let mut shift = (4 - (address & 3)) * 8 - 1;
+    address &= 0xFFFF_FFFC;
+    let mut bits = unsafe { *(address as *const u32) };
 
-        for yy in y..(y + GLYPH_HEIGHT) {
-            if yy < 0 {
-                return;
+    for yy in y..(y + GLYPH_HEIGHT) {
+        if yy < 0 {
+            return;
+        }
+
+        if yy >= out_tex.height {
+            return;
+        }
+
+        for xx in x..(x + GLYPH_WIDTH) {
+            if (bits >> shift) & 1 == 1 && xx < out_tex.width && x >= 0 {
+                out_tex.data[(yy * out_tex.width + xx) as usize] = color;
             }
 
-            if yy >= graphics::HEIGHT {
-                return;
-            }
-
-            for xx in x..(x + GLYPH_WIDTH) {
-                if (bits >> shift) & 1 == 1 && xx < graphics::WIDTH && x >= 0 {
-                    fb[(yy * graphics::WIDTH + xx) as usize] = color;
-                }
-
-                if shift == 0 {
-                    address += 4;
-                    bits = unsafe { *(address as *const u32) };
-                    shift = 31;
-                } else {
-                    shift -= 1;
-                }
+            if shift == 0 {
+                address += 4;
+                bits = unsafe { *(address as *const u32) };
+                shift = 31;
+            } else {
+                shift -= 1;
             }
         }
-    });
+    }
 }
 
 #[cfg(not(target_vendor = "nintendo64"))]
-pub fn draw_char(x: i32, y: i32, color: Color, ch: u8) {
-    graphics::with_framebuffer(|fb| {
-        use core::convert::TryInto;
+pub fn draw_char(out_tex: &mut TextureMut, x: i32, y: i32, color: Color, ch: u8) {
+    
+    use core::convert::TryInto;
 
-        let ipl3 = std::include_bytes!("../../bootcode.bin");
+    let ipl3 = std::include_bytes!("../../bootcode.bin");
 
-        let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
+    let index = GLYPHS.iter().position(|c| *c == ch).unwrap_or(UNKNOWN);
 
-        let mut address = (GLYPH_ADDR - 64) + index * GLYPH_SIZE;
-        let mut shift = (4 - (address & 3)) * 8 - 1;
-        address &= 0x0FFF_FFFC;
-        let mut bits = u32::from_be_bytes(ipl3[address..(address + 4)].try_into().unwrap());
+    let mut address = (GLYPH_ADDR - 64) + index * GLYPH_SIZE;
+    let mut shift = (4 - (address & 3)) * 8 - 1;
+    address &= 0x0FFF_FFFC;
+    let mut bits = u32::from_be_bytes(ipl3[address..(address + 4)].try_into().unwrap());
 
-        for yy in y..(y + GLYPH_HEIGHT) {
-            if yy < 0 {
-                return;
+    for yy in y..(y + GLYPH_HEIGHT) {
+        if yy < 0 {
+            return;
+        }
+
+        if yy >= out_tex.height {
+            return;
+        }
+
+        for xx in x..(x + GLYPH_WIDTH) {
+            if (bits >> shift) & 1 == 1 && xx < out_tex.width && x >= 0 {
+                out_tex.data[(yy * out_tex.width + xx) as usize] = color;
             }
 
-            if yy >= graphics::HEIGHT {
-                return;
-            }
-
-            for xx in x..(x + GLYPH_WIDTH) {
-                if (bits >> shift) & 1 == 1 && xx < graphics::WIDTH && x >= 0 {
-                    fb[(yy * graphics::WIDTH + xx) as usize] = color;
-                }
-
-                if shift == 0 {
-                    address += 4;
-                    bits = u32::from_be_bytes(ipl3[address..(address + 4)].try_into().unwrap());
-                    shift = 31;
-                } else {
-                    shift -= 1;
-                }
+            if shift == 0 {
+                address += 4;
+                bits = u32::from_be_bytes(ipl3[address..(address + 4)].try_into().unwrap());
+                shift = 31;
+            } else {
+                shift -= 1;
             }
         }
-    });
+    }
 }

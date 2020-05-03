@@ -1,4 +1,5 @@
-mod texture;
+pub use command_buffer::CommandBuffer;
+pub use texture::{Texture, TextureMut, StaticTexture};
 
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {
@@ -10,5 +11,4 @@ cfg_if::cfg_if! {
     }
 }
 
-pub use command_buffer::CommandBuffer;
-pub use texture::Texture;
+mod texture;

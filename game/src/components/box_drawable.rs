@@ -1,6 +1,6 @@
 use crate::components::{movable, systems};
 use crate::impl_system;
-use n64::{gfx::CommandBuffer, graphics};
+use n64::gfx::CommandBuffer;
 use n64_math::{Color, Vec2};
 
 #[derive(Copy, Clone)]
@@ -17,7 +17,7 @@ pub fn draw(cb: &mut CommandBuffer) {
             let upper_left = movable.pos - half_size;
             let lower_right = movable.pos + half_size;
 
-            let screen_size = Vec2::new(graphics::WIDTH as f32, graphics::HEIGHT as f32);
+            let screen_size = Vec2::new(320.0, 240.0);
 
             cb.add_colored_rect(
                 upper_left * screen_size,
