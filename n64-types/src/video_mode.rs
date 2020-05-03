@@ -1,23 +1,23 @@
 #[derive(Copy, Clone)]
 pub enum VideoMode {
-    Ntsc320x240,
-    Pal640x480,
+    Ntsc { width: i32, height: i32 },
+    Pal  { width: i32, height: i32 },
 }
 
 impl VideoMode {
     #[inline]
     pub fn width(self) -> i32 {
         match self {
-            VideoMode::Ntsc320x240 => 320,
-            VideoMode::Pal640x480 => 640,
+            VideoMode::Ntsc { width, .. } => width,
+            VideoMode::Pal { width, .. } => width,
         }
     }
 
     #[inline]
     pub fn height(self) -> i32 {
         match self {
-            VideoMode::Ntsc320x240 => 240,
-            VideoMode::Pal640x480 => 480,
+            VideoMode::Ntsc { height, .. } => height,
+            VideoMode::Pal { height, .. } => height,
         }
     }
 

@@ -30,7 +30,7 @@ mod textures;
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
-const VIDEO_MODE: VideoMode = VideoMode::Pal640x480;
+const VIDEO_MODE: VideoMode = VideoMode::Pal { width: 320, height: 240 };
 
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);

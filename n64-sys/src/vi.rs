@@ -26,7 +26,7 @@ static mut LAST_BUFFER: Option<*mut Color> = None;
 #[inline]
 pub fn init(video_mode: VideoMode, fb: &mut [Color]) {
     match video_mode {
-        VideoMode::Ntsc320x240 => unsafe {
+        VideoMode::Ntsc { .. } => unsafe {
             write_volatile(VI_STATUS, 0x0000_320E);
             write_volatile(VI_DRAM_ADDR, fb.as_mut_ptr() as usize);
             write_volatile(VI_H_WIDTH, video_mode.width() as usize);
@@ -41,7 +41,7 @@ pub fn init(video_mode: VideoMode, fb: &mut [Color]) {
             write_volatile(VI_X_SCALE, 0x100 * video_mode.width() as usize / 160);
             write_volatile(VI_Y_SCALE, 0x100 * video_mode.height() as usize / 60);
         },
-        VideoMode::Pal640x480 => unsafe {
+        VideoMode::Pal { .. } => unsafe {
             write_volatile(VI_STATUS, 0x0000_320E);
             write_volatile(VI_DRAM_ADDR, fb.as_mut_ptr() as usize);
             write_volatile(VI_H_WIDTH, video_mode.width() as usize);
