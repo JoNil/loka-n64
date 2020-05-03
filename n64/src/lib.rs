@@ -49,18 +49,6 @@ impl N64 {
             graphics,
         }
     }
-
-    pub fn split_mut(&mut self) -> (&mut Audio, &mut Framebuffer, &mut Graphics) {
-        let this: *mut Self = self as *mut _;
-
-        unsafe {
-            (
-                &mut (*this).audio,
-                &mut (*this).framebuffer,
-                &mut (*this).graphics,
-            )
-        }
-    }
 }
 
 cfg_if::cfg_if! {
