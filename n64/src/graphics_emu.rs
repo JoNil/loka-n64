@@ -57,11 +57,12 @@ thread_local! {
 
 pub struct Graphics {
     pub(crate) video_mode: VideoMode,
-    pub(crate) window: Window,
     pub(crate) keys_down: HashSet<VirtualKeyCode>,
 
+    _window: Window,
+    _adapter: wgpu::Adapter,
+
     pub(crate) surface: wgpu::Surface,
-    pub(crate) adapter: wgpu::Adapter,
     pub(crate) device: Arc<wgpu::Device>,
     pub(crate) queue: wgpu::Queue,
     pub(crate) swap_chain_desc: wgpu::SwapChainDescriptor,
@@ -153,11 +154,12 @@ impl Graphics {
 
         Self {
             video_mode,
-            window,
             keys_down,
 
+            _window: window,
+            _adapter: adapter,
+
             surface,
-            adapter,
             device,
             queue,
             swap_chain_desc,

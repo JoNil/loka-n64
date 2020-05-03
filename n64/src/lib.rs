@@ -34,6 +34,7 @@ pub struct N64 {
     pub audio: Audio,
     pub framebuffer: Framebuffer,
     pub graphics: Graphics,
+    pub controllers: Controllers,
 }
 
 impl N64 {
@@ -42,11 +43,13 @@ impl N64 {
         let audio = Audio::new();
         let mut framebuffer = Framebuffer::new(video_mode);
         let graphics = Graphics::new(video_mode, &mut framebuffer);
+        let controllers = Controllers::new();
 
         N64 {
             audio,
             framebuffer,
             graphics,
+            controllers,
         }
     }
 }
