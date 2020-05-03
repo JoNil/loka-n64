@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use core::ptr::{read_volatile, write_volatile};
-use crate::sys::uncached_addr_mut;
 use n64_math::Color;
 use n64_types::VideoMode;
 
@@ -56,7 +55,7 @@ pub fn init(video_mode: VideoMode, fb: &mut [Color]) {
             write_volatile(VI_V_BURST, 0x0009_026B);
             write_volatile(VI_X_SCALE, 0x100 * video_mode.width() as usize / 160);
             write_volatile(VI_Y_SCALE, 0x100 * video_mode.height() as usize / 60);
-        }
+        },
     }
 }
 

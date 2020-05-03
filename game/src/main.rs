@@ -14,8 +14,8 @@ use components::movable;
 use components::sprite_drawable;
 use enemy_system::EnemySystem;
 use n64::{
-    self, current_time_us, gfx::CommandBuffer, ipl3font, slow_cpu_clear,
-    VideoMode, BUFFER_NO_SAMPLES, N64,
+    self, current_time_us, gfx::CommandBuffer, ipl3font, slow_cpu_clear, VideoMode,
+    BUFFER_NO_SAMPLES, N64,
 };
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
@@ -162,7 +162,6 @@ fn main() {
     }
 
     loop {
-
         {
             let mut out_tex = n64.framebuffer.next_buffer();
             slow_cpu_clear(out_tex.data);

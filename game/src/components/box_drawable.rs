@@ -1,6 +1,6 @@
 use crate::components::{movable, systems};
 use crate::impl_system;
-use n64::{VideoMode, gfx::CommandBuffer};
+use n64::{gfx::CommandBuffer, VideoMode};
 use n64_math::{Color, Vec2};
 
 #[derive(Copy, Clone)]
