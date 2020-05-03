@@ -7,7 +7,7 @@ impl Graphics {
 
     #[inline]
     pub(crate) fn new(video_mode: VideoMode, framebuffer: &mut Framebuffer) -> Self {
-        vi::init(video_mode.width(), framebuffer.next_buffer().data);
+        vi::init(video_mode, framebuffer.next_buffer().data);
         Self {}
     }
 

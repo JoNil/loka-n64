@@ -6,13 +6,12 @@ pub use audio::{Audio, BUFFER_NO_SAMPLES};
 pub use controllers::Controllers;
 pub use framebuffer::{slow_cpu_clear, Framebuffer};
 pub use graphics::Graphics;
-pub use video_mode::VideoMode;
+pub use n64_types::VideoMode;
 
 pub mod gfx;
 pub mod ipl3font;
 
 mod framebuffer;
-mod video_mode;
 
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {

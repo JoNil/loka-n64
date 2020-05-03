@@ -21,7 +21,7 @@ pub(crate) mod copy_tex;
 pub(crate) mod dst_texture;
 pub(crate) mod textured_rect;
 
-const SCALE: i32 = 4;
+const SCALE: i32 = 2;
 
 #[repr(C)]
 #[derive(Clone, Copy, AsBytes, FromBytes)]

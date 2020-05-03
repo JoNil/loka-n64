@@ -15,7 +15,7 @@ use components::sprite_drawable;
 use enemy_system::EnemySystem;
 use n64::{
     self, current_time_us, gfx::CommandBuffer, ipl3font, slow_cpu_clear,
-    VideoMode::Ntsc320x240, BUFFER_NO_SAMPLES, N64,
+    VideoMode, BUFFER_NO_SAMPLES, N64,
 };
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
@@ -30,9 +30,10 @@ mod textures;
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
+const VIDEO_MODE: VideoMode = VideoMode::Pal640x480;
+
 fn main() {
-    let video_mode = Ntsc320x240;
-    let mut n64 = N64::new(video_mode);
+    let mut n64 = N64::new(VIDEO_MODE);
 
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
@@ -111,8 +112,8 @@ fn main() {
 
                 cb.clear();
 
-                box_drawable::draw(&mut cb, video_mode);
-                sprite_drawable::draw(&mut cb, video_mode);
+                box_drawable::draw(&mut cb, VIDEO_MODE);
+                sprite_drawable::draw(&mut cb, VIDEO_MODE);
 
                 cb.run(&mut n64.graphics);
             }
@@ -187,8 +188,8 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
     let current_buffer = n64_sys::vi::get_vi_buffer();
-    let mut out_tex = n64::gfx::TextureMut::new(320, 240, unsafe {
-        core::slice::from_raw_parts_mut(current_buffer, 2 * 320 * 240)
+    let mut out_tex = n64::gfx::TextureMut::new(VIDEO_MODE.width(), VIDEO_MODE.height(), unsafe {
+        core::slice::from_raw_parts_mut(current_buffer, VIDEO_MODE.size() as usize)
     });
     slow_cpu_clear(out_tex.data);
 
@@ -219,8 +220,8 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
     let current_buffer = n64_sys::vi::get_vi_buffer();
-    let mut out_tex = n64::gfx::TextureMut::new(320, 240, unsafe {
-        core::slice::from_raw_parts_mut(current_buffer, 2 * 320 * 240)
+    let mut out_tex = n64::gfx::TextureMut::new(VIDEO_MODE.width(), VIDEO_MODE.height(), unsafe {
+        core::slice::from_raw_parts_mut(current_buffer, VIDEO_MODE.size() as usize)
     });
     slow_cpu_clear(out_tex.data);
     ipl3font::draw_str(&mut out_tex, 50, 15, RED, b"OUT OF MEMORY!");
