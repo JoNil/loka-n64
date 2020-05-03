@@ -1,8 +1,16 @@
 # loka-n64
 
-- Cpu profiling
-- Draw a textured quad
+- Texture quad on console
+
+- Load and draw level
+
 - Rotate textured quad
 - Audio emu
 
-- Tiled paralax world
+- Cpu profiling
+
+Optimization:
+- pc render into u16 texture
+- pc sample u16 texture
+- Console gpu work overlap with cpu work
+
