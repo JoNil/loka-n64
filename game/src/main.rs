@@ -19,7 +19,6 @@ use n64::{
 };
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
-use spin::{Mutex, MutexGuard, Once};
 
 mod bullet_system;
 mod components;
@@ -31,14 +30,8 @@ mod textures;
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
-static GLOBAL_N64: Once<Mutex<n64::N64>> = Once::new();
-
-fn n64() -> MutexGuard<'static, N64> {
-    GLOBAL_N64.wait().unwrap().lock()
-}
-
 fn main() {
-    GLOBAL_N64.call_once(|| Mutex::new(n64::N64::new(Ntsc320x240)));
+    let mut n64 = N64::new(Ntsc320x240);
 
     let mut controllers = Controllers::new();
     let mut player = Player::new();
@@ -74,7 +67,7 @@ fn main() {
         {
             // Update
 
-            controllers.update(&n64().graphics);
+            controllers.update(&n64.graphics);
 
             enemy_system.update(&mut bullet_system, &mut player);
 
@@ -92,7 +85,7 @@ fn main() {
         {
             // Audio
 
-            if !n64().audio.all_buffers_are_full() {
+            if !n64.audio.all_buffers_are_full() {
                 for (i, chunk) in audio_buffer.chunks_mut(128).enumerate() {
                     for sample in chunk {
                         if i % 2 == 0 {
@@ -103,20 +96,17 @@ fn main() {
                     }
                 }
 
-                n64().audio.write_audio_blocking(&audio_buffer);
+                n64.audio.write_audio_blocking(&audio_buffer);
             }
 
-            n64().audio.update();
+            n64.audio.update();
         }
 
         {
             // Graphics
 
-            let mut n64 = n64();
-            let (_, framebuffer, graphics) = n64.split_mut();
-
             {
-                let mut fb = framebuffer.next_buffer();
+                let mut fb = n64.framebuffer.next_buffer();
                 let mut cb = CommandBuffer::new(&mut fb);
 
                 cb.clear();
@@ -124,11 +114,11 @@ fn main() {
                 box_drawable::draw(&mut cb);
                 sprite_drawable::draw(&mut cb);
 
-                cb.run(graphics);
+                cb.run(&mut n64.graphics);
             }
 
             {
-                let mut fb = framebuffer.next_buffer();
+                let mut fb = n64.framebuffer.next_buffer();
 
                 ipl3font::draw_number(&mut fb, 300, 10, BLUE, player.score());
                 ipl3font::draw_number(
@@ -166,22 +156,19 @@ fn main() {
                 }
             }
 
-            graphics.swap_buffers(framebuffer);
+            n64.graphics.swap_buffers(&mut n64.framebuffer);
         }
     }
 
     loop {
+
         {
-            let mut n64 = n64();
             let mut out_tex = n64.framebuffer.next_buffer();
             slow_cpu_clear(out_tex.data);
             ipl3font::draw_str(&mut out_tex, 50, 10, RED, b"GAME OVER");
         }
-        {
-            let mut n64 = n64();
-            let (_, framebuffer, graphics) = n64.split_mut();
-            graphics.swap_buffers(framebuffer);
-        }
+
+        n64.graphics.swap_buffers(&mut n64.framebuffer);
     }
 }
 
@@ -199,33 +186,31 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    {
-        let mut n64 = n64();
-        let mut out_tex = n64.framebuffer.next_buffer();
-        slow_cpu_clear(out_tex.data);
+    let current_buffer = n64_sys::vi::get_vi_buffer();
+    let mut out_tex = n64::gfx::TextureMut::new(320, 240, unsafe {
+        core::slice::from_raw_parts_mut(current_buffer, 2 * 320 * 240)
+    });
+    slow_cpu_clear(out_tex.data);
 
-        ipl3font::draw_str(&mut out_tex, 15, 15, RED, b"PANIC!");
-        if let Some(location) = info.location() {
-            ipl3font::draw_str(
-                &mut out_tex,
-                15,
-                30,
-                RED,
-                alloc::format!(
-                    "{}:{}",
-                    location.file().rsplit("\\").nth(0).unwrap_or(""),
-                    location.line()
-                )
-                .as_bytes(),
-            );
-        }
+    ipl3font::draw_str(&mut out_tex, 15, 15, RED, b"PANIC!");
+    if let Some(location) = info.location() {
+        ipl3font::draw_str(
+            &mut out_tex,
+            15,
+            30,
+            RED,
+            alloc::format!(
+                "{}:{}",
+                location.file().rsplit("\\").nth(0).unwrap_or(""),
+                location.line()
+            )
+            .as_bytes(),
+        );
     }
 
-    {
-        let mut n64 = n64();
-        let (_, framebuffer, graphics) = n64.split_mut();
-        graphics.swap_buffers(framebuffer);
-    }
+    unsafe { n64_sys::sys::data_cache_hit_writeback(out_tex.data) };
+
+    n64_sys::vi::set_vi_buffer(out_tex.data);
 
     loop {}
 }
@@ -233,18 +218,16 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[cfg(target_vendor = "nintendo64")]
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
-    {
-        let mut n64 = n64();
-        let mut out_tex = n64.framebuffer.next_buffer();
-        slow_cpu_clear(out_tex.data);
-        ipl3font::draw_str(&mut out_tex, 50, 15, RED, b"OUT OF MEMORY!");
-    }
+    let current_buffer = n64_sys::vi::get_vi_buffer();
+    let mut out_tex = n64::gfx::TextureMut::new(320, 240, unsafe {
+        core::slice::from_raw_parts_mut(current_buffer, 2 * 320 * 240)
+    });
+    slow_cpu_clear(out_tex.data);
+    ipl3font::draw_str(&mut out_tex, 50, 15, RED, b"OUT OF MEMORY!");
 
-    {
-        let mut n64 = n64();
-        let (_, framebuffer, graphics) = n64.split_mut();
-        graphics.swap_buffers(framebuffer);
-    }
+    unsafe { n64_sys::sys::data_cache_hit_writeback(out_tex.data) };
+
+    n64_sys::vi::set_vi_buffer(out_tex.data);
 
     loop {}
 }

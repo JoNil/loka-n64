@@ -1,6 +1,7 @@
 #![allow(dead_code)]
 
 use core::ptr::{read_volatile, write_volatile};
+use crate::sys::uncached_addr_mut;
 use n64_math::Color;
 
 const VI_BASE: usize = 0xA440_0000;
@@ -19,6 +20,8 @@ const VI_V_VIDEO: *mut usize = (VI_BASE + 0x28) as _;
 const VI_V_BURST: *mut usize = (VI_BASE + 0x2C) as _;
 const VI_X_SCALE: *mut usize = (VI_BASE + 0x30) as _;
 const VI_Y_SCALE: *mut usize = (VI_BASE + 0x34) as _;
+
+static mut LAST_BUFFER: Option<*mut Color> = None;
 
 #[inline]
 pub fn init(width: i32, fb: &mut [Color]) {
@@ -50,8 +53,14 @@ pub fn wait_for_vblank() {
 }
 
 #[inline]
-pub fn set_vi_buffers(fb: &mut [Color]) {
+pub fn set_vi_buffer(fb: &mut [Color]) {
     unsafe {
+        LAST_BUFFER = Some(fb.as_mut_ptr());
         write_volatile(VI_DRAM_ADDR, fb.as_mut_ptr() as usize);
     }
+}
+
+#[inline]
+pub fn get_vi_buffer() -> *mut Color {
+    unsafe { LAST_BUFFER.unwrap() }
 }
