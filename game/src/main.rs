@@ -46,7 +46,6 @@ fn main() {
     };
 
     let mut frame_begin_time;
-    let mut frame_end_time = current_time_us();
     let mut last_frame_begin_time = current_time_us();
     let mut frame_used_time = 0;
     let mut dt;
@@ -158,7 +157,7 @@ fn main() {
                 }
             }
 
-            frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
+            let frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
             frame_used_time = frame_end_time - frame_begin_time;
         }
     }
