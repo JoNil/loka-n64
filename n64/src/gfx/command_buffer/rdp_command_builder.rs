@@ -90,9 +90,14 @@ pub const COMMAND_SET_COLOR_IMAGE: u64 = 0xff;
 pub const COMMAND_SET_SCISSOR: u64 = 0xed;
 pub const COMMAND_SET_OTHER_MODE: u64 = 0xef;
 pub const COMMAND_SET_FILL_COLOR: u64 = 0xf7;
+pub const COMMAND_SET_TEXTURE_IMAGE: u64 = 0xfd;
+pub const COMMAND_SET_TILE: u64 = 0xf5;
+pub const COMMAND_LOAD_TILE: u64 = 0xf4;
 pub const COMMAND_FILL_RECTANGLE: u64 = 0xf6;
+pub const COMMAND_TEXTURE_RECTANGLE: u64 = 0xe4;
 pub const COMMAND_SYNC_FULL: u64 = 0xe9;
 pub const COMMAND_SYNC_PIPE: u64 = 0xe7;
+pub const COMMAND_SYNC_TILE: u64 = 0xe8;
 
 pub struct RdpCommandBuilder {
     commands: Vec<RdpCommand>,
@@ -150,6 +155,30 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
+    pub fn set_texture_image(&mut self) -> &mut RdpCommandBuilder {
+        self.commands.push(RdpCommand(
+            (COMMAND_SET_TEXTURE_IMAGE << 56),
+        ));
+        self
+    }
+
+    #[inline]
+    pub fn set_tile(&mut self) -> &mut RdpCommandBuilder {
+        self.commands.push(RdpCommand(
+            (COMMAND_SET_TILE << 56),
+        ));
+        self
+    }
+
+    #[inline]
+    pub fn load_tile(&mut self) -> &mut RdpCommandBuilder {
+        self.commands.push(RdpCommand(
+            (COMMAND_LOAD_TILE << 56),
+        ));
+        self
+    }
+
+    #[inline]
     pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(
             (COMMAND_FILL_RECTANGLE << 56)
@@ -157,6 +186,14 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_10_2(bottom_right.y()) << 32)
                 | (to_fixpoint_10_2(top_left.x()) << 12)
                 | (to_fixpoint_10_2(top_left.y())),
+        ));
+        self
+    }
+
+    #[inline]
+    pub fn texture_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
+        self.commands.push(RdpCommand(
+            (COMMAND_TEXTURE_RECTANGLE << 56)
         ));
         self
     }
@@ -170,6 +207,12 @@ impl RdpCommandBuilder {
     #[inline]
     pub fn sync_pipe(&mut self) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(COMMAND_SYNC_PIPE << 56));
+        self
+    }
+
+    #[inline]
+    pub fn sync_tile(&mut self) -> &mut RdpCommandBuilder {
+        self.commands.push(RdpCommand(COMMAND_SYNC_TILE << 56));
         self
     }
 
