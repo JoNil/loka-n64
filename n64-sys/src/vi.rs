@@ -70,14 +70,12 @@ pub fn wait_for_vblank() {
 }
 
 #[inline]
-pub fn set_vi_buffer(fb: &mut [Color]) {
-    unsafe {
-        LAST_BUFFER = Some(fb.as_mut_ptr());
-        write_volatile(VI_DRAM_ADDR, fb.as_mut_ptr() as usize);
-    }
+pub unsafe fn set_vi_buffer(fb: &mut [Color]) {
+    LAST_BUFFER = Some(fb.as_mut_ptr());
+    write_volatile(VI_DRAM_ADDR, fb.as_mut_ptr() as usize);
 }
 
 #[inline]
-pub fn get_vi_buffer() -> *mut Color {
-    unsafe { LAST_BUFFER.unwrap() }
+pub unsafe fn get_vi_buffer() -> *mut Color {
+    LAST_BUFFER.unwrap()
 }

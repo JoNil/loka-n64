@@ -19,7 +19,7 @@ impl Graphics {
         unsafe { n64_sys::sys::data_cache_hit_writeback(fb.data) };
 
         vi::wait_for_vblank();
-        vi::set_vi_buffer(fb.data);
+        unsafe { vi::set_vi_buffer(fb.data) };
 
         framebuffer.swap_buffer();
     }
