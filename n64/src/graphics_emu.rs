@@ -14,7 +14,7 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
-use crate::{framebuffer::Framebuffer, VideoMode};
+use crate::{framebuffer::Framebuffer, VideoMode, current_time_us};
 
 pub(crate) mod colored_rect;
 pub(crate) mod copy_tex;
@@ -241,7 +241,7 @@ impl Graphics {
         });
     }
 
-    pub(crate) fn render_cpu_buffer(&mut self, framebuffer: &mut Framebuffer) {
+    pub(crate) fn render_cpu_buffer(&mut self, framebuffer: &mut Framebuffer) -> i64 {
 
         let fb = framebuffer.next_buffer();
 
@@ -309,14 +309,20 @@ impl Graphics {
 
             encoder.finish()
         };
+
+        let frame_end_time = current_time_us();
+
         self.queue.submit(&[render_command_buf]);
+
+        frame_end_time
     }
 
-    pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) {
+    pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
 
         self.poll_events(framebuffer);
-        self.render_cpu_buffer(framebuffer);
+        let frame_end_time = self.render_cpu_buffer(framebuffer);
         framebuffer.swap_buffer();
+        frame_end_time
     }
 }
 

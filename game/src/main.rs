@@ -45,8 +45,10 @@ fn main() {
         buffer.into_boxed_slice()
     };
 
-    let mut time_used;
-    let mut time_frame = current_time_us();
+    let mut frame_begin_time;
+    let mut frame_end_time = current_time_us();
+    let mut last_frame_begin_time = current_time_us();
+    let mut frame_used_time = 0;
     let mut dt;
 
     enemy_system.spawn_enemy();
@@ -57,13 +59,13 @@ fn main() {
     enemy_system.spawn_enemy();
 
     loop {
-        {
-            let now = current_time_us();
-            dt = (now - time_frame) as f32 / 1e6;
-            time_frame = now;
-        }
 
-        time_used = current_time_us();
+        frame_begin_time = current_time_us();
+
+        {
+            dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;
+            last_frame_begin_time = frame_begin_time;
+        }
 
         {
             // Update
@@ -132,12 +134,6 @@ fn main() {
                         .unwrap_or(0),
                 );
 
-                {
-                    let used_frame_time = current_time_us() - time_used;
-                    ipl3font::draw_number(&mut fb, 200, 10, RED, used_frame_time as i32);
-                    ipl3font::draw_number(&mut fb, 100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
-                }
-
                 #[cfg(target_vendor = "nintendo64")]
                 {
                     ipl3font::draw_number(
@@ -155,9 +151,15 @@ fn main() {
                         *n64_alloc::PAGE_OFFSET.lock() as i32,
                     );
                 }
+
+                {
+                    ipl3font::draw_number(&mut fb, 200, 10, RED, frame_used_time as i32);
+                    ipl3font::draw_number(&mut fb, 100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
+                }
             }
 
-            n64.graphics.swap_buffers(&mut n64.framebuffer);
+            frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
+            frame_used_time = frame_end_time - frame_begin_time;
         }
     }
 
