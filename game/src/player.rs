@@ -50,7 +50,7 @@ impl Player {
                 texture: SHIP_2_SMALL.as_texture(),
             },
         );
-        health::add(&player.entity, HealthComponent { health: 500 });
+        health::add(&player.entity, HealthComponent { health: 5000 });
 
         player
     }
