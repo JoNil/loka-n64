@@ -100,6 +100,7 @@ pub const COMMAND_SET_COLOR_IMAGE: u64 = 0xff;
 pub const COMMAND_SET_SCISSOR: u64 = 0xed;
 pub const COMMAND_SET_OTHER_MODE: u64 = 0xef;
 pub const COMMAND_SET_FILL_COLOR: u64 = 0xf7;
+pub const COMMAND_SET_COMBINE_MODE: u64 = 0xfc;
 pub const COMMAND_SET_TEXTURE_IMAGE: u64 = 0xfd;
 pub const COMMAND_SET_TILE: u64 = 0xf5;
 pub const COMMAND_LOAD_TILE: u64 = 0xf4;
@@ -190,6 +191,33 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
+    pub fn set_combine_mode(
+        &mut self,
+        values: &[u8; 16]
+    ) -> &mut RdpCommandBuilder {
+        self.commands.push(RdpCommand(
+            (COMMAND_SET_COMBINE_MODE << 56)
+                | ((values[0] as u64) << 52)
+                | ((values[1] as u64) << 47)
+                | ((values[2] as u64) << 44)
+                | ((values[3] as u64) << 41)
+                | ((values[4] as u64) << 37)
+                | ((values[5] as u64) << 32)
+                | ((values[6] as u64) << 28)
+                | ((values[7] as u64) << 24)
+                | ((values[8] as u64) << 21)
+                | ((values[9] as u64) << 18)
+                | ((values[10] as u64) << 15)
+                | ((values[11] as u64) << 12)
+                | ((values[12] as u64) << 9)
+                | ((values[13] as u64) << 6)
+                | ((values[14] as u64) << 3)
+                | ((values[15] as u64) << 0)
+        ));
+        self
+    }
+
+    #[inline]
     pub fn set_tile(
         &mut self,
         format: u8,
@@ -272,11 +300,10 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_10_2(top_left.y())),
         ));
         self.commands.push(RdpCommand(
-            ((4<<10) << 16) | (1<<10)
-            /*(to_fixpoint_s_10_5(st_top_left.x()) << 48)
+            (to_fixpoint_s_10_5(st_top_left.x()) << 48)
                 | (to_fixpoint_s_10_5(st_top_left.y()) << 32)
                 | (to_fixpoint_s_10_5(d_xy_d_st.x()) << 16)
-                | (to_fixpoint_s_10_5(d_xy_d_st.y()) << 0)*/
+                | (to_fixpoint_s_10_5(d_xy_d_st.y()) << 0)
         ));
         self
     }

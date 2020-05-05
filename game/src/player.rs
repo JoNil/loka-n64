@@ -4,7 +4,7 @@ use crate::components::health::{self, HealthComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::components::sprite_drawable::{self, SpriteDrawableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
-use crate::textures::SHIP_2;
+use crate::textures::SHIP_2_SMALL;
 use n64::{current_time_us, Controllers};
 use n64_math::{Color, Vec2};
 
@@ -12,7 +12,7 @@ const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_COLOR: Color = Color::new(0b10000_00011_00011_1);
 const SHIP_SPEED: f32 = 0.35;
 const SHIP_SHOOT_DELAY_MS: i32 = 150;
-pub const SHIP_SIZE: Vec2 = Vec2::new(48.0 / 320.0 as f32, 48.0 / 240.0 as f32);
+pub const SHIP_SIZE: Vec2 = Vec2::new(32.0 / 320.0 as f32, 32.0 / 240.0 as f32);
 
 pub struct Player {
     entity: OwnedEntity,
@@ -36,18 +36,18 @@ impl Player {
             },
         );
         // TODO: Remove when sprite drawable is working
-        box_drawable::add(
+        /*box_drawable::add(
             &player.entity,
             BoxDrawableComponent {
                 size: SHIP_SIZE,
                 color: SHIP_COLOR,
             },
-        );
+        );*/
         sprite_drawable::add(
             &player.entity,
             SpriteDrawableComponent {
                 size: SHIP_SIZE,
-                texture: SHIP_2.as_texture(),
+                texture: SHIP_2_SMALL.as_texture(),
             },
         );
         health::add(&player.entity, HealthComponent { health: 500 });
