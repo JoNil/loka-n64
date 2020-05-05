@@ -1,7 +1,7 @@
 #[derive(Copy, Clone)]
 pub enum VideoMode {
     Ntsc { width: i32, height: i32 },
-    Pal  { width: i32, height: i32 },
+    Pal { width: i32, height: i32 },
 }
 
 impl VideoMode {

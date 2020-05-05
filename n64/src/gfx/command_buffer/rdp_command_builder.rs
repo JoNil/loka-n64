@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use n64_math::{Color, Vec2};
 use n64_types::RdpCommand;
 
-use n64_sys::sys::virtual_to_physical_mut;
+use n64_sys::sys::{virtual_to_physical_mut, virtual_to_physical};
 
 // RDP Command Docs: http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
 
@@ -86,6 +86,16 @@ pub const OTHER_MODE_CYCLE_TYPE_COPY: u64 = 0x20_0000_0000_0000; // Set_Other_Mo
 pub const OTHER_MODE_CYCLE_TYPE_FILL: u64 = 0x30_0000_0000_0000; // Set_Other_Modes i: Display Pipeline Cycle Control Mode Fill (Bit 52..53)
 pub const OTHER_MODE_ATOMIC_PRIM: u64 = 0x80_0000_0000_0000; // Set_Other_Modes k: Force Primitive To Be Written To Frame Buffer Before Read Of Following
 
+pub const SIZE_OF_PIXEL_4B: u8 = 0; // Set_Tile/Set_Texture_Image/Set_Color_Image: Size Of Pixel/Texel Color Element 4B (Bit 51..52)
+pub const SIZE_OF_PIXEL_8B: u8 = 1; // Set_Tile/Set_Texture_Image/Set_Color_Image: Size Of Pixel/Texel Color Element 8B (Bit 51..52)
+pub const SIZE_OF_PIXEL_16B: u8 = 2; // Set_Tile/Set_Texture_Image/Set_Color_Image: Size Of Pixel/Texel Color Element 16B (Bit 51..52)
+pub const SIZE_OF_PIXEL_32B: u8 = 3; // Set_Tile/Set_Texture_Image/Set_Color_Image: Size Of Pixel/Texel Color Element 32B (Bit 51..52)
+pub const FORMAT_RGBA: u8 = 0; // Set_Tile/Set_Texture_Image/Set_Color_Image: Image Data Format RGBA (Bit 53..55)
+pub const FORMAT_YUV: u8 = 1; // Set_Tile/Set_Texture_Image/Set_Color_Image: Image Data Format YUV (Bit 53..55)
+pub const FORMAT_COLOR_INDX: u8 = 2; // Set_Tile/Set_Texture_Image/Set_Color_Image: Image Data Format COLOR_INDX (Bit 53..55)
+pub const FORMAT_IA: u8 = 3; // Set_Tile/Set_Texture_Image/Set_Color_Image: Image Data Format IA (Bit 53..55)
+pub const FORMAT_I: u8 = 4; // Set_Tile/Set_Texture_Image/Set_Color_Image: Image Data Format I (Bit 53..55)
+
 pub const COMMAND_SET_COLOR_IMAGE: u64 = 0xff;
 pub const COMMAND_SET_SCISSOR: u64 = 0xed;
 pub const COMMAND_SET_OTHER_MODE: u64 = 0xef;
@@ -112,12 +122,19 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_color_image(&mut self, image: *mut u16, width: i32) -> &mut RdpCommandBuilder {
+    pub fn set_color_image(
+        &mut self,
+        format: u8,
+        size: u8,
+        width: u16,
+        image: *mut u16,
+    ) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(
             (COMMAND_SET_COLOR_IMAGE << 56)
-                | (0x2 << 51) // RGBA 16 bits per channel
+                | (((format & 0b111) as u64) << 53)
+                | (((size & 0b11) as u64) << 51)
                 | ((width as u64 - 1) << 32)
-                | (virtual_to_physical_mut(image) as u64),
+                | virtual_to_physical_mut(image) as u64,
         ));
 
         self
@@ -155,25 +172,73 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_texture_image(&mut self) -> &mut RdpCommandBuilder {
+    pub fn set_texture_image(
+        &mut self,
+        format: u8,
+        size: u8,
+        width: u16,
+        image: *const u16,
+    ) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(
-            (COMMAND_SET_TEXTURE_IMAGE << 56),
+            (COMMAND_SET_TEXTURE_IMAGE << 56)
+                | (((format & 0b111) as u64) << 53)
+                | (((size & 0b11) as u64) << 51)
+                | ((width as u64 - 1) << 32)
+                | (virtual_to_physical(image) as u64),
         ));
         self
     }
 
     #[inline]
-    pub fn set_tile(&mut self) -> &mut RdpCommandBuilder {
+    pub fn set_tile(
+        &mut self,
+        format: u8,
+        size: u8,
+        width: u16,
+        texture_cache_start_address: u16,
+        tile_index: u8,
+        clamp_t: u8,
+        mirror_t: u8,
+        mask_t: u8,
+        shift_t: u8,
+        clamp_s: u8,
+        mirror_s: u8,
+        mask_s: u8,
+        shift_s: u8,
+    ) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(
-            (COMMAND_SET_TILE << 56),
+            (COMMAND_SET_TILE << 56)
+                | (((format & 0b111) as u64) << 53)
+                | (((size & 0b11) as u64) << 51)
+                | (((width >> 2) as u64) << 41)
+                | ((texture_cache_start_address as u64) << 32)
+                | ((tile_index as u64) << 24)
+                | ((clamp_t as u64) << 19)
+                | ((mask_t as u64) << 19)
+                | ((mask_t as u64) << 14)
+                | ((shift_t as u64) << 10)
+                | ((clamp_s as u64) << 9)
+                | ((mask_s as u64) << 8)
+                | ((mask_s as u64) << 4)
+                | ((shift_s as u64) << 0),
         ));
         self
     }
 
     #[inline]
-    pub fn load_tile(&mut self) -> &mut RdpCommandBuilder {
+    pub fn load_tile(
+        &mut self,
+        top_left: Vec2,
+        bottom_right: Vec2,
+        tile_index: u8,
+    ) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(
-            (COMMAND_LOAD_TILE << 56),
+            (COMMAND_LOAD_TILE << 56)
+                | (to_fixpoint_10_2(bottom_right.x()) << (32 + 12))
+                | (to_fixpoint_10_2(bottom_right.y()) << 32)
+                | ((tile_index as u64) << 24)
+                | (to_fixpoint_10_2(top_left.x()) << 12)
+                | (to_fixpoint_10_2(top_left.y())),
         ));
         self
     }
@@ -191,9 +256,26 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn texture_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
+    pub fn texture_rectangle(
+        &mut self,
+        top_left: Vec2,
+        bottom_right: Vec2,
+        tile_index: u8,
+        st_top_left: Vec2,
+        d_xy_d_st: Vec2,
+    ) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(
             (COMMAND_TEXTURE_RECTANGLE << 56)
+                | (to_fixpoint_10_2(bottom_right.x()) << (32 + 12))
+                | (to_fixpoint_10_2(bottom_right.y()) << 32)
+                | (to_fixpoint_10_2(top_left.x()) << 12)
+                | (to_fixpoint_10_2(top_left.y())),
+        ));
+        self.commands.push(RdpCommand(
+            (to_fixpoint_s_10_5(st_top_left.x()) << 48)
+                | (to_fixpoint_s_10_5(st_top_left.y()) << 32)
+                | (to_fixpoint_s_10_5(d_xy_d_st.x()) << 16)
+                | (to_fixpoint_s_10_5(d_xy_d_st.y()) << 0),
         ));
         self
     }
@@ -225,4 +307,9 @@ impl RdpCommandBuilder {
 #[inline]
 fn to_fixpoint_10_2(val: f32) -> u64 {
     (((val * (1 << 2) as f32) as i16) & 0xfff) as u64
+}
+
+#[inline]
+fn to_fixpoint_s_10_5(val: f32) -> u64 {
+    ((val * (1 << 5) as f32) as i16) as u64
 }

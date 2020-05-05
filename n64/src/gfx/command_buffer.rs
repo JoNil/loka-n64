@@ -14,10 +14,10 @@ pub struct CommandBuffer<'a> {
 impl<'a> CommandBuffer<'a> {
     pub fn new(out_tex: &'a mut TextureMut<'a>) -> Self {
         let mut rdp = RdpCommandBuilder::new();
-        rdp.set_color_image(out_tex.data.as_mut_ptr() as *mut u16, out_tex.width)
+        rdp.set_color_image(FORMAT_RGBA, SIZE_OF_PIXEL_16B, out_tex.width as u16, out_tex.data.as_mut_ptr() as *mut u16)
             .set_scissor(
                 Vec2::zero(),
-                Vec2::new(out_tex.width as f32, out_tex.height as f32),
+                Vec2::new((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
             );
 
         CommandBuffer { out_tex, rdp }
@@ -36,7 +36,7 @@ impl<'a> CommandBuffer<'a> {
             .set_fill_color(Color::new(0b00000_00000_00000_1))
             .fill_rectangle(
                 Vec2::new(0.0, 0.0),
-                Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32),
+                Vec2::new((self.out_tex.width - 1) as f32, (self.out_tex.height - 1) as f32),
             );
 
         self
@@ -59,7 +59,7 @@ impl<'a> CommandBuffer<'a> {
                     | OTHER_MODE_FORCE_BLEND,
             )
             .set_fill_color(color)
-            .fill_rectangle(upper_left, lower_right);
+            .fill_rectangle(upper_left, lower_right - Vec2::new(1.0, 1.0));
 
         self
     }
@@ -70,6 +70,24 @@ impl<'a> CommandBuffer<'a> {
         lower_right: Vec2,
         texture: Texture<'static>,
     ) -> &mut Self {
+        //self.rdp
+            //.sync_pipe()
+            //.sync_tile()
+            //.sync_full()
+            /*.set_other_modes(
+                OTHER_MODE_CYCLE_TYPE_FILL
+                    | OTHER_MODE_CYCLE_TYPE_COPY
+                    | OTHER_MODE_CYCLE_TYPE_2_CYCLE
+                    | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
+                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
+                    | OTHER_MODE_FORCE_BLEND
+                | OTHER_MODE_IMAGE_READ_EN,
+            )*/
+            //.set_texture_image(FORMAT_RGBA, SIZE_OF_PIXEL_16B, texture.width as u16, texture.data.as_ptr() as *const u16)
+            //.set_tile(FORMAT_RGBA, SIZE_OF_PIXEL_16B, texture.width as u16, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0)
+            //.load_tile(Vec2::new(0.0, 0.0), Vec2::new((texture.width - 1) as f32, (texture.height - 1) as f32), 0)
+            //.texture_rectangle(upper_left, lower_right  - Vec2::new(1.0, 1.0), 0, Vec2::new(0.0, 0.0), Vec2::new(1.0, 1.0))
+            //.sync_full();
         self
     }
 
@@ -77,11 +95,8 @@ impl<'a> CommandBuffer<'a> {
         self.rdp.sync_full();
         let commands = self.rdp.build();
 
-        #[cfg(target_vendor = "nintendo64")]
-        {
-            unsafe { rdp::run_command_buffer(commands) };
+        unsafe { rdp::run_command_buffer(commands) };
 
-            unsafe { n64_sys::sys::data_cache_hit_invalidate(self.out_tex.data) };
-        }
+        unsafe { n64_sys::sys::data_cache_hit_invalidate(self.out_tex.data) };
     }
 }

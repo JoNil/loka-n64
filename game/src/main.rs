@@ -30,7 +30,10 @@ mod textures;
 const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
-const VIDEO_MODE: VideoMode = VideoMode::Pal { width: 320, height: 240 };
+const VIDEO_MODE: VideoMode = VideoMode::Pal {
+    width: 320,
+    height: 240,
+};
 
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);
@@ -58,7 +61,6 @@ fn main() {
     enemy_system.spawn_enemy();
 
     loop {
-
         frame_begin_time = current_time_us();
 
         {
@@ -187,7 +189,6 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-
     let mut out_tex = n64::gfx::TextureMut::new(VIDEO_MODE.width(), VIDEO_MODE.height(), unsafe {
         core::slice::from_raw_parts_mut(n64_sys::vi::get_vi_buffer(), VIDEO_MODE.size() as usize)
     });
@@ -221,7 +222,6 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[cfg(target_vendor = "nintendo64")]
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
-    
     let mut out_tex = n64::gfx::TextureMut::new(VIDEO_MODE.width(), VIDEO_MODE.height(), unsafe {
         core::slice::from_raw_parts_mut(n64_sys::vi::get_vi_buffer(), VIDEO_MODE.size() as usize)
     });

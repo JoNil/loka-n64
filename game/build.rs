@@ -4,8 +4,8 @@ use std::convert::TryInto;
 use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
-use std::{io::BufReader, path::Path};
 use std::fs::{self, File};
+use std::{io::BufReader, path::Path};
 
 struct Image {
     width: i32,
@@ -14,7 +14,6 @@ struct Image {
 }
 
 fn load_png(path: &Path) -> Result<Image, Box<dyn Error>> {
-
     let file = File::open(path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
     let decoder = png::Decoder::new(file);
     let (info, mut reader) = decoder.read_info()?;
@@ -85,7 +84,7 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         let file = File::open(&path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
         let reader = BufReader::new(file);
         let map = tiled::parse_with_path(reader, &env::current_dir()?.join("maps"))?;
-        
+
         println!("{:#?}", map.object_groups);
 
         println!("rerun-if-changed={}", path.to_string_lossy());

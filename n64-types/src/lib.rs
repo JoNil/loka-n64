@@ -1,7 +1,7 @@
 #![no_std]
 
-pub use video_mode::VideoMode;
 pub use rdp_command::RdpCommand;
+pub use video_mode::VideoMode;
 
-mod video_mode;
 mod rdp_command;
+mod video_mode;
