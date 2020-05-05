@@ -272,10 +272,11 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_10_2(top_left.y())),
         ));
         self.commands.push(RdpCommand(
-            (to_fixpoint_s_10_5(st_top_left.x()) << 48)
+            ((4<<10) << 16) | (1<<10)
+            /*(to_fixpoint_s_10_5(st_top_left.x()) << 48)
                 | (to_fixpoint_s_10_5(st_top_left.y()) << 32)
                 | (to_fixpoint_s_10_5(d_xy_d_st.x()) << 16)
-                | (to_fixpoint_s_10_5(d_xy_d_st.y()) << 0),
+                | (to_fixpoint_s_10_5(d_xy_d_st.y()) << 0)*/
         ));
         self
     }
