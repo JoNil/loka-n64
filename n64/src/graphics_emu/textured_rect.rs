@@ -32,7 +32,7 @@ impl UploadedTexture {
             .iter()
             .zip(temp_buffer.chunks_exact_mut(4 as usize))
         {            
-            let rgba = pixel.to_rgba();
+            let rgba = pixel.be_to_le().to_rgba();
 
             data[0] = (rgba[0] * 255.0) as u8;
             data[1] = (rgba[1] * 255.0) as u8;

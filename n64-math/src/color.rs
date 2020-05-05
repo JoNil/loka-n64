@@ -51,6 +51,13 @@ impl Color {
     }
 
     #[inline]
+    pub fn be_to_le(&self) -> Self {
+        Self {
+            value: ((self.value) << 8) | ((self.value) >> 8)
+        }
+    }
+
+    #[inline]
     pub fn to_rgba(&self) -> [f32; 4] {
         let r = (self.value >> 11 & 0b11111) as f32 / 31.0;
         let g = (self.value >> 6 & 0b11111) as f32 / 31.0;

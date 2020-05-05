@@ -51,7 +51,7 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
             for pixel in image.data.chunks(4) {
                 let color = Color::from_bytes(pixel.try_into()?);
-                out_image.extend(&color.value().to_le_bytes());
+                out_image.extend(&color.value().to_be_bytes());
             }
 
             fs::write(&out_path, &out_image)?;
