@@ -70,24 +70,18 @@ impl<'a> CommandBuffer<'a> {
         lower_right: Vec2,
         texture: Texture<'static>,
     ) -> &mut Self {
-        //self.rdp
-            //.sync_pipe()
-            //.sync_tile()
-            //.sync_full()
-            /*.set_other_modes(
-                OTHER_MODE_CYCLE_TYPE_FILL
-                    | OTHER_MODE_CYCLE_TYPE_COPY
-                    | OTHER_MODE_CYCLE_TYPE_2_CYCLE
-                    | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
+        self.rdp
+            .sync_tile()
+            .set_other_modes(
+                    OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_FORCE_BLEND
-                | OTHER_MODE_IMAGE_READ_EN,
-            )*/
-            //.set_texture_image(FORMAT_RGBA, SIZE_OF_PIXEL_16B, texture.width as u16, texture.data.as_ptr() as *const u16)
-            //.set_tile(FORMAT_RGBA, SIZE_OF_PIXEL_16B, texture.width as u16, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0)
-            //.load_tile(Vec2::new(0.0, 0.0), Vec2::new((texture.width - 1) as f32, (texture.height - 1) as f32), 0)
-            //.texture_rectangle(upper_left, lower_right  - Vec2::new(1.0, 1.0), 0, Vec2::new(0.0, 0.0), Vec2::new(1.0, 1.0))
-            //.sync_full();
+                    | OTHER_MODE_IMAGE_READ_EN
+            )
+            .set_texture_image(FORMAT_RGBA, SIZE_OF_PIXEL_16B, texture.width as u16, texture.data.as_ptr() as *const u16)
+            .set_tile(FORMAT_RGBA, SIZE_OF_PIXEL_16B, texture.width as u16, 0, 0,  0, 0, 0, 0,  0, 0, 0, 0)
+            .load_tile(Vec2::new(0.0, 0.0), Vec2::new((texture.width - 1) as f32, (texture.height - 1) as f32), 0)
+            .texture_rectangle(upper_left, lower_right  - Vec2::new(1.0, 1.0), 0, Vec2::new(0.0, 0.0), Vec2::new(1.0, 1.0));
         self
     }
 
