@@ -47,13 +47,13 @@ impl<'a> TextureMut<'a> {
 }
 
 #[derive(Copy, Clone)]
-pub struct StaticTexture<'a> {
+pub struct StaticTexture {
     pub width: i32,
     pub height: i32,
-    pub data: &'a [u8],
+    pub data: &'static [u8],
 }
 
-impl StaticTexture<'static> {
+impl StaticTexture {
     #[inline]
     pub const fn from_static(width: i32, height: i32, data: &'static [u8]) -> Self {
         Self {

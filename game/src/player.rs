@@ -35,14 +35,6 @@ impl Player {
                 speed: Vec2::zero(),
             },
         );
-        // TODO: Remove when sprite drawable is working
-        /*box_drawable::add(
-            &player.entity,
-            BoxDrawableComponent {
-                size: SHIP_SIZE,
-                color: SHIP_COLOR,
-            },
-        );*/
         sprite_drawable::add(
             &player.entity,
             SpriteDrawableComponent {

@@ -19,11 +19,15 @@ use n64::{
 };
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
+use map::Map;
+use maps::MAP_1;
 
 mod bullet_system;
 mod components;
 mod enemy_system;
 mod entity;
+mod map;
+mod maps;
 mod player;
 mod textures;
 
@@ -52,6 +56,8 @@ fn main() {
     let mut last_frame_begin_time = current_time_us();
     let mut frame_used_time = 0;
     let mut dt;
+
+    let mut map = Map::load(MAP_1);
 
     enemy_system.spawn_enemy();
     enemy_system.spawn_enemy();
