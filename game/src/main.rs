@@ -13,14 +13,14 @@ use components::health;
 use components::movable;
 use components::sprite_drawable;
 use enemy_system::EnemySystem;
+use map::Map;
+use maps::MAP_1;
 use n64::{
     self, current_time_us, gfx::CommandBuffer, ipl3font, slow_cpu_clear, VideoMode,
     BUFFER_NO_SAMPLES, N64,
 };
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
-use map::Map;
-use maps::MAP_1;
 
 mod bullet_system;
 mod components;

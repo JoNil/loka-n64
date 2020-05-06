@@ -19,4 +19,5 @@ n64-sys = { path = "../n64-sys" }
 [build-dependencies]
 n64-math = { path = "../n64-math" }
 png = "0.16"
+quote = "1"
 tiled = { git = "https://github.com/JoNil/rs-tiled.git" }

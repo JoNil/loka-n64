@@ -1,5 +1,6 @@
 use n64_math::Color;
 use png;
+use quote::{quote, format_ident};
 use std::convert::TryInto;
 use std::env;
 use std::error::Error;
@@ -11,6 +12,46 @@ struct Image {
     width: i32,
     height: i32,
     data: Vec<u8>,
+}
+
+fn write_file_if_changed(
+    path: impl AsRef<Path>,
+    content: impl AsRef<str>,
+) -> Result<(), Box<dyn Error>> {
+    let s = match fs::read_to_string(path.as_ref()) {
+        Ok(s) => s,
+        Err(_) => {
+            return fs::write(path.as_ref(), content.as_ref())
+                .map_err(|e| format!("Unable to write {:?}: {}", path.as_ref(), e).into());
+        }
+    };
+
+    if s != content.as_ref() {
+        return fs::write(path.as_ref(), content.as_ref())
+            .map_err(|e| format!("Unable to write {:?}: {}", path.as_ref(), e).into());
+    }
+
+    Ok(())
+}
+
+fn write_binary_file_if_changed(
+    path: impl AsRef<Path>,
+    content: impl AsRef<[u8]>,
+) -> Result<(), Box<dyn Error>> {
+    let s = match fs::read(path.as_ref()) {
+        Ok(s) => s,
+        Err(_) => {
+            return fs::write(path.as_ref(), content.as_ref())
+                .map_err(|e| format!("Unable to write {:?}: {}", path.as_ref(), e).into());
+        }
+    };
+
+    if s != content.as_ref() {
+        return fs::write(path.as_ref(), content.as_ref())
+            .map_err(|e| format!("Unable to write {:?}: {}", path.as_ref(), e).into());
+    }
+
+    Ok(())
 }
 
 fn load_png(path: &Path) -> Result<Image, Box<dyn Error>> {
@@ -42,6 +83,8 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("png")))
     {
+        println!("rerun-if-changed={}", path.to_string_lossy());
+
         if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
             let image = load_png(path.as_path())?;
 
@@ -63,34 +106,72 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
                 height = image.height,
                 path = out_path
             ));
-
-            println!("rerun-if-changed={}", path.to_string_lossy());
         }
     }
 
-    fs::write(Path::new(out_dir).join("texture_includes.rs"), res)?;
+    write_file_if_changed(Path::new(out_dir).join("texture_includes.rs"), res)?;
 
     Ok(())
 }
 
 fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
-    let mut res = String::new();
+
+    let mut maps = Vec::new();
 
     for path in fs::read_dir("maps")?
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("tmx")))
     {
+        println!("rerun-if-changed={}", path.to_string_lossy());
+
+        let name = path.file_stem().ok_or("No File Stem")?.to_str().ok_or("Bad Os String")?;
+        let uppercase_name = name.to_uppercase();
         let file = File::open(&path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
         let reader = BufReader::new(file);
         let map = tiled::parse_with_path(reader, &env::current_dir()?.join("maps"))?;
 
-        println!("{:#?}", map.object_groups);
+        let mut layers = Vec::new();
 
-        println!("rerun-if-changed={}", path.to_string_lossy());
+        for layer in map.layers.iter() {
+            for row in layer.tiles.iter() {
+                for tile in row.iter() {
+                    layers.push(tile.gid as u8);
+                }
+            }
+        }
+
+        let map_data_path = Path::new(out_dir).join(name).with_extension("nmap");
+        let map_data_path = map_data_path.to_str().ok_or("Bad Path")?;
+
+        write_binary_file_if_changed(
+            map_data_path,
+            &layers,
+        )?;
+
+        let name_ident = format_ident!("{}", uppercase_name);
+        let map_width = map.width as i32;
+        let map_height = map.height as i32;
+
+        let map = quote! {
+            pub static #name_ident: &'static StaticMapData = &StaticMapData {
+                width: #map_width,
+                height: #map_height,
+                layers: include_bytes!(#map_data_path),
+            };
+        };
+
+        maps.push(map);
     }
 
-    fs::write(Path::new(out_dir).join("map_includes.rs"), res)?;
+    let maps = quote! {
+        #(#maps)*
+    };
+
+    write_file_if_changed(
+        Path::new(out_dir).join("map_includes.rs"),
+        format!("{}", maps),
+    )?;
 
     Ok(())
 }

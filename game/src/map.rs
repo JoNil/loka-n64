@@ -1,26 +1,23 @@
+use crate::{
+    components::{movable, sprite_drawable},
+    entity::{self, OwnedEntity}, maps::TILES,
+};
 use alloc::vec::Vec;
-use crate::{components::{sprite_drawable, movable}, entity::{self, OwnedEntity}};
+use movable::MovableComponent;
 use n64::gfx::StaticTexture;
 use n64_math::Vec2;
-use movable::MovableComponent;
 use sprite_drawable::SpriteDrawableComponent;
 
 const TILE_SIZE: Vec2 = Vec2::new(32.0 / 320.0, 32.0 / 240.0);
 
-#[derive(Copy, Clone)]
-pub struct StaticTile {
-    pub pos: Vec2,
+pub struct StaticTileDesc {
     pub texture: &'static StaticTexture,
 }
 
-impl StaticTile {
-    #[inline]
-    pub const fn from_static(pos: Vec2, texture: &'static StaticTexture) -> Self {
-        Self {
-            pos,
-            texture,
-        }
-    }
+pub struct StaticMapData {
+    pub width: i32,
+    pub height: i32,
+    pub layers: &'static [u8],
 }
 
 struct Tile {
@@ -36,22 +33,29 @@ pub struct Map {
 }
 
 impl Map {
-    pub fn load(data: &'static [&'static [StaticTile]]) -> Self {
+    pub fn load(data: &'static StaticMapData) -> Self {
 
-        let mut layers = Vec::with_capacity(data.len());
+        let tiles_in_layer = (data.width * data.height) as usize;
+        let layer_count = data.layers.len() / tiles_in_layer;
 
-        for layer in data {
+        let mut layers = Vec::with_capacity(layer_count);
+
+        for layer in data.layers.chunks_exact(tiles_in_layer) {
 
             let mut tiles = Vec::with_capacity(layer.len());
 
-            for tile in *layer {
-
+            for (index, tile) in layer.iter().enumerate() {
                 let entity = entity::create();
+
+                let x = index % (data.width as usize);
+                let y = index / (data.width as usize);
+
+                let pos = Vec2::new(x as f32, y as f32) * TILE_SIZE;
 
                 movable::add(
                     &entity,
                     MovableComponent {
-                        pos: tile.pos,
+                        pos: pos,
                         speed: Vec2::zero(),
                     },
                 );
@@ -59,22 +63,16 @@ impl Map {
                     &entity,
                     SpriteDrawableComponent {
                         size: TILE_SIZE,
-                        texture: tile.texture.as_texture(),
+                        texture: TILES[*tile as usize].as_texture(),
                     },
                 );
 
-                tiles.push(Tile {
-                    entity,
-                });
+                tiles.push(Tile { entity });
             }
 
-            layers.push(Layer {
-                tiles,
-            });
+            layers.push(Layer { tiles });
         }
 
-        Self {
-            layers,
-        }
+        Self { layers }
     }
 }

@@ -53,7 +53,7 @@ impl Color {
     #[inline]
     pub fn be_to_le(&self) -> Self {
         Self {
-            value: ((self.value) << 8) | ((self.value) >> 8)
+            value: ((self.value) << 8) | ((self.value) >> 8),
         }
     }
 

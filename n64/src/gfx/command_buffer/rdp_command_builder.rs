@@ -5,7 +5,7 @@ use alloc::vec::Vec;
 use n64_math::{Color, Vec2};
 use n64_types::RdpCommand;
 
-use n64_sys::sys::{virtual_to_physical_mut, virtual_to_physical};
+use n64_sys::sys::{virtual_to_physical, virtual_to_physical_mut};
 
 // RDP Command Docs: http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
 
@@ -191,10 +191,7 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_combine_mode(
-        &mut self,
-        values: &[u8; 16]
-    ) -> &mut RdpCommandBuilder {
+    pub fn set_combine_mode(&mut self, values: &[u8; 16]) -> &mut RdpCommandBuilder {
         self.commands.push(RdpCommand(
             (COMMAND_SET_COMBINE_MODE << 56)
                 | ((values[0] as u64) << 52)
@@ -212,7 +209,7 @@ impl RdpCommandBuilder {
                 | ((values[12] as u64) << 9)
                 | ((values[13] as u64) << 6)
                 | ((values[14] as u64) << 3)
-                | ((values[15] as u64) << 0)
+                | ((values[15] as u64) << 0),
         ));
         self
     }
@@ -303,7 +300,7 @@ impl RdpCommandBuilder {
             (to_fixpoint_s_10_5(st_top_left.x()) << 48)
                 | (to_fixpoint_s_10_5(st_top_left.y()) << 32)
                 | (to_fixpoint_s_10_5(d_xy_d_st.x()) << 16)
-                | (to_fixpoint_s_10_5(d_xy_d_st.y()) << 0)
+                | (to_fixpoint_s_10_5(d_xy_d_st.y()) << 0),
         ));
         self
     }
