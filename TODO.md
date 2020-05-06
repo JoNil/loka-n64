@@ -2,6 +2,7 @@
 
 - Load and draw level
 - Camera with proper coordinate system
+- Culling of sprites
 - Audio emu
 - Sound effects
 
