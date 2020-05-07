@@ -1,12 +1,14 @@
 use n64_math::Color;
 use png;
+use proc_macro2::TokenStream;
 use quote::{quote, format_ident};
+use std::{io::BufReader, path::Path, collections::HashMap};
 use std::convert::TryInto;
 use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::{io::BufReader, path::Path};
+use tiled::Map;
 
 struct Image {
     width: i32,
@@ -97,7 +99,7 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
                 out_image.extend(&color.value().to_be_bytes());
             }
 
-            fs::write(&out_path, &out_image)?;
+            write_binary_file_if_changed(&out_path, &out_image)?;
 
             res.push_str(&format!(
                 "pub static {name}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes!({path:?}));\n",
@@ -114,9 +116,51 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn parse_map_tiles(out_dir: &str, map: &Map, used_tile_ids: &[u32]) -> Result<(Vec<TokenStream>, Vec<TokenStream>), Box<dyn Error>> {
+
+    let mut map_tiles = Vec::new();
+    let mut map_tile_refs = Vec::new();
+
+    for id in used_tile_ids.iter() {
+
+        let width: i32 = map.tile_width.try_into().unwrap();
+        let height: i32 = map.tile_height.try_into().unwrap();
+        let size = (2 * width * height).try_into().unwrap();
+
+        let tile_path = Path::new(out_dir).join(format!("tile_{}", *id)).with_extension("ntex");
+        let tile_path = tile_path.to_str().ok_or("Bad Path")?;
+
+        let mut tile_data = Vec::with_capacity(size);
+        tile_data.resize_with(size, || *id as u8);
+
+        //println!("rerun-if-changed={}", image_path.to_string_lossy());
+
+        write_binary_file_if_changed(&tile_path, &tile_data)?;
+
+        let tile_ident = format_ident!("TILE_{}", id);
+
+        let tile = quote! {
+            static #tile_ident: StaticTexture = StaticTexture::from_static(#width, #height, include_bytes!(#tile_path));
+        };
+
+        let tile_ref = quote! {
+            &#tile_ident
+        };
+
+        map_tiles.push(tile);
+        map_tile_refs.push(tile_ref);
+    }
+
+    Ok((map_tiles, map_tile_refs))
+}
+
 fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
     let mut maps = Vec::new();
+    let mut tiles = Vec::new();
+
+    let mut used_tile_ids_map = HashMap::new();
+    let mut used_tile_ids = Vec::new();
 
     for path in fs::read_dir("maps")?
         .filter_map(|e| e.ok())
@@ -126,20 +170,33 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         println!("rerun-if-changed={}", path.to_string_lossy());
 
         let name = path.file_stem().ok_or("No File Stem")?.to_str().ok_or("Bad Os String")?;
-        let uppercase_name = name.to_uppercase();
-        let file = File::open(&path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
-        let reader = BufReader::new(file);
-        let map = tiled::parse_with_path(reader, &env::current_dir()?.join("maps"))?;
+      
+        let map = {
+            let file = File::open(&path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
+            let reader = BufReader::new(file);  
+            tiled::parse_with_path(reader, &env::current_dir()?.join("maps"))?
+        };
 
         let mut layers = Vec::new();
 
         for layer in map.layers.iter() {
             for row in layer.tiles.iter() {
                 for tile in row.iter() {
-                    layers.push(tile.gid as u8);
+                    if let Some(id) = used_tile_ids_map.get(&tile.gid) {
+                        layers.push(*id);
+                    } else {
+                        let new_id = used_tile_ids.len().try_into().unwrap();
+                        used_tile_ids_map.insert(tile.gid, new_id);
+                        used_tile_ids.push(tile.gid);
+                        layers.push(new_id);
+                    }
                 }
             }
         }
+
+        let (map_tiles, map_tile_refs) = parse_map_tiles(out_dir, &map, &used_tile_ids)?;
+
+        tiles.extend_from_slice(&map_tiles);
 
         let map_data_path = Path::new(out_dir).join(name).with_extension("nmap");
         let map_data_path = map_data_path.to_str().ok_or("Bad Path")?;
@@ -149,12 +206,18 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             &layers,
         )?;
 
-        let name_ident = format_ident!("{}", uppercase_name);
+        let map_name_ident = format_ident!("{}", name.to_uppercase());
+        let tiles_name_ident = format_ident!("{}_TILES", name.to_uppercase());
         let map_width = map.width as i32;
         let map_height = map.height as i32;
 
         let map = quote! {
-            pub static #name_ident: &'static StaticMapData = &StaticMapData {
+
+            pub static #tiles_name_ident: &'static [&'static StaticTexture] = &[
+                #(#map_tile_refs),*
+            ];
+
+            pub static #map_name_ident: &'static StaticMapData = &StaticMapData {
                 width: #map_width,
                 height: #map_height,
                 layers: include_bytes!(#map_data_path),
@@ -165,6 +228,9 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
     }
 
     let maps = quote! {
+
+        #(#tiles)*
+
         #(#maps)*
     };
 

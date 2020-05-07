@@ -1,6 +1,6 @@
 use crate::{
     components::{movable, sprite_drawable},
-    entity::{self, OwnedEntity}, maps::TILES,
+    entity::{self, OwnedEntity}, maps::MAP_1_TILES,
 };
 use alloc::vec::Vec;
 use movable::MovableComponent;
@@ -63,7 +63,7 @@ impl Map {
                     &entity,
                     SpriteDrawableComponent {
                         size: TILE_SIZE,
-                        texture: TILES[*tile as usize].as_texture(),
+                        texture: MAP_1_TILES[*tile as usize].as_texture(),
                     },
                 );
 
