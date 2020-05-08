@@ -224,6 +224,11 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         for layer in map.layers.iter() {
             for row in layer.tiles.iter() {
                 for tile in row.iter() {
+
+                    if tile.gid == 0 {
+                        continue;
+                    }
+
                     if let Some(id) = used_tile_ids_map.get(&tile.gid) {
                         layers.push(*id);
                     } else {
