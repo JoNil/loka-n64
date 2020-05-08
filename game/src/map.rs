@@ -1,6 +1,7 @@
 use crate::{
     components::{movable, sprite_drawable},
-    entity::{self, OwnedEntity}, maps::MAP_1_TILES,
+    entity::{self, OwnedEntity},
+    maps::MAP_1_TILES,
 };
 use alloc::vec::Vec;
 use movable::MovableComponent;
@@ -34,18 +35,15 @@ pub struct Map {
 
 impl Map {
     pub fn load(data: &'static StaticMapData) -> Self {
-
         let tiles_in_layer = (data.width * data.height) as usize;
         let layer_count = data.layers.len() / tiles_in_layer;
 
         let mut layers = Vec::with_capacity(layer_count);
 
         for layer in data.layers.chunks_exact(tiles_in_layer) {
-
             let mut tiles = Vec::with_capacity(layer.len());
 
             for (index, tile) in layer.iter().enumerate() {
-
                 if *tile == 0 {
                     continue;
                 }

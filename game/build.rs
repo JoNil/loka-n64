@@ -1,11 +1,11 @@
 use n64_math::Color;
 use png;
-use std::{io::BufReader, path::Path, collections::HashMap};
 use std::convert::TryInto;
 use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fs::{self, File};
+use std::{collections::HashMap, io::BufReader, path::Path};
 use tiled::Map;
 
 struct Image {
@@ -126,18 +126,24 @@ r##"    &{tile_ident},
 "##
 }; }
 
-fn parse_map_tiles(out_dir: &str, map: &Map, used_tile_ids: &[u32]) -> Result<(Vec<String>, Vec<String>), Box<dyn Error>> {
-
+fn parse_map_tiles(
+    out_dir: &str,
+    name: &str,
+    uppercase_name: &str,
+    map: &Map,
+    used_tile_ids: &[u32],
+) -> Result<(Vec<String>, Vec<String>), Box<dyn Error>> {
     let mut map_tiles = Vec::new();
     let mut map_tile_refs = Vec::new();
 
     for id in used_tile_ids.iter() {
-
         let width: i32 = map.tile_width.try_into().unwrap();
         let height: i32 = map.tile_height.try_into().unwrap();
         let size = (2 * width * height).try_into().unwrap();
 
-        let tile_path = Path::new(out_dir).join(format!("tile_{}", *id)).with_extension("ntex");
+        let tile_path = Path::new(out_dir)
+            .join(format!("{}_tile_{}", name, *id))
+            .with_extension("ntex");
         let tile_path = tile_path.to_str().ok_or("Bad Path")?;
 
         let mut tile_data = Vec::with_capacity(size);
@@ -147,7 +153,7 @@ fn parse_map_tiles(out_dir: &str, map: &Map, used_tile_ids: &[u32]) -> Result<(V
 
         write_binary_file_if_changed(&tile_path, &tile_data)?;
 
-        let tile_ident = format!("TILE_{}", id);
+        let tile_ident = format!("{}_TILE_{}", uppercase_name, id);
 
         let tile = format!(
             TILE_TEMPLATE!(),
@@ -157,10 +163,7 @@ fn parse_map_tiles(out_dir: &str, map: &Map, used_tile_ids: &[u32]) -> Result<(V
             tile_path = tile_path,
         );
 
-        let tile_ref = format!(
-            TILE_IDENT_TEMPLATE!(),
-            tile_ident = tile_ident,
-        );
+        let tile_ref = format!(TILE_IDENT_TEMPLATE!(), tile_ident = tile_ident,);
 
         map_tiles.push(tile);
         map_tile_refs.push(tile_ref);
@@ -197,7 +200,6 @@ use n64_math::Vec2;
 }; }
 
 fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
-
     let mut maps = Vec::new();
     let mut tiles = Vec::new();
 
@@ -211,11 +213,17 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
     {
         println!("rerun-if-changed={}", path.to_string_lossy());
 
-        let name = path.file_stem().ok_or("No File Stem")?.to_str().ok_or("Bad Os String")?;
-      
+        let name = path
+            .file_stem()
+            .ok_or("No File Stem")?
+            .to_str()
+            .ok_or("Bad Os String")?;
+        let uppercase_name = name.to_uppercase();
+
         let map = {
-            let file = File::open(&path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
-            let reader = BufReader::new(file);  
+            let file =
+                File::open(&path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
+            let reader = BufReader::new(file);
             tiled::parse_with_path(reader, &env::current_dir()?.join("maps"))?
         };
 
@@ -224,7 +232,6 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         for layer in map.layers.iter() {
             for row in layer.tiles.iter() {
                 for tile in row.iter() {
-
                     if tile.gid == 0 {
                         continue;
                     }
@@ -241,20 +248,18 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             }
         }
 
-        let (map_tiles, map_tile_refs) = parse_map_tiles(out_dir, &map, &used_tile_ids)?;
+        let (map_tiles, map_tile_refs) =
+            parse_map_tiles(out_dir, &name, &uppercase_name, &map, &used_tile_ids)?;
 
         tiles.extend_from_slice(&map_tiles);
 
         let map_data_path = Path::new(out_dir).join(name).with_extension("nmap");
         let map_data_path = map_data_path.to_str().ok_or("Bad Path")?;
 
-        write_binary_file_if_changed(
-            map_data_path,
-            &layers,
-        )?;
+        write_binary_file_if_changed(map_data_path, &layers)?;
 
-        let map_name_ident = format!("{}", name.to_uppercase());
-        let tiles_name_ident = format!("{}_TILES", name.to_uppercase());
+        let map_name_ident = format!("{}", &uppercase_name);
+        let tiles_name_ident = format!("{}_TILES", &uppercase_name);
         let map_width = map.width as i32;
         let map_height = map.height as i32;
 
@@ -277,10 +282,7 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         maps = maps.join(""),
     );
 
-    write_file_if_changed(
-        env::current_dir()?.join("src").join("maps.rs"),
-        maps,
-    )?;
+    write_file_if_changed(env::current_dir()?.join("src").join("maps.rs"), maps)?;
 
     Ok(())
 }
