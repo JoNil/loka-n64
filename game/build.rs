@@ -5,8 +5,8 @@ use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::{collections::HashMap, io::BufReader, path::Path};
-use tiled::{Tileset, Map};
+use std::{collections::HashMap, io::BufReader, path::{PathBuf, Path}};
+use tiled::{Map, Tileset};
 
 struct Image {
     width: i32,
@@ -55,7 +55,8 @@ fn write_binary_file_if_changed(
 }
 
 fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
-    let file = File::open(path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
+    let file = File::open(path.as_ref())
+        .map_err(|e| format!("Unable to open {}: {}", path.as_ref().to_string_lossy(), e))?;
     let decoder = png::Decoder::new(file);
     let (info, mut reader) = decoder.read_info()?;
     let mut buf = vec![0; info.buffer_size()];
@@ -70,7 +71,7 @@ fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
 
     let mut data = Vec::with_capacity((2 * info.width * info.height) as usize);
 
-    for pixel in buf.data.chunks(4) {
+    for pixel in buf.chunks_exact(4) {
         let color = Color::from_bytes(pixel.try_into()?);
         data.extend(&color.value().to_be_bytes());
     }
@@ -93,7 +94,6 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
         println!("rerun-if-changed={}", path.to_string_lossy());
 
         if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
-            
             let out_path = path.canonicalize()?.with_extension("ntex");
             let image = load_png(path.as_path())?;
 
@@ -127,41 +127,44 @@ r##"    &{tile_ident},
 }; }
 
 fn find_tileset_with_gid(gid: u32, tilesets: &[Tileset]) -> Result<&Tileset, Box<dyn Error>> {
-
     for tileset in tilesets {
-
         let effective_gid = gid as i32 - tileset.first_gid as i32;
 
-        let tileset_tiles = (tileset.tile_width * tileset.tile_height) as i32;
-
-        if effective_gid >= 0 && effective_gid < tileset_tiles {
-            return Ok(tileset);
+        if effective_gid >= 0
+            && (effective_gid as u32) < tileset.tilecount.ok_or("Tileset needs tilecount")?
+        {
+            return dbg!(Ok(tileset));
         }
     }
 
     Err(format!("GID {} Not Found", gid).into())
 }
 
-fn load_tileset_image(gid: u32, tileset: &Tileset, tileset_image_cache: &mut HashMap<String, Image>) -> Result<&Image, Box<dyn Error>> {
-
+fn load_tile_image(
+    gid: u32,
+    map_path: &Path,
+    tileset: &Tileset,
+    tileset_image_cache: &mut HashMap<PathBuf, Image>,
+) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut effective_gid = gid - tileset.first_gid;
     let tile_size = tileset.tile_width * tileset.tile_height;
 
-    for tileset_image in tileset.images {
-
+    for tileset_image in tileset.images.iter() {
         let image_size = (tileset_image.width * tileset_image.height) as u32;
         let image_tiles = image_size / tile_size;
-        
+
+        let image_path = map_path.join(&tileset.source).join(&tileset_image.source);
+
         if effective_gid < image_tiles {
+            let image = tileset_image_cache
+                .entry(image_path.clone())
+                .or_insert_with(|| load_png(image_path).unwrap());
 
-            if let Some(cached_image) = tileset_image_cache.get(&tileset_image.source) {
-                return Ok(cached_image)
-            } else {
-                let new_image = load_png(&tileset_image.source);
-                tileset_image_cache.insert(&tileset_image.source, new_image);
+            let res = Vec::new();
 
-                return Ok(tileset_image_cache.get(&tileset_image.source).unwrap());
-            }
+            panic!("{}", effective_gid);
+
+            return Ok(res);
         }
 
         effective_gid -= image_tiles;
@@ -170,18 +173,14 @@ fn load_tileset_image(gid: u32, tileset: &Tileset, tileset_image_cache: &mut Has
     Err(format!("GID {} Not Found In Tileset Images", gid).into())
 }
 
-fn get_tileset_data(gid: u32, tileset: &Tileset, image: &Image) -> Vec<u8> {
-
-    Vec::new()
-}
-
 fn parse_map_tiles(
     out_dir: &str,
+    map_path: &Path,
     name: &str,
     uppercase_name: &str,
     map: &Map,
     used_tile_ids: &[u32],
-    tileset_image_cache: &mut HashMap<String, Image>,
+    tileset_image_cache: &mut HashMap<PathBuf, Image>,
 ) -> Result<(Vec<String>, Vec<String>), Box<dyn Error>> {
     let mut map_tiles = Vec::new();
     let mut map_tile_refs = Vec::new();
@@ -189,22 +188,16 @@ fn parse_map_tiles(
     for id in used_tile_ids.iter() {
         let width: i32 = map.tile_width.try_into().unwrap();
         let height: i32 = map.tile_height.try_into().unwrap();
-        let size = (2 * width * height).try_into().unwrap();
 
         let tile_path = Path::new(out_dir)
             .join(format!("{}_tile_{}", name, *id))
             .with_extension("ntex");
         let tile_path = tile_path.to_str().ok_or("Bad Path")?;
 
-        let mut tile_data = Vec::with_capacity(size);
-        
-        let tileset = find_tileset_with_gid(*id, &map.tilesets);
+        let tileset = find_tileset_with_gid(*id, &map.tilesets)?;
+        let tile_image = load_tile_image(*id, map_path, tileset, tileset_image_cache)?;
 
-        let tileset_image = load_tileset_image(*id, tileset, tileset_image_cache)?;
-
-        let tilese_data = get_tileset_data(*id, tileset, tileset_image);
-
-        write_binary_file_if_changed(&tile_path, &tilese_data)?;
+        write_binary_file_if_changed(&tile_path, &tile_image)?;
 
         let tile_ident = format!("{}_TILE_{}", uppercase_name, id);
 
@@ -259,7 +252,7 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
     let mut used_tile_ids_map = HashMap::new();
     let mut used_tile_ids = Vec::new();
 
-    let tileset_image_cache = HashMap::new();
+    let mut tileset_image_cache = HashMap::new();
 
     for path in fs::read_dir("maps")?
         .filter_map(|e| e.ok())
@@ -275,11 +268,13 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             .ok_or("Bad Os String")?;
         let uppercase_name = name.to_uppercase();
 
+        let map_path = Path::new("maps");
+
         let map = {
             let file =
-                File::open(&path).map_err(|e| format!("Unable to open {:?}: {}", path, e))?;
+                File::open(&path).map_err(|e| format!("Unable to open {}: {}", path.to_string_lossy(), e))?;
             let reader = BufReader::new(file);
-            tiled::parse_with_path(reader, &env::current_dir()?.join("maps"))?
+            tiled::parse_with_path(reader, &map_path)?
         };
 
         let mut layers = Vec::new();
@@ -303,8 +298,15 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             }
         }
 
-        let (map_tiles, map_tile_refs) =
-            parse_map_tiles(out_dir, &name, &uppercase_name, &map, &used_tile_ids, &mut tileset_image_cache)?;
+        let (map_tiles, map_tile_refs) = parse_map_tiles(
+            out_dir,
+            &map_path,
+            &name,
+            &uppercase_name,
+            &map,
+            &used_tile_ids,
+            &mut tileset_image_cache,
+        )?;
 
         tiles.extend_from_slice(&map_tiles);
 
