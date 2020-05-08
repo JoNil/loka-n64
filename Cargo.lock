@@ -378,8 +378,6 @@ dependencies = [
  "n64-math 0.1.0",
  "n64-sys 0.1.0",
  "png 0.16.3 (registry+https://github.com/rust-lang/crates.io-index)",
- "proc-macro2 1.0.10 (registry+https://github.com/rust-lang/crates.io-index)",
- "quote 1.0.3 (registry+https://github.com/rust-lang/crates.io-index)",
  "spin 0.5.2 (registry+https://github.com/rust-lang/crates.io-index)",
  "tiled 0.9.1 (git+https://github.com/JoNil/rs-tiled.git)",
 ]

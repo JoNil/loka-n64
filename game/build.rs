@@ -1,7 +1,5 @@
 use n64_math::Color;
 use png;
-use proc_macro2::TokenStream;
-use quote::{quote, format_ident};
 use std::{io::BufReader, path::Path, collections::HashMap};
 use std::convert::TryInto;
 use std::env;
@@ -116,7 +114,19 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn parse_map_tiles(out_dir: &str, map: &Map, used_tile_ids: &[u32]) -> Result<(Vec<TokenStream>, Vec<TokenStream>), Box<dyn Error>> {
+#[rustfmt::skip]
+macro_rules! TILE_TEMPLATE { () => {
+r##"static {tile_ident}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes!({tile_path:?}));
+"##
+}; }
+
+#[rustfmt::skip]
+macro_rules! TILE_IDENT_TEMPLATE { () => {
+r##"    &{tile_ident},
+"##
+}; }
+
+fn parse_map_tiles(out_dir: &str, map: &Map, used_tile_ids: &[u32]) -> Result<(Vec<String>, Vec<String>), Box<dyn Error>> {
 
     let mut map_tiles = Vec::new();
     let mut map_tile_refs = Vec::new();
@@ -137,15 +147,20 @@ fn parse_map_tiles(out_dir: &str, map: &Map, used_tile_ids: &[u32]) -> Result<(V
 
         write_binary_file_if_changed(&tile_path, &tile_data)?;
 
-        let tile_ident = format_ident!("TILE_{}", id);
+        let tile_ident = format!("TILE_{}", id);
 
-        let tile = quote! {
-            static #tile_ident: StaticTexture = StaticTexture::from_static(#width, #height, include_bytes!(#tile_path));
-        };
+        let tile = format!(
+            TILE_TEMPLATE!(),
+            tile_ident = tile_ident,
+            width = width,
+            height = height,
+            tile_path = tile_path,
+        );
 
-        let tile_ref = quote! {
-            &#tile_ident
-        };
+        let tile_ref = format!(
+            TILE_IDENT_TEMPLATE!(),
+            tile_ident = tile_ident,
+        );
 
         map_tiles.push(tile);
         map_tile_refs.push(tile_ref);
@@ -153,6 +168,33 @@ fn parse_map_tiles(out_dir: &str, map: &Map, used_tile_ids: &[u32]) -> Result<(V
 
     Ok((map_tiles, map_tile_refs))
 }
+
+#[rustfmt::skip]
+macro_rules! MAP_TEMPLATE { () => {
+r##"pub static {tiles_name_ident}: &'static [&'static StaticTexture] = &[
+{map_tile_refs}];
+
+pub static {map_name_ident}: &'static StaticMapData = &StaticMapData {{
+    width: {map_width},
+    height: {map_height},
+    layers: include_bytes!({map_data_path:?}),
+}};"##
+}; }
+
+#[rustfmt::skip]
+macro_rules! MAPS_TEMPLATE { () => {
+r##"// This file is generated
+
+use crate::map::{{StaticTileDesc, StaticMapData}};
+use crate::textures::SHIP_2_SMALL;
+use n64::gfx::StaticTexture;
+use n64_math::Vec2;
+
+{tiles}
+{maps}
+
+"##
+}; }
 
 fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
@@ -206,37 +248,33 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             &layers,
         )?;
 
-        let map_name_ident = format_ident!("{}", name.to_uppercase());
-        let tiles_name_ident = format_ident!("{}_TILES", name.to_uppercase());
+        let map_name_ident = format!("{}", name.to_uppercase());
+        let tiles_name_ident = format!("{}_TILES", name.to_uppercase());
         let map_width = map.width as i32;
         let map_height = map.height as i32;
 
-        let map = quote! {
-
-            pub static #tiles_name_ident: &'static [&'static StaticTexture] = &[
-                #(#map_tile_refs),*
-            ];
-
-            pub static #map_name_ident: &'static StaticMapData = &StaticMapData {
-                width: #map_width,
-                height: #map_height,
-                layers: include_bytes!(#map_data_path),
-            };
-        };
+        let map = format!(
+            MAP_TEMPLATE!(),
+            map_name_ident = map_name_ident,
+            tiles_name_ident = tiles_name_ident,
+            map_tile_refs = map_tile_refs.join(""),
+            map_width = map_width,
+            map_height = map_height,
+            map_data_path = map_data_path,
+        );
 
         maps.push(map);
     }
 
-    let maps = quote! {
-
-        #(#tiles)*
-
-        #(#maps)*
-    };
+    let maps = format!(
+        MAPS_TEMPLATE!(),
+        tiles = tiles.join(""),
+        maps = maps.join(""),
+    );
 
     write_file_if_changed(
-        Path::new(out_dir).join("map_includes.rs"),
-        format!("{}", maps),
+        env::current_dir()?.join("src").join("maps.rs"),
+        maps,
     )?;
 
     Ok(())
