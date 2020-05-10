@@ -178,12 +178,12 @@ fn load_tile_image(
             let start_x = tile_x * tile_width;
             let start_y = tile_y * tile_height;
 
-            let image_stride = 2 * image.width as u32;
+            let image_stride = image.width as u32;
 
             for y in 0..tile_height {
                 for x in 0..tile_width {
-                    let out_index = (2 * x + tile_width * y) as usize;
-                    let image_index = (2 * (start_x + x) + image_stride * (start_y + y)) as usize;
+                    let out_index = 2 * (x + tile_width * y) as usize;
+                    let image_index = 2 * ((start_x + x) + image_stride * (start_y + y)) as usize;
 
                     res[out_index] = image.data[image_index];
                     res[out_index + 1] = image.data[image_index + 1];
