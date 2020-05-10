@@ -121,7 +121,7 @@ impl Graphics {
 
         let swap_chain_desc = wgpu::SwapChainDescriptor {
             usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
-            format: wgpu::TextureFormat::Bgra8UnormSrgb,
+            format: wgpu::TextureFormat::Bgra8Unorm,
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
