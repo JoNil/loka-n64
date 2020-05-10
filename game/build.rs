@@ -272,7 +272,7 @@ pub static {map_name_ident}: &'static StaticMapData = &StaticMapData {{
 macro_rules! MAPS_TEMPLATE { () => {
 r##"// This file is generated
 
-use crate::map::{{StaticTileDesc, StaticMapData}};
+use crate::map::StaticMapData;
 use crate::textures::SHIP_2_SMALL;
 use n64::gfx::StaticTexture;
 use n64_math::Vec2;
