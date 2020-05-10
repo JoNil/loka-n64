@@ -306,13 +306,11 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             .ok_or("Bad Os String")?;
         let uppercase_name = name.to_uppercase();
 
-        let map_folder = Path::new("maps");
-
         let map = {
             let file = File::open(&path)
                 .map_err(|e| format!("Unable to open {}: {}", path.to_string_lossy(), e))?;
             let reader = BufReader::new(file);
-            tiled::parse_with_path(reader, &map_folder)?
+            tiled::parse_with_path(reader, &path)?
         };
 
         let mut layers = Vec::new();
