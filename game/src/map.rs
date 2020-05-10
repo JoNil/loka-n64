@@ -75,4 +75,8 @@ impl Map {
 
         Self { layers }
     }
+
+    pub fn render(camera_pos: Vec2) {
+
+    }
 }

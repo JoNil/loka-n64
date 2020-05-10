@@ -104,10 +104,12 @@ impl<'a> CommandBuffer<'a> {
 
             for command in &self.commands {
                 if let Command::TexturedRect { texture, .. } = command {
-                    texture_data.insert(
-                        texture.data as *const _,
-                        UploadedTexture::new(&graphics.device, &mut encoder, texture),
-                    );
+                    if !texture_data.contains_key(&(texture.data as *const _)) {
+                        texture_data.insert(
+                            texture.data as *const _,
+                            UploadedTexture::new(&graphics.device, &mut encoder, texture),
+                        );
+                    }
                 }
             }
 

@@ -12,3 +12,6 @@ members = [
 ]
 
 default-members = ["deploy"]
+
+[patch.crates-io]
+spirv_cross = { git = "https://github.com/JoNil/spirv_cross.git" }
