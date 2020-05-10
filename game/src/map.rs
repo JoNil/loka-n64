@@ -44,9 +44,6 @@ impl Map {
             let mut tiles = Vec::with_capacity(layer.len());
 
             for (index, tile) in layer.iter().enumerate() {
-                if *tile == 0 {
-                    continue;
-                }
 
                 let entity = entity::create();
 
