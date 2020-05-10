@@ -59,6 +59,9 @@ fn write_binary_file_if_changed(
 }
 
 fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
+
+    println!("rerun-if-changed={}", path.as_ref().to_string_lossy());
+
     let file = File::open(path.as_ref())
         .map_err(|e| format!("Unable to open {}: {}", path.as_ref().to_string_lossy(), e))?;
     let decoder = png::Decoder::new(file);
@@ -95,8 +98,6 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("png")))
     {
-        println!("rerun-if-changed={}", path.to_string_lossy());
-
         if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
             let out_path = path.canonicalize()?.with_extension("ntex");
             let image = load_png(path.as_path())?;
@@ -234,7 +235,7 @@ fn parse_map_tiles(
             tile_path = tile_path,
         );
 
-        let tile_ref = format!(TILE_IDENT_TEMPLATE!(), tile_ident = tile_ident,);
+        let tile_ref = format!(TILE_IDENT_TEMPLATE!(), tile_ident = tile_ident);
 
         map_tiles.push(tile);
         map_tile_refs.push(tile_ref);
