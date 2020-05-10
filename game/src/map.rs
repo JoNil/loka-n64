@@ -11,10 +11,6 @@ use sprite_drawable::SpriteDrawableComponent;
 
 const TILE_SIZE: Vec2 = Vec2::new(32.0 / 320.0, 32.0 / 240.0);
 
-pub struct StaticTileDesc {
-    pub texture: &'static StaticTexture,
-}
-
 pub struct StaticMapData {
     pub width: i32,
     pub height: i32,
