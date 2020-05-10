@@ -59,7 +59,6 @@ fn write_binary_file_if_changed(
 }
 
 fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
-
     println!("rerun-if-changed={}", path.as_ref().to_string_lossy());
 
     let file = File::open(path.as_ref())
@@ -138,7 +137,7 @@ fn find_tileset_with_gid(gid: u32, tilesets: &[Tileset]) -> Result<&Tileset, Box
         if effective_gid >= 0
             && (effective_gid as u32) < tileset.tilecount.ok_or("Tileset needs tilecount")?
         {
-            return dbg!(Ok(tileset));
+            return Ok(tileset);
         }
     }
 
@@ -156,11 +155,24 @@ fn load_tile_image(
     let tile_height = tileset.tile_height;
     let tile_size = tile_width * tile_height;
 
+    if let Some(source) = &tileset.source {
+        println!("rerun-if-changed={}", source);
+    }
+
     for tileset_image in tileset.images.iter() {
         let image_size = (tileset_image.width * tileset_image.height) as u32;
         let image_tiles = image_size / tile_size;
 
-        let image_path = map_path.join(&tileset.source).join(&tileset_image.source);
+        let image_path = tileset
+            .source
+            .clone()
+            .map(|s| PathBuf::from(s))
+            .unwrap_or(map_path.to_path_buf());
+
+        let image_path = image_path
+            .parent()
+            .unwrap_or(&image_path)
+            .join(&tileset_image.source);
 
         if effective_gid < image_tiles {
             let image = tileset_image_cache
@@ -294,13 +306,13 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             .ok_or("Bad Os String")?;
         let uppercase_name = name.to_uppercase();
 
-        let map_path = Path::new("maps");
+        let map_folder = Path::new("maps");
 
         let map = {
             let file = File::open(&path)
                 .map_err(|e| format!("Unable to open {}: {}", path.to_string_lossy(), e))?;
             let reader = BufReader::new(file);
-            tiled::parse_with_path(reader, &map_path)?
+            tiled::parse_with_path(reader, &map_folder)?
         };
 
         let mut layers = Vec::new();
@@ -326,7 +338,7 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
         let (map_tiles, map_tile_refs) = parse_map_tiles(
             out_dir,
-            &map_path,
+            &path,
             &name,
             &uppercase_name,
             &map,

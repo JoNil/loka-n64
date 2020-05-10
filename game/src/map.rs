@@ -44,7 +44,6 @@ impl Map {
             let mut tiles = Vec::with_capacity(layer.len());
 
             for (index, tile) in layer.iter().enumerate() {
-
                 let entity = entity::create();
 
                 let x = index % (data.width as usize);
@@ -76,7 +75,5 @@ impl Map {
         Self { layers }
     }
 
-    pub fn render(camera_pos: Vec2) {
-
-    }
+    pub fn render(camera_pos: Vec2) {}
 }
