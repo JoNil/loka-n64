@@ -5,7 +5,11 @@ use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
 use std::fs::{self, File};
-use std::{collections::HashMap, io::BufReader, path::{PathBuf, Path}};
+use std::{
+    collections::HashMap,
+    io::BufReader,
+    path::{Path, PathBuf},
+};
 use tiled::{Map, Tileset};
 
 struct Image {
@@ -147,7 +151,9 @@ fn load_tile_image(
     tileset_image_cache: &mut HashMap<PathBuf, Image>,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut effective_gid = gid - tileset.first_gid;
-    let tile_size = tileset.tile_width * tileset.tile_height;
+    let tile_width = tileset.tile_width;
+    let tile_height = tileset.tile_height;
+    let tile_size = tile_width * tile_height;
 
     for tileset_image in tileset.images.iter() {
         let image_size = (tileset_image.width * tileset_image.height) as u32;
@@ -160,9 +166,28 @@ fn load_tile_image(
                 .entry(image_path.clone())
                 .or_insert_with(|| load_png(image_path).unwrap());
 
-            let res = Vec::new();
+            let mut res = Vec::new();
+            res.resize_with(2 * tile_size as usize, Default::default);
 
-            panic!("{}", effective_gid);
+            let image_width_tiles = image.width as u32 / tile_width;
+
+            let tile_x = effective_gid % image_width_tiles;
+            let tile_y = effective_gid / image_width_tiles;
+
+            let start_x = tile_x * tile_width;
+            let start_y = tile_y * tile_height;
+
+            let image_stride = 2 * image.width as u32;
+
+            for y in 0..tile_height {
+                for x in 0..tile_width {
+                    let out_index = (2 * x + tile_width * y) as usize;
+                    let image_index = (2 * (start_x + x) + image_stride * (start_y + y)) as usize;
+
+                    res[out_index] = image.data[image_index];
+                    res[out_index + 1] = image.data[image_index + 1];
+                }
+            }
 
             return Ok(res);
         }
@@ -271,8 +296,8 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         let map_path = Path::new("maps");
 
         let map = {
-            let file =
-                File::open(&path).map_err(|e| format!("Unable to open {}: {}", path.to_string_lossy(), e))?;
+            let file = File::open(&path)
+                .map_err(|e| format!("Unable to open {}: {}", path.to_string_lossy(), e))?;
             let reader = BufReader::new(file);
             tiled::parse_with_path(reader, &map_path)?
         };
