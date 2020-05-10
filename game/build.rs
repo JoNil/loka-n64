@@ -167,12 +167,8 @@ fn load_tile_image(
             .source
             .clone()
             .map(|s| PathBuf::from(s))
-            .unwrap_or(map_path.to_path_buf());
-
-        let image_path = image_path
-            .parent()
-            .unwrap_or(&image_path)
-            .join(&tileset_image.source);
+            .unwrap_or(map_path.to_path_buf())
+            .with_file_name(&tileset_image.source);
 
         if effective_gid < image_tiles {
             let image = tileset_image_cache
