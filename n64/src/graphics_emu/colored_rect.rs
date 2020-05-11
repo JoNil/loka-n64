@@ -9,6 +9,34 @@ pub(crate) struct ColoredRectUniforms {
     pub offset: [f32; 2],
     pub scale: [f32; 2],
 }
+#[derive(Default)]
+pub(crate) struct ColoredRectDrawData {
+    pub uniform_buffer: Option<wgpu::Buffer>,
+    pub bind_group: Option<wgpu::BindGroup>,
+}
+
+impl ColoredRectDrawData {
+    pub(crate) fn init(&mut self, device: &wgpu::Device, bind_group_layout: &wgpu::BindGroupLayout) {
+        self.uniform_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: mem::size_of::<ColoredRectUniforms>() as u64,
+            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+        }));
+
+        self.bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: bind_group_layout,
+            bindings: &[wgpu::Binding {
+                binding: 0,
+                resource: wgpu::BindingResource::Buffer {
+                    buffer: self.uniform_buffer.as_ref().unwrap(),
+                    range: 0..(mem::size_of::<ColoredRectUniforms>()
+                        as u64),
+                },
+            }],
+            label: None,
+        }));
+    }
+}
 
 pub(crate) struct ColoredRect {
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -16,6 +44,7 @@ pub(crate) struct ColoredRect {
     pub vs_module: wgpu::ShaderModule,
     pub fs_module: wgpu::ShaderModule,
     pub pipeline: wgpu::RenderPipeline,
+    pub draw_data: Vec<ColoredRectDrawData>,
 }
 
 impl ColoredRect {
@@ -96,12 +125,15 @@ impl ColoredRect {
             alpha_to_coverage_enabled: false,
         });
 
+        let draw_data = Vec::new();
+
         Self {
             bind_group_layout,
             pipeline_layout,
             vs_module,
             fs_module,
             pipeline,
+            draw_data,
         }
     }
 }

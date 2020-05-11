@@ -1,12 +1,11 @@
 use crate::bullet_system::BulletSystem;
-use crate::components::box_drawable::{self, BoxDrawableComponent};
 use crate::components::health::{self, HealthComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::components::sprite_drawable::{self, SpriteDrawableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
 use crate::textures::SHIP_2_SMALL;
 use n64::{current_time_us, Controllers};
-use n64_math::{Color, Vec2};
+use n64_math::Vec2;
 
 const START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_SPEED: f32 = 0.35;

@@ -150,7 +150,7 @@ impl Graphics {
                     device.poll(wgpu::Maintain::Poll);
                 }
             }))
-        };
+       };
 
         Self {
             video_mode,

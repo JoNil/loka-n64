@@ -2,8 +2,9 @@ use crate::{
     gfx::Texture,
     graphics_emu::Vertex,
 };
-use std::mem;
+use std::{collections::HashMap, mem};
 use zerocopy::{AsBytes, FromBytes};
+use n64_math::Color;
 
 pub(crate) struct UploadedTexture {
     pub tex_format: wgpu::TextureFormat,
@@ -93,6 +94,22 @@ pub(crate) struct TexturedRectUniforms {
     pub scale: [f32; 2],
 }
 
+#[derive(Default)]
+pub(crate) struct TexturedRectDrawData {
+    pub uniform_buffer: Option<wgpu::Buffer>,
+    pub bind_group: Option<wgpu::BindGroup>,
+}
+
+impl TexturedRectDrawData {
+    pub(crate) fn init(&mut self, device: &wgpu::Device) {
+        self.uniform_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: mem::size_of::<TexturedRectUniforms>() as u64,
+            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
+        }));
+    }
+}
+
 pub(crate) struct TexturedRect {
     pub sampler: wgpu::Sampler,
     pub bind_group_layout: wgpu::BindGroupLayout,
@@ -100,6 +117,8 @@ pub(crate) struct TexturedRect {
     pub vs_module: wgpu::ShaderModule,
     pub fs_module: wgpu::ShaderModule,
     pub pipeline: wgpu::RenderPipeline,
+    pub draw_data: Vec<TexturedRectDrawData>,
+    pub texture_cache: HashMap<*const [Color], UploadedTexture>,
 }
 
 impl TexturedRect {
@@ -215,6 +234,9 @@ impl TexturedRect {
             alpha_to_coverage_enabled: false,
         });
 
+        let draw_data = Vec::new();
+        let texture_cache = HashMap::new();
+
         Self {
             sampler,
             bind_group_layout,
@@ -222,6 +244,8 @@ impl TexturedRect {
             vs_module,
             fs_module,
             pipeline,
+            draw_data,
+            texture_cache,
         }
     }
 }
