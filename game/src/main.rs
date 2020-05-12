@@ -58,7 +58,7 @@ fn main() {
     let mut frame_used_time = 0;
     let mut dt;
 
-    //let mut map = Map::load(MAP_1);
+    let mut map = Map::load(MAP_1);
 
     enemy_system.spawn_enemy();
     enemy_system.spawn_enemy();
