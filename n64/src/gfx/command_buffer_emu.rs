@@ -125,7 +125,7 @@ impl<'a> CommandBuffer<'a> {
                             texture,
                         } => {
 
-                            let id = graphics.textured_rect.upload_texture_data(
+                            graphics.textured_rect.upload_texture_data(
                                 &graphics.device,
                                 &mut encoder,
                                 texture,
@@ -138,8 +138,6 @@ impl<'a> CommandBuffer<'a> {
                                 -2.0 * upper_left.y() / window_size.y() + 1.0 - scale.y();
 
                             textured_rect_uniforms.push(TexturedRectUniforms {
-                                texture: id,
-                                padding: Default::default(),
                                 offset: [offset_x, offset_y],
                                 scale: [scale.x(), scale.y()],
                             });
@@ -223,11 +221,11 @@ impl<'a> CommandBuffer<'a> {
                                 );
                                 colored_rect_index += 1;
                             }
-                            Command::TexturedRect { .. } => {
+                            Command::TexturedRect { texture, .. } => {
                                 render_pass.set_pipeline(&graphics.textured_rect.pipeline);
                                 render_pass.set_bind_group(
                                     0,
-                                    &graphics.textured_rect.bind_group,
+                                    &graphics.textured_rect.texture_cache.get(&(texture.data as *const _)).unwrap().bind_group,
                                     &[],
                                 );
                                 render_pass.draw_indexed(

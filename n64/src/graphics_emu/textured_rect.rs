@@ -7,17 +7,20 @@ use zerocopy::{AsBytes, FromBytes};
 use n64_math::Color;
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
-pub const MAX_TEXTURED_RECT_TEXTURES: u32 = 128;
-pub const TEX_HEIGHT: u32 = 32;
-pub const TEX_WIDTH: u32 = 32;
 
 #[repr(C)]
 #[derive(Clone, Copy, Debug, AsBytes, FromBytes)]
 pub(crate) struct TexturedRectUniforms {
-    pub texture: u32,
-    pub padding: [u32; 3],
     pub offset: [f32; 2],
     pub scale: [f32; 2],
+}
+
+pub(crate) struct UploadedTexture {
+    pub tex_format: wgpu::TextureFormat,
+    pub tex_extent: wgpu::Extent3d,
+    pub tex: wgpu::Texture,
+    pub tex_view: wgpu::TextureView,
+    pub bind_group: wgpu::BindGroup,
 }
 
 pub(crate) struct TexturedRect {
@@ -26,14 +29,9 @@ pub(crate) struct TexturedRect {
     pub vs_module: wgpu::ShaderModule,
     pub fs_module: wgpu::ShaderModule,
     pub pipeline: wgpu::RenderPipeline,
-    pub sampler: wgpu::Sampler,
-    pub tex_format: wgpu::TextureFormat,
-    pub tex_extent: wgpu::Extent3d,
-    pub tex: wgpu::Texture,
-    pub tex_view: wgpu::TextureView,
     pub shader_storage_buffer: wgpu::Buffer,
-    pub bind_group: wgpu::BindGroup,
-    pub texture_cache: HashMap<*const [Color], u32>,
+    pub sampler: wgpu::Sampler,
+    pub texture_cache: HashMap<*const [Color], UploadedTexture>,
 }
 
 impl TexturedRect {
@@ -43,7 +41,7 @@ impl TexturedRect {
             bindings: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStage::FRAGMENT | wgpu::ShaderStage::VERTEX,
+                    visibility: wgpu::ShaderStage::VERTEX,
                     ty: wgpu::BindingType::StorageBuffer  { dynamic: false, readonly: true },
                 },
                 wgpu::BindGroupLayoutEntry {
@@ -138,6 +136,12 @@ impl TexturedRect {
             alpha_to_coverage_enabled: false,
         });
 
+        let shader_storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: MAX_TEXTURED_RECTS * mem::size_of::<TexturedRectUniforms>() as u64,
+            usage: wgpu::BufferUsage::STORAGE_READ | wgpu::BufferUsage::COPY_DST,
+        });
+
         let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
@@ -150,55 +154,6 @@ impl TexturedRect {
             compare: wgpu::CompareFunction::Undefined,
         });
 
-        let tex_format = wgpu::TextureFormat::Rgba8Unorm;
-
-        let tex_extent = wgpu::Extent3d {
-            width: TEX_WIDTH,
-            height: TEX_HEIGHT,
-            depth: 1,
-        };
-        let tex = device.create_texture(&wgpu::TextureDescriptor {
-            label: None,
-            size: tex_extent,
-            array_layer_count: MAX_TEXTURED_RECT_TEXTURES,
-            mip_level_count: 1,
-            sample_count: 1,
-            dimension: wgpu::TextureDimension::D2,
-            format: tex_format,
-            usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::SAMPLED,
-        });
-        let tex_view = tex.create_default_view();
-
-        let shader_storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: MAX_TEXTURED_RECTS * mem::size_of::<TexturedRectUniforms>() as u64,
-            usage: wgpu::BufferUsage::STORAGE_READ | wgpu::BufferUsage::COPY_DST,
-        });
-
-        let bind_group = 
-            device
-            .create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &bind_group_layout,
-                bindings: &[
-                    wgpu::Binding {
-                        binding: 0,
-                        resource: wgpu::BindingResource::Buffer {
-                            buffer: &shader_storage_buffer,
-                            range: 0..(MAX_TEXTURED_RECTS * mem::size_of::<TexturedRectUniforms>() as u64),
-                        },
-                    },
-                    wgpu::Binding {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(&tex_view),
-                    },
-                    wgpu::Binding {
-                        binding: 2,
-                        resource: wgpu::BindingResource::Sampler(&sampler),
-                    },
-                ],
-                label: None,
-            });
-
         let texture_cache = HashMap::new();
 
         Self {
@@ -207,13 +162,8 @@ impl TexturedRect {
             vs_module,
             fs_module,
             pipeline,
-            sampler,
-            tex_format,
-            tex_extent,
-            tex,
-            tex_view,
             shader_storage_buffer,
-            bind_group,
+            sampler,
             texture_cache,
         }
     }
@@ -223,18 +173,53 @@ impl TexturedRect {
         device: &wgpu::Device,
         encoder: &mut wgpu::CommandEncoder,
         texture: &Texture,
-    ) -> u32 {
-
-        if let Some(id) = self.texture_cache.get(&(texture.data as *const _)) {
-            return *id;
+    ) {
+        if self.texture_cache.contains_key(&(texture.data as *const _)) {
+            return;
         }
 
-        assert!(texture.width == TEX_WIDTH as i32);
-        assert!(texture.height == TEX_HEIGHT as i32);
+        let tex_format = wgpu::TextureFormat::Rgba8Unorm;
 
-        let next_index = self.texture_cache.len();
+        let tex_extent = wgpu::Extent3d {
+            width: texture.width as u32,
+            height: texture.height as u32,
+            depth: 1,
+        };
+        let tex = device.create_texture(&wgpu::TextureDescriptor {
+            label: None,
+            size: tex_extent,
+            array_layer_count: 1,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: tex_format,
+            usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::SAMPLED,
+        });
+        let tex_view = tex.create_default_view();
 
-        self.texture_cache.insert(texture.data as *const _, next_index as u32);
+        let bind_group = 
+            device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &self.bind_group_layout,
+                bindings: &[
+                    wgpu::Binding {
+                        binding: 0,
+                        resource: wgpu::BindingResource::Buffer {
+                            buffer: &self.shader_storage_buffer,
+                            range: 0..(MAX_TEXTURED_RECTS * mem::size_of::<TexturedRectUniforms>() as u64),
+                        },
+                    },
+                    wgpu::Binding {
+                        binding: 1,
+                        resource: wgpu::BindingResource::TextureView(&tex_view),
+                    },
+                    wgpu::Binding {
+                        binding: 2,
+                        resource: wgpu::BindingResource::Sampler(&self.sampler),
+                    },
+                ],
+                label: None,
+            });
 
         let mut temp_buffer: Box<[u8]> = {
             let mut temp_buffer = Vec::new();
@@ -268,14 +253,20 @@ impl TexturedRect {
                 rows_per_image: texture.height as u32,
             },
             wgpu::TextureCopyView {
-                texture: &self.tex,
+                texture: &tex,
                 mip_level: 0,
-                array_layer: next_index as u32,
+                array_layer: 0,
                 origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
             },
-            self.tex_extent,
+            tex_extent,
         );
 
-        next_index as u32
+        self.texture_cache.insert(texture.data as *const _, UploadedTexture {
+            tex_format,
+            tex_extent,
+            tex,
+            tex_view,
+            bind_group,
+        });
     }
 }
