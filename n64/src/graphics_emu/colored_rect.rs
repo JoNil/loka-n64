@@ -2,40 +2,14 @@ use crate::graphics_emu::Vertex;
 use std::mem;
 use zerocopy::{AsBytes, FromBytes};
 
+pub const MAX_COLORED_RECTS: u64 = 4096;
+
 #[repr(C)]
 #[derive(Clone, Copy, Debug, AsBytes, FromBytes)]
 pub(crate) struct ColoredRectUniforms {
     pub color: [f32; 4],
     pub offset: [f32; 2],
     pub scale: [f32; 2],
-}
-#[derive(Default)]
-pub(crate) struct ColoredRectDrawData {
-    pub uniform_buffer: Option<wgpu::Buffer>,
-    pub bind_group: Option<wgpu::BindGroup>,
-}
-
-impl ColoredRectDrawData {
-    pub(crate) fn init(&mut self, device: &wgpu::Device, bind_group_layout: &wgpu::BindGroupLayout) {
-        self.uniform_buffer = Some(device.create_buffer(&wgpu::BufferDescriptor {
-            label: None,
-            size: mem::size_of::<ColoredRectUniforms>() as u64,
-            usage: wgpu::BufferUsage::UNIFORM | wgpu::BufferUsage::COPY_DST,
-        }));
-
-        self.bind_group = Some(device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: bind_group_layout,
-            bindings: &[wgpu::Binding {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer {
-                    buffer: self.uniform_buffer.as_ref().unwrap(),
-                    range: 0..(mem::size_of::<ColoredRectUniforms>()
-                        as u64),
-                },
-            }],
-            label: None,
-        }));
-    }
 }
 
 pub(crate) struct ColoredRect {
@@ -44,7 +18,8 @@ pub(crate) struct ColoredRect {
     pub vs_module: wgpu::ShaderModule,
     pub fs_module: wgpu::ShaderModule,
     pub pipeline: wgpu::RenderPipeline,
-    pub draw_data: Vec<ColoredRectDrawData>,
+    pub shader_storage_buffer: wgpu::Buffer,
+    pub bind_group: wgpu::BindGroup,
 }
 
 impl ColoredRect {
@@ -53,7 +28,7 @@ impl ColoredRect {
             bindings: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
                 visibility: wgpu::ShaderStage::FRAGMENT | wgpu::ShaderStage::VERTEX,
-                ty: wgpu::BindingType::UniformBuffer { dynamic: false },
+                ty: wgpu::BindingType::StorageBuffer { dynamic: false, readonly: true },
             }],
             label: None,
         });
@@ -67,16 +42,16 @@ impl ColoredRect {
                 include_str!("shaders/colored_rect.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
-            .unwrap(),
+            .map_err(|e| { println!("{}", e); "Unable to compile shaders/colored_rect.vert" }).unwrap(),
         )
-        .unwrap();
+        .map_err(|e| format!("{}", e)).unwrap();
 
         let fs_bytes = wgpu::read_spirv(
             glsl_to_spirv::compile(
                 include_str!("shaders/colored_rect.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
-            .unwrap(),
+            .map_err(|e| { println!("{}", e); "Unable to compile shaders/colored_rect.frag" }).unwrap(),
         )
         .unwrap();
 
@@ -125,7 +100,23 @@ impl ColoredRect {
             alpha_to_coverage_enabled: false,
         });
 
-        let draw_data = Vec::new();
+        let shader_storage_buffer =device.create_buffer(&wgpu::BufferDescriptor {
+            label: None,
+            size: MAX_COLORED_RECTS * mem::size_of::<ColoredRectUniforms>() as u64,
+            usage: wgpu::BufferUsage::STORAGE_READ | wgpu::BufferUsage::COPY_DST,
+        });
+
+        let bind_group =device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &bind_group_layout,
+            bindings: &[wgpu::Binding {
+                binding: 0,
+                resource: wgpu::BindingResource::Buffer {
+                    buffer: &shader_storage_buffer,
+                    range: 0..(MAX_COLORED_RECTS * mem::size_of::<ColoredRectUniforms>() as u64),
+                },
+            }],
+            label: None,
+        });
 
         Self {
             bind_group_layout,
@@ -133,7 +124,8 @@ impl ColoredRect {
             vs_module,
             fs_module,
             pipeline,
-            draw_data,
+            shader_storage_buffer,
+            bind_group,
         }
     }
 }

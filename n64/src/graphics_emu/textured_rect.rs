@@ -169,7 +169,7 @@ impl TexturedRect {
                 include_str!("shaders/textured_rect.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
-            .unwrap(),
+            .map_err(|e| { println!("{}", e); "Unable to compile shaders/textured_rect.vert" }).unwrap(),
         )
         .unwrap();
 
@@ -178,7 +178,7 @@ impl TexturedRect {
                 include_str!("shaders/textured_rect.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
-            .unwrap(),
+            .map_err(|e| { println!("{}", e); "Unable to compile shaders/textured_rect.frag" }).unwrap(),
         )
         .unwrap();
 

@@ -99,7 +99,7 @@ impl CopyTex {
                 include_str!("shaders/copy_tex.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
-            .unwrap(),
+            .map_err(|e| { println!("{}", e); "Unable to compile shaders/copy_tex.vert" }).unwrap(),
         )
         .unwrap();
 
@@ -108,7 +108,7 @@ impl CopyTex {
                 include_str!("shaders/copy_tex.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
-            .unwrap(),
+            .map_err(|e| { println!("{}", e); "Unable to compile shaders/frag.vert" }).unwrap(),
         )
         .unwrap();
 

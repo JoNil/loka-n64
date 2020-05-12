@@ -3,7 +3,7 @@ use crate::gfx::Texture;
 use crate::{
     graphics::QUAD_INDEX_DATA,
     graphics_emu::{
-        colored_rect::ColoredRectUniforms,
+        colored_rect::{ColoredRectUniforms, MAX_COLORED_RECTS},
         dst_texture::DstTexture,
         textured_rect::{TexturedRectUniforms, UploadedTexture},
         Graphics,
@@ -90,23 +90,7 @@ impl<'a> CommandBuffer<'a> {
         let dst = DstTexture::new(&graphics.device, self.out_tex.width, self.out_tex.height);
         let window_size = Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32);
 
-        {
-            let old_size = graphics.colored_rect.draw_data.len();
-            let extra_colored_rect = (self.colored_rect_count as i32) - (old_size as i32);
-
-            graphics
-                .colored_rect
-                .draw_data
-                .resize_with(self.colored_rect_count as usize, Default::default);
-
-            if extra_colored_rect > 0 {
-                for colored_rect_draw_data in graphics.colored_rect.draw_data[old_size..].iter_mut()
-                {
-                    colored_rect_draw_data
-                        .init(&graphics.device, &graphics.colored_rect.bind_group_layout);
-                }
-            }
-        }
+        assert!(self.colored_rect_count <= MAX_COLORED_RECTS as u32);
 
         {
             let old_size = graphics.textured_rect.draw_data.len();
@@ -131,8 +115,9 @@ impl<'a> CommandBuffer<'a> {
                 .device
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
             {
-                let mut colored_rect_index = 0;
                 let mut textured_rect_index = 0;
+
+                let mut colored_rect_uniforms = Vec::with_capacity(self.colored_rect_count as usize);
 
                 for command in &self.commands {
                     match command {
@@ -147,29 +132,11 @@ impl<'a> CommandBuffer<'a> {
                             let offset_y =
                                 -2.0 * upper_left.y() / window_size.y() + 1.0 - scale.y();
 
-                            let uniforms = ColoredRectUniforms {
+                            colored_rect_uniforms.push(ColoredRectUniforms {
                                 color: color.to_rgba(),
                                 offset: [offset_x, offset_y],
                                 scale: [scale.x(), scale.y()],
-                            };
-
-                            let temp_buffer = graphics.device.create_buffer_with_data(
-                                uniforms.as_bytes(),
-                                wgpu::BufferUsage::COPY_SRC,
-                            );
-
-                            encoder.copy_buffer_to_buffer(
-                                &temp_buffer,
-                                0,
-                                graphics.colored_rect.draw_data[colored_rect_index]
-                                    .uniform_buffer
-                                    .as_ref()
-                                    .unwrap(),
-                                0,
-                                mem::size_of::<ColoredRectUniforms>() as u64,
-                            );
-
-                            colored_rect_index += 1;
+                            });
                         }
                         Command::TexturedRect {
                             upper_left,
@@ -259,6 +226,22 @@ impl<'a> CommandBuffer<'a> {
                         }
                     }
                 }
+
+                {
+                    let temp_buffer = graphics.device.create_buffer_with_data(
+                        colored_rect_uniforms.as_bytes(),
+                        wgpu::BufferUsage::COPY_SRC,
+                    );
+
+                    encoder.copy_buffer_to_buffer(
+                        &temp_buffer,
+                        0,
+                        &graphics.colored_rect.shader_storage_buffer,
+                        0,
+                        (colored_rect_uniforms.len() * mem::size_of::<ColoredRectUniforms>())
+                            as u64,
+                    );
+                }
             }
 
             {
@@ -295,16 +278,13 @@ impl<'a> CommandBuffer<'a> {
                                 render_pass.set_pipeline(&graphics.colored_rect.pipeline);
                                 render_pass.set_bind_group(
                                     0,
-                                    graphics.colored_rect.draw_data[colored_rect_index]
-                                        .bind_group
-                                        .as_ref()
-                                        .unwrap(),
+                                    &graphics.colored_rect.bind_group,
                                     &[],
                                 );
                                 render_pass.draw_indexed(
                                     0..(QUAD_INDEX_DATA.len() as u32),
                                     0,
-                                    0..1,
+                                    colored_rect_index..(colored_rect_index + 1),
                                 );
                                 colored_rect_index += 1;
                             }
