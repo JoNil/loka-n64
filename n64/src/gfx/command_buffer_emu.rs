@@ -5,7 +5,7 @@ use crate::{
     graphics_emu::{
         colored_rect::{ColoredRectUniforms, MAX_COLORED_RECTS},
         dst_texture::DstTexture,
-        textured_rect::{TexturedRectUniforms, UploadedTexture},
+        textured_rect::{TexturedRectUniforms, MAX_TEXTURED_RECTS},
         Graphics,
     },
 };
@@ -50,7 +50,6 @@ impl<'a> CommandBuffer<'a> {
     pub fn clear(&mut self) -> &mut Self {
         self.clear = true;
         self.commands.clear();
-
         self
     }
 
@@ -91,33 +90,15 @@ impl<'a> CommandBuffer<'a> {
         let window_size = Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32);
 
         assert!(self.colored_rect_count <= MAX_COLORED_RECTS as u32);
-
-        {
-            let old_size = graphics.textured_rect.draw_data.len();
-            let extra_textured_rect = (self.textured_rect_count as i32) - (old_size as i32);
-
-            graphics
-                .textured_rect
-                .draw_data
-                .resize_with(self.textured_rect_count as usize, Default::default);
-
-            if extra_textured_rect > 0 {
-                for textured_rect_draw_data in
-                    graphics.textured_rect.draw_data[old_size..].iter_mut()
-                {
-                    textured_rect_draw_data.init(&graphics.device);
-                }
-            }
-        }
+        assert!(self.textured_rect_count <= MAX_TEXTURED_RECTS as u32);
 
         let command_buf = {
             let mut encoder = graphics
                 .device
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
             {
-                let mut textured_rect_index = 0;
-
                 let mut colored_rect_uniforms = Vec::with_capacity(self.colored_rect_count as usize);
+                let mut textured_rect_uniforms = Vec::with_capacity(self.textured_rect_count as usize);
 
                 for command in &self.commands {
                     match command {
@@ -143,16 +124,12 @@ impl<'a> CommandBuffer<'a> {
                             lower_right,
                             texture,
                         } => {
-                            if !graphics
-                                .textured_rect
-                                .texture_cache
-                                .contains_key(&(texture.data as *const _))
-                            {
-                                graphics.textured_rect.texture_cache.insert(
-                                    texture.data as *const _,
-                                    UploadedTexture::new(&graphics.device, &mut encoder, texture),
-                                );
-                            }
+
+                            let id = graphics.textured_rect.upload_texture_data(
+                                &graphics.device,
+                                &mut encoder,
+                                texture,
+                            );
 
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
@@ -160,69 +137,12 @@ impl<'a> CommandBuffer<'a> {
                             let offset_y =
                                 -2.0 * upper_left.y() / window_size.y() + 1.0 - scale.y();
 
-                            let uniforms = TexturedRectUniforms {
+                            textured_rect_uniforms.push(TexturedRectUniforms {
+                                texture: id,
+                                padding: Default::default(),
                                 offset: [offset_x, offset_y],
                                 scale: [scale.x(), scale.y()],
-                            };
-
-                            let temp_buffer = graphics.device.create_buffer_with_data(
-                                uniforms.as_bytes(),
-                                wgpu::BufferUsage::COPY_SRC,
-                            );
-
-                            encoder.copy_buffer_to_buffer(
-                                &temp_buffer,
-                                0,
-                                graphics.textured_rect.draw_data[textured_rect_index]
-                                    .uniform_buffer
-                                    .as_ref()
-                                    .unwrap(),
-                                0,
-                                mem::size_of::<TexturedRectUniforms>() as u64,
-                            );
-
-                            graphics.textured_rect.draw_data[textured_rect_index].bind_group = Some(
-                                graphics
-                                    .device
-                                    .create_bind_group(&wgpu::BindGroupDescriptor {
-                                        layout: &graphics.textured_rect.bind_group_layout,
-                                        bindings: &[
-                                            wgpu::Binding {
-                                                binding: 0,
-                                                resource: wgpu::BindingResource::Buffer {
-                                                    buffer: graphics.textured_rect.draw_data
-                                                        [textured_rect_index]
-                                                        .uniform_buffer
-                                                        .as_ref()
-                                                        .unwrap(),
-                                                    range: 0
-                                                        ..(mem::size_of::<TexturedRectUniforms>()
-                                                            as u64),
-                                                },
-                                            },
-                                            wgpu::Binding {
-                                                binding: 1,
-                                                resource: wgpu::BindingResource::TextureView(
-                                                    &graphics
-                                                        .textured_rect
-                                                        .texture_cache
-                                                        .get(&(texture.data as *const _))
-                                                        .unwrap()
-                                                        .tex_view,
-                                                ),
-                                            },
-                                            wgpu::Binding {
-                                                binding: 2,
-                                                resource: wgpu::BindingResource::Sampler(
-                                                    &graphics.textured_rect.sampler,
-                                                ),
-                                            },
-                                        ],
-                                        label: None,
-                                    }),
-                            );
-
-                            textured_rect_index += 1;
+                            });
                         }
                     }
                 }
@@ -240,6 +160,21 @@ impl<'a> CommandBuffer<'a> {
                         0,
                         (colored_rect_uniforms.len() * mem::size_of::<ColoredRectUniforms>())
                             as u64,
+                    );
+                }
+
+                {
+                    let temp_buffer = graphics.device.create_buffer_with_data(
+                        textured_rect_uniforms.as_bytes(),
+                        wgpu::BufferUsage::COPY_SRC,
+                    );
+
+                    encoder.copy_buffer_to_buffer(
+                        &temp_buffer,
+                        0,
+                        &graphics.textured_rect.shader_storage_buffer,
+                        0,
+                        (textured_rect_uniforms.len() * mem::size_of::<TexturedRectUniforms>()) as u64,
                     );
                 }
             }
@@ -292,16 +227,13 @@ impl<'a> CommandBuffer<'a> {
                                 render_pass.set_pipeline(&graphics.textured_rect.pipeline);
                                 render_pass.set_bind_group(
                                     0,
-                                    graphics.textured_rect.draw_data[textured_rect_index]
-                                        .bind_group
-                                        .as_ref()
-                                        .unwrap(),
+                                    &graphics.textured_rect.bind_group,
                                     &[],
                                 );
                                 render_pass.draw_indexed(
                                     0..(QUAD_INDEX_DATA.len() as u32),
                                     0,
-                                    0..1,
+                                    textured_rect_index..(textured_rect_index + 1),
                                 );
                                 textured_rect_index += 1;
                             }

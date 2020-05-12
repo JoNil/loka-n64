@@ -7,7 +7,7 @@ use zerocopy::{AsBytes, FromBytes};
 use n64_math::Color;
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
-pub const MAX_TEXTURED_RECT_TEXTURES: u64 = 4096;
+pub const MAX_TEXTURED_RECT_TEXTURES: u32 = 128;
 pub const TEX_HEIGHT: u32 = 32;
 pub const TEX_WIDTH: u32 = 32;
 
@@ -43,8 +43,8 @@ impl TexturedRect {
             bindings: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX,
-                    ty: wgpu::BindingType::UniformBuffer { dynamic: false },
+                    visibility: wgpu::ShaderStage::FRAGMENT | wgpu::ShaderStage::VERTEX,
+                    ty: wgpu::BindingType::StorageBuffer  { dynamic: false, readonly: true },
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
@@ -225,23 +225,27 @@ impl TexturedRect {
         texture: &Texture,
     ) -> u32 {
 
-        if self.texture_cache.contains_key(&(texture.data as *const _)) {
-            return self.texture_cache.get(&(texture.data as *const _));
+        if let Some(id) = self.texture_cache.get(&(texture.data as *const _)) {
+            return *id;
         }
 
-        assert!(texture_data.width == TEX_WIDTH);
-        assert!(texture_data.height == TEX_HEIGHT);
+        assert!(texture.width == TEX_WIDTH as i32);
+        assert!(texture.height == TEX_HEIGHT as i32);
+
+        let next_index = self.texture_cache.len();
+
+        self.texture_cache.insert(texture.data as *const _, next_index as u32);
 
         let mut temp_buffer: Box<[u8]> = {
             let mut temp_buffer = Vec::new();
             temp_buffer.resize_with(
-                (4 * texture_data.width * texture_data.height) as usize,
+                (4 * texture.width * texture.height) as usize,
                 Default::default,
             );
             temp_buffer.into_boxed_slice()
         };
 
-        for (pixel, data) in texture_data
+        for (pixel, data) in texture
             .data
             .iter()
             .zip(temp_buffer.chunks_exact_mut(4 as usize))
@@ -260,16 +264,18 @@ impl TexturedRect {
             wgpu::BufferCopyView {
                 buffer: &temp_buf,
                 offset: 0,
-                bytes_per_row: 4 * texture_data.width as u32,
-                rows_per_image: texture_data.height as u32,
+                bytes_per_row: 4 * texture.width as u32,
+                rows_per_image: texture.height as u32,
             },
             wgpu::TextureCopyView {
-                texture: &tex,
+                texture: &self.tex,
                 mip_level: 0,
-                array_layer: 0,
+                array_layer: next_index as u32,
                 origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
             },
-            tex_extent,
+            self.tex_extent,
         );
+
+        next_index as u32
     }
 }
