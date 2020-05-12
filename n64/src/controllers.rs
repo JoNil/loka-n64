@@ -40,4 +40,59 @@ impl Controllers {
     pub fn z(&self) -> bool {
         self.data[0] & 0x2000_0000 > 0
     }
+
+    #[inline]
+    pub fn start(&self) -> bool {
+        self.data[0] & 0x1000_0000 > 0
+    }
+
+    #[inline]
+    pub fn up(&self) -> bool {
+        self.data[0] & 0x0800_0000 > 0
+    }
+
+    #[inline]
+    pub fn down(&self) -> bool {
+        self.data[0] & 0x0400_0000 > 0
+    }
+
+    #[inline]
+    pub fn left(&self) -> bool {
+        self.data[0] & 0x0200_0000 > 0
+    }
+
+    #[inline]
+    pub fn right(&self) -> bool {
+        self.data[0] & 0x0100_0000 > 0
+    }
+
+    #[inline]
+    pub fn l(&self) -> bool {
+        self.data[0] & 0x0020_0000 > 0
+    }
+
+    #[inline]
+    pub fn r(&self) -> bool {
+        self.data[0] & 0x0010_0000 > 0
+    }
+
+    #[inline]
+    pub fn c_up(&self) -> bool {
+        self.data[0] & 0x0008_0000 > 0
+    }
+
+    #[inline]
+    pub fn c_down(&self) -> bool {
+        self.data[0] & 0x0004_0000 > 0
+    }
+
+    #[inline]
+    pub fn c_left(&self) -> bool {
+        self.data[0] & 0x0002_0000 > 0
+    }
+
+    #[inline]
+    pub fn c_right(&self) -> bool {
+        self.data[0] & 0x0001_0000 > 0
+    }
 }

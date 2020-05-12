@@ -21,8 +21,8 @@ pub struct BulletSystem {
 }
 
 impl BulletSystem {
-    pub fn new() -> BulletSystem {
-        BulletSystem {
+    pub fn new() -> Self {
+        Self {
             bullets: Vec::new(),
             screen_bb: Aabb2::new(Vec2::zero(), Vec2::new(1.0, 1.0)),
         }

@@ -97,8 +97,10 @@ impl<'a> CommandBuffer<'a> {
                 .device
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
             {
-                let mut colored_rect_uniforms = Vec::with_capacity(self.colored_rect_count as usize);
-                let mut textured_rect_uniforms = Vec::with_capacity(self.textured_rect_count as usize);
+                let mut colored_rect_uniforms =
+                    Vec::with_capacity(self.colored_rect_count as usize);
+                let mut textured_rect_uniforms =
+                    Vec::with_capacity(self.textured_rect_count as usize);
 
                 for command in &self.commands {
                     match command {
@@ -124,7 +126,6 @@ impl<'a> CommandBuffer<'a> {
                             lower_right,
                             texture,
                         } => {
-
                             graphics.textured_rect.upload_texture_data(
                                 &graphics.device,
                                 &mut encoder,
@@ -172,7 +173,8 @@ impl<'a> CommandBuffer<'a> {
                         0,
                         &graphics.textured_rect.shader_storage_buffer,
                         0,
-                        (textured_rect_uniforms.len() * mem::size_of::<TexturedRectUniforms>()) as u64,
+                        (textured_rect_uniforms.len() * mem::size_of::<TexturedRectUniforms>())
+                            as u64,
                     );
                 }
             }
@@ -225,7 +227,12 @@ impl<'a> CommandBuffer<'a> {
                                 render_pass.set_pipeline(&graphics.textured_rect.pipeline);
                                 render_pass.set_bind_group(
                                     0,
-                                    &graphics.textured_rect.texture_cache.get(&(texture.data as *const _)).unwrap().bind_group,
+                                    &graphics
+                                        .textured_rect
+                                        .texture_cache
+                                        .get(&(texture.data as *const _))
+                                        .unwrap()
+                                        .bind_group,
                                     &[],
                                 );
                                 render_pass.draw_indexed(

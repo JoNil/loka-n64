@@ -9,6 +9,7 @@ extern crate alloc;
 
 use alloc::vec::Vec;
 use bullet_system::BulletSystem;
+use camera::Camera;
 use components::box_drawable;
 use components::health;
 use components::movable;
@@ -24,6 +25,7 @@ use n64_math::Color;
 use player::{Player, SHIP_SIZE};
 
 mod bullet_system;
+mod camera;
 mod components;
 mod enemy_system;
 mod entity;
@@ -43,9 +45,11 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);
 
+    let mut camera = Camera::new();
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
     let mut enemy_system = EnemySystem::new();
+    let mut map = Map::load(MAP_1);
 
     let mut audio_buffer = {
         let mut buffer = Vec::new();
@@ -57,8 +61,6 @@ fn main() {
     let mut last_frame_begin_time = current_time_us();
     let mut frame_used_time = 0;
     let mut dt;
-
-    let mut map = Map::load(MAP_1);
 
     enemy_system.spawn_enemy();
     enemy_system.spawn_enemy();
@@ -79,6 +81,8 @@ fn main() {
             // Update
 
             n64.controllers.update(&n64.graphics);
+
+            camera.update(&n64.controllers);
 
             enemy_system.update(&mut bullet_system, &mut player);
 
@@ -122,8 +126,8 @@ fn main() {
 
                 cb.clear();
 
-                box_drawable::draw(&mut cb, VIDEO_MODE);
-                sprite_drawable::draw(&mut cb, VIDEO_MODE);
+                box_drawable::draw(&mut cb, VIDEO_MODE, &camera);
+                sprite_drawable::draw(&mut cb, VIDEO_MODE, &camera);
 
                 cb.run(&mut n64.graphics);
             }

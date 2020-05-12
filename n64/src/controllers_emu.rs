@@ -63,4 +63,59 @@ impl Controllers {
     pub fn z(&self) -> bool {
         self.data.contains(&VirtualKeyCode::Space)
     }
+
+    #[inline]
+    pub fn start(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::Return)
+    }
+
+    #[inline]
+    pub fn up(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::W)
+    }
+
+    #[inline]
+    pub fn down(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::S)
+    }
+
+    #[inline]
+    pub fn left(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::A)
+    }
+
+    #[inline]
+    pub fn right(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::D)
+    }
+
+    #[inline]
+    pub fn l(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::Q)
+    }
+
+    #[inline]
+    pub fn r(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::E)
+    }
+
+    #[inline]
+    pub fn c_up(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::I)
+    }
+
+    #[inline]
+    pub fn c_down(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::K)
+    }
+
+    #[inline]
+    pub fn c_left(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::J)
+    }
+
+    #[inline]
+    pub fn c_right(&self) -> bool {
+        self.data.contains(&VirtualKeyCode::L)
+    }
 }

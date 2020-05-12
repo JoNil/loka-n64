@@ -27,8 +27,8 @@ pub struct EnemySystem {
 }
 
 impl EnemySystem {
-    pub fn new() -> EnemySystem {
-        EnemySystem {
+    pub fn new() -> Self {
+        Self {
             enemies: Vec::new(),
         }
     }

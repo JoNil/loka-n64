@@ -19,7 +19,7 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new() -> Player {
+    pub fn new() -> Self {
         let player = Player {
             entity: entity::create(),
             score: 0,
