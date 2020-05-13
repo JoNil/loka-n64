@@ -220,7 +220,6 @@ fn parse_map_tiles(
     let mut map_tile_refs = Vec::new();
 
     for id in used_tile_ids.iter() {
-
         if *id == 0 {
             continue;
         }
@@ -263,8 +262,10 @@ r##"pub static {tiles_name_ident}: &'static [&'static StaticTexture] = &[
 {map_tile_refs}];
 
 pub static {map_name_ident}: &'static StaticMapData = &StaticMapData {{
-    width: {map_width},
-    height: {map_height},
+    width_in_tiles: {map_width},
+    height_in_tiles: {map_height},
+    tile_width: {tile_width},
+    tile_height: {tile_height},
     layers: include_bytes!({map_data_path:?}),
 }};"##
 }; }
@@ -353,6 +354,8 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         let tiles_name_ident = format!("{}_TILES", &uppercase_name);
         let map_width = map.width as i32;
         let map_height = map.height as i32;
+        let tile_width = map.tile_width as i32;
+        let tile_height = map.tile_height as i32;
 
         let map = format!(
             MAP_TEMPLATE!(),
@@ -361,6 +364,8 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             map_tile_refs = map_tile_refs.join(""),
             map_width = map_width,
             map_height = map_height,
+            tile_width = tile_width,
+            tile_height = tile_height,
             map_data_path = map_data_path,
         );
 

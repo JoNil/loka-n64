@@ -127,9 +127,9 @@ fn main() {
 
                 cb.clear();
 
+                map.render(&mut cb, VIDEO_MODE, &camera);
                 box_drawable::draw(&mut cb, VIDEO_MODE, &camera);
                 sprite_drawable::draw(&mut cb, VIDEO_MODE, &camera);
-                map.render(&mut cb, VIDEO_MODE, &camera);
 
                 cb.run(&mut n64.graphics)
             };

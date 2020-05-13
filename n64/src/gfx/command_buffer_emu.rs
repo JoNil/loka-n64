@@ -285,6 +285,9 @@ impl<'a> CommandBuffer<'a> {
             }
         });
 
-        (self.colored_rect_count as i32, self.textured_rect_count as i32)
+        (
+            self.colored_rect_count as i32,
+            self.textured_rect_count as i32,
+        )
     }
 }

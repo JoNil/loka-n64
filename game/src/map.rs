@@ -2,11 +2,11 @@ use crate::{camera::Camera, maps::MAP_1_TILES};
 use n64::{gfx::CommandBuffer, VideoMode};
 use n64_math::Vec2;
 
-const TILE_SIZE: Vec2 = Vec2::new(32.0 / 320.0, 32.0 / 240.0);
-
 pub struct StaticMapData {
-    pub width: i32,
-    pub height: i32,
+    pub width_in_tiles: i32,
+    pub height_in_tiles: i32,
+    pub tile_width: i32,
+    pub tile_height: i32,
     pub layers: &'static [u8],
 }
 
@@ -20,37 +20,57 @@ impl Map {
     }
 
     pub fn render(&self, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-        let tiles_in_layer = (self.data.width * self.data.height) as usize;
-        let layer_count = self.data.layers.len() / tiles_in_layer;
+        let tiles_in_layer = (self.data.width_in_tiles * self.data.height_in_tiles) as usize;
 
-        dbg!(self.data.layers.len());
-        dbg!(self.data.width);
-        dbg!(self.data.height);
+        let tile_scale: Vec2 = Vec2::new(
+            32.0 / video_mode.width() as f32,
+            32.0 / video_mode.height() as f32,
+        );
+
+        let camera_tile = camera.pos / Vec2::new(self.data.tile_width as f32, self.data.tile_height as f32);
+
+        let tiles_on_screen_x = (video_mode.width() / self.data.tile_width) + 2;
+        let tiles_on_screen_y = (video_mode.height() / self.data.tile_height) + 2;
+
+        let first_tile_x = camera_tile.x().floor() as i32;
+        let first_tile_y = camera_tile.y().floor() as i32;
 
         for layer in self.data.layers.chunks_exact(tiles_in_layer) {
-            for (index, tile) in layer.iter().enumerate() {
 
-                if *tile == 0 {
+            for y in first_tile_y..(first_tile_y + tiles_on_screen_y) {
+
+                if y < 0 || y >= self.data.height_in_tiles {
                     continue;
                 }
 
-                let x = index % (self.data.width as usize);
-                let y = index / (self.data.width as usize);
+                for x in first_tile_x..(first_tile_x + tiles_on_screen_x) {
 
-                let pos = Vec2::new(x as f32, y as f32) * TILE_SIZE;
+                    if x < 0 || x >= self.data.width_in_tiles {
+                        continue;
+                    }
 
-                let half_size = TILE_SIZE / 2.0;
+                    let index = x + y * self.data.width_in_tiles;
+                    let tile = layer[index as usize];
 
-                let upper_left = pos - half_size;
-                let lower_right = pos + half_size;
+                    if tile == 0 {
+                        continue;
+                    }
 
-                let screen_size = Vec2::new(video_mode.width() as f32, video_mode.height() as f32);
+                    let pos = Vec2::new(x as f32, y as f32) * tile_scale;
 
-                cb.add_textured_rect(
-                    upper_left * screen_size + camera.pos,
-                    lower_right * screen_size + camera.pos,
-                    MAP_1_TILES[(*tile - 1) as usize].as_texture(),
-                );
+                    let half_size = tile_scale / 2.0;
+
+                    let upper_left = pos - half_size;
+                    let lower_right = pos + half_size;
+
+                    let screen_size = Vec2::new(video_mode.width() as f32, video_mode.height() as f32);
+
+                    cb.add_textured_rect(
+                        upper_left * screen_size - camera.pos,
+                        lower_right * screen_size - camera.pos,
+                        MAP_1_TILES[(tile - 1) as usize].as_texture(),
+                    );
+                }
             }
         }
     }

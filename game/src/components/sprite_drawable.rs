@@ -23,8 +23,8 @@ pub fn draw(cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
             let screen_size = Vec2::new(video_mode.width() as f32, video_mode.height() as f32);
 
             cb.add_textured_rect(
-                upper_left * screen_size + camera.pos,
-                lower_right * screen_size + camera.pos,
+                upper_left * screen_size - camera.pos,
+                lower_right * screen_size - camera.pos,
                 component.texture,
             );
         }

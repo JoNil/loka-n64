@@ -142,6 +142,9 @@ impl<'a> CommandBuffer<'a> {
 
         unsafe { n64_sys::sys::data_cache_hit_invalidate(self.out_tex.data) };
 
-        (self.colored_rect_count as i32, self.textured_rect_count as i32)
+        (
+            self.colored_rect_count as i32,
+            self.textured_rect_count as i32,
+        )
     }
 }
