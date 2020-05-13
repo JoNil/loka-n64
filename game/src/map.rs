@@ -1,7 +1,5 @@
-use crate::{
-    maps::MAP_1_TILES, camera::Camera,
-};
-use n64::{VideoMode, gfx::CommandBuffer};
+use crate::{camera::Camera, maps::MAP_1_TILES};
+use n64::{gfx::CommandBuffer, VideoMode};
 use n64_math::Vec2;
 
 const TILE_SIZE: Vec2 = Vec2::new(32.0 / 320.0, 32.0 / 240.0);
@@ -22,14 +20,11 @@ impl Map {
     }
 
     pub fn render(&self, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-
         let tiles_in_layer = (self.data.width * self.data.height) as usize;
         let layer_count = self.data.layers.len() / tiles_in_layer;
 
         for layer in self.data.layers.chunks_exact(tiles_in_layer) {
-
             for (index, tile) in layer.iter().enumerate() {
-
                 let x = index % (self.data.width as usize);
                 let y = index / (self.data.width as usize);
 

@@ -34,8 +34,9 @@ mod maps;
 mod player;
 mod textures;
 
-const BLUE: Color = Color::new(0b00001_00001_11100_1);
 const RED: Color = Color::new(0b10000_00011_00011_1);
+const GREEN: Color = Color::new(0b00011_10000_00011_1);
+const BLUE: Color = Color::new(0b00011_00011_10000_1);
 
 const VIDEO_MODE: VideoMode = VideoMode::Pal {
     width: 320,
@@ -120,7 +121,7 @@ fn main() {
         {
             // Graphics
 
-            {
+            let (colored_rect_count, textured_rect_count) = {
                 let mut fb = n64.framebuffer.next_buffer();
                 let mut cb = CommandBuffer::new(&mut fb);
 
@@ -130,8 +131,8 @@ fn main() {
                 sprite_drawable::draw(&mut cb, VIDEO_MODE, &camera);
                 map.render(&mut cb, VIDEO_MODE, &camera);
 
-                cb.run(&mut n64.graphics);
-            }
+                cb.run(&mut n64.graphics)
+            };
 
             {
                 let mut fb = n64.framebuffer.next_buffer();
@@ -166,8 +167,10 @@ fn main() {
                 }
 
                 {
-                    ipl3font::draw_number(&mut fb, 200, 10, RED, frame_used_time as i32);
                     ipl3font::draw_number(&mut fb, 100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
+                    ipl3font::draw_number(&mut fb, 200, 10, RED, frame_used_time as i32);
+                    ipl3font::draw_number(&mut fb, 100, 30, GREEN, colored_rect_count);
+                    ipl3font::draw_number(&mut fb, 200, 30, GREEN, textured_rect_count);
                 }
             }
 

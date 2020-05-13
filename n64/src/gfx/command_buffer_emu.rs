@@ -85,7 +85,7 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn run(self, graphics: &mut Graphics) {
+    pub fn run(self, graphics: &mut Graphics) -> (i32, i32) {
         let dst = DstTexture::new(&graphics.device, self.out_tex.width, self.out_tex.height);
         let window_size = Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32);
 
@@ -284,5 +284,7 @@ impl<'a> CommandBuffer<'a> {
                 *fb_color = Color::from_bytes(mapped_color.try_into().unwrap());
             }
         });
+
+        (self.colored_rect_count as i32, self.textured_rect_count as i32)
     }
 }
