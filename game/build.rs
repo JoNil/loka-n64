@@ -220,6 +220,11 @@ fn parse_map_tiles(
     let mut map_tile_refs = Vec::new();
 
     for id in used_tile_ids.iter() {
+
+        if *id == 0 {
+            continue;
+        }
+
         let width: i32 = map.tile_width.try_into().unwrap();
         let height: i32 = map.tile_height.try_into().unwrap();
 
@@ -284,6 +289,9 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
     let mut used_tile_ids_map = HashMap::new();
     let mut used_tile_ids = Vec::new();
 
+    used_tile_ids_map.insert(0, 0);
+    used_tile_ids.push(0);
+
     let mut tileset_image_cache = HashMap::new();
 
     for path in fs::read_dir("maps")?
@@ -312,10 +320,6 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         for layer in map.layers.iter() {
             for row in layer.tiles.iter() {
                 for tile in row.iter() {
-                    if tile.gid == 0 {
-                        continue;
-                    }
-
                     if let Some(id) = used_tile_ids_map.get(&tile.gid) {
                         layers.push(*id);
                     } else {

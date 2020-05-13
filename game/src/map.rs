@@ -23,8 +23,17 @@ impl Map {
         let tiles_in_layer = (self.data.width * self.data.height) as usize;
         let layer_count = self.data.layers.len() / tiles_in_layer;
 
+        dbg!(self.data.layers.len());
+        dbg!(self.data.width);
+        dbg!(self.data.height);
+
         for layer in self.data.layers.chunks_exact(tiles_in_layer) {
             for (index, tile) in layer.iter().enumerate() {
+
+                if *tile == 0 {
+                    continue;
+                }
+
                 let x = index % (self.data.width as usize);
                 let y = index / (self.data.width as usize);
 
@@ -40,7 +49,7 @@ impl Map {
                 cb.add_textured_rect(
                     upper_left * screen_size + camera.pos,
                     lower_right * screen_size + camera.pos,
-                    MAP_1_TILES[*tile as usize].as_texture(),
+                    MAP_1_TILES[(*tile - 1) as usize].as_texture(),
                 );
             }
         }
