@@ -269,9 +269,7 @@ macro_rules! MAPS_TEMPLATE { () => {
 r##"// This file is generated
 
 use crate::map::StaticMapData;
-use crate::textures::SHIP_2_SMALL;
 use n64::gfx::StaticTexture;
-use n64_math::Vec2;
 
 {tiles}
 {maps}

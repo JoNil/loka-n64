@@ -1,13 +1,8 @@
 use crate::{
-    components::{movable, sprite_drawable},
-    entity::{self, OwnedEntity},
-    maps::MAP_1_TILES,
+    maps::MAP_1_TILES, camera::Camera,
 };
-use alloc::vec::Vec;
-use movable::MovableComponent;
-use n64::gfx::StaticTexture;
+use n64::{VideoMode, gfx::CommandBuffer};
 use n64_math::Vec2;
-use sprite_drawable::SpriteDrawableComponent;
 
 const TILE_SIZE: Vec2 = Vec2::new(32.0 / 320.0, 32.0 / 240.0);
 
@@ -17,59 +12,42 @@ pub struct StaticMapData {
     pub layers: &'static [u8],
 }
 
-struct Tile {
-    entity: OwnedEntity,
-}
-
-struct Layer {
-    tiles: Vec<Tile>,
-}
-
 pub struct Map {
-    layers: Vec<Layer>,
+    data: &'static StaticMapData,
 }
 
 impl Map {
     pub fn load(data: &'static StaticMapData) -> Self {
-        let tiles_in_layer = (data.width * data.height) as usize;
-        let layer_count = data.layers.len() / tiles_in_layer;
+        Self { data }
+    }
 
-        let mut layers = Vec::with_capacity(layer_count);
+    pub fn render(&self, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
 
-        for layer in data.layers.chunks_exact(tiles_in_layer) {
-            let mut tiles = Vec::with_capacity(layer.len());
+        let tiles_in_layer = (self.data.width * self.data.height) as usize;
+        let layer_count = self.data.layers.len() / tiles_in_layer;
+
+        for layer in self.data.layers.chunks_exact(tiles_in_layer) {
 
             for (index, tile) in layer.iter().enumerate() {
-                let entity = entity::create();
 
-                let x = index % (data.width as usize);
-                let y = index / (data.width as usize);
+                let x = index % (self.data.width as usize);
+                let y = index / (self.data.width as usize);
 
                 let pos = Vec2::new(x as f32, y as f32) * TILE_SIZE;
 
-                movable::add(
-                    &entity,
-                    MovableComponent {
-                        pos: pos,
-                        speed: Vec2::zero(),
-                    },
-                );
-                sprite_drawable::add(
-                    &entity,
-                    SpriteDrawableComponent {
-                        size: TILE_SIZE,
-                        texture: MAP_1_TILES[*tile as usize].as_texture(),
-                    },
-                );
+                let half_size = TILE_SIZE / 2.0;
 
-                tiles.push(Tile { entity });
+                let upper_left = pos - half_size;
+                let lower_right = pos + half_size;
+
+                let screen_size = Vec2::new(video_mode.width() as f32, video_mode.height() as f32);
+
+                cb.add_textured_rect(
+                    upper_left * screen_size + camera.pos,
+                    lower_right * screen_size + camera.pos,
+                    MAP_1_TILES[*tile as usize].as_texture(),
+                );
             }
-
-            layers.push(Layer { tiles });
         }
-
-        Self { layers }
     }
-
-    pub fn render(camera_pos: Vec2) {}
 }

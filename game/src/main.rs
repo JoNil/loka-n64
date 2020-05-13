@@ -49,7 +49,7 @@ fn main() {
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
     let mut enemy_system = EnemySystem::new();
-    let mut map = Map::load(MAP_1);
+    let map = Map::load(MAP_1);
 
     let mut audio_buffer = {
         let mut buffer = Vec::new();
@@ -128,6 +128,7 @@ fn main() {
 
                 box_drawable::draw(&mut cb, VIDEO_MODE, &camera);
                 sprite_drawable::draw(&mut cb, VIDEO_MODE, &camera);
+                map.render(&mut cb, VIDEO_MODE, &camera);
 
                 cb.run(&mut n64.graphics);
             }
