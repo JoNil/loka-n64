@@ -49,3 +49,4 @@ cargo run
 - http://ultra64.ca/files/documentation/silicon-graphics/SGI_Nintendo_64_RSP_Programmers_Guide.pdf
 - http://krikzz.com/pub/support/everdrive-64/x-series/dev/
 - https://dragonminded.com/n64dev/Reality%20Coprocessor.pdf
+- https://github.com/Themaister/parallel-rdp

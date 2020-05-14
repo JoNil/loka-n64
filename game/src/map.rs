@@ -30,8 +30,8 @@ impl Map {
         let tiles_on_screen_x = (video_mode.width() / self.data.tile_width) + 2;
         let tiles_on_screen_y = (video_mode.height() / self.data.tile_height) + 2;
 
-        let first_tile_x = camera_tile.x().floor() as i32;
-        let first_tile_y = camera_tile.y().floor() as i32;
+        let first_tile_x = camera_tile.x() as i32;
+        let first_tile_y = camera_tile.y() as i32;
 
         for layer in self.data.layers.chunks_exact(tiles_in_layer) {
             for y in first_tile_y..(first_tile_y + tiles_on_screen_y) {
