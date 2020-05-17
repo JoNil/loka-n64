@@ -101,7 +101,7 @@ fn main() {
         {
             // Audio
 
-            if !n64.audio.all_buffers_are_full() {
+            while !n64.audio.all_buffers_are_full() {
                 for (i, chunk) in audio_buffer.chunks_mut(128).enumerate() {
                     for sample in chunk {
                         if i % 2 == 0 {
