@@ -17,10 +17,7 @@ use components::sprite_drawable;
 use enemy_system::EnemySystem;
 use map::Map;
 use maps::MAP_1;
-use n64::{
-    self, current_time_us, gfx::CommandBuffer, ipl3font, slow_cpu_clear, VideoMode,
-    BUFFER_NO_SAMPLES, N64,
-};
+use n64::{self, current_time_us, gfx::CommandBuffer, ipl3font, slow_cpu_clear, VideoMode, N64};
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
 
@@ -51,12 +48,6 @@ fn main() {
     let mut bullet_system = BulletSystem::new();
     let mut enemy_system = EnemySystem::new();
     let map = Map::load(MAP_1);
-
-    let mut audio_buffer = {
-        let mut buffer = Vec::new();
-        buffer.resize_with(BUFFER_NO_SAMPLES, Default::default);
-        buffer.into_boxed_slice()
-    };
 
     let mut frame_begin_time;
     let mut last_frame_begin_time = current_time_us();
@@ -101,8 +92,8 @@ fn main() {
         {
             // Audio
 
-            while !n64.audio.all_buffers_are_full() {
-                for (i, chunk) in audio_buffer.chunks_mut(128).enumerate() {
+            n64.audio.update(|buffer| {
+                for (i, chunk) in buffer.chunks_mut(128).enumerate() {
                     for sample in chunk {
                         if i % 2 == 0 {
                             *sample = 5000;
@@ -111,11 +102,7 @@ fn main() {
                         }
                     }
                 }
-
-                n64.audio.write_audio_blocking(&audio_buffer);
-            }
-
-            n64.audio.update();
+            });
         }
 
         {

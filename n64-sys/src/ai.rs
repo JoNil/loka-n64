@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
-use crate::sys::{memory_barrier, uncached_addr, uncached_addr_mut, virtual_to_physical};
-use core::intrinsics::volatile_copy_nonoverlapping_memory;
+use crate::sys::{memory_barrier, uncached_addr, virtual_to_physical};
 use core::ptr::{read_volatile, write_volatile};
 
 const AI_BASE: usize = 0xA4500000;
@@ -62,11 +61,7 @@ pub fn init() {
 }
 
 #[inline]
-pub fn write_audio_blocking(buffer: &[i16]) {
-    if buffer.len() != BUFFER_NO_SAMPLES {
-        panic!();
-    }
-
+pub fn write_audio_blocking(mut f: impl FnMut(&mut [i16])) {
     unsafe {
         let next = (NOW_WRITING + 1) % BUFFER_COUNT;
         while BUFFERS_FULL_BITMASK & (1 << next) > 0 {
@@ -76,11 +71,7 @@ pub fn write_audio_blocking(buffer: &[i16]) {
         BUFFERS_FULL_BITMASK |= 1 << next;
         NOW_WRITING = next;
 
-        volatile_copy_nonoverlapping_memory(
-            uncached_addr_mut(BUFFERS[NOW_WRITING].as_mut_ptr()),
-            buffer.as_ptr(),
-            buffer.len(),
-        );
+        f(&mut BUFFERS[NOW_WRITING]);
     }
 }
 
