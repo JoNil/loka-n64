@@ -651,11 +651,13 @@ impl<'a> N64Alloc<'a> {
 }
 
 pub static BYTES_LEFT: AtomicI32 = AtomicI32::new(imp::SCRATCH_LEN_BYTES as i32);
+pub static BYTES_USED: AtomicI32 = AtomicI32::new(0);
 pub use imp::OFFSET as PAGE_OFFSET;
 
 unsafe impl GlobalAlloc for N64Alloc<'static> {
     unsafe fn alloc(&self, layout: Layout) -> *mut u8 {
         BYTES_LEFT.fetch_sub(layout.size() as i32, Ordering::SeqCst);
+        BYTES_USED.fetch_add(layout.size() as i32, Ordering::SeqCst);
 
         match self.alloc_impl(layout) {
             Ok(ptr) => ptr.as_ptr(),
@@ -665,6 +667,7 @@ unsafe impl GlobalAlloc for N64Alloc<'static> {
 
     unsafe fn dealloc(&self, ptr: *mut u8, layout: Layout) {
         BYTES_LEFT.fetch_add(layout.size() as i32, Ordering::SeqCst);
+        BYTES_USED.fetch_sub(layout.size() as i32, Ordering::SeqCst);
 
         if let Some(ptr) = NonNull::new(ptr) {
             self.dealloc_impl(ptr, layout);

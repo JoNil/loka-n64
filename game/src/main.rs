@@ -144,6 +144,13 @@ fn main() {
                     ipl3font::draw_number(
                         &mut fb,
                         100,
+                        160,
+                        RED,
+                        n64_alloc::BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
+                    );
+                    ipl3font::draw_number(
+                        &mut fb,
+                        100,
                         180,
                         RED,
                         n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
