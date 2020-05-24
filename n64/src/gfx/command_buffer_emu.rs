@@ -28,28 +28,40 @@ enum Command {
     },
 }
 
+pub struct CommandBufferCache {
+    commands: Vec<Command>,
+}
+
+impl CommandBufferCache {
+    pub fn new() -> Self {
+        Self {
+            commands: Vec::new(),
+        }
+    }
+}
+
 pub struct CommandBuffer<'a> {
     out_tex: &'a mut TextureMut<'a>,
     clear: bool,
     colored_rect_count: u32,
     textured_rect_count: u32,
-    commands: Vec<Command>,
+    cache: &'a mut CommandBufferCache,
 }
 
 impl<'a> CommandBuffer<'a> {
-    pub fn new(out_tex: &'a mut TextureMut<'a>) -> Self {
-        CommandBuffer {
+    pub fn new(out_tex: &'a mut TextureMut<'a>, cache: &'a mut CommandBufferCache) -> Self {
+        Self {
             out_tex,
             clear: false,
             colored_rect_count: 0,
             textured_rect_count: 0,
-            commands: Vec::new(),
+            cache,
         }
     }
 
     pub fn clear(&mut self) -> &mut Self {
         self.clear = true;
-        self.commands.clear();
+        self.cache.commands.clear();
         self
     }
 
@@ -60,7 +72,7 @@ impl<'a> CommandBuffer<'a> {
         color: Color,
     ) -> &mut Self {
         self.colored_rect_count += 1;
-        self.commands.push(Command::ColoredRect {
+        self.cache.commands.push(Command::ColoredRect {
             upper_left,
             lower_right,
             color,
@@ -76,7 +88,7 @@ impl<'a> CommandBuffer<'a> {
         texture: Texture<'static>,
     ) -> &mut Self {
         self.textured_rect_count += 1;
-        self.commands.push(Command::TexturedRect {
+        self.cache.commands.push(Command::TexturedRect {
             upper_left,
             lower_right,
             texture,
@@ -102,7 +114,7 @@ impl<'a> CommandBuffer<'a> {
                 let mut textured_rect_uniforms =
                     Vec::with_capacity(self.textured_rect_count as usize);
 
-                for command in &self.commands {
+                for command in &self.cache.commands {
                     match command {
                         Command::ColoredRect {
                             upper_left,
@@ -207,7 +219,7 @@ impl<'a> CommandBuffer<'a> {
                     let mut colored_rect_index = 0;
                     let mut textured_rect_index = 0;
 
-                    for command in &self.commands {
+                    for command in &self.cache.commands {
                         match command {
                             Command::ColoredRect { .. } => {
                                 render_pass.set_pipeline(&graphics.colored_rect.pipeline);

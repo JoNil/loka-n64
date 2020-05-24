@@ -75,9 +75,12 @@ macro_rules! impl_system {
             #[allow(dead_code)]
             fn new() -> System {
                 System {
-                    components: alloc::vec::Vec::new(),
-                    entities: alloc::vec::Vec::new(),
-                    map: hashbrown::HashMap::with_hasher(n64_math::BuildFnvHasher),
+                    components: alloc::vec::Vec::with_capacity(256),
+                    entities: alloc::vec::Vec::with_capacity(256),
+                    map: hashbrown::HashMap::with_capacity_and_hasher(
+                        256,
+                        n64_math::BuildFnvHasher,
+                    ),
                 }
             }
 

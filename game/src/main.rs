@@ -7,7 +7,6 @@
 
 extern crate alloc;
 
-use alloc::vec::Vec;
 use bullet_system::BulletSystem;
 use camera::Camera;
 use components::box_drawable;
@@ -17,7 +16,11 @@ use components::sprite_drawable;
 use enemy_system::EnemySystem;
 use map::Map;
 use maps::MAP_1;
-use n64::{self, current_time_us, gfx::CommandBuffer, ipl3font, slow_cpu_clear, VideoMode, N64};
+use n64::{
+    self, current_time_us,
+    gfx::{CommandBuffer, CommandBufferCache},
+    ipl3font, slow_cpu_clear, VideoMode, N64,
+};
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
 
@@ -47,6 +50,7 @@ fn main() {
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
     let mut enemy_system = EnemySystem::new();
+    let mut command_buffer_cache = CommandBufferCache::new();
     let map = Map::load(MAP_1);
 
     let mut frame_begin_time;
@@ -110,7 +114,7 @@ fn main() {
 
             let (colored_rect_count, textured_rect_count) = {
                 let mut fb = n64.framebuffer.next_buffer();
-                let mut cb = CommandBuffer::new(&mut fb);
+                let mut cb = CommandBuffer::new(&mut fb, &mut command_buffer_cache);
 
                 cb.clear();
 

@@ -6,38 +6,54 @@ use rdp_command_builder::*;
 
 mod rdp_command_builder;
 
+pub struct CommandBufferCache {
+    rdp: RdpCommandBuilder,
+}
+
+impl CommandBufferCache {
+    pub fn new() -> Self {
+        Self {
+            rdp: RdpCommandBuilder::new(),
+        }
+    }
+}
+
 pub struct CommandBuffer<'a> {
     out_tex: &'a mut TextureMut<'a>,
-    rdp: RdpCommandBuilder,
     colored_rect_count: u32,
     textured_rect_count: u32,
+    cache: &'a mut CommandBufferCache,
 }
 
 impl<'a> CommandBuffer<'a> {
-    pub fn new(out_tex: &'a mut TextureMut<'a>) -> Self {
-        let mut rdp = RdpCommandBuilder::new();
-        rdp.set_color_image(
-            FORMAT_RGBA,
-            SIZE_OF_PIXEL_16B,
-            out_tex.width as u16,
-            out_tex.data.as_mut_ptr() as *mut u16,
-        )
-        .set_scissor(
-            Vec2::zero(),
-            Vec2::new((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
-        )
-        .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7]);
+    pub fn new(out_tex: &'a mut TextureMut<'a>, cache: &'a mut CommandBufferCache) -> Self {
+        cache.rdp.clear();
+
+        cache
+            .rdp
+            .set_color_image(
+                FORMAT_RGBA,
+                SIZE_OF_PIXEL_16B,
+                out_tex.width as u16,
+                out_tex.data.as_mut_ptr() as *mut u16,
+            )
+            .set_scissor(
+                Vec2::zero(),
+                Vec2::new((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
+            )
+            .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7]);
 
         CommandBuffer {
             out_tex,
-            rdp,
             colored_rect_count: 0,
             textured_rect_count: 0,
+            cache,
         }
     }
 
     pub fn clear(&mut self) -> &mut Self {
-        self.rdp
+        self.cache
+            .rdp
             .set_other_modes(
                 OTHER_MODE_CYCLE_TYPE_FILL
                     | OTHER_MODE_CYCLE_TYPE_COPY
@@ -65,7 +81,8 @@ impl<'a> CommandBuffer<'a> {
         color: Color,
     ) -> &mut Self {
         self.colored_rect_count += 1;
-        self.rdp
+        self.cache
+            .rdp
             .sync_pipe()
             .set_other_modes(
                 OTHER_MODE_CYCLE_TYPE_FILL
@@ -88,7 +105,8 @@ impl<'a> CommandBuffer<'a> {
         texture: Texture<'static>,
     ) -> &mut Self {
         self.textured_rect_count += 1;
-        self.rdp
+        self.cache
+            .rdp
             .sync_tile()
             .set_other_modes(
                 OTHER_MODE_SAMPLE_TYPE
@@ -135,12 +153,14 @@ impl<'a> CommandBuffer<'a> {
     }
 
     pub fn run(mut self, _graphics: &mut Graphics) -> (i32, i32) {
-        self.rdp.sync_full();
-        let commands = self.rdp.build();
+        self.cache.rdp.sync_full();
 
-        unsafe { rdp::run_command_buffer(commands) };
-
-        unsafe { n64_sys::sys::data_cache_hit_invalidate(self.out_tex.data) };
+        unsafe {
+            self.cache.rdp.commands =
+                Some(rdp::swap_commands(self.cache.rdp.commands.take().unwrap()));
+            rdp::run_command_buffer();
+            n64_sys::sys::data_cache_hit_invalidate(self.out_tex.data);
+        }
 
         (
             self.colored_rect_count as i32,

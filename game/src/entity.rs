@@ -81,8 +81,8 @@ pub struct EntitySystem {
 impl EntitySystem {
     pub fn new() -> EntitySystem {
         EntitySystem {
-            generation: Vec::new(),
-            free_indices: VecDeque::new(),
+            generation: Vec::with_capacity(256),
+            free_indices: VecDeque::with_capacity((2 * MINIMUM_FREE_INDICES) as usize),
         }
     }
 

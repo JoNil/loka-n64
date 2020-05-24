@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 use crate::sys::{data_cache_hit_writeback, memory_barrier};
-use alloc::boxed::Box;
+use alloc::vec::Vec;
 use core::ptr::{read_volatile, write_volatile};
 use n64_types::RdpCommand;
 
@@ -46,17 +46,29 @@ fn wait_for_done() {
     while unsafe { read_volatile(RDP_STATUS) & RDP_STATUS_CMB } == 0 {}
 }
 
-static mut COMMANDS: Option<Box<[RdpCommand]>> = None;
+static mut COMMANDS: Option<Vec<RdpCommand>> = None;
 
 #[inline]
-pub unsafe fn run_command_buffer(commands_in: Box<[RdpCommand]>) {
-    if commands_in.len() == 0 {
-        return;
+pub fn init() {
+    unsafe {
+        COMMANDS = Some(Vec::with_capacity(4096));
     }
+}
 
-    COMMANDS = Some(commands_in);
+#[inline]
+pub unsafe fn swap_commands(commands: Vec<RdpCommand>) -> Vec<RdpCommand> {
+    let temp = COMMANDS.take().unwrap();
+    COMMANDS = Some(commands);
+    temp
+}
 
+#[inline]
+pub unsafe fn run_command_buffer() {
     if let Some(commands) = &COMMANDS {
+        if commands.len() == 0 {
+            return;
+        }
+
         data_cache_hit_writeback(&commands);
 
         write_volatile(
