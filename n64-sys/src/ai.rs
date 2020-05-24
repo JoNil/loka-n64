@@ -61,7 +61,7 @@ pub fn init() {
 }
 
 #[inline]
-pub fn write_audio_blocking(mut f: impl FnMut(&mut [i16])) {
+pub fn write_audio_blocking(f: &mut impl FnMut(&mut [i16])) {
     unsafe {
         let next = (NOW_WRITING + 1) % BUFFER_COUNT;
         while BUFFERS_FULL_BITMASK & (1 << next) > 0 {

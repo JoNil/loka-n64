@@ -13,7 +13,7 @@ impl Audio {
     pub fn update(&mut self, mut f: impl FnMut(&mut [i16])) {
 
         while !ai::all_buffers_are_full() {
-            write_audio_blocking(f);
+            ai::write_audio_blocking(&mut f);
         }
 
         ai::submit_audio_data_to_dac();

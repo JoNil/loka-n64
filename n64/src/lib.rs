@@ -2,7 +2,7 @@
 
 extern crate alloc;
 
-pub use audio::{Audio, BUFFER_NO_SAMPLES};
+pub use audio::Audio;
 pub use controllers::Controllers;
 pub use framebuffer::{slow_cpu_clear, Framebuffer};
 pub use graphics::Graphics;

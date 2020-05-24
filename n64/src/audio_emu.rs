@@ -10,8 +10,8 @@ use std::{
 };
 use rubato::{Resampler, SincFixedIn, InterpolationType, InterpolationParameters, WindowFunction};
 
-pub const BUFFER_NO_SAMPLES: usize = 2 * 512;
-pub const BUFFER_COUNT: usize = 4;
+const BUFFER_NO_SAMPLES: usize = 2 * 512;
+const BUFFER_COUNT: usize = 4;
 
 fn get_sample<T>(
     resampler: &mut SincFixedIn<f32>,

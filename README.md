@@ -3,6 +3,8 @@
 ## Build Environment Setup
 
 ```bash
+rustup install nightly
+
 cargo +nightly install -f --git https://github.com/JoNil/cargo-n64 cargo-n64
 
 rustup default nightly
