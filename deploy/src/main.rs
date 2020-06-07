@@ -14,6 +14,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             "build",
             "--ipl3",
             "bootcode.bin",
+            "--",
             "--package",
             "game",
         ])

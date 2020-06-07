@@ -5,7 +5,7 @@
 ```bash
 rustup install nightly-2020-05-14
 
-cargo +nightly-2020-05-14 install -f --git https://github.com/JoNil/cargo-n64 cargo-n64
+cargo +nightly-2020-05-14 install -f --git https://github.com/rust-console/cargo-n64.git cargo-n64
 
 rustup default nightly-2020-05-14
 rustup component add rust-src
