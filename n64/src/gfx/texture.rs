@@ -1,5 +1,3 @@
-use core::mem::size_of;
-use core::slice::from_raw_parts;
 use n64_math::Color;
 use zerocopy::LayoutVerified;
 
@@ -66,8 +64,9 @@ impl StaticTexture {
 
     #[inline]
     pub fn as_texture(self) -> Texture<'static> {
-
-        let data = LayoutVerified::<_, [Color]>::new_slice_unaligned(self.data).unwrap().into_slice();
+        let data = LayoutVerified::<_, [Color]>::new_slice_unaligned(self.data)
+            .unwrap()
+            .into_slice();
 
         Texture {
             width: self.width,
