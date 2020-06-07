@@ -3,11 +3,11 @@
 ## Build Environment Setup
 
 ```bash
-rustup install nightly
+rustup install nightly-2020-05-14
 
-cargo +nightly install -f --git https://github.com/JoNil/cargo-n64 cargo-n64
+cargo +nightly-2020-05-14 install -f --git https://github.com/JoNil/cargo-n64 cargo-n64
 
-rustup default nightly
+rustup default nightly-2020-05-14
 rustup component add rust-src
 rustup default stable
 ```

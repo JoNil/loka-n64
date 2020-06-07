@@ -9,7 +9,7 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     assert!(Command::new("cargo")
         .args(&[
-            "+nightly",
+            "+nightly-2020-05-14",
             "n64",
             "build",
             "--ipl3",
