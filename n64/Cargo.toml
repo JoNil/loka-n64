@@ -10,6 +10,7 @@ edition = "2018"
 cfg-if = "0.1"
 n64-math = { path = "../n64-math" }
 n64-types = { path = "../n64-types" }
+zerocopy = "0.3"
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
 cpal = "0.11"
@@ -19,7 +20,6 @@ lazy_static = "1"
 rubato = { git = "https://github.com/JoNil/rubato.git" }
 wgpu = "0.5"
 winit = "0.22"
-zerocopy = "0.3"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-sys = { path = "../n64-sys" }

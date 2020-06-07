@@ -1,6 +1,7 @@
 use core::mem::size_of;
 use core::slice::from_raw_parts;
 use n64_math::Color;
+use zerocopy::LayoutVerified;
 
 #[derive(Copy, Clone)]
 pub struct Texture<'a> {
@@ -65,15 +66,13 @@ impl StaticTexture {
 
     #[inline]
     pub fn as_texture(self) -> Texture<'static> {
+
+        let data = LayoutVerified::<_, [Color]>::new_slice_unaligned(self.data).unwrap().into_slice();
+
         Texture {
             width: self.width,
             height: self.height,
-            data: unsafe {
-                from_raw_parts(
-                    self.data.as_ptr() as *const _,
-                    self.data.len() / size_of::<Color>(),
-                )
-            },
+            data,
         }
     }
 }

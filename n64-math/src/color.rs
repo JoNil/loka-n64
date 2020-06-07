@@ -1,5 +1,7 @@
-#[derive(Clone, Copy, Debug, Default)]
-#[repr(C)]
+use zerocopy::{AsBytes, FromBytes, Unaligned};
+
+#[repr(C, packed)]
+#[derive(Clone, Copy, Debug, Default, AsBytes, FromBytes, Unaligned)]
 pub struct Color {
     value: u16,
 }

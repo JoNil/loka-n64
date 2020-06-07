@@ -14,6 +14,7 @@ members = [
 default-members = ["deploy"]
 
 [patch.crates-io]
+byteorder = { git = "https://github.com/JoNil/byteorder.git" }
 spirv_cross = { git = "https://github.com/JoNil/spirv_cross.git" }
 
 [profile.dev.package."*"]
