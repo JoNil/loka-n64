@@ -138,13 +138,13 @@ impl<'a> CommandBuffer<'a> {
                 0,
             )
             .load_tile(
-                Vec2::new((texture.width - 1) as f32, (texture.height - 1) as f32),
+                Vec2::new((texture.width) as f32, (texture.height) as f32),
                 Vec2::new(0.0, 0.0),
                 0,
             )
             .texture_rectangle(
                 upper_left,
-                lower_right - Vec2::new(1.0, 1.0),
+                lower_right,
                 0,
                 Vec2::new(0.0, 0.0),
                 Vec2::new(32.0, 32.0),
