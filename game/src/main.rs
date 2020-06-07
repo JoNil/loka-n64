@@ -8,7 +8,6 @@
 
 extern crate alloc;
 
-use alloc::string::String;
 use bullet_system::BulletSystem;
 use camera::Camera;
 use components::box_drawable;
