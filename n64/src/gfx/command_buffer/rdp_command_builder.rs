@@ -302,22 +302,18 @@ impl RdpCommandBuilder {
         let mut st_l = st_top_left.x();
         let mut st_t = st_top_left.y();
 
-        if l < 0.0
-        {
+        if l < 0.0 {
             st_l -= l;
             l = 0.0;
-            if r < 0.0
-            {
+            if r < 0.0 {
                 r = 0.0;
             }
         }
 
-        if t < 0.0
-        {
+        if t < 0.0 {
             st_t -= t;
             t = 0.0;
-            if b < 0.0
-            {
+            if b < 0.0 {
                 b = 0.0;
             }
         }
@@ -329,7 +325,7 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_10_2_round_to_integer(l) << 12)
                 | (to_fixpoint_10_2_round_to_integer(t)),
         ));
-        
+
         self.commands.as_mut().unwrap().push(RdpCommand(
             (to_fixpoint_s_10_5(st_l) << 48)
                 | (to_fixpoint_s_10_5(st_t) << 32)

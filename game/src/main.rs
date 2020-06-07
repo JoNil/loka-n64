@@ -5,7 +5,6 @@
 #![cfg_attr(target_vendor = "nintendo64", feature(panic_info_message))]
 #![cfg_attr(target_vendor = "nintendo64", feature(start))]
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
- 
 
 extern crate alloc;
 
@@ -37,9 +36,9 @@ mod maps;
 mod player;
 mod textures;
 
-const RED: Color    = Color::new(0b10000_00011_00011_1);
+const RED: Color = Color::new(0b10000_00011_00011_1);
 const YELLOW: Color = Color::new(0b10000_10000_00011_1);
-const GREEN: Color  = Color::new(0b00011_10000_00011_1);
+const GREEN: Color = Color::new(0b00011_10000_00011_1);
 const BLUE: Color = Color::new(0b00011_00011_10000_1);
 
 const VIDEO_MODE: VideoMode = VideoMode::Pal {
@@ -228,7 +227,13 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
         );
     }
     if let Some(args) = info.message() {
-        ipl3font::draw_str(&mut out_tex, 15, 45, YELLOW, alloc::format!("{}", args).as_bytes());
+        ipl3font::draw_str(
+            &mut out_tex,
+            15,
+            45,
+            YELLOW,
+            alloc::format!("{}", args).as_bytes(),
+        );
     } else {
         ipl3font::draw_str(&mut out_tex, 15, 45, YELLOW, b"No Message");
     }
