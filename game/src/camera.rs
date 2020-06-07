@@ -8,11 +8,13 @@ pub struct Camera {
 
 impl Camera {
     pub fn new() -> Self {
-        Self { pos: Vec2::zero(), dpad_pressed_last_frame: false }
+        Self {
+            pos: Vec2::zero(),
+            dpad_pressed_last_frame: false,
+        }
     }
 
     pub fn update(&mut self, controllers: &Controllers) {
-
         if controllers.c_up() {
             self.pos.set_y(self.pos.y() - 10.0);
         }

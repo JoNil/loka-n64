@@ -300,7 +300,6 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("tmx")))
     {
-
         if path.to_string_lossy().contains("map_2") {
             continue;
         }
