@@ -58,7 +58,9 @@ static mut LAST_BUFFER: Option<*mut Color> = None;
 
 #[inline]
 pub fn init(video_mode: VideoMode, fb: &mut [Color]) {
-    unsafe { LAST_BUFFER = Some(fb.as_mut_ptr()); }
+    unsafe {
+        LAST_BUFFER = Some(fb.as_mut_ptr());
+    }
     match video_mode {
         VideoMode::Ntsc { .. } => unsafe {
             write_volatile(
