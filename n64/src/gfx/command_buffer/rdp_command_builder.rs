@@ -1,7 +1,6 @@
 #![allow(dead_code)]
 
 use alloc::vec::Vec;
-use libm::roundf;
 use n64_math::{Color, Vec2};
 use n64_types::RdpCommand;
 
@@ -150,10 +149,10 @@ impl RdpCommandBuilder {
     pub fn set_scissor(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
             (COMMAND_SET_SCISSOR << 56)
-                | (to_fixpoint_10_2(top_left.x()) << (32 + 12))
-                | (to_fixpoint_10_2(top_left.y()) << 32)
-                | (to_fixpoint_10_2(bottom_right.x()) << 12)
-                | (to_fixpoint_10_2(bottom_right.y())),
+                | (to_fixpoint_10_2_as_integer(top_left.x()) << (32 + 12))
+                | (to_fixpoint_10_2_as_integer(top_left.y()) << 32)
+                | (to_fixpoint_10_2_as_integer(bottom_right.x()) << 12)
+                | (to_fixpoint_10_2_as_integer(bottom_right.y())),
         ));
 
         self
@@ -264,23 +263,42 @@ impl RdpCommandBuilder {
     ) -> &mut RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
             (COMMAND_LOAD_TILE << 56)
-                | (to_fixpoint_10_2_round_to_integer(bottom_right.x()) << (32 + 12))
-                | (to_fixpoint_10_2_round_to_integer(bottom_right.y()) << 32)
+                | (to_fixpoint_10_2_as_integer(bottom_right.x()) << (32 + 12))
+                | (to_fixpoint_10_2_as_integer(bottom_right.y()) << 32)
                 | ((tile_index as u64) << 24)
-                | (to_fixpoint_10_2_round_to_integer(top_left.x()) << 12)
-                | (to_fixpoint_10_2_round_to_integer(top_left.y())),
+                | (to_fixpoint_10_2_as_integer(top_left.x()) << 12)
+                | (to_fixpoint_10_2_as_integer(top_left.y())),
         ));
         self
     }
 
     #[inline]
     pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
+        let mut l = top_left.x();
+        let mut t = top_left.y();
+        let mut r = bottom_right.x();
+        let mut b = bottom_right.y();
+
+        if l < 0.0 {
+            l = 0.0;
+            if r < 0.0 {
+                r = 0.0;
+            }
+        }
+
+        if t < 0.0 {
+            t = 0.0;
+            if b < 0.0 {
+                b = 0.0;
+            }
+        }
+
         self.commands.as_mut().unwrap().push(RdpCommand(
             (COMMAND_FILL_RECTANGLE << 56)
-                | (to_fixpoint_10_2(bottom_right.x()) << (32 + 12))
-                | (to_fixpoint_10_2(bottom_right.y()) << 32)
-                | (to_fixpoint_10_2(top_left.x()) << 12)
-                | (to_fixpoint_10_2(top_left.y())),
+                | (to_fixpoint_10_2_as_integer(r) << (32 + 12))
+                | (to_fixpoint_10_2_as_integer(b) << 32)
+                | (to_fixpoint_10_2_as_integer(l) << 12)
+                | (to_fixpoint_10_2_as_integer(t)),
         ));
         self
     }
@@ -320,10 +338,10 @@ impl RdpCommandBuilder {
 
         self.commands.as_mut().unwrap().push(RdpCommand(
             (COMMAND_TEXTURE_RECTANGLE << 56)
-                | (to_fixpoint_10_2_round_to_integer(r) << (32 + 12))
-                | (to_fixpoint_10_2_round_to_integer(b) << 32)
-                | (to_fixpoint_10_2_round_to_integer(l) << 12)
-                | (to_fixpoint_10_2_round_to_integer(t)),
+                | (to_fixpoint_10_2_as_integer(r) << (32 + 12))
+                | (to_fixpoint_10_2_as_integer(b) << 32)
+                | (to_fixpoint_10_2_as_integer(l) << 12)
+                | (to_fixpoint_10_2_as_integer(t)),
         ));
 
         self.commands.as_mut().unwrap().push(RdpCommand(
@@ -364,13 +382,8 @@ impl RdpCommandBuilder {
 }
 
 #[inline]
-fn to_fixpoint_10_2(val: f32) -> u64 {
-    ((roundf(val * ((1 << 2) as f32)) as i16) & 0xfff) as u64
-}
-
-#[inline]
-fn to_fixpoint_10_2_round_to_integer(val: f32) -> u64 {
-    (((roundf(val) * ((1 << 2) as f32)) as i16) & 0xfff) as u64
+fn to_fixpoint_10_2_as_integer(val: f32) -> u64 {
+    ((val as i16) * (1 << 2) & 0xffc) as u64
 }
 
 #[inline]
