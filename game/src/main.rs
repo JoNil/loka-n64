@@ -33,6 +33,8 @@ mod entity;
 mod map;
 mod maps;
 mod player;
+mod sound;
+mod sounds;
 mod textures;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);

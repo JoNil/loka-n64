@@ -11,6 +11,7 @@ use std::{
     path::{Path, PathBuf},
 };
 use tiled::{Map, Tileset};
+use zerocopy::AsBytes;
 
 struct Image {
     width: i32,
@@ -89,8 +90,23 @@ fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
     })
 }
 
-fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
-    let mut res = String::new();
+#[rustfmt::skip]
+macro_rules! TEXTURE_TEMPLATE { () => {
+r##"pub static {name}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes!({path:?}));
+"##
+}; }
+
+#[rustfmt::skip]
+macro_rules! TEXTURES_TEMPLATE { () => {
+r##"// This file is generated
+
+use n64::gfx::StaticTexture;
+
+{textures}"##
+}; }
+
+fn parse_textures() -> Result<(), Box<dyn Error>> {
+    let mut textures = String::new();
 
     for path in fs::read_dir("textures")?
         .filter_map(|e| e.ok())
@@ -103,8 +119,8 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
             write_binary_file_if_changed(&out_path, &image.data)?;
 
-            res.push_str(&format!(
-                "pub static {name}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes!({path:?}));\n",
+            textures.push_str(&format!(
+                TEXTURE_TEMPLATE!(),
                 name = name.to_uppercase(),
                 width = image.width,
                 height = image.height,
@@ -113,7 +129,9 @@ fn parse_textures(out_dir: &str) -> Result<(), Box<dyn Error>> {
         }
     }
 
-    write_file_if_changed(Path::new(out_dir).join("texture_includes.rs"), res)?;
+    let textures = format!(TEXTURES_TEMPLATE!(), textures = textures);
+    
+    write_file_if_changed(env::current_dir()?.join("src").join("textures.rs"), textures)?;
 
     Ok(())
 }
@@ -155,10 +173,6 @@ fn load_tile_image(
     let tile_height = tileset.tile_height;
     let tile_size = tile_width * tile_height;
 
-    if let Some(source) = &tileset.source {
-        println!("rerun-if-changed={}", source);
-    }
-
     for tileset_image in tileset.images.iter() {
         let image_size = (tileset_image.width * tileset_image.height) as u32;
         let image_tiles = image_size / tile_size;
@@ -173,7 +187,12 @@ fn load_tile_image(
         if effective_gid < image_tiles {
             let image = tileset_image_cache
                 .entry(image_path.clone())
-                .or_insert_with(|| load_png(image_path).unwrap());
+                .or_insert_with(|| {
+                    if let Some(source) = &tileset.source {
+                        println!("rerun-if-changed={}", source);
+                    }
+                    load_png(image_path).unwrap()
+                });
 
             let mut res = Vec::new();
             res.resize_with(2 * tile_size as usize, Default::default);
@@ -279,7 +298,6 @@ use n64::gfx::StaticTexture;
 
 {tiles}
 {maps}
-
 "##
 }; }
 
@@ -369,7 +387,7 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             map_width = map_width,
             map_height = map_height,
             tile_width = tile_width,
-            tile_height = tile_height,
+                tile_height = tile_height,
             map_data_path = map_data_path,
         );
 
@@ -387,11 +405,82 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
+fn load_wav(path: impl AsRef<Path>) -> Result<Vec<i16>, Box<dyn Error>> {
+    println!("rerun-if-changed={}", path.as_ref().to_string_lossy());
+
+    let reader = hound::WavReader::open(path.as_ref())
+        .map_err(|e| format!("Unable to load: {}, {}", path.as_ref().to_string_lossy(), e))?;
+
+    let spec = reader.spec();
+
+    assert!(spec.channels == 2 || spec.channels == 1);
+    assert!(spec.sample_rate == 22050);
+    assert!(spec.bits_per_sample == 16);
+    assert!(spec.sample_format == hound::SampleFormat::Int);
+
+    let mut data = Vec::with_capacity(2 * reader.duration() as usize);
+
+    for sample in reader.into_samples::<i16>().filter_map(|e| e.ok()) {
+        data.push(sample);
+
+        if spec.channels == 1 {
+            data.push(sample);
+        }
+    }
+
+    Ok(data)
+}
+
+#[rustfmt::skip]
+macro_rules! SOUND_TEMPLATE { () => {
+r##"pub static {name}: StaticSoundData = StaticSoundData {{ data: include_bytes!({path:?}) }};
+"##
+}; }
+
+#[rustfmt::skip]
+macro_rules! SOUNDS_TEMPLATE { () => {
+r##"// This file is generated
+
+use crate::sound::StaticSoundData;
+
+{sounds}"##
+}; }
+
+fn parse_sounds() -> Result<(), Box<dyn Error>> {
+    let mut sounds = String::new();
+
+    for path in fs::read_dir("sounds")?
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+        .filter(|path| path.extension() == Some(OsStr::new("wav")))
+    {
+        if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
+            let out_path = path.canonicalize()?.with_extension("nsnd");
+            let wav = load_wav(dbg!(&path))?;
+
+            write_binary_file_if_changed(&out_path, wav.as_bytes())?;
+
+            sounds.push_str(&format!(
+                SOUND_TEMPLATE!(),
+                name = name.to_uppercase(),
+                path = out_path,
+            ));
+        }
+    }
+
+    let sounds = format!(SOUNDS_TEMPLATE!(), sounds = sounds);
+
+    write_file_if_changed(env::current_dir()?.join("src").join("sounds.rs"), sounds)?;
+
+    Ok(())
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let out_dir = env::var("OUT_DIR")?;
 
-    parse_textures(&out_dir)?;
+    parse_textures()?;
     parse_maps(&out_dir)?;
+    parse_sounds()?;
 
     Ok(())
 }

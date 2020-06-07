@@ -340,6 +340,7 @@ impl RdpCommandBuilder {
             (COMMAND_TEXTURE_RECTANGLE << 56)
                 | (to_fixpoint_10_2_as_integer(r) << (32 + 12))
                 | (to_fixpoint_10_2_as_integer(b) << 32)
+                | ((tile_index as u64) << 24)
                 | (to_fixpoint_10_2_as_integer(l) << 12)
                 | (to_fixpoint_10_2_as_integer(t)),
         ));
