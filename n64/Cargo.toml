@@ -22,4 +22,5 @@ winit = "0.22"
 zerocopy = "0.3"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
+libm = "0.2"
 n64-sys = { path = "../n64-sys" }
