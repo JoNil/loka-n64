@@ -1,3 +1,4 @@
+use crate::{current_time_us, framebuffer::Framebuffer, VideoMode};
 use colored_rect::ColoredRect;
 use copy_tex::CopyTex;
 use std::collections::HashSet;
@@ -14,7 +15,6 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
-use crate::{framebuffer::Framebuffer, VideoMode, current_time_us};
 
 pub(crate) mod colored_rect;
 pub(crate) mod copy_tex;
@@ -84,8 +84,10 @@ impl Graphics {
         let window = {
             let mut builder = winit::window::WindowBuilder::new();
             builder = builder.with_title("N64");
-            builder = builder
-                .with_inner_size(winit::dpi::LogicalSize::new(SCALE * video_mode.width(), SCALE * video_mode.height()));
+            builder = builder.with_inner_size(winit::dpi::LogicalSize::new(
+                SCALE * video_mode.width(),
+                SCALE * video_mode.height(),
+            ));
             builder = builder.with_visible(false);
             EVENT_LOOP.with(|event_loop| builder.build(&event_loop.lock().unwrap()).unwrap())
         };
@@ -150,7 +152,7 @@ impl Graphics {
                     device.poll(wgpu::Maintain::Poll);
                 }
             }))
-       };
+        };
 
         Self {
             video_mode,
@@ -242,7 +244,6 @@ impl Graphics {
     }
 
     pub(crate) fn render_cpu_buffer(&mut self, framebuffer: &mut Framebuffer) -> i64 {
-
         let fb = framebuffer.next_buffer();
 
         for (pixel, data) in fb.data.iter().zip(self.copy_tex.src_buffer.chunks_mut(4)) {
@@ -318,7 +319,6 @@ impl Graphics {
     }
 
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
-
         self.poll_events(framebuffer);
         let frame_end_time = self.render_cpu_buffer(framebuffer);
         framebuffer.swap_buffer();

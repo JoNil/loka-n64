@@ -28,7 +28,10 @@ impl ColoredRect {
             bindings: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
                 visibility: wgpu::ShaderStage::FRAGMENT | wgpu::ShaderStage::VERTEX,
-                ty: wgpu::BindingType::StorageBuffer { dynamic: false, readonly: true },
+                ty: wgpu::BindingType::StorageBuffer {
+                    dynamic: false,
+                    readonly: true,
+                },
             }],
             label: None,
         });
@@ -42,16 +45,25 @@ impl ColoredRect {
                 include_str!("shaders/colored_rect.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
-            .map_err(|e| { println!("{}", e); "Unable to compile shaders/colored_rect.vert" }).unwrap(),
+            .map_err(|e| {
+                println!("{}", e);
+                "Unable to compile shaders/colored_rect.vert"
+            })
+            .unwrap(),
         )
-        .map_err(|e| format!("{}", e)).unwrap();
+        .map_err(|e| format!("{}", e))
+        .unwrap();
 
         let fs_bytes = wgpu::read_spirv(
             glsl_to_spirv::compile(
                 include_str!("shaders/colored_rect.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
-            .map_err(|e| { println!("{}", e); "Unable to compile shaders/colored_rect.frag" }).unwrap(),
+            .map_err(|e| {
+                println!("{}", e);
+                "Unable to compile shaders/colored_rect.frag"
+            })
+            .unwrap(),
         )
         .unwrap();
 
@@ -100,13 +112,13 @@ impl ColoredRect {
             alpha_to_coverage_enabled: false,
         });
 
-        let shader_storage_buffer =device.create_buffer(&wgpu::BufferDescriptor {
+        let shader_storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: MAX_COLORED_RECTS * mem::size_of::<ColoredRectUniforms>() as u64,
             usage: wgpu::BufferUsage::STORAGE_READ | wgpu::BufferUsage::COPY_DST,
         });
 
-        let bind_group =device.create_bind_group(&wgpu::BindGroupDescriptor {
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             layout: &bind_group_layout,
             bindings: &[wgpu::Binding {
                 binding: 0,

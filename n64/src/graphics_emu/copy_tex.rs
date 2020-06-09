@@ -1,4 +1,4 @@
-use crate::{VideoMode, graphics_emu::{Vertex}};
+use crate::{graphics_emu::Vertex, VideoMode};
 use std::mem;
 
 pub(crate) struct CopyTex {
@@ -16,11 +16,17 @@ pub(crate) struct CopyTex {
 }
 
 impl CopyTex {
-    pub(crate) fn new(device: &wgpu::Device, swap_chain_desc: &wgpu::SwapChainDescriptor, video_mode: VideoMode) -> Self {
-
+    pub(crate) fn new(
+        device: &wgpu::Device,
+        swap_chain_desc: &wgpu::SwapChainDescriptor,
+        video_mode: VideoMode,
+    ) -> Self {
         let src_buffer = {
             let mut buffer = Vec::new();
-            buffer.resize_with((4 * video_mode.width() * video_mode.height()) as usize, || 0);
+            buffer.resize_with(
+                (4 * video_mode.width() * video_mode.height()) as usize,
+                || 0,
+            );
             buffer.into_boxed_slice()
         };
 
@@ -53,26 +59,25 @@ impl CopyTex {
             compare: wgpu::CompareFunction::Always,
         });
 
-        let bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                label: None,
-                bindings: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStage::FRAGMENT,
-                        ty: wgpu::BindingType::SampledTexture {
-                            multisampled: false,
-                            component_type: wgpu::TextureComponentType::Uint,
-                            dimension: wgpu::TextureViewDimension::D2,
-                        },
+        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+            label: None,
+            bindings: &[
+                wgpu::BindGroupLayoutEntry {
+                    binding: 0,
+                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    ty: wgpu::BindingType::SampledTexture {
+                        multisampled: false,
+                        component_type: wgpu::TextureComponentType::Uint,
+                        dimension: wgpu::TextureViewDimension::D2,
                     },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStage::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler { comparison: false },
-                    },
-                ],
-            });
+                },
+                wgpu::BindGroupLayoutEntry {
+                    binding: 1,
+                    visibility: wgpu::ShaderStage::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler { comparison: false },
+                },
+            ],
+        });
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
@@ -89,17 +94,20 @@ impl CopyTex {
             ],
         });
 
-        let pipeline_layout =
-            device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                bind_group_layouts: &[&bind_group_layout],
-            });
+        let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            bind_group_layouts: &[&bind_group_layout],
+        });
 
         let vs_bytes = wgpu::read_spirv(
             glsl_to_spirv::compile(
                 include_str!("shaders/copy_tex.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
-            .map_err(|e| { println!("{}", e); "Unable to compile shaders/copy_tex.vert" }).unwrap(),
+            .map_err(|e| {
+                println!("{}", e);
+                "Unable to compile shaders/copy_tex.vert"
+            })
+            .unwrap(),
         )
         .unwrap();
 
@@ -108,7 +116,11 @@ impl CopyTex {
                 include_str!("shaders/copy_tex.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
-            .map_err(|e| { println!("{}", e); "Unable to compile shaders/frag.vert" }).unwrap(),
+            .map_err(|e| {
+                println!("{}", e);
+                "Unable to compile shaders/frag.vert"
+            })
+            .unwrap(),
         )
         .unwrap();
 

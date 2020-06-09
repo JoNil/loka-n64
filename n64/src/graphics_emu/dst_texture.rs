@@ -1,4 +1,3 @@
-
 pub(crate) static TEXUTRE_FORMAT: wgpu::TextureFormat = wgpu::TextureFormat::Rgba8Unorm;
 
 pub(crate) struct DstTexture {

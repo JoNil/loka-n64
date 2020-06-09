@@ -1,10 +1,7 @@
-use crate::{
-    gfx::Texture,
-    graphics_emu::Vertex,
-};
+use crate::{gfx::Texture, graphics_emu::Vertex};
+use n64_math::Color;
 use std::{collections::HashMap, mem};
 use zerocopy::{AsBytes, FromBytes};
-use n64_math::Color;
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
 
@@ -36,13 +33,15 @@ pub(crate) struct TexturedRect {
 
 impl TexturedRect {
     pub(crate) fn new(device: &wgpu::Device, dst_tex_format: wgpu::TextureFormat) -> Self {
-
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             bindings: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStage::VERTEX,
-                    ty: wgpu::BindingType::StorageBuffer  { dynamic: false, readonly: true },
+                    ty: wgpu::BindingType::StorageBuffer {
+                        dynamic: false,
+                        readonly: true,
+                    },
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
@@ -71,7 +70,11 @@ impl TexturedRect {
                 include_str!("shaders/textured_rect.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
-            .map_err(|e| { println!("{}", e); "Unable to compile shaders/textured_rect.vert" }).unwrap(),
+            .map_err(|e| {
+                println!("{}", e);
+                "Unable to compile shaders/textured_rect.vert"
+            })
+            .unwrap(),
         )
         .unwrap();
 
@@ -80,7 +83,11 @@ impl TexturedRect {
                 include_str!("shaders/textured_rect.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
-            .map_err(|e| { println!("{}", e); "Unable to compile shaders/textured_rect.frag" }).unwrap(),
+            .map_err(|e| {
+                println!("{}", e);
+                "Unable to compile shaders/textured_rect.frag"
+            })
+            .unwrap(),
         )
         .unwrap();
 
@@ -205,29 +212,28 @@ impl TexturedRect {
         });
         let tex_view = tex.create_default_view();
 
-        let bind_group = 
-            device
-            .create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &self.bind_group_layout,
-                bindings: &[
-                    wgpu::Binding {
-                        binding: 0,
-                        resource: wgpu::BindingResource::Buffer {
-                            buffer: &self.shader_storage_buffer,
-                            range: 0..(MAX_TEXTURED_RECTS * mem::size_of::<TexturedRectUniforms>() as u64),
-                        },
+        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
+            layout: &self.bind_group_layout,
+            bindings: &[
+                wgpu::Binding {
+                    binding: 0,
+                    resource: wgpu::BindingResource::Buffer {
+                        buffer: &self.shader_storage_buffer,
+                        range: 0..(MAX_TEXTURED_RECTS
+                            * mem::size_of::<TexturedRectUniforms>() as u64),
                     },
-                    wgpu::Binding {
-                        binding: 1,
-                        resource: wgpu::BindingResource::TextureView(&tex_view),
-                    },
-                    wgpu::Binding {
-                        binding: 2,
-                        resource: wgpu::BindingResource::Sampler(&self.sampler),
-                    },
-                ],
-                label: None,
-            });
+                },
+                wgpu::Binding {
+                    binding: 1,
+                    resource: wgpu::BindingResource::TextureView(&tex_view),
+                },
+                wgpu::Binding {
+                    binding: 2,
+                    resource: wgpu::BindingResource::Sampler(&self.sampler),
+                },
+            ],
+            label: None,
+        });
 
         let mut temp_buffer: Box<[u8]> = {
             let mut temp_buffer = Vec::new();
@@ -242,7 +248,7 @@ impl TexturedRect {
             .data
             .iter()
             .zip(temp_buffer.chunks_exact_mut(4 as usize))
-        {            
+        {
             let rgba = pixel.be_to_le().to_rgba();
 
             data[0] = (rgba[0] * 255.0) as u8;
@@ -269,12 +275,15 @@ impl TexturedRect {
             tex_extent,
         );
 
-        self.texture_cache.insert(texture.data as *const _, UploadedTexture {
-            tex_format,
-            tex_extent,
-            tex,
-            tex_view,
-            bind_group,
-        });
+        self.texture_cache.insert(
+            texture.data as *const _,
+            UploadedTexture {
+                tex_format,
+                tex_extent,
+                tex,
+                tex_view,
+                bind_group,
+            },
+        );
     }
 }

@@ -3,12 +3,12 @@ use cpal::{
     traits::{DeviceTrait, EventLoopTrait, HostTrait},
     StreamData, UnknownTypeOutputBuffer,
 };
+use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
 use std::error::Error;
 use std::{
     sync::mpsc::{channel, Receiver, Sender},
     thread,
 };
-use rubato::{Resampler, SincFixedIn, InterpolationType, InterpolationParameters, WindowFunction};
 
 const BUFFER_NO_SAMPLES: usize = 2 * 512;
 const BUFFER_COUNT: usize = 4;
@@ -23,8 +23,7 @@ fn get_sample<T>(
 ) -> T {
     if current_buffer.is_none() {
         if let Ok(buffer) = to_audio_receiver.try_recv() {
-
-            let mut channels = Vec::new();    
+            let mut channels = Vec::new();
             channels.push(Vec::with_capacity(BUFFER_NO_SAMPLES / 2));
             channels.push(Vec::with_capacity(BUFFER_NO_SAMPLES / 2));
 
@@ -35,7 +34,8 @@ fn get_sample<T>(
 
             let resampled_buffers = resampler.process(&channels).unwrap();
 
-            let mut converted_buffer = Vec::with_capacity(resampled_buffers[0].len() + resampled_buffers[1].len());
+            let mut converted_buffer =
+                Vec::with_capacity(resampled_buffers[0].len() + resampled_buffers[1].len());
 
             for samples in resampled_buffers[0].iter().zip(resampled_buffers[1].iter()) {
                 converted_buffer.push(*samples.0);

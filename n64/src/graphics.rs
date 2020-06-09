@@ -1,10 +1,9 @@
-use n64_sys::{vi, rdp};
-use crate::{framebuffer::Framebuffer, VideoMode, current_time_us};
+use crate::{current_time_us, framebuffer::Framebuffer, VideoMode};
+use n64_sys::{rdp, vi};
 
 pub struct Graphics {}
 
 impl Graphics {
-
     #[inline]
     pub(crate) fn new(video_mode: VideoMode, framebuffer: &mut Framebuffer) -> Self {
         vi::init(video_mode, framebuffer.next_buffer().data);
@@ -14,7 +13,6 @@ impl Graphics {
 
     #[inline]
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
-        
         let fb = framebuffer.next_buffer();
 
         unsafe { n64_sys::sys::data_cache_hit_writeback(fb.data) };
