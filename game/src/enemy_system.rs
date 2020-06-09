@@ -3,7 +3,7 @@ use crate::components::box_drawable::{self, BoxDrawableComponent};
 use crate::components::health::{self, HealthComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
-use crate::Player;
+use crate::{sound_mixer::SoundMixer, Player, sounds::{SHOOT_0, EXPLOSION_0}};
 use alloc::vec::Vec;
 use n64::current_time_us;
 use n64_math::{self, Color, Vec2};
@@ -62,19 +62,21 @@ impl EnemySystem {
         });
     }
 
-    pub fn update(&mut self, bullet_system: &mut BulletSystem, player: &mut Player) {
+    pub fn update(&mut self, bullet_system: &mut BulletSystem, player: &mut Player, sound_mixer: &mut SoundMixer) {
         let mut delete_list = Vec::new();
 
         let now = current_time_us();
 
         for (i, enemy) in self.enemies_mut().iter_mut().enumerate() {
             if !health::is_alive(&enemy.entity) {
+                //sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
                 player.add_score(1000);
                 delete_list.push(i);
             }
 
             if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
                 if let Some(movable) = movable::get_component(&enemy.entity) {
+                    //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                     bullet_system.shoot_bullet_enemy(
                         movable.pos + Vec2::new(0.0, ENEMY_SIZE.y() / 2.0),
                         Vec2::new(0.0, 0.65),

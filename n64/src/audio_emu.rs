@@ -74,6 +74,7 @@ fn audio_thread(
         .ok_or("No output device available")?;
 
     let format = device.default_output_format()?;
+    assert!(format.channels == 2);
 
     let event_loop = host.event_loop();
     let stream_id = event_loop.build_output_stream(&device, &format)?;

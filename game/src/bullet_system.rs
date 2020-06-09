@@ -29,13 +29,14 @@ impl BulletSystem {
     }
 
     pub fn shoot_bullet(&mut self, pos: Vec2, speed: Vec2) {
+
         let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
         let entity = entity::create();
         movable::add(
             &entity,
             MovableComponent {
-                pos: pos,
+                pos,
                 speed: Vec2::new(speed.x() + spread, speed.y()),
             },
         );
@@ -74,7 +75,7 @@ impl BulletSystem {
         );
 
         self.bullets.push(Bullet {
-            entity: entity,
+            entity,
             can_hit_player: true,
             can_hit_enemy: false,
         });

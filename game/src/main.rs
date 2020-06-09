@@ -24,6 +24,7 @@ use n64::{
 };
 use n64_math::Color;
 use player::{Player, SHIP_SIZE};
+use sound_mixer::SoundMixer;
 
 mod bullet_system;
 mod camera;
@@ -34,6 +35,7 @@ mod map;
 mod maps;
 mod player;
 mod sound;
+mod sound_mixer;
 mod sounds;
 mod textures;
 
@@ -50,6 +52,7 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);
 
+    let mut sound_mixer = SoundMixer::new();
     let mut camera = Camera::new();
     let mut player = Player::new();
     let mut bullet_system = BulletSystem::new();
@@ -84,9 +87,9 @@ fn main() {
 
             camera.update(&n64.controllers);
 
-            enemy_system.update(&mut bullet_system, &mut player);
+            enemy_system.update(&mut bullet_system, &mut player, &mut sound_mixer);
 
-            player.update(&n64.controllers, &mut bullet_system);
+            player.update(&n64.controllers, &mut bullet_system, &mut sound_mixer);
 
             bullet_system.update(&mut enemy_system, &mut player);
 
@@ -101,15 +104,7 @@ fn main() {
             // Audio
 
             n64.audio.update(|buffer| {
-                for (i, chunk) in buffer.chunks_mut(128).enumerate() {
-                    for sample in chunk {
-                        if i % 2 == 0 {
-                            *sample = 5000;
-                        } else {
-                            *sample = -5000;
-                        }
-                    }
-                }
+                sound_mixer.mix(buffer);
             });
         }
 

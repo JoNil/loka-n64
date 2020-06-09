@@ -1,13 +1,10 @@
 # loka-n64
 
-- Load and draw level
-- Camera with proper coordinate system
-- Culling of sprites
-- Audio emu
-- Sound effects
+- Load enemies from level
 
 - Rotate textured quad
-
+- Culling of sprites
+- Sort draws by texture
 - Cpu profiling
 
 Optimization:
