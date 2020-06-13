@@ -159,7 +159,7 @@ impl<'a> CommandBuffer<'a> {
             self.cache.rdp.commands =
                 Some(rdp::swap_commands(self.cache.rdp.commands.take().unwrap()));
             rdp::run_command_buffer();
-            n64_sys::sys::data_cache_hit_invalidate(self.out_tex.data);
+            //n64_sys::sys::data_cache_hit_invalidate(self.out_tex.data);
         }
 
         (

@@ -15,7 +15,7 @@ impl Graphics {
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
         let fb = framebuffer.next_buffer();
 
-        unsafe { n64_sys::sys::data_cache_hit_writeback(fb.data) };
+        //unsafe { n64_sys::sys::data_cache_hit_writeback(fb.data) };
 
         let frame_end_time = current_time_us();
 
