@@ -101,7 +101,7 @@ pub fn submit_audio_data_to_dac() {
 
             write_volatile(
                 AI_ADDR,
-                virtual_to_physical(uncached_addr(BUFFERS[NOW_PLAYING].as_ptr())),
+                virtual_to_physical(BUFFERS[NOW_PLAYING].as_ptr()),
             );
             memory_barrier();
             write_volatile(AI_LENGTH, (BUFFER_NO_SAMPLES * 2) & !7);
