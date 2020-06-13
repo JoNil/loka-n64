@@ -67,7 +67,7 @@ impl Audio {
                     break;
                 }
 
-                ai::submit_audio_data_to_dac(&self.buffers[next]);
+                unsafe { ai::submit_audio_data_to_dac(&self.buffers[next]) };
             }
         }
     }

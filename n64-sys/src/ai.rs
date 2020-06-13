@@ -30,7 +30,7 @@ pub fn init() {
             _ => AI_NTSC_DACRATE,
         };
 
-        write_volatile(AI_DACRATE, ((2 * clockrate / FREQUENCY) + 1) / 2 - 1);
+        write_volatile(AI_DACRATE, (clockrate / FREQUENCY) - 1);
         write_volatile(AI_SAMPLESIZE, 15);
     }
 }
@@ -46,11 +46,9 @@ pub fn full() -> bool {
 }
 
 #[inline]
-pub fn submit_audio_data_to_dac(buffer: &[i16]) {
-    unsafe {
-        data_cache_hit_writeback(buffer);
-        write_volatile(AI_ADDR,virtual_to_physical(buffer.as_ptr()));
-        write_volatile(AI_LENGTH, buffer.len() & !7);
-        write_volatile(AI_CONTROL, 1);
-    }
+pub unsafe fn submit_audio_data_to_dac(buffer: &[i16]) {
+    data_cache_hit_writeback(buffer);
+    write_volatile(AI_ADDR,virtual_to_physical(buffer.as_ptr()));
+    write_volatile(AI_LENGTH, buffer.len() & !7);
+    write_volatile(AI_CONTROL, 1);
 }
