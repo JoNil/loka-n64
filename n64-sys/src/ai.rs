@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::sys::{memory_barrier, uncached_addr, virtual_to_physical};
+use crate::sys::{memory_barrier, uncached_addr, virtual_to_physical, data_cache_hit_writeback};
 use core::ptr::{read_volatile, write_volatile};
 
 const AI_BASE: usize = 0xA4500000;
@@ -64,9 +64,7 @@ pub fn init() {
 pub fn write_audio_blocking(f: &mut impl FnMut(&mut [i16])) {
     unsafe {
         let next = (NOW_WRITING + 1) % BUFFER_COUNT;
-        while BUFFERS_FULL_BITMASK & (1 << next) > 0 {
-            submit_audio_data_to_dac();
-        }
+        assert!(BUFFERS_FULL_BITMASK & (1 << next) == 0);
 
         BUFFERS_FULL_BITMASK |= 1 << next;
         NOW_WRITING = next;
@@ -98,6 +96,8 @@ pub fn submit_audio_data_to_dac() {
 
             // Set up DMA
             NOW_PLAYING = next;
+
+            data_cache_hit_writeback(&BUFFERS[NOW_PLAYING]);
 
             write_volatile(
                 AI_ADDR,
