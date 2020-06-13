@@ -102,7 +102,6 @@ fn main() {
 
         {
             // Audio
-
             n64.audio.update(|buffer| {
                 sound_mixer.mix(buffer);
             });
