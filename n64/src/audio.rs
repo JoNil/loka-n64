@@ -4,7 +4,7 @@ use alloc::vec::Vec;
 use alloc::boxed::Box;
 
 const BUFFER_COUNT: usize = 4;
-const BUFFER_NO_SAMPLES: usize = 2 * 512;
+const BUFFER_NO_SAMPLES: usize = 2 * 880;
 
 pub struct Audio {
     free_buffers: VecDeque<Box<[i16]>>,
