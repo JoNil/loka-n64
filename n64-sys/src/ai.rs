@@ -30,7 +30,7 @@ pub fn init() {
             _ => AI_NTSC_DACRATE,
         };
 
-        write_volatile(AI_DACRATE, (clockrate / FREQUENCY) - 1);
+        write_volatile(AI_DACRATE, (2 * AI_PAL_DACRATE / FREQUENCY) - 1);
         write_volatile(AI_SAMPLESIZE, 15);
     }
 }

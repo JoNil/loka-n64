@@ -35,9 +35,20 @@ impl SoundMixer {
                 if playing_sound.current_sample >= playing_sound.sound.samples.len() {
                     playing_sound.done = true;
                 } else {
-                    accumulator = accumulator.saturating_add(
-                        playing_sound.sound.samples[playing_sound.current_sample] as i32,
-                    );
+                    #[cfg(target_vendor = "nintendo64")]
+                    {
+                        accumulator = accumulator.saturating_add(
+                            playing_sound.sound.samples[playing_sound.current_sample] as i32,
+                        );
+                    }
+
+                    #[cfg(not(target_vendor = "nintendo64"))]
+                    {
+                        accumulator = accumulator.saturating_add(
+                            playing_sound.sound.samples[playing_sound.current_sample].swap_bytes() as i32,
+                        );
+                    }
+
                     playing_sound.current_sample += 1;
                 }
             }

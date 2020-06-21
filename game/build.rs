@@ -421,10 +421,10 @@ fn load_wav(path: impl AsRef<Path>) -> Result<Vec<i16>, Box<dyn Error>> {
     let mut data = Vec::with_capacity(2 * reader.duration() as usize);
 
     for sample in reader.into_samples::<i16>().filter_map(|e| e.ok()) {
-        data.push(sample);
+        data.push(sample.swap_bytes());
 
         if spec.channels == 1 {
-            data.push(sample);
+            data.push(sample.swap_bytes());
         }
     }
 
