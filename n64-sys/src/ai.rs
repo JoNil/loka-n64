@@ -1,4 +1,4 @@
-use crate::sys::{memory_barrier, uncached_addr, virtual_to_physical, data_cache_hit_writeback};
+use crate::sys::{virtual_to_physical, data_cache_hit_writeback};
 use core::ptr::{read_volatile, write_volatile};
 
 const AI_BASE: usize = 0xA4500000;

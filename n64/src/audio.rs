@@ -1,73 +1,61 @@
 use n64_sys::ai;
+use alloc::collections::VecDeque;
+use alloc::vec::Vec;
+use alloc::boxed::Box;
 
 const BUFFER_COUNT: usize = 4;
 const BUFFER_NO_SAMPLES: usize = 2 * 512;
 
 pub struct Audio {
-    buffers: [[i16; BUFFER_NO_SAMPLES]; BUFFER_COUNT],
-    now_playing: usize,
-    now_writing: usize,
-    buffers_full_bitmask: usize,
+    free_buffers: VecDeque<Box<[i16]>>,
+    ready_buffers: VecDeque<Box<[i16]>>,
+    playing_buffers: VecDeque<Box<[i16]>>,
 }
 
 impl Audio {
     #[inline]
     pub(crate) fn new() -> Self {
         ai::init();
-        Self {
-            buffers: [[0; BUFFER_NO_SAMPLES]; BUFFER_COUNT],
-            now_playing: 0,
-            now_writing: 0,
-            buffers_full_bitmask: 0,
+
+        let mut free_buffers = VecDeque::with_capacity(BUFFER_COUNT);
+        let ready_buffers = VecDeque::with_capacity(BUFFER_COUNT);
+        let mut playing_buffers = VecDeque::with_capacity(BUFFER_COUNT);
+
+        for _ in 0..(BUFFER_COUNT/2) {
+            let mut buffer = Vec::new();
+            buffer.resize_with(BUFFER_NO_SAMPLES, Default::default);
+            free_buffers.push_back(buffer.into_boxed_slice());
         }
-    }
 
-    #[inline]
-    fn next_to_write(&self) -> usize {
-        (self.now_writing + 1) % BUFFER_COUNT
-    }
+        for _ in 0..(BUFFER_COUNT/2) {
+            let mut buffer = Vec::new();
+            buffer.resize_with(BUFFER_NO_SAMPLES, Default::default);
+            playing_buffers.push_back(buffer.into_boxed_slice());
+        }
 
-    #[inline]
-    fn next_playing(&self) -> usize {
-        (self.now_playing + 1) % BUFFER_COUNT
-    }
-
-    #[inline]
-    fn all_buffers_are_full(&self) -> bool {
-        self.buffers_full_bitmask & (1 << self.next_to_write()) > 0
+        Self {
+            free_buffers,
+            ready_buffers,
+            playing_buffers,
+        }
     }
 
     #[inline]
     pub fn update(&mut self, mut f: impl FnMut(&mut [i16])) {
-        while !self.all_buffers_are_full() {
-            let next = self.next_to_write();
-            assert!(self.buffers_full_bitmask & (1 << next) == 0);
 
-            self.buffers_full_bitmask |= 1 << next;
-            self.now_writing = next;
-
-            f(&mut self.buffers[next]);
+        for mut buffer in self.free_buffers.drain(..) {
+            f(&mut buffer);
+            self.ready_buffers.push_back(buffer);
         }
 
-        while !ai::full() {
+        while !ai::full() && self.ready_buffers.len() > 0 && self.playing_buffers.len() > 0 {
+            
+            self.free_buffers.push_back(self.playing_buffers.pop_front().unwrap());
 
             {
-                let next = self.next_playing();
-                if self.buffers_full_bitmask & (1 << next) == 0 {
-                    break;
-                }
-                
-                self.buffers_full_bitmask &= !(1 << next);
-                self.now_playing = next;
-            }
-
-            {
-                let next = self.next_playing();
-                if self.buffers_full_bitmask & (1 << next) == 0 {
-                    break;
-                }
-
-                unsafe { ai::submit_audio_data_to_dac(&self.buffers[next]) };
+                let next_buffer = self.ready_buffers.pop_front().unwrap();
+                unsafe { ai::submit_audio_data_to_dac(&next_buffer); }
+                self.playing_buffers.push_back(next_buffer);
             }
         }
     }
