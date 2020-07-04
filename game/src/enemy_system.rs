@@ -116,7 +116,7 @@ impl EnemySystem {
                     //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                     bullet_system.shoot_bullet_enemy(
                         movable.pos + Vec2::new(0.0, ENEMY_SIZE.y() / 2.0),
-                        Vec2::new(0.0, 0.65),
+                        Vec2::new(0.0, 1.65),
                     );
                     enemy.last_shoot_time = now;
                 }
