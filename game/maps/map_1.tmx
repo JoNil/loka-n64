@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.3.4" orientation="orthogonal" renderorder="right-down" width="12" height="100" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="13">
+<map version="1.2" tiledversion="1.3.4" orientation="orthogonal" renderorder="right-down" width="12" height="100" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="42">
  <tileset firstgid="1" source="tiles/terrain_atlas.tsx"/>
  <tileset firstgid="1025" source="tiles/base_out_atlas.tsx"/>
  <tileset firstgid="2049" source="tiles/space-blks-1.034.tsx"/>
@@ -424,7 +424,33 @@
   <object id="7" template="templates/enemy_1.tx" x="226" y="2938"/>
   <object id="9" template="templates/enemy_1.tx" x="286.667" y="2922"/>
   <object id="10" template="templates/enemy_1.tx" x="336.667" y="2898.67"/>
-  <object id="11" template="templates/enemy_1.tx" x="168.667" y="2922.67"/>
-  <object id="12" template="templates/enemy_1.tx" x="117.333" y="2900"/>
+  <object id="11" template="templates/enemy_1.tx" x="166.667" y="2921.17"/>
+  <object id="12" template="templates/enemy_1.tx" x="112.333" y="2898.5"/>
+  <object id="13" template="templates/enemy_1.tx" x="218" y="2689.25"/>
+  <object id="14" template="templates/enemy_1.tx" x="278.667" y="2673.25"/>
+  <object id="15" template="templates/enemy_1.tx" x="328.667" y="2649.92"/>
+  <object id="16" template="templates/enemy_1.tx" x="158.667" y="2672.42"/>
+  <object id="17" template="templates/enemy_1.tx" x="104.333" y="2649.75"/>
+  <object id="18" template="templates/enemy_1.tx" x="210" y="2466.75"/>
+  <object id="19" template="templates/enemy_1.tx" x="270.667" y="2450.75"/>
+  <object id="20" template="templates/enemy_1.tx" x="320.667" y="2427.42"/>
+  <object id="21" template="templates/enemy_1.tx" x="150.667" y="2449.92"/>
+  <object id="22" template="templates/enemy_1.tx" x="96.333" y="2427.25"/>
+  <object id="26" template="templates/enemy_1.tx" x="126.167" y="2220.42"/>
+  <object id="27" template="templates/enemy_1.tx" x="71.833" y="2197.75"/>
+  <object id="28" template="templates/enemy_1.tx" x="291" y="2077.16"/>
+  <object id="29" template="templates/enemy_1.tx" x="341" y="2053.84"/>
+  <object id="30" template="templates/enemy_1.tx" x="136.167" y="1915.34"/>
+  <object id="31" template="templates/enemy_1.tx" x="81.833" y="1892.66"/>
+  <object id="32" template="templates/enemy_1.tx" x="213" y="2577.75"/>
+  <object id="33" template="templates/enemy_1.tx" x="273.667" y="2561.75"/>
+  <object id="34" template="templates/enemy_1.tx" x="323.667" y="2538.42"/>
+  <object id="35" template="templates/enemy_1.tx" x="153.667" y="2560.92"/>
+  <object id="36" template="templates/enemy_1.tx" x="99.333" y="2538.25"/>
+  <object id="37" template="templates/enemy_1.tx" x="220" y="2831.25"/>
+  <object id="38" template="templates/enemy_1.tx" x="280.667" y="2815.25"/>
+  <object id="39" template="templates/enemy_1.tx" x="330.667" y="2791.92"/>
+  <object id="40" template="templates/enemy_1.tx" x="160.667" y="2814.42"/>
+  <object id="41" template="templates/enemy_1.tx" x="106.333" y="2791.75"/>
  </objectgroup>
 </map>

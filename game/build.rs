@@ -293,7 +293,7 @@ fn parse_map_objects(
 
     for object_group in &map.object_groups {
         for object in &object_group.objects {
-            objects.push(format!(OBJECT_TEMPLATE!(), x = object.x, y = object.y));
+            objects.push(format!(OBJECT_TEMPLATE!(), x = object.x - 57.0/2.0, y = object.y - 42.0/2.0));
         }
     }
 

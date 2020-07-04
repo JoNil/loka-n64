@@ -56,7 +56,7 @@ fn main() {
 
     let start_pos = Vec2::new(
         map.get_start_pos().0 / VIDEO_MODE.width() as f32,
-        (map.get_start_pos().1) / VIDEO_MODE.height() as f32 - 1.0,
+        map.get_start_pos().1 / VIDEO_MODE.height() as f32 - 1.0,
     );
 
     let mut sound_mixer = SoundMixer::new();
@@ -66,17 +66,12 @@ fn main() {
     let mut enemy_system = EnemySystem::new();
     let mut command_buffer_cache = CommandBufferCache::new();
 
+    map.spawn_enemies(&mut enemy_system, &VIDEO_MODE);
+
     let mut frame_begin_time;
     let mut last_frame_begin_time = current_time_us();
     let mut frame_used_time = 0;
     let mut dt;
-
-    enemy_system.spawn_enemy();
-    enemy_system.spawn_enemy();
-    enemy_system.spawn_enemy();
-    enemy_system.spawn_enemy();
-    enemy_system.spawn_enemy();
-    enemy_system.spawn_enemy();
 
     loop {
         frame_begin_time = current_time_us();
@@ -91,7 +86,7 @@ fn main() {
 
             n64.controllers.update(&n64.graphics);
 
-            camera.update(&n64.controllers, dt);
+            camera.update(&n64.controllers, dt, &VIDEO_MODE);
 
             enemy_system.update(&mut bullet_system, &mut player, &mut sound_mixer);
 

@@ -1,4 +1,4 @@
-use crate::camera::Camera;
+use crate::{enemy_system::EnemySystem, camera::Camera};
 use n64::{
     gfx::{CommandBuffer, StaticTexture},
     VideoMode,
@@ -29,6 +29,16 @@ impl Map {
         Self { data }
     }
 
+    pub fn spawn_enemies(&self, enemy_system: &mut EnemySystem, video_mode: &VideoMode) {
+        for objects in self.data.objects {
+            for object in *objects {
+                enemy_system.spawn_enemy(
+                    Vec2::new(object.x / video_mode.width() as f32, object.y / video_mode.height() as f32)
+                );
+            }
+        }
+    }
+
     pub fn render(&self, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
         let tiles_in_layer = (self.data.width_in_tiles * self.data.height_in_tiles) as usize;
 
@@ -44,7 +54,7 @@ impl Map {
             camera_pixel_pos.1 / self.data.tile_height as f32,
         );
 
-        let tiles_on_screen_x = (video_mode.width() / self.data.tile_width) + 2;
+        let tiles_on_screen_x = (video_mode.width() / self.data.tile_width) + 1;
         let tiles_on_screen_y = (video_mode.height() / self.data.tile_height) + 2;
 
         let first_tile_x = camera_tile.x() as i32;
@@ -73,10 +83,8 @@ impl Map {
                         (y * self.data.tile_height) as f32,
                     );
 
-                    let half_size = tile_scale / 2.0;
-
-                    let upper_left = pos - half_size;
-                    let lower_right = pos + half_size;
+                    let upper_left = pos;
+                    let lower_right = pos + tile_scale;
 
                     cb.add_textured_rect(
                         upper_left - camera_pixel_pos,
@@ -90,7 +98,7 @@ impl Map {
 
     pub fn get_start_pos(&self) -> Vec2 {
         Vec2::new(
-            0.0,
+            self.data.tile_width as f32,
             ((self.data.height_in_tiles - 1) * self.data.tile_height) as f32,
         )
     }

@@ -37,12 +37,12 @@ impl EnemySystem {
         }
     }
 
-    pub fn spawn_enemy(&mut self) {
+    pub fn spawn_enemy(&mut self, pos: Vec2) {
         let entity = entity::create();
         movable::add(
             &entity,
             MovableComponent {
-                pos: Vec2::new(n64_math::random_f32(), n64_math::random_f32() * 0.6),
+                pos,
                 speed: Vec2::zero(),
             },
         );
