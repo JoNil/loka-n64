@@ -1,9 +1,14 @@
-use crate::{camera::Camera, maps::MAP_1_TILES};
+use crate::camera::Camera;
 use n64::{
     gfx::{CommandBuffer, StaticTexture},
     VideoMode,
 };
 use n64_math::Vec2;
+
+pub struct StaticObject {
+    pub x: f32,
+    pub y: f32,
+}
 
 pub struct StaticMapData {
     pub width_in_tiles: i32,
@@ -12,6 +17,7 @@ pub struct StaticMapData {
     pub tile_height: i32,
     pub tiles: &'static [&'static StaticTexture],
     pub layers: &'static [u8],
+    pub objects: &'static [&'static [StaticObject]],
 }
 
 pub struct Map {

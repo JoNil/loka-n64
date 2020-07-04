@@ -281,17 +281,41 @@ fn parse_map_tiles(
 }
 
 #[rustfmt::skip]
+macro_rules! OBJECT_TEMPLATE { () => {
+r##"    StaticObject {{ x: {x} as f32, y: {y} as f32 }},
+"##
+}; }
+
+fn parse_map_objects(
+    map: &Map,
+) -> Result<Vec<String>, Box<dyn Error>> {
+    let mut objects = Vec::new();
+
+    for object_group in &map.object_groups {
+        for object in &object_group.objects {
+            objects.push(format!(OBJECT_TEMPLATE!(), x = object.x, y = object.y));
+        }
+    }
+
+    Ok(objects)
+}
+
+#[rustfmt::skip]
 macro_rules! MAP_TEMPLATE { () => {
-r##"pub static {tiles_name_ident}: &'static [&'static StaticTexture] = &[
+r##"static {tiles_name_ident}: &'static [&'static StaticTexture] = &[
 {map_tile_refs}];
+
+pub static {objects_name_ident}: &'static [&'static [StaticObject]] = &[&[
+{objects}]];
 
 pub static {map_name_ident}: &'static StaticMapData = &StaticMapData {{
     width_in_tiles: {map_width},
     height_in_tiles: {map_height},
     tile_width: {tile_width},
     tile_height: {tile_height},
-    tiles: {tiles},
+    tiles: {tiles_name_ident},
     layers: include_bytes!({map_data_path:?}),
+    objects: {objects_name_ident},
 }};"##
 }; }
 
@@ -301,7 +325,7 @@ r##"// This file is generated
 
 #![rustfmt::skip]
 
-use crate::map::StaticMapData;
+use crate::map::{{StaticMapData, StaticObject}};
 use n64::gfx::StaticTexture;
 
 {tiles}
@@ -380,8 +404,11 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
         write_binary_file_if_changed(map_data_path, &layers)?;
 
+        let objects = parse_map_objects(&map)?;
+
         let map_name_ident = format!("{}", &uppercase_name);
         let tiles_name_ident = format!("{}_TILES", &uppercase_name);
+        let objects_name_ident = format!("{}_OBJECTS", &uppercase_name);
         let map_width = map.width as i32;
         let map_height = map.height as i32;
         let tile_width = map.tile_width as i32;
@@ -396,8 +423,9 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             map_height = map_height,
             tile_width = tile_width,
             tile_height = tile_height,
-            tiles = tiles_name_ident,
             map_data_path = map_data_path,
+            objects = objects.join(""),
+            objects_name_ident = objects_name_ident,
         );
 
         maps.push(map);
