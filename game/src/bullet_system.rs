@@ -89,7 +89,6 @@ impl BulletSystem {
             if let Some(movable) = movable::get_component(&bullet.entity) {
                 let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 
-                //if !bullet_bb.collides(&self.screen_bb) {
                 if !bullet_bb.collides(&camera_bb) {
                     delete_list.push(i);
                 }
