@@ -21,7 +21,6 @@ impl Camera {
     }
 
     pub fn update(&mut self, controllers: &Controllers, dt: f32) {
-
         if !self.debug_camera {
             self.pos.1 -= SPEED * dt;
         }

@@ -3,7 +3,11 @@ use crate::components::box_drawable::{self, BoxDrawableComponent};
 use crate::components::health::{self, HealthComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
-use crate::{sound_mixer::SoundMixer, Player, sounds::{SHOOT_0, EXPLOSION_0}};
+use crate::{
+    sound_mixer::SoundMixer,
+    sounds::{EXPLOSION_0, SHOOT_0},
+    Player,
+};
 use alloc::vec::Vec;
 use n64::current_time_us;
 use n64_math::{self, Color, Vec2};
@@ -62,7 +66,12 @@ impl EnemySystem {
         });
     }
 
-    pub fn update(&mut self, bullet_system: &mut BulletSystem, player: &mut Player, sound_mixer: &mut SoundMixer) {
+    pub fn update(
+        &mut self,
+        bullet_system: &mut BulletSystem,
+        player: &mut Player,
+        sound_mixer: &mut SoundMixer,
+    ) {
         let mut delete_list = Vec::new();
 
         let now = current_time_us();

@@ -1,4 +1,4 @@
-use crate::sys::{virtual_to_physical, data_cache_hit_writeback};
+use crate::sys::{data_cache_hit_writeback, virtual_to_physical};
 use core::ptr::{read_volatile, write_volatile};
 
 const AI_BASE: usize = 0xA4500000;
@@ -48,7 +48,7 @@ pub fn full() -> bool {
 #[inline]
 pub unsafe fn submit_audio_data_to_dac(buffer: &[i16]) {
     data_cache_hit_writeback(buffer);
-    write_volatile(AI_ADDR,virtual_to_physical(buffer.as_ptr()));
+    write_volatile(AI_ADDR, virtual_to_physical(buffer.as_ptr()));
     write_volatile(AI_LENGTH, buffer.len() & !7);
     write_volatile(AI_CONTROL, 1);
 }

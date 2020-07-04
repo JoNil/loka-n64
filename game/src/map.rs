@@ -1,5 +1,8 @@
 use crate::{camera::Camera, maps::MAP_1_TILES};
-use n64::{gfx::CommandBuffer, VideoMode};
+use n64::{
+    gfx::{CommandBuffer, StaticTexture},
+    VideoMode,
+};
 use n64_math::Vec2;
 
 pub struct StaticMapData {
@@ -7,6 +10,7 @@ pub struct StaticMapData {
     pub height_in_tiles: i32,
     pub tile_width: i32,
     pub tile_height: i32,
+    pub tiles: &'static [&'static StaticTexture],
     pub layers: &'static [u8],
 }
 
@@ -64,7 +68,7 @@ impl Map {
                     cb.add_textured_rect(
                         upper_left - camera.pos,
                         lower_right - camera.pos,
-                        MAP_1_TILES[(tile - 1) as usize].as_texture(),
+                        self.data.tiles[(tile - 1) as usize].as_texture(),
                     );
                 }
             }
@@ -72,6 +76,9 @@ impl Map {
     }
 
     pub fn get_start_pos(&self) -> Vec2 {
-        Vec2::new(0.0, ((self.data.height_in_tiles - 1) * self.data.tile_height) as f32)
+        Vec2::new(
+            0.0,
+            ((self.data.height_in_tiles - 1) * self.data.tile_height) as f32,
+        )
     }
 }

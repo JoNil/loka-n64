@@ -100,6 +100,8 @@ r##"pub static {name}: StaticTexture = StaticTexture::from_static({width}, {heig
 macro_rules! TEXTURES_TEMPLATE { () => {
 r##"// This file is generated
 
+#![rustfmt::skip]
+
 use n64::gfx::StaticTexture;
 
 {textures}"##
@@ -130,8 +132,11 @@ fn parse_textures() -> Result<(), Box<dyn Error>> {
     }
 
     let textures = format!(TEXTURES_TEMPLATE!(), textures = textures);
-    
-    write_file_if_changed(env::current_dir()?.join("src").join("textures.rs"), textures)?;
+
+    write_file_if_changed(
+        env::current_dir()?.join("src").join("textures.rs"),
+        textures,
+    )?;
 
     Ok(())
 }
@@ -285,6 +290,7 @@ pub static {map_name_ident}: &'static StaticMapData = &StaticMapData {{
     height_in_tiles: {map_height},
     tile_width: {tile_width},
     tile_height: {tile_height},
+    tiles: {tiles},
     layers: include_bytes!({map_data_path:?}),
 }};"##
 }; }
@@ -292,6 +298,8 @@ pub static {map_name_ident}: &'static StaticMapData = &StaticMapData {{
 #[rustfmt::skip]
 macro_rules! MAPS_TEMPLATE { () => {
 r##"// This file is generated
+
+#![rustfmt::skip]
 
 use crate::map::StaticMapData;
 use n64::gfx::StaticTexture;
@@ -387,7 +395,8 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             map_width = map_width,
             map_height = map_height,
             tile_width = tile_width,
-                tile_height = tile_height,
+            tile_height = tile_height,
+            tiles = tiles_name_ident,
             map_data_path = map_data_path,
         );
 
@@ -440,6 +449,8 @@ r##"pub static {name}: StaticSoundData = StaticSoundData {{ data: include_bytes!
 #[rustfmt::skip]
 macro_rules! SOUNDS_TEMPLATE { () => {
 r##"// This file is generated
+
+#![rustfmt::skip]
 
 use crate::sound::StaticSoundData;
 

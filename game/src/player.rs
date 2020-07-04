@@ -3,7 +3,12 @@ use crate::components::health::{self, HealthComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::components::sprite_drawable::{self, SpriteDrawableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
-use crate::{sound_mixer::SoundMixer, textures::SHIP_2_SMALL, sounds::SHOOT_1, camera::{self, Camera}};
+use crate::{
+    camera::{self, Camera},
+    sound_mixer::SoundMixer,
+    sounds::SHOOT_1,
+    textures::SHIP_2_SMALL,
+};
 use n64::{current_time_us, Controllers, VideoMode};
 use n64_math::Vec2;
 
@@ -57,7 +62,13 @@ impl Player {
         self.score
     }
 
-    pub fn update(&mut self, controllers: &Controllers, bullet_system: &mut BulletSystem, sound_mixer: &mut SoundMixer, video_mode: &VideoMode) {
+    pub fn update(
+        &mut self,
+        controllers: &Controllers,
+        bullet_system: &mut BulletSystem,
+        sound_mixer: &mut SoundMixer,
+        video_mode: &VideoMode,
+    ) {
         let controller_x = controllers.x();
         let controller_y = controllers.y();
 
@@ -72,7 +83,8 @@ impl Player {
         }
 
         if let Some(movable) = movable::lock_mut().lookup_mut(&self.entity) {
-            movable.speed = SHIP_SPEED * controller_dir + Vec2::new(0.0, -camera::SPEED / video_mode.height() as f32);
+            movable.speed = SHIP_SPEED * controller_dir
+                + Vec2::new(0.0, -camera::SPEED / video_mode.height() as f32);
         }
 
         if let Some(movable) = movable::get_component(&self.entity) {

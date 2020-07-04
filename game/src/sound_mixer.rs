@@ -45,7 +45,8 @@ impl SoundMixer {
                     #[cfg(not(target_vendor = "nintendo64"))]
                     {
                         accumulator = accumulator.saturating_add(
-                            playing_sound.sound.samples[playing_sound.current_sample].swap_bytes() as i32,
+                            playing_sound.sound.samples[playing_sound.current_sample].swap_bytes()
+                                as i32,
                         );
                     }
 

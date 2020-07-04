@@ -29,7 +29,6 @@ impl BulletSystem {
     }
 
     pub fn shoot_bullet(&mut self, pos: Vec2, speed: Vec2) {
-
         let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
         let entity = entity::create();
