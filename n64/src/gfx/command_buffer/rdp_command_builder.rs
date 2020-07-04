@@ -279,7 +279,7 @@ impl RdpCommandBuilder {
         let mut r = bottom_right.x();
         let mut b = bottom_right.y();
 
-        if r < 0.0  || b < 0.0 {
+        if r < 0.0 || b < 0.0 {
             // Outside drawing area.
             return self;
         }
@@ -316,7 +316,7 @@ impl RdpCommandBuilder {
         let mut r = bottom_right.x();
         let mut b = bottom_right.y();
 
-        if r < 0.0  || b < 0.0 {
+        if r < 0.0 || b < 0.0 {
             // Outside drawing area.
             return self;
         }

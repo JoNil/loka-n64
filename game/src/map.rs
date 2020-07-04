@@ -28,11 +28,15 @@ impl Map {
 
         let tile_scale: Vec2 = Vec2::new(32.0, 32.0);
 
-        let camera_pixel_pos = Vec2::new(camera.pos.0 * video_mode.width() as f32, camera.pos.1 * video_mode.height() as f32);
+        let camera_pixel_pos = Vec2::new(
+            camera.pos.0 * video_mode.width() as f32,
+            camera.pos.1 * video_mode.height() as f32,
+        );
 
         let camera_tile = Vec2::new(
             camera_pixel_pos.0 / self.data.tile_width as f32,
-            camera_pixel_pos.1 / self.data.tile_height as f32);
+            camera_pixel_pos.1 / self.data.tile_height as f32,
+        );
 
         let tiles_on_screen_x = (video_mode.width() / self.data.tile_width) + 2;
         let tiles_on_screen_y = (video_mode.height() / self.data.tile_height) + 2;
@@ -69,15 +73,9 @@ impl Map {
                     let lower_right = pos + half_size;
 
                     cb.add_textured_rect(
-<<<<<<< HEAD
-                        upper_left - camera.pos,
-                        lower_right - camera.pos,
-                        self.data.tiles[(tile - 1) as usize].as_texture(),
-=======
                         upper_left - camera_pixel_pos,
                         lower_right - camera_pixel_pos,
-                        MAP_1_TILES[(tile - 1) as usize].as_texture(),
->>>>>>> Changed camera coordinate system, fixed object clipping
+                        self.data.tiles[(tile - 1) as usize].as_texture(),
                     );
                 }
             }

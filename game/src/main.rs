@@ -54,7 +54,10 @@ fn main() {
 
     let map = Map::load(MAP_1);
 
-    let start_pos = Vec2::new(map.get_start_pos().0/VIDEO_MODE.width() as f32, (map.get_start_pos().1)/VIDEO_MODE.height() as f32 - 1.0);
+    let start_pos = Vec2::new(
+        map.get_start_pos().0 / VIDEO_MODE.width() as f32,
+        (map.get_start_pos().1) / VIDEO_MODE.height() as f32 - 1.0,
+    );
 
     let mut sound_mixer = SoundMixer::new();
     let mut camera = Camera::new(start_pos);
@@ -92,7 +95,13 @@ fn main() {
 
             enemy_system.update(&mut bullet_system, &mut player, &mut sound_mixer);
 
-            player.update(&n64.controllers, &mut bullet_system, &mut sound_mixer, &VIDEO_MODE, &camera);
+            player.update(
+                &n64.controllers,
+                &mut bullet_system,
+                &mut sound_mixer,
+                &VIDEO_MODE,
+                &camera,
+            );
 
             bullet_system.update(&mut enemy_system, &mut player, &camera);
 

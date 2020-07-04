@@ -62,7 +62,14 @@ impl Player {
         self.score
     }
 
-    pub fn update(&mut self, controllers: &Controllers, bullet_system: &mut BulletSystem, sound_mixer: &mut SoundMixer, video_mode: &VideoMode, camera: &Camera) {
+    pub fn update(
+        &mut self,
+        controllers: &Controllers,
+        bullet_system: &mut BulletSystem,
+        sound_mixer: &mut SoundMixer,
+        video_mode: &VideoMode,
+        camera: &Camera,
+    ) {
         let controller_x = controllers.x();
         let controller_y = controllers.y();
 

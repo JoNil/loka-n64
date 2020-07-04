@@ -1,7 +1,7 @@
-use n64::{VideoMode, Controllers};
+use n64::{Controllers, VideoMode};
 use n64_math::Vec2;
 
-pub const SPEED: f32 = 16.0/240.0;
+pub const SPEED: f32 = 16.0 / 240.0;
 
 pub struct Camera {
     pub pos: Vec2,

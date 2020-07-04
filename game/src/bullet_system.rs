@@ -3,7 +3,7 @@ use crate::components::health;
 use crate::components::movable::{self, MovableComponent};
 use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
 use crate::entity::{self, OwnedEntity};
-use crate::{Player, SHIP_SIZE, camera::Camera};
+use crate::{camera::Camera, Player, SHIP_SIZE};
 use alloc::vec::Vec;
 use n64_math::{self, Aabb2, Color, Vec2};
 
