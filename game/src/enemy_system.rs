@@ -42,7 +42,7 @@ impl EnemySystem {
         movable::add(
             &entity,
             MovableComponent {
-                pos,
+                pos: pos,
                 speed: Vec2::zero(),
             },
         );
