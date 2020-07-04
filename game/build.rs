@@ -286,14 +286,16 @@ r##"    StaticObject {{ x: {x} as f32, y: {y} as f32 }},
 "##
 }; }
 
-fn parse_map_objects(
-    map: &Map,
-) -> Result<Vec<String>, Box<dyn Error>> {
+fn parse_map_objects(map: &Map) -> Result<Vec<String>, Box<dyn Error>> {
     let mut objects = Vec::new();
 
     for object_group in &map.object_groups {
         for object in &object_group.objects {
-            objects.push(format!(OBJECT_TEMPLATE!(), x = object.x - 57.0/2.0, y = object.y - 42.0/2.0));
+            objects.push(format!(
+                OBJECT_TEMPLATE!(),
+                x = object.x - 57.0 / 2.0,
+                y = object.y - 42.0 / 2.0
+            ));
         }
     }
 

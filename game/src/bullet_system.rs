@@ -87,7 +87,6 @@ impl BulletSystem {
 
         for (i, bullet) in self.bullets.iter_mut().enumerate() {
             if let Some(movable) = movable::get_component(&bullet.entity) {
-
                 let mut delete = false;
                 let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 
