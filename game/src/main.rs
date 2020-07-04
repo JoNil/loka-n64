@@ -22,7 +22,7 @@ use n64::{
     gfx::{CommandBuffer, CommandBufferCache},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
-use n64_math::Color;
+use n64_math::{Vec2, Color};
 use player::{Player, SHIP_SIZE};
 use sound_mixer::SoundMixer;
 
@@ -52,13 +52,16 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);
 
+    let map = Map::load(MAP_1);
+
+    let start_pos = map.get_start_pos() - Vec2::new(0.0, VIDEO_MODE.height() as f32);
+
     let mut sound_mixer = SoundMixer::new();
-    let mut camera = Camera::new();
-    let mut player = Player::new();
+    let mut camera = Camera::new(start_pos);
+    let mut player = Player::new(start_pos / Vec2::new(VIDEO_MODE.width() as f32, VIDEO_MODE.height() as f32));
     let mut bullet_system = BulletSystem::new();
     let mut enemy_system = EnemySystem::new();
     let mut command_buffer_cache = CommandBufferCache::new();
-    let map = Map::load(MAP_1);
 
     let mut frame_begin_time;
     let mut last_frame_begin_time = current_time_us();
@@ -85,11 +88,11 @@ fn main() {
 
             n64.controllers.update(&n64.graphics);
 
-            camera.update(&n64.controllers);
+            camera.update(&n64.controllers, dt);
 
             enemy_system.update(&mut bullet_system, &mut player, &mut sound_mixer);
 
-            player.update(&n64.controllers, &mut bullet_system, &mut sound_mixer);
+            player.update(&n64.controllers, &mut bullet_system, &mut sound_mixer, &VIDEO_MODE);
 
             bullet_system.update(&mut enemy_system, &mut player);
 

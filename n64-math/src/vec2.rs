@@ -4,7 +4,7 @@ use libm;
 /// A 2-dimensional vector.
 #[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
 #[repr(C)]
-pub struct Vec2(f32, f32);
+pub struct Vec2(pub f32, pub f32);
 
 impl Vec2 {
     /// Creates a new `Vec2`.

@@ -70,4 +70,8 @@ impl Map {
             }
         }
     }
+
+    pub fn get_start_pos(&self) -> Vec2 {
+        Vec2::new(0.0, ((self.data.height_in_tiles - 1) * self.data.tile_height) as f32)
+    }
 }
