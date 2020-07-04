@@ -22,7 +22,13 @@ impl Camera {
 
     pub fn update(&mut self, controllers: &Controllers, dt: f32, video_mode: &VideoMode) {
         if !self.debug_camera {
-            self.pos.1 -= SPEED * dt;
+            self.pos.1 -= self.speed.1 * dt;
+
+            // Stop at top.
+            if self.pos.1 < 0.0 {
+                self.pos.1 = 0.0;
+                self.speed.1 = 0.0;
+            }
         }
 
         if controllers.c_up() {
