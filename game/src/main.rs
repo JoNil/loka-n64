@@ -88,7 +88,7 @@ fn main() {
 
             camera.update(&n64.controllers, dt, &VIDEO_MODE);
 
-            enemy_system.update(&mut bullet_system, &mut player, &mut sound_mixer);
+            enemy_system.update(&mut bullet_system, &mut player, &mut sound_mixer, dt);
 
             player.update(
                 &n64.controllers,

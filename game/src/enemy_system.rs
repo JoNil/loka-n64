@@ -14,10 +14,35 @@ use n64_math::{self, Color, Vec2};
 
 pub const ENEMY_SIZE: Vec2 = Vec2::new(0.05, 0.05);
 
+static ENEMY_WAYPOINT: [Vec2; 4] = [
+    Vec2::new(0.4, 0.4),
+    Vec2::new(0.6, 0.4),
+    Vec2::new(0.6, 0.6),
+    Vec2::new(0.4, 0.6),
+];
+
+fn ai(enemy: &mut Enemy, dt: f32) {
+    if let Some(movable) = movable::lock_mut().lookup_mut(&enemy.entity) {
+        if enemy.waypoint_step >= 1.0 {
+            enemy.waypoint_step -= 1.0;
+            enemy.waypoint += 1;
+            if enemy.waypoint >= ENEMY_WAYPOINT.len() {
+                enemy.waypoint = 0;
+            }
+        }
+
+        let next_waypoint = (enemy.waypoint + 1) % ENEMY_WAYPOINT.len();
+        movable.speed = ENEMY_WAYPOINT[next_waypoint] - ENEMY_WAYPOINT[enemy.waypoint];
+        enemy.waypoint_step += dt;
+    }
+}
+
 pub struct Enemy {
     entity: OwnedEntity,
     shoot_speed: i32,
     last_shoot_time: i64,
+    waypoint: usize,
+    waypoint_step: f32,
 }
 
 impl Enemy {
@@ -63,6 +88,8 @@ impl EnemySystem {
             entity,
             shoot_speed: 500 + (n64_math::random_f32() * 200.0) as i32,
             last_shoot_time: 0,
+            waypoint: 0,
+            waypoint_step: 1.0,
         });
     }
 
@@ -71,6 +98,7 @@ impl EnemySystem {
         bullet_system: &mut BulletSystem,
         player: &mut Player,
         sound_mixer: &mut SoundMixer,
+        dt: f32,
     ) {
         let mut delete_list = Vec::new();
 
@@ -93,6 +121,8 @@ impl EnemySystem {
                     enemy.last_shoot_time = now;
                 }
             }
+
+            ai(enemy, dt);
         }
 
         {
