@@ -279,18 +279,17 @@ impl RdpCommandBuilder {
         let mut r = bottom_right.x();
         let mut b = bottom_right.y();
 
+        if r < 0.0  || b < 0.0 {
+            // Outside drawing area.
+            return self;
+        }
+
         if l < 0.0 {
             l = 0.0;
-            if r < 0.0 {
-                r = 0.0;
-            }
         }
 
         if t < 0.0 {
             t = 0.0;
-            if b < 0.0 {
-                b = 0.0;
-            }
         }
 
         self.commands.as_mut().unwrap().push(RdpCommand(
@@ -317,23 +316,22 @@ impl RdpCommandBuilder {
         let mut r = bottom_right.x();
         let mut b = bottom_right.y();
 
+        if r < 0.0  || b < 0.0 {
+            // Outside drawing area.
+            return self;
+        }
+
         let mut st_l = st_top_left.x();
         let mut st_t = st_top_left.y();
 
         if l < 0.0 {
             st_l -= l;
             l = 0.0;
-            if r < 0.0 {
-                r = 0.0;
-            }
         }
 
         if t < 0.0 {
             st_t -= t;
             t = 0.0;
-            if b < 0.0 {
-                b = 0.0;
-            }
         }
 
         self.commands.as_mut().unwrap().push(RdpCommand(
