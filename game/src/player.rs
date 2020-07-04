@@ -68,6 +68,7 @@ impl Player {
         bullet_system: &mut BulletSystem,
         sound_mixer: &mut SoundMixer,
         video_mode: &VideoMode,
+        camera: &Camera,
     ) {
         let controller_x = controllers.x();
         let controller_y = controllers.y();
@@ -83,8 +84,7 @@ impl Player {
         }
 
         if let Some(movable) = movable::lock_mut().lookup_mut(&self.entity) {
-            movable.speed = SHIP_SPEED * controller_dir
-                + Vec2::new(0.0, -camera::SPEED / video_mode.height() as f32);
+            movable.speed = SHIP_SPEED * controller_dir - camera.speed;
         }
 
         if let Some(movable) = movable::get_component(&self.entity) {

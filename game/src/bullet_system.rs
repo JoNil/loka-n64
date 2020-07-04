@@ -3,7 +3,7 @@ use crate::components::health;
 use crate::components::movable::{self, MovableComponent};
 use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
 use crate::entity::{self, OwnedEntity};
-use crate::{Player, SHIP_SIZE};
+use crate::{camera::Camera, Player, SHIP_SIZE};
 use alloc::vec::Vec;
 use n64_math::{self, Aabb2, Color, Vec2};
 
@@ -80,14 +80,16 @@ impl BulletSystem {
         });
     }
 
-    pub fn update(&mut self, enemy_system: &mut EnemySystem, player: &mut Player) {
+    pub fn update(&mut self, enemy_system: &mut EnemySystem, player: &mut Player, camera: &Camera) {
         let mut delete_list = Vec::new();
+
+        let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
         for (i, bullet) in self.bullets.iter_mut().enumerate() {
             if let Some(movable) = movable::get_component(&bullet.entity) {
                 let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 
-                if !bullet_bb.collides(&self.screen_bb) {
+                if !bullet_bb.collides(&camera_bb) {
                     delete_list.push(i);
                 }
 

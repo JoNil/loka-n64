@@ -1,12 +1,11 @@
-use n64::Controllers;
+use n64::{Controllers, VideoMode};
 use n64_math::Vec2;
 
-pub const SPEED: f32 = 16.0;
-
-//TODO(jonil): Camera is not in game coordinate system
+pub const SPEED: f32 = 16.0 / 240.0;
 
 pub struct Camera {
     pub pos: Vec2,
+    pub speed: Vec2,
     dpad_pressed_last_frame: bool,
     debug_camera: bool,
 }
@@ -15,6 +14,7 @@ impl Camera {
     pub fn new(start_pos: Vec2) -> Self {
         Self {
             pos: start_pos,
+            speed: Vec2::new(0.0, SPEED),
             dpad_pressed_last_frame: false,
             debug_camera: false,
         }
@@ -22,7 +22,12 @@ impl Camera {
 
     pub fn update(&mut self, controllers: &Controllers, dt: f32) {
         if !self.debug_camera {
-            self.pos.1 -= SPEED * dt;
+            self.pos.1 -= self.speed.1 * dt;
+            // Stop at top.
+            if self.pos.1 < 0.0 {
+                self.pos.1 = 0.0;
+                self.speed.1 = 0.0;
+            }
         }
 
         if controllers.c_up() {
