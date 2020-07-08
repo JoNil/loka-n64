@@ -31,8 +31,12 @@ fn ai(enemy: &mut Enemy, dt: f32) {
             }
         }
 
-        let next_waypoint = (enemy.waypoint + 1) % ENEMY_WAYPOINT.len();
-        movable.speed = ENEMY_WAYPOINT[next_waypoint] - ENEMY_WAYPOINT[enemy.waypoint];
+        let a_waypoint = (enemy.waypoint + 1) % ENEMY_WAYPOINT.len();
+        let speed_a =  ENEMY_WAYPOINT[a_waypoint] - ENEMY_WAYPOINT[enemy.waypoint];
+        let b_waypoint = (a_waypoint + 1) % ENEMY_WAYPOINT.len();
+        let speed_b =  ENEMY_WAYPOINT[b_waypoint] - ENEMY_WAYPOINT[a_waypoint];
+
+        movable.speed = (1.0 - enemy.waypoint_step)*speed_a + enemy.waypoint_step*speed_b;
         enemy.waypoint_step += dt;
     }
 }
