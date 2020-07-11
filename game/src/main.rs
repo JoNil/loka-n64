@@ -40,7 +40,6 @@ mod sounds;
 mod textures;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);
-const YELLOW: Color = Color::new(0b10000_10000_00011_1);
 const GREEN: Color = Color::new(0b00011_10000_00011_1);
 const BLUE: Color = Color::new(0b00011_00011_10000_1);
 
@@ -94,7 +93,6 @@ fn main() {
                 &n64.controllers,
                 &mut bullet_system,
                 &mut sound_mixer,
-                &VIDEO_MODE,
                 &camera,
             );
 

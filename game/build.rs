@@ -100,7 +100,7 @@ r##"pub static {name}: StaticTexture = StaticTexture::from_static({width}, {heig
 macro_rules! TEXTURES_TEMPLATE { () => {
 r##"// This file is generated
 
-#![rustfmt::skip]
+#![cfg_attr(rustfmt, rustfmt::skip)]
 
 use n64::gfx::StaticTexture;
 
@@ -325,7 +325,7 @@ pub static {map_name_ident}: &'static StaticMapData = &StaticMapData {{
 macro_rules! MAPS_TEMPLATE { () => {
 r##"// This file is generated
 
-#![rustfmt::skip]
+#![cfg_attr(rustfmt, rustfmt::skip)]
 
 use crate::map::{{StaticMapData, StaticObject}};
 use n64::gfx::StaticTexture;
@@ -480,7 +480,7 @@ r##"pub static {name}: StaticSoundData = StaticSoundData {{ data: include_bytes!
 macro_rules! SOUNDS_TEMPLATE { () => {
 r##"// This file is generated
 
-#![rustfmt::skip]
+#![cfg_attr(rustfmt, rustfmt::skip)]
 
 use crate::sound::StaticSoundData;
 

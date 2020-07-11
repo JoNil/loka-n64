@@ -3,13 +3,8 @@ use crate::components::health::{self, HealthComponent};
 use crate::components::movable::{self, MovableComponent};
 use crate::components::sprite_drawable::{self, SpriteDrawableComponent};
 use crate::entity::{self, Entity, OwnedEntity};
-use crate::{
-    camera::{self, Camera},
-    sound_mixer::SoundMixer,
-    sounds::SHOOT_1,
-    textures::SHIP_2_SMALL,
-};
-use n64::{current_time_us, Controllers, VideoMode};
+use crate::{camera::Camera, sound_mixer::SoundMixer, sounds::SHOOT_1, textures::SHIP_2_SMALL};
+use n64::{current_time_us, Controllers};
 use n64_math::Vec2;
 
 const PLAYTER_START_POS: Vec2 = Vec2::new(0.5, 0.8);
@@ -67,7 +62,6 @@ impl Player {
         controllers: &Controllers,
         bullet_system: &mut BulletSystem,
         sound_mixer: &mut SoundMixer,
-        video_mode: &VideoMode,
         camera: &Camera,
     ) {
         let controller_x = controllers.x();
