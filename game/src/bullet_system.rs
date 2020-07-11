@@ -7,7 +7,7 @@ use crate::{camera::Camera, Player, SHIP_SIZE};
 use alloc::vec::Vec;
 use n64_math::{self, Aabb2, Color, Vec2};
 
-const BULLET_SIZE: Vec2 = Vec2::new(0.00625, 0.00625);
+const BULLET_SIZE: Vec2 = Vec2::new(0.00825, 0.00825);
 
 struct Bullet {
     entity: OwnedEntity,
@@ -17,14 +17,12 @@ struct Bullet {
 
 pub struct BulletSystem {
     bullets: Vec<Bullet>,
-    screen_bb: Aabb2,
 }
 
 impl BulletSystem {
     pub fn new() -> Self {
         Self {
             bullets: Vec::new(),
-            screen_bb: Aabb2::new(Vec2::zero(), Vec2::new(1.0, 1.0)),
         }
     }
 
@@ -43,11 +41,7 @@ impl BulletSystem {
             &entity,
             BoxDrawableComponent {
                 size: BULLET_SIZE,
-                color: Color::from_rgb(
-                    n64_math::random_f32(),
-                    n64_math::random_f32(),
-                    n64_math::random_f32(),
-                ),
+                color: Color::from_rgb(0.2, 0.2, 0.9),
             },
         );
 
@@ -65,11 +59,7 @@ impl BulletSystem {
             &entity,
             BoxDrawableComponent {
                 size: BULLET_SIZE,
-                color: Color::from_rgb(
-                    n64_math::random_f32(),
-                    n64_math::random_f32(),
-                    n64_math::random_f32(),
-                ),
+                color: Color::from_rgb(0.9, 0.2, 0.2),
             },
         );
 

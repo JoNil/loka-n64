@@ -32,11 +32,11 @@ fn ai(enemy: &mut Enemy, dt: f32) {
         }
 
         let a_waypoint = (enemy.waypoint + 1) % ENEMY_WAYPOINT.len();
-        let speed_a =  ENEMY_WAYPOINT[a_waypoint] - ENEMY_WAYPOINT[enemy.waypoint];
+        let speed_a = ENEMY_WAYPOINT[a_waypoint] - ENEMY_WAYPOINT[enemy.waypoint];
         let b_waypoint = (a_waypoint + 1) % ENEMY_WAYPOINT.len();
-        let speed_b =  ENEMY_WAYPOINT[b_waypoint] - ENEMY_WAYPOINT[a_waypoint];
+        let speed_b = ENEMY_WAYPOINT[b_waypoint] - ENEMY_WAYPOINT[a_waypoint];
 
-        movable.speed = (1.0 - enemy.waypoint_step)*speed_a + enemy.waypoint_step*speed_b;
+        movable.speed = (1.0 - enemy.waypoint_step) * speed_a + enemy.waypoint_step * speed_b;
         enemy.waypoint_step += dt;
     }
 }
@@ -110,7 +110,7 @@ impl EnemySystem {
 
         for (i, enemy) in self.enemies_mut().iter_mut().enumerate() {
             if !health::is_alive(&enemy.entity) {
-                //sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
+                sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
                 player.add_score(1000);
                 delete_list.push(i);
             }
@@ -120,7 +120,7 @@ impl EnemySystem {
                     //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                     bullet_system.shoot_bullet_enemy(
                         movable.pos + Vec2::new(0.0, ENEMY_SIZE.y() / 2.0),
-                        Vec2::new(0.0, 1.65),
+                        Vec2::new(0.0, 1.25),
                     );
                     enemy.last_shoot_time = now;
                 }

@@ -32,11 +32,11 @@ pub struct Entity {
 }
 
 impl Entity {
-    fn index(&self) -> u32 {
+    pub fn index(&self) -> u32 {
         self.id & INDEX_MASK
     }
 
-    fn generation(&self) -> Wrapping<u8> {
+    pub fn generation(&self) -> Wrapping<u8> {
         Wrapping(((self.id >> INDEX_BITS) & GENERATION_MASK) as u8)
     }
 }

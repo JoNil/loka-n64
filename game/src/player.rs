@@ -45,7 +45,7 @@ impl Player {
                 texture: SHIP_2_SMALL.as_texture(),
             },
         );
-        health::add(&player.entity, HealthComponent { health: 5000 });
+        health::add(&player.entity, HealthComponent { health: 1000 });
 
         player
     }
@@ -95,7 +95,7 @@ impl Player {
                     sound_mixer.play_sound(SHOOT_1.as_sound_data());
                     bullet_system.shoot_bullet(
                         movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                        Vec2::new(0.0, movable.speed.y() - 1.65),
+                        Vec2::new(0.0, movable.speed.y() - 1.25),
                     );
                     self.last_shoot_time = now;
                 }
