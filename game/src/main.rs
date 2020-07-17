@@ -6,6 +6,8 @@
 #![cfg_attr(target_vendor = "nintendo64", feature(start))]
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
+#![allow(clippy::inconsistent_digit_grouping)]
+
 extern crate alloc;
 
 use bullet_system::BulletSystem;

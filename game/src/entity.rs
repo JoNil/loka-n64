@@ -96,7 +96,7 @@ impl EntitySystem {
     }
 
     pub fn alive(&self, entity: &Entity) -> bool {
-        return self.generation[entity.index() as usize] == entity.generation();
+        self.generation[entity.index() as usize] == entity.generation()
     }
 
     pub fn gc(&mut self, removers: &mut [&mut dyn Remover]) {

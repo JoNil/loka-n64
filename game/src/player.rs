@@ -89,16 +89,14 @@ impl Player {
         if let Some(movable) = world.movable.lookup(&self.entity).copied() {
             let now = current_time_us();
 
-            if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS as i64 * 1000 {
-                if controllers.z() {
-                    sound_mixer.play_sound(SHOOT_1.as_sound_data());
-                    bullet_system.shoot_bullet(
-                        world,
-                        movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                        Vec2::new(0.0, movable.speed.y() - 1.25),
-                    );
-                    self.last_shoot_time = now;
-                }
+            if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS as i64 * 1000 && controllers.z() {
+                sound_mixer.play_sound(SHOOT_1.as_sound_data());
+                bullet_system.shoot_bullet(
+                    world,
+                    movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                    Vec2::new(0.0, movable.speed.y() - 1.25),
+                );
+                self.last_shoot_time = now;
             }
         }
     }

@@ -92,7 +92,7 @@ impl BulletSystem {
                 if bullet.can_hit_enemy {
                     for enemy in enemy_system.enemies_mut() {
                         let enemy_bb = Aabb2::from_center_size(
-                            world.movable.pos(enemy.entity()).unwrap_or(Vec2::zero()),
+                            world.movable.pos(enemy.entity()).unwrap_or_else(Vec2::zero),
                             ENEMY_SIZE,
                         );
 
@@ -108,7 +108,7 @@ impl BulletSystem {
 
                 if bullet.can_hit_player {
                     let player_bb = Aabb2::from_center_size(
-                        world.movable.pos(player.entity()).unwrap_or(Vec2::zero()),
+                        world.movable.pos(player.entity()).unwrap_or_else(Vec2::zero),
                         SHIP_SIZE,
                     );
 

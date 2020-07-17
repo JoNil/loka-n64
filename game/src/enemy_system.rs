@@ -5,7 +5,7 @@ use crate::components::movable::MovableComponent;
 use crate::entity::{Entity, OwnedEntity};
 use crate::{
     sound_mixer::SoundMixer,
-    sounds::{EXPLOSION_0, SHOOT_0},
+    sounds::EXPLOSION_0,
     world::World,
     Player,
 };

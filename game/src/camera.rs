@@ -51,40 +51,32 @@ impl Camera {
             self.pos.0 += 10.0 / video_mode.width() as f32;
         }
 
-        let mut dpad_pressed_this_frame = false;
-
-        if controllers.up() {
+        self.dpad_pressed_last_frame = if controllers.up() {
             self.debug_camera = true;
             if !self.dpad_pressed_last_frame {
                 self.pos.1 -= 1.0 / video_mode.height() as f32;
             }
-            dpad_pressed_this_frame = true;
-        }
-
-        if controllers.down() {
+            true
+        } else if controllers.down() {
             self.debug_camera = true;
             if !self.dpad_pressed_last_frame {
                 self.pos.1 += 1.0 / video_mode.height() as f32;
             }
-            dpad_pressed_this_frame = true;
-        }
-
-        if controllers.left() {
+            true
+        } else if controllers.left() {
             self.debug_camera = true;
             if !self.dpad_pressed_last_frame {
                 self.pos.0 -= 1.0 / video_mode.width() as f32;
             }
-            dpad_pressed_this_frame = true;
-        }
-
-        if controllers.right() {
+            true
+        } else if controllers.right() {
             self.debug_camera = true;
             if !self.dpad_pressed_last_frame {
                 self.pos.0 += 1.0 / video_mode.width() as f32;
             }
-            dpad_pressed_this_frame = true;
-        }
-
-        self.dpad_pressed_last_frame = dpad_pressed_this_frame;
+            true
+        } else {
+            false
+        };
     }
 }

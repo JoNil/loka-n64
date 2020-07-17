@@ -1,5 +1,4 @@
 use n64_math::Color;
-use png;
 use std::convert::TryInto;
 use std::env;
 use std::error::Error;
@@ -73,7 +72,7 @@ fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
         || info.bit_depth != png::BitDepth::Eight
         || info.buffer_size() != (4 * info.width * info.height) as usize
     {
-        return Err("Image format not supported!")?;
+        return Err("Image format not supported!".into());
     }
 
     let mut data = Vec::with_capacity((2 * info.width * info.height) as usize);
@@ -185,8 +184,8 @@ fn load_tile_image(
         let image_path = tileset
             .source
             .clone()
-            .map(|s| PathBuf::from(s))
-            .unwrap_or(map_path.to_path_buf())
+            .map(PathBuf::from)
+            .unwrap_or_else(|| map_path.to_path_buf())
             .with_file_name(&tileset_image.source);
 
         if effective_gid < image_tiles {
@@ -282,7 +281,7 @@ fn parse_map_tiles(
 
 #[rustfmt::skip]
 macro_rules! OBJECT_TEMPLATE { () => {
-r##"    StaticObject {{ x: {x} as f32, y: {y} as f32 }},
+r##"    StaticObject {{ x: {x}_f32, y: {y}_f32 }},
 "##
 }; }
 
@@ -304,13 +303,13 @@ fn parse_map_objects(map: &Map) -> Result<Vec<String>, Box<dyn Error>> {
 
 #[rustfmt::skip]
 macro_rules! MAP_TEMPLATE { () => {
-r##"static {tiles_name_ident}: &'static [&'static StaticTexture] = &[
+r##"static {tiles_name_ident}: &[&StaticTexture] = &[
 {map_tile_refs}];
 
-pub static {objects_name_ident}: &'static [&'static [StaticObject]] = &[&[
+pub static {objects_name_ident}: &[&[StaticObject]] = &[&[
 {objects}]];
 
-pub static {map_name_ident}: &'static StaticMapData = &StaticMapData {{
+pub static {map_name_ident}: &StaticMapData = &StaticMapData {{
     width_in_tiles: {map_width},
     height_in_tiles: {map_height},
     tile_width: {tile_width},
@@ -408,7 +407,7 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
         let objects = parse_map_objects(&map)?;
 
-        let map_name_ident = format!("{}", &uppercase_name);
+        let map_name_ident = uppercase_name.to_string();
         let tiles_name_ident = format!("{}_TILES", &uppercase_name);
         let objects_name_ident = format!("{}_OBJECTS", &uppercase_name);
         let map_width = map.width as i32;
