@@ -1,9 +1,8 @@
-use crate::components::box_drawable::{self, BoxDrawableComponent};
-use crate::components::health;
-use crate::components::movable::{self, MovableComponent};
+use crate::components::box_drawable::BoxDrawableComponent;
+use crate::components::movable::MovableComponent;
 use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
-use crate::entity::{self, OwnedEntity};
-use crate::{camera::Camera, Player, SHIP_SIZE};
+use crate::entity::OwnedEntity;
+use crate::{camera::Camera, Player, SHIP_SIZE, world::World};
 use alloc::vec::Vec;
 use n64_math::{self, Aabb2, Color, Vec2};
 
@@ -26,18 +25,18 @@ impl BulletSystem {
         }
     }
 
-    pub fn shoot_bullet(&mut self, pos: Vec2, speed: Vec2) {
+    pub fn shoot_bullet(&mut self, world: &mut World, pos: Vec2, speed: Vec2) {
         let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-        let entity = entity::create();
-        movable::add(
+        let entity = world.entity.create();
+        world.movable.add(
             &entity,
             MovableComponent {
                 pos,
                 speed: Vec2::new(speed.x() + spread, speed.y()),
             },
         );
-        box_drawable::add(
+        world.box_drawable.add(
             &entity,
             BoxDrawableComponent {
                 size: BULLET_SIZE,
@@ -52,10 +51,10 @@ impl BulletSystem {
         });
     }
 
-    pub fn shoot_bullet_enemy(&mut self, pos: Vec2, speed: Vec2) {
-        let entity = entity::create();
-        movable::add(&entity, MovableComponent { pos, speed });
-        box_drawable::add(
+    pub fn shoot_bullet_enemy(&mut self, world: &mut World, pos: Vec2, speed: Vec2) {
+        let entity = world.entity.create();
+        world.movable.add(&entity, MovableComponent { pos, speed });
+        world.box_drawable.add(
             &entity,
             BoxDrawableComponent {
                 size: BULLET_SIZE,
@@ -70,13 +69,13 @@ impl BulletSystem {
         });
     }
 
-    pub fn update(&mut self, enemy_system: &mut EnemySystem, player: &mut Player, camera: &Camera) {
+    pub fn update(&mut self, world: &mut World, enemy_system: &mut EnemySystem, player: &mut Player, camera: &Camera) {
         let mut delete_list = Vec::new();
 
         let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
         for (i, bullet) in self.bullets.iter_mut().enumerate() {
-            if let Some(movable) = movable::get_component(&bullet.entity) {
+            if let Some(movable) = world.movable.lookup(&bullet.entity) {
                 let mut delete = false;
                 let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 
@@ -87,12 +86,12 @@ impl BulletSystem {
                 if bullet.can_hit_enemy {
                     for enemy in enemy_system.enemies_mut() {
                         let enemy_bb = Aabb2::from_center_size(
-                            movable::pos(enemy.entity()).unwrap_or(Vec2::zero()),
+                            world.movable.pos(enemy.entity()).unwrap_or(Vec2::zero()),
                             ENEMY_SIZE,
                         );
 
                         if bullet_bb.collides(&enemy_bb) {
-                            health::damage(
+                            world.health.damage(
                                 enemy.entity(),
                                 50 + (n64_math::random_f32() * 20.0) as i32,
                             );
@@ -103,12 +102,12 @@ impl BulletSystem {
 
                 if bullet.can_hit_player {
                     let player_bb = Aabb2::from_center_size(
-                        movable::pos(player.entity()).unwrap_or(Vec2::zero()),
+                        world.movable.pos(player.entity()).unwrap_or(Vec2::zero()),
                         SHIP_SIZE,
                     );
 
                     if bullet_bb.collides(&player_bb) {
-                        health::damage(
+                        world.health.damage(
                             player.entity(),
                             50 + (n64_math::random_f32() * 20.0) as i32,
                         );

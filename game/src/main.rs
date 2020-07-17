@@ -10,10 +10,6 @@ extern crate alloc;
 
 use bullet_system::BulletSystem;
 use camera::Camera;
-use components::box_drawable;
-use components::health;
-use components::movable;
-use components::sprite_drawable;
 use enemy_system::EnemySystem;
 use map::Map;
 use maps::MAP_1;
@@ -63,12 +59,12 @@ fn main() {
 
     let mut sound_mixer = SoundMixer::new();
     let mut camera = Camera::new(start_pos);
-    let mut player = Player::new(start_pos);
+    let mut player = Player::new(&mut world, start_pos);
     let mut bullet_system = BulletSystem::new();
     let mut enemy_system = EnemySystem::new();
     let mut command_buffer_cache = CommandBufferCache::new();
 
-    map.spawn_enemies(&mut enemy_system, &VIDEO_MODE);
+    map.spawn_enemies(&mut world, &mut enemy_system, &VIDEO_MODE);
 
     let mut frame_begin_time;
     let mut last_frame_begin_time = current_time_us();
@@ -90,20 +86,23 @@ fn main() {
 
             camera.update(&n64.controllers, dt, &VIDEO_MODE);
 
-            enemy_system.update(&mut bullet_system, &mut player, &mut sound_mixer, dt);
+            enemy_system.update(&mut world, &mut bullet_system, &mut player, &mut sound_mixer, dt);
 
             player.update(
+                &mut world,
                 &n64.controllers,
                 &mut bullet_system,
                 &mut sound_mixer,
                 &camera,
             );
 
-            bullet_system.update(&mut enemy_system, &mut player, &camera);
+            bullet_system.update(&mut world, &mut enemy_system, &mut player, &camera);
 
-            movable::simulate(dt);
+            world.movable.simulate(dt);
 
-            if !health::is_alive(player.entity()) {
+            world.entity.gc(&mut [&mut world.movable, &mut world.box_drawable, &mut world.sprite_drawable, &mut world.health]);
+
+            if !world.health.is_alive(player.entity()) {
                 break;
             }
         }
@@ -125,8 +124,8 @@ fn main() {
                 cb.clear();
 
                 map.render(&mut cb, VIDEO_MODE, &camera);
-                box_drawable::draw(&mut cb, VIDEO_MODE, &camera);
-                sprite_drawable::draw(&mut cb, VIDEO_MODE, &camera);
+                world.box_drawable.draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
+                world.sprite_drawable.draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
 
                 cb.run(&mut n64.graphics)
             };
@@ -140,7 +139,7 @@ fn main() {
                     300,
                     215,
                     BLUE,
-                    health::get_component(player.entity())
+                    world.health.lookup(player.entity())
                         .map(|hc| hc.health)
                         .unwrap_or(0),
                 );

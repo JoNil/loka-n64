@@ -1,9 +1,9 @@
 use crate::bullet_system::BulletSystem;
-use crate::components::health::{self, HealthComponent};
-use crate::components::movable::{self, MovableComponent};
-use crate::components::sprite_drawable::{self, SpriteDrawableComponent};
-use crate::entity::{self, Entity, OwnedEntity};
-use crate::{camera::Camera, sound_mixer::SoundMixer, sounds::SHOOT_1, textures::SHIP_2_SMALL};
+use crate::components::health::HealthComponent;
+use crate::components::movable::MovableComponent;
+use crate::components::sprite_drawable::SpriteDrawableComponent;
+use crate::entity::{Entity, OwnedEntity};
+use crate::{camera::Camera, sound_mixer::SoundMixer, sounds::SHOOT_1, textures::SHIP_2_SMALL, world::World};
 use n64::{current_time_us, Controllers};
 use n64_math::Vec2;
 
@@ -19,28 +19,28 @@ pub struct Player {
 }
 
 impl Player {
-    pub fn new(start_pos: Vec2) -> Self {
+    pub fn new(world: &mut World, start_pos: Vec2) -> Self {
         let player = Player {
-            entity: entity::create(),
+            entity: world.entity.create(),
             score: 0,
             last_shoot_time: 0,
         };
 
-        movable::add(
+        world.movable.add(
             &player.entity,
             MovableComponent {
                 pos: start_pos + PLAYTER_START_POS,
                 speed: Vec2::new(0.0, 0.0),
             },
         );
-        sprite_drawable::add(
+        world.sprite_drawable.add(
             &player.entity,
             SpriteDrawableComponent {
                 size: SHIP_SIZE,
                 texture: SHIP_2_SMALL.as_texture(),
             },
         );
-        health::add(&player.entity, HealthComponent { health: 1000 });
+        world.health.add(&player.entity, HealthComponent { health: 1000 });
 
         player
     }
@@ -59,6 +59,7 @@ impl Player {
 
     pub fn update(
         &mut self,
+        world: &mut World,
         controllers: &Controllers,
         bullet_system: &mut BulletSystem,
         sound_mixer: &mut SoundMixer,
@@ -77,17 +78,18 @@ impl Player {
             controller_dir.set_y(if controller_y > 0 { -1.0 } else { 1.0 });
         }
 
-        if let Some(movable) = movable::lock_mut().lookup_mut(&self.entity) {
+        if let Some(movable) = world.movable.lookup_mut(&self.entity) {
             movable.speed = SHIP_SPEED * controller_dir - camera.speed;
         }
 
-        if let Some(movable) = movable::get_component(&self.entity) {
+        if let Some(movable) = world.movable.lookup(&self.entity).copied() {
             let now = current_time_us();
 
             if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS as i64 * 1000 {
                 if controllers.z() {
                     sound_mixer.play_sound(SHOOT_1.as_sound_data());
                     bullet_system.shoot_bullet(
+                        world,
                         movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                         Vec2::new(0.0, movable.speed.y() - 1.25),
                     );

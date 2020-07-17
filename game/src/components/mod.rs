@@ -1,7 +1,3 @@
-use crate::entity::Entity;
-use alloc::vec::Vec;
-use spin::{Mutex, MutexGuard, Once};
-
 pub mod box_drawable;
 pub mod health;
 pub mod movable;
@@ -24,7 +20,7 @@ macro_rules! impl_system {
 
         impl System {
             #[allow(dead_code)]
-            fn new() -> Self {
+            pub fn new() -> Self {
                 Self {
                     components: alloc::vec::Vec::with_capacity(256),
                     entities: alloc::vec::Vec::with_capacity(256),
@@ -90,7 +86,7 @@ macro_rules! impl_system {
             }
         }
 
-        impl Remover for System {
+        impl crate::components::Remover for System {
             fn remove(&mut self, entity: &crate::entity::Entity) {
                 if let Some(&index) = self.map.get(entity) {
                     let last = self.components.len() - 1;

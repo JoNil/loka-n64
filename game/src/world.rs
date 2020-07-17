@@ -1,25 +1,21 @@
-use crate::{components::{Removers, box_drawable, health, movable, sprite_drawable, Remover}, entity::EntitySystem};
+use crate::{components::{box_drawable, health, movable, sprite_drawable}, entity::EntitySystem};
 
 pub struct World {
-    pub entities: EntitySystem,
-    pub movables: movable::System,
-    pub box_drawables: box_drawable::System,
-    pub sprite_drawables: sprite_drawable::System,
-    pub healths: health::System,
+    pub entity: EntitySystem,
+    pub movable: movable::System,
+    pub box_drawable: box_drawable::System,
+    pub sprite_drawable: sprite_drawable::System,
+    pub health: health::System,
 }
 
 impl World {
-    fn new() -> Self {
+    pub fn new() -> Self {
         Self {
-            entities: EntitySystem::new(),
-            movables: movable::System::new(),
-            box_drawables: box_drawable::System::new(),
-            sprite_drawables: sprite_drawable::System::new(),
-            healths: health::System::new(),
+            entity: EntitySystem::new(),
+            movable: movable::System::new(),
+            box_drawable: box_drawable::System::new(),
+            sprite_drawable: sprite_drawable::System::new(),
+            health: health::System::new(),
         }
-    }
-
-    fn get_removers(&mut self) -> [&mut dyn Remover; 4] {
-        [&mut self.movables, &mut self.box_drawables, &mut self.sprite_drawables, &mut self.healths]
     }
 }

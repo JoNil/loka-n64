@@ -1,12 +1,12 @@
 use crate::bullet_system::BulletSystem;
-use crate::components::box_drawable::{self, BoxDrawableComponent};
-use crate::components::health::{self, HealthComponent};
-use crate::components::movable::{self, MovableComponent};
-use crate::entity::{self, Entity, OwnedEntity};
+use crate::components::box_drawable::BoxDrawableComponent;
+use crate::components::health::HealthComponent;
+use crate::components::movable::MovableComponent;
+use crate::entity::{Entity, OwnedEntity};
 use crate::{
     sound_mixer::SoundMixer,
     sounds::{EXPLOSION_0, SHOOT_0},
-    Player,
+    Player, world::World,
 };
 use alloc::vec::Vec;
 use n64::current_time_us;
@@ -21,8 +21,8 @@ static ENEMY_WAYPOINT: [Vec2; 4] = [
     Vec2::new(0.4, 0.6),
 ];
 
-fn ai(enemy: &mut Enemy, dt: f32) {
-    if let Some(movable) = movable::lock_mut().lookup_mut(&enemy.entity) {
+fn ai(world: &mut World, enemy: &mut Enemy, dt: f32) {
+    if let Some(movable) = world.movable.lookup_mut(&enemy.entity) {
         if enemy.waypoint_step >= 1.0 {
             enemy.waypoint_step -= 1.0;
             enemy.waypoint += 1;
@@ -62,20 +62,20 @@ pub struct EnemySystem {
 impl EnemySystem {
     pub fn new() -> Self {
         Self {
-            enemies: Vec::new(),
+            enemies: Vec::with_capacity(256),
         }
     }
 
-    pub fn spawn_enemy(&mut self, pos: Vec2) {
-        let entity = entity::create();
-        movable::add(
+    pub fn spawn_enemy(&mut self, world: &mut World, pos: Vec2) {
+        let entity = world.entity.create();
+        world.movable.add(
             &entity,
             MovableComponent {
-                pos: pos,
+                pos,
                 speed: Vec2::zero(),
             },
         );
-        box_drawable::add(
+        world.box_drawable.add(
             &entity,
             BoxDrawableComponent {
                 size: ENEMY_SIZE,
@@ -86,7 +86,7 @@ impl EnemySystem {
                 ),
             },
         );
-        health::add(&entity, HealthComponent { health: 100 });
+        world.health.add(&entity, HealthComponent { health: 100 });
 
         self.enemies.push(Enemy {
             entity,
@@ -99,6 +99,7 @@ impl EnemySystem {
 
     pub fn update(
         &mut self,
+        world: &mut World,
         bullet_system: &mut BulletSystem,
         player: &mut Player,
         sound_mixer: &mut SoundMixer,
@@ -109,16 +110,17 @@ impl EnemySystem {
         let now = current_time_us();
 
         for (i, enemy) in self.enemies_mut().iter_mut().enumerate() {
-            if !health::is_alive(&enemy.entity) {
+            if !world.health.is_alive(&enemy.entity) {
                 sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
                 player.add_score(1000);
                 delete_list.push(i);
             }
 
             if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
-                if let Some(movable) = movable::get_component(&enemy.entity) {
+                if let Some(movable) = world.movable.lookup(&enemy.entity).copied() {
                     //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                     bullet_system.shoot_bullet_enemy(
+                        world,
                         movable.pos + Vec2::new(0.0, ENEMY_SIZE.y() / 2.0),
                         Vec2::new(0.0, 1.25),
                     );
@@ -126,7 +128,7 @@ impl EnemySystem {
                 }
             }
 
-            ai(enemy, dt);
+            ai(world, enemy, dt);
         }
 
         {

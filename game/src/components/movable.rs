@@ -8,17 +8,15 @@ pub struct MovableComponent {
     pub speed: Vec2,
 }
 
-pub fn pos(entity: &Entity) -> Option<Vec2> {
-    if let Some(movable) = get_component(entity) {
-        Some(movable.pos)
-    } else {
-        None
+impl System {
+    pub fn pos(&self, entity: &Entity) -> Option<Vec2> {
+        self.lookup(entity).map(|c| c.pos)
     }
-}
 
-pub fn simulate(dt: f32) {
-    for component in lock_mut().components_mut() {
-        component.pos += dt * component.speed;
+    pub fn simulate(&mut self, dt: f32) {
+        for component in self.components_mut() {
+            component.pos += dt * component.speed;
+        }
     }
 }
 

@@ -3,6 +3,8 @@ use alloc::vec::Vec;
 use core::num::Wrapping;
 use core::ops::Deref;
 use core::ops::Drop;
+use spin::{Mutex, Once, MutexGuard};
+use crate::components::Remover;
 
 const INDEX_BITS: u32 = 24;
 const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
@@ -12,6 +14,13 @@ const GENERATION_MASK: u32 = (1 << GENERATION_BITS) - 1;
 
 const MINIMUM_FREE_INDICES: u32 = 1024;
 
+static ENTITY_REMOVE_LIST: Once<Mutex<Vec<Entity>>> = Once::new();
+
+fn entity_remove_list() -> MutexGuard<'static, Vec<Entity>> {
+    ENTITY_REMOVE_LIST
+        .call_once(|| Mutex::new(Vec::with_capacity(128)))
+        .lock()
+}
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Entity {
@@ -48,7 +57,7 @@ impl OwnedEntity {
 
 impl Drop for OwnedEntity {
     fn drop(&mut self) {
-        lock().destroy(self);
+        entity_remove_list().push(**self);
     }
 }
 
@@ -90,13 +99,20 @@ impl EntitySystem {
         return self.generation[entity.index() as usize] == entity.generation();
     }
 
-    fn destroy(&mut self, entity: &Entity) {
-        let index = entity.index();
-        self.generation[index as usize] += Wrapping(1);
-        self.free_indices.push_back(index);
+    pub fn gc(&mut self, removers: &mut [&mut dyn Remover]) {
+        let mut remove_list = entity_remove_list();
 
-        for remove in systems().removers() {
-            remove(entity);
+        for entity in remove_list.iter() { 
+
+            let index = entity.index();
+            self.generation[index as usize] += Wrapping(1);
+            self.free_indices.push_back(index);
+
+            for remover in removers.iter_mut() {
+                remover.remove(entity);
+            }
         }
+
+        remove_list.clear();
     }
 }
