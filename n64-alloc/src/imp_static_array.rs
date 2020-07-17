@@ -51,7 +51,6 @@ impl<T> Exclusive<T> {
         for<'x> F: FnOnce(&'x mut T) -> U,
     {
         let mut guard = self.inner.lock();
-        let result = f(&mut guard);
-        result
+        f(&mut guard)
     }
 }

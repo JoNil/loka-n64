@@ -1,5 +1,9 @@
 #![no_std]
 
+#![allow(clippy::declare_interior_mutable_const)]
+#![allow(clippy::cast_ptr_alignment)]
+#![allow(clippy::needless_lifetimes)]
+
 extern crate alloc;
 
 mod const_init;
@@ -12,7 +16,6 @@ use core::alloc::{GlobalAlloc, Layout};
 use core::cell::Cell;
 use core::cmp;
 use core::marker::Sync;
-use core::mem;
 use core::ptr::{self, NonNull};
 use core::sync::atomic::{AtomicI32, Ordering};
 use imp_static_array as imp;
@@ -28,7 +31,7 @@ where
     Bytes: RoundUpTo<T>,
 {
     if b.0.checked_add(T::BYTE_SIZE.0).is_none() {
-        return None;
+        None
     } else {
         Some(b.round_up_to())
     }
@@ -87,8 +90,8 @@ fn allocated_cell_layout() {
     );
 
     assert_eq!(
-        mem::align_of::<CellHeader>(),
-        mem::align_of::<AllocatedCell>()
+        core::mem::align_of::<CellHeader>(),
+        core::mem::align_of::<AllocatedCell>()
     );
 }
 
@@ -108,8 +111,8 @@ fn free_cell_layout() {
     );
 
     assert_eq!(
-        mem::align_of::<CellHeader>(),
-        mem::align_of::<AllocatedCell>()
+        core::mem::align_of::<CellHeader>(),
+        core::mem::align_of::<AllocatedCell>()
     );
 }
 
@@ -166,7 +169,7 @@ impl<'a> CellHeader<'a> {
 
     fn as_free_cell(&self) -> Option<&FreeCell<'a>> {
         if self.is_free() {
-            Some(unsafe { mem::transmute(self) })
+            Some(unsafe { &*(self as *const CellHeader as *const FreeCell) })
         } else {
             None
         }
@@ -244,9 +247,9 @@ impl<'a> FreeCell<'a> {
         raw
     }
 
-    fn into_allocated_cell(&self, _policy: &dyn AllocPolicy<'a>) -> &AllocatedCell<'a> {
+    fn as_allocated_cell(&self, _policy: &dyn AllocPolicy<'a>) -> &AllocatedCell<'a> {
         CellHeader::set_allocated(&self.header.neighbors);
-        unsafe { mem::transmute(self) }
+        unsafe { &*(self as *const FreeCell as *const AllocatedCell) }
     }
 
     // Try and satisfy the given allocation request with this cell.
@@ -293,7 +296,7 @@ impl<'a> FreeCell<'a> {
                 CellHeader::set_next_cell_is_invalid(&split_cell.header.neighbors);
             }
 
-            return Some(split_cell.into_allocated_cell(policy));
+            return Some(split_cell.as_allocated_cell(policy));
         }
 
         // There isn't enough room to split this cell and still satisfy the
@@ -302,7 +305,7 @@ impl<'a> FreeCell<'a> {
         // properly aligned?
         if self.header.is_aligned_to(align) {
             previous.set(self.next_free());
-            let allocated = self.into_allocated_cell(policy);
+            let allocated = self.as_allocated_cell(policy);
             return Some(allocated);
         }
 
@@ -321,9 +324,9 @@ impl<'a> FreeCell<'a> {
 }
 
 impl<'a> AllocatedCell<'a> {
-    unsafe fn into_free_cell(&self, _policy: &dyn AllocPolicy<'a>) -> &FreeCell<'a> {
+    unsafe fn as_free_cell(&self, _policy: &dyn AllocPolicy<'a>) -> &FreeCell<'a> {
         CellHeader::set_free(&self.header.neighbors);
-        let free: &FreeCell = mem::transmute(self);
+        let free: &FreeCell = &*(self as *const AllocatedCell as *const FreeCell);
         free.next_free_raw.set(ptr::null_mut());
         free
     }
@@ -486,9 +489,7 @@ unsafe fn alloc_with_refill<'a, 'b>(
 
     let cell = policy.new_cell_for_free_list(size, align)?;
     let head = (*cell).insert_into_free_list(head, policy);
-    let result = alloc_first_fit(size, align, head, policy);
-
-    result
+    alloc_first_fit(size, align, head, policy)
 }
 
 /// A n64 allocator.
@@ -577,9 +578,9 @@ impl<'a> N64Alloc<'a> {
         self.with_free_list_and_policy_for_size(size, align, |head, policy| {
             let cell = (ptr.as_ptr() as *mut CellHeader<'a> as *const CellHeader<'a>).offset(-1);
             let cell = &*cell;
-            let cell: &AllocatedCell<'a> = mem::transmute(cell);
+            let cell: &AllocatedCell<'a> = &*(cell as *const CellHeader as *const AllocatedCell);
 
-            let free = cell.into_free_cell(policy);
+            let free = cell.as_free_cell(policy);
 
             if policy.should_merge_adjacent_free_cells() {
                 // Merging with the _previous_ adjacent cell is easy: it is

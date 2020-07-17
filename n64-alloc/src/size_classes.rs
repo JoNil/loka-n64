@@ -68,7 +68,7 @@ where
             None,
             self as &dyn AllocPolicy,
         );
-        let next_cell = (new_cell.as_ptr() as *const u8).offset(new_cell_size.0 as isize);
+        let next_cell = (new_cell.as_ptr() as *const u8).add(new_cell_size.0);
         (*free_cell)
             .header
             .neighbors
