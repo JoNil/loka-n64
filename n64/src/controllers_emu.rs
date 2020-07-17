@@ -2,6 +2,7 @@ use crate::graphics::Graphics;
 use std::collections::HashSet;
 use winit::event::VirtualKeyCode;
 
+#[derive(Default)]
 pub struct Controllers {
     data: HashSet<VirtualKeyCode>,
 }

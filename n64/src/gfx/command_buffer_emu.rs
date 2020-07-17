@@ -9,7 +9,6 @@ use crate::{
         Graphics,
     },
 };
-use futures_executor;
 use n64_math::{Color, Vec2};
 use std::convert::TryInto;
 use std::mem;
@@ -28,6 +27,7 @@ enum Command {
     },
 }
 
+#[derive(Default)]
 pub struct CommandBufferCache {
     commands: Vec<Command>,
 }
@@ -158,7 +158,7 @@ impl<'a> CommandBuffer<'a> {
                     }
                 }
 
-                if colored_rect_uniforms.len() > 0 {
+                if !colored_rect_uniforms.is_empty() {
                     let temp_buffer = graphics.device.create_buffer_with_data(
                         colored_rect_uniforms.as_bytes(),
                         wgpu::BufferUsage::COPY_SRC,
@@ -174,7 +174,7 @@ impl<'a> CommandBuffer<'a> {
                     );
                 }
 
-                if textured_rect_uniforms.len() > 0 {
+                if !textured_rect_uniforms.is_empty() {
                     let temp_buffer = graphics.device.create_buffer_with_data(
                         textured_rect_uniforms.as_bytes(),
                         wgpu::BufferUsage::COPY_SRC,

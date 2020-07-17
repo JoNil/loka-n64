@@ -1,6 +1,7 @@
 use crate::graphics::Graphics;
 use n64_sys::si;
 
+#[derive(Default)]
 pub struct Controllers {
     data: [u64; 8],
 }

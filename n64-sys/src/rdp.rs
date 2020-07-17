@@ -7,7 +7,7 @@ use n64_types::RdpCommand;
 
 const RDP_BASE: usize = 0xA410_0000;
 
-const RDP_COMMAND_BUFFER_START: *mut usize = (RDP_BASE + 0x00) as _;
+const RDP_COMMAND_BUFFER_START: *mut usize = (RDP_BASE) as _;
 const RDP_COMMAND_BUFFER_END: *mut usize = (RDP_BASE + 0x04) as _;
 const RDP_COMMAND_BUFFER_CURRENT: *const usize = (RDP_BASE + 0x08) as _;
 const RDP_STATUS: *mut usize = (RDP_BASE + 0x0C) as _;
@@ -65,7 +65,7 @@ pub unsafe fn swap_commands(commands: Vec<RdpCommand>) -> Vec<RdpCommand> {
 #[inline]
 pub unsafe fn run_command_buffer() {
     if let Some(commands) = &COMMANDS {
-        if commands.len() == 0 {
+        if commands.is_empty() {
             return;
         }
 
@@ -84,7 +84,7 @@ pub unsafe fn run_command_buffer() {
         memory_barrier();
         write_volatile(
             RDP_COMMAND_BUFFER_END,
-            (commands.as_ptr().offset(commands.len() as isize) as usize) | 0xa000_0000,
+            (commands.as_ptr().add(commands.len()) as usize) | 0xa000_0000,
         );
         memory_barrier();
 

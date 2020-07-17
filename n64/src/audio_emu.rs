@@ -90,7 +90,7 @@ fn audio_thread(
     };
 
     let mut resampler = SincFixedIn::<f32>::new(
-        format.sample_rate.0 as f64 / 22050 as f64,
+        format.sample_rate.0 as f64 / 22050.0,
         params,
         BUFFER_NO_SAMPLES / 2,
         2,

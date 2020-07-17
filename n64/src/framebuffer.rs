@@ -53,11 +53,12 @@ impl Framebuffer {
 
 #[inline]
 pub fn slow_cpu_clear(fb: &mut [Color]) {
+    #[allow(clippy::cast_ptr_alignment)]
     let mut p = fb.as_mut_ptr() as *mut u32;
 
     for _ in 0..(fb.len() / 2) {
         unsafe {
-            *p = 0x0001_0001;
+            p.write_unaligned(0x0001_0001);
             p = p.offset(1);
         }
     }

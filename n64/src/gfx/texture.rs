@@ -36,7 +36,7 @@ impl<'a> TextureMut<'a> {
     }
 
     #[inline]
-    pub fn as_texture(self) -> Texture<'a> {
+    pub fn into_texture(self) -> Texture<'a> {
         Texture {
             width: self.width,
             height: self.height,

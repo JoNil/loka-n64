@@ -11,8 +11,8 @@ impl Aabb2 {
     #[inline]
     pub const fn new(upper_left: Vec2, lower_right: Vec2) -> Aabb2 {
         Aabb2 {
-            upper_left: upper_left,
-            lower_right: lower_right,
+            upper_left,
+            lower_right,
         }
     }
 

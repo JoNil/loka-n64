@@ -54,7 +54,7 @@ impl Audio {
 
             {
                 let next_buffer = self.ready_buffers.pop_front().unwrap();
-                unsafe { ai::submit_audio_data_to_dac(&next_buffer); }
+                ai::submit_audio_data_to_dac(&next_buffer);
                 self.playing_buffers.push_back(next_buffer);
             }
         }

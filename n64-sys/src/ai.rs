@@ -3,7 +3,7 @@ use core::ptr::{read_volatile, write_volatile};
 
 const AI_BASE: usize = 0xA4500000;
 
-const AI_ADDR: *mut usize = (AI_BASE + 0x00) as _;
+const AI_ADDR: *mut usize = (AI_BASE) as _;
 const AI_LENGTH: *mut usize = (AI_BASE + 0x04) as _;
 const AI_CONTROL: *mut usize = (AI_BASE + 0x08) as _;
 const AI_STATUS: *mut usize = (AI_BASE + 0x0C) as _;
@@ -30,7 +30,7 @@ pub fn init() {
             _ => AI_NTSC_DACRATE,
         };
 
-        write_volatile(AI_DACRATE, (2 * AI_PAL_DACRATE / FREQUENCY) - 1);
+        write_volatile(AI_DACRATE, (2 * clockrate / FREQUENCY) - 1);
         write_volatile(AI_SAMPLESIZE, 15);
     }
 }
@@ -46,9 +46,11 @@ pub fn full() -> bool {
 }
 
 #[inline]
-pub unsafe fn submit_audio_data_to_dac(buffer: &[i16]) {
-    data_cache_hit_writeback(buffer);
-    write_volatile(AI_ADDR, virtual_to_physical(buffer.as_ptr()));
-    write_volatile(AI_LENGTH, buffer.len() & !7);
-    write_volatile(AI_CONTROL, 1);
+pub fn submit_audio_data_to_dac(buffer: &[i16]) {
+    unsafe {
+        data_cache_hit_writeback(buffer);
+        write_volatile(AI_ADDR, virtual_to_physical(buffer.as_ptr()));
+        write_volatile(AI_LENGTH, buffer.len() & !7);
+        write_volatile(AI_CONTROL, 1);
+    }
 }

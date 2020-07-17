@@ -1,5 +1,7 @@
-use core::{f32, fmt, ops::*};
-use libm;
+use core::{
+    f32, fmt,
+    ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
+};
 
 /// A 2-dimensional vector.
 #[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]

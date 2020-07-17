@@ -1,4 +1,3 @@
-use core::mem;
 use core::num::Wrapping;
 use spin::Mutex;
 
@@ -32,7 +31,7 @@ impl Rng {
         const UPPER_MASK: u32 = 0x3F800000;
         const LOWER_MASK: u32 = 0x7FFFFF;
         let tmp = UPPER_MASK | (self.next_u32() & LOWER_MASK);
-        let result: f32 = unsafe { mem::transmute(tmp) };
+        let result: f32 = f32::from_bits(tmp);
         result - 1.0
     }
 
@@ -41,7 +40,7 @@ impl Rng {
         const UPPER_MASK: u64 = 0x3FF0000000000000;
         const LOWER_MASK: u64 = 0xFFFFFFFFFFFFF;
         let tmp = UPPER_MASK | (self.next_u64() & LOWER_MASK);
-        let result: f64 = unsafe { mem::transmute(tmp) };
+        let result: f64 = f64::from_bits(tmp);
         result - 1.0
     }
 }

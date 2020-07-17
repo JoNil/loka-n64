@@ -7,7 +7,7 @@ use core::ptr::{read_volatile, write_volatile};
 
 const SI_BASE: usize = 0xA480_0000;
 
-const SI_ADDR: *mut usize = (SI_BASE + 0x00) as _;
+const SI_ADDR: *mut usize = (SI_BASE) as _;
 const SI_START_READ: *mut usize = (SI_BASE + 0x04) as _;
 const SI_START_WRITE: *mut usize = (SI_BASE + 0x10) as _;
 const SI_STATUS: *mut usize = (SI_BASE + 0x18) as _;
@@ -28,7 +28,7 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
         let mut inblock_temp: [u64; 8] = [0; 8];
         let mut outblock_temp: [u64; 8] = [0; 8];
 
-        data_cache_hit_writeback_invalidate(&mut inblock_temp);
+        data_cache_hit_writeback_invalidate(&inblock_temp);
         volatile_copy_nonoverlapping_memory(
             uncached_addr_mut(inblock_temp.as_mut_ptr()),
             inblock.as_ptr(),
@@ -44,7 +44,7 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
 
         dma_wait();
 
-        data_cache_hit_writeback_invalidate(&mut outblock_temp);
+        data_cache_hit_writeback_invalidate(&outblock_temp);
 
         write_volatile(SI_ADDR, virtual_to_physical_mut(outblock_temp.as_mut_ptr()));
         memory_barrier();

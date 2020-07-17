@@ -4,7 +4,7 @@ use std::fs;
 
 fn main() -> Result<(), Box<dyn Error>> {
     if env::args().len() < 2 {
-        println!("Usage: {} [FILE]", env::args().nth(0).unwrap());
+        println!("Usage: {} [FILE]", env::args().next().unwrap());
         return Ok(());
     }
 

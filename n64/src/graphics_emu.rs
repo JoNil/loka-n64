@@ -30,7 +30,7 @@ pub(crate) struct Vertex {
     tex_coord: [f32; 2],
 }
 
-static QUAD_VERTEX_DATA: &'static [Vertex] = &[
+static QUAD_VERTEX_DATA: &[Vertex] = &[
     Vertex {
         pos: [-1.0, -1.0, 1.0],
         tex_coord: [0.0, 1.0],
@@ -49,7 +49,7 @@ static QUAD_VERTEX_DATA: &'static [Vertex] = &[
     },
 ];
 
-pub(crate) static QUAD_INDEX_DATA: &'static [u16] = &[0, 1, 2, 2, 3, 0];
+pub(crate) static QUAD_INDEX_DATA: &[u16] = &[0, 1, 2, 2, 3, 0];
 
 thread_local! {
     static EVENT_LOOP: Mutex<EventLoop<()>> = Mutex::new(EventLoop::new());
