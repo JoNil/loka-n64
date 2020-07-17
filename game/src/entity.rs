@@ -1,10 +1,8 @@
-use crate::components::systems;
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 use core::num::Wrapping;
 use core::ops::Deref;
 use core::ops::Drop;
-use spin::{Mutex, MutexGuard, Once};
 
 const INDEX_BITS: u32 = 24;
 const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
@@ -14,17 +12,6 @@ const GENERATION_MASK: u32 = (1 << GENERATION_BITS) - 1;
 
 const MINIMUM_FREE_INDICES: u32 = 1024;
 
-static ENTITY_SYSTEM: Once<Mutex<EntitySystem>> = Once::new();
-
-fn lock() -> MutexGuard<'static, EntitySystem> {
-    ENTITY_SYSTEM
-        .call_once(|| Mutex::new(EntitySystem::new()))
-        .lock()
-}
-
-pub fn create() -> OwnedEntity {
-    lock().create()
-}
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Entity {

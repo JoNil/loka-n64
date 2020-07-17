@@ -25,6 +25,7 @@ use n64::{
 use n64_math::{Color, Vec2};
 use player::{Player, SHIP_SIZE};
 use sound_mixer::SoundMixer;
+use world::World;
 
 mod bullet_system;
 mod camera;
@@ -33,6 +34,7 @@ mod enemy_system;
 mod entity;
 mod map;
 mod maps;
+mod world;
 mod player;
 mod sound;
 mod sound_mixer;
@@ -51,6 +53,7 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);
 
+    let mut world = World::new();
     let map = Map::load(MAP_1);
 
     let start_pos = Vec2::new(

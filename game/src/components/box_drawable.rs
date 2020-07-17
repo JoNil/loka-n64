@@ -1,4 +1,4 @@
-use crate::components::{movable, systems};
+use crate::components::movable;
 use crate::{camera::Camera, impl_system};
 use n64::{gfx::CommandBuffer, VideoMode};
 use n64_math::{Color, Vec2};
