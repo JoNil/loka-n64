@@ -30,12 +30,12 @@ mod enemy_system;
 mod entity;
 mod map;
 mod maps;
-mod world;
 mod player;
 mod sound;
 mod sound_mixer;
 mod sounds;
 mod textures;
+mod world;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);
 const GREEN: Color = Color::new(0b00011_10000_00011_1);
@@ -86,7 +86,13 @@ fn main() {
 
             camera.update(&n64.controllers, dt, &VIDEO_MODE);
 
-            enemy_system.update(&mut world, &mut bullet_system, &mut player, &mut sound_mixer, dt);
+            enemy_system.update(
+                &mut world,
+                &mut bullet_system,
+                &mut player,
+                &mut sound_mixer,
+                dt,
+            );
 
             player.update(
                 &mut world,
@@ -100,7 +106,12 @@ fn main() {
 
             world.movable.simulate(dt);
 
-            world.entity.gc(&mut [&mut world.movable, &mut world.box_drawable, &mut world.sprite_drawable, &mut world.health]);
+            world.entity.gc(&mut [
+                &mut world.movable,
+                &mut world.box_drawable,
+                &mut world.sprite_drawable,
+                &mut world.health,
+            ]);
 
             if !world.health.is_alive(player.entity()) {
                 break;
@@ -124,8 +135,12 @@ fn main() {
                 cb.clear();
 
                 map.render(&mut cb, VIDEO_MODE, &camera);
-                world.box_drawable.draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
-                world.sprite_drawable.draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
+                world
+                    .box_drawable
+                    .draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
+                world
+                    .sprite_drawable
+                    .draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
 
                 cb.run(&mut n64.graphics)
             };
@@ -139,7 +154,9 @@ fn main() {
                     300,
                     215,
                     BLUE,
-                    world.health.lookup(player.entity())
+                    world
+                        .health
+                        .lookup(player.entity())
                         .map(|hc| hc.health)
                         .unwrap_or(0),
                 );

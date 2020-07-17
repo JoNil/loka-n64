@@ -6,7 +6,8 @@ use crate::entity::{Entity, OwnedEntity};
 use crate::{
     sound_mixer::SoundMixer,
     sounds::{EXPLOSION_0, SHOOT_0},
-    Player, world::World,
+    world::World,
+    Player,
 };
 use alloc::vec::Vec;
 use n64::current_time_us;

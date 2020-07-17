@@ -1,10 +1,10 @@
+use crate::components::Remover;
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;
 use core::num::Wrapping;
 use core::ops::Deref;
 use core::ops::Drop;
-use spin::{Mutex, Once, MutexGuard};
-use crate::components::Remover;
+use spin::{Mutex, MutexGuard, Once};
 
 const INDEX_BITS: u32 = 24;
 const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
@@ -102,8 +102,7 @@ impl EntitySystem {
     pub fn gc(&mut self, removers: &mut [&mut dyn Remover]) {
         let mut remove_list = entity_remove_list();
 
-        for entity in remove_list.iter() { 
-
+        for entity in remove_list.iter() {
             let index = entity.index();
             self.generation[index as usize] += Wrapping(1);
             self.free_indices.push_back(index);

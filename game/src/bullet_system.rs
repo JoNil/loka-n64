@@ -2,7 +2,7 @@ use crate::components::box_drawable::BoxDrawableComponent;
 use crate::components::movable::MovableComponent;
 use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
 use crate::entity::OwnedEntity;
-use crate::{camera::Camera, Player, SHIP_SIZE, world::World};
+use crate::{camera::Camera, world::World, Player, SHIP_SIZE};
 use alloc::vec::Vec;
 use n64_math::{self, Aabb2, Color, Vec2};
 
@@ -69,7 +69,13 @@ impl BulletSystem {
         });
     }
 
-    pub fn update(&mut self, world: &mut World, enemy_system: &mut EnemySystem, player: &mut Player, camera: &Camera) {
+    pub fn update(
+        &mut self,
+        world: &mut World,
+        enemy_system: &mut EnemySystem,
+        player: &mut Player,
+        camera: &Camera,
+    ) {
         let mut delete_list = Vec::new();
 
         let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
@@ -107,10 +113,9 @@ impl BulletSystem {
                     );
 
                     if bullet_bb.collides(&player_bb) {
-                        world.health.damage(
-                            player.entity(),
-                            50 + (n64_math::random_f32() * 20.0) as i32,
-                        );
+                        world
+                            .health
+                            .damage(player.entity(), 50 + (n64_math::random_f32() * 20.0) as i32);
                         delete = true;
                     }
                 }

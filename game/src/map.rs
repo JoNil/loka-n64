@@ -29,15 +29,21 @@ impl Map {
         Self { data }
     }
 
-    pub fn spawn_enemies(&self, world: &mut World, enemy_system: &mut EnemySystem, video_mode: &VideoMode) {
+    pub fn spawn_enemies(
+        &self,
+        world: &mut World,
+        enemy_system: &mut EnemySystem,
+        video_mode: &VideoMode,
+    ) {
         for objects in self.data.objects {
             for object in *objects {
                 enemy_system.spawn_enemy(
                     world,
                     Vec2::new(
-                    object.x / video_mode.width() as f32,
-                    object.y / video_mode.height() as f32,
-                ));
+                        object.x / video_mode.width() as f32,
+                        object.y / video_mode.height() as f32,
+                    ),
+                );
             }
         }
     }

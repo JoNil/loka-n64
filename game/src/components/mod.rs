@@ -10,7 +10,6 @@ pub trait Remover {
 #[macro_export]
 macro_rules! impl_system {
     ($component_ident: ident) => {
-
         #[allow(dead_code)]
         pub struct System {
             components: alloc::vec::Vec<$component_ident>,

@@ -1,4 +1,7 @@
-use crate::{components::{box_drawable, health, movable, sprite_drawable}, entity::EntitySystem};
+use crate::{
+    components::{box_drawable, health, movable, sprite_drawable},
+    entity::EntitySystem,
+};
 
 pub struct World {
     pub entity: EntitySystem,

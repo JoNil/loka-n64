@@ -13,7 +13,13 @@ pub struct SpriteDrawableComponent {
 }
 
 impl System {
-    pub fn draw(&mut self, movalbe: &movable::System, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
+    pub fn draw(
+        &mut self,
+        movalbe: &movable::System,
+        cb: &mut CommandBuffer,
+        video_mode: VideoMode,
+        camera: &Camera,
+    ) {
         for (component, entity) in self.components_and_entities() {
             if let Some(movable) = movalbe.lookup(&entity) {
                 let half_size = component.size / 2.0;

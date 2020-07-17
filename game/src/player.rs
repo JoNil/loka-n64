@@ -3,7 +3,9 @@ use crate::components::health::HealthComponent;
 use crate::components::movable::MovableComponent;
 use crate::components::sprite_drawable::SpriteDrawableComponent;
 use crate::entity::{Entity, OwnedEntity};
-use crate::{camera::Camera, sound_mixer::SoundMixer, sounds::SHOOT_1, textures::SHIP_2_SMALL, world::World};
+use crate::{
+    camera::Camera, sound_mixer::SoundMixer, sounds::SHOOT_1, textures::SHIP_2_SMALL, world::World,
+};
 use n64::{current_time_us, Controllers};
 use n64_math::Vec2;
 
@@ -40,7 +42,9 @@ impl Player {
                 texture: SHIP_2_SMALL.as_texture(),
             },
         );
-        world.health.add(&player.entity, HealthComponent { health: 1000 });
+        world
+            .health
+            .add(&player.entity, HealthComponent { health: 1000 });
 
         player
     }
