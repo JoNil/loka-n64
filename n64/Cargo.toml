@@ -14,11 +14,10 @@ zerocopy = "0.3"
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
 cpal = "0.11"
-futures-executor = "0.3"
 glsl-to-spirv = "0.1"
 lazy_static = "1"
-rubato = "0.2"
-wgpu = "0.5"
+rubato = "0.4"
+wgpu = "0.6"
 winit = "0.22"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]

@@ -1,5 +1,6 @@
 use crate::{graphics_emu::Vertex, VideoMode};
-use std::mem;
+use std::{io::Read, mem, convert::TryInto};
+use wgpu::ShaderModuleSource;
 
 pub(crate) struct CopyTex {
     pub src_buffer: Box<[u8]>,
@@ -38,16 +39,16 @@ impl CopyTex {
         let src_tex = device.create_texture(&wgpu::TextureDescriptor {
             label: None,
             size: src_tex_extent,
-            array_layer_count: 1,
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: wgpu::TextureFormat::Rgba8Unorm,
             usage: wgpu::TextureUsage::SAMPLED | wgpu::TextureUsage::COPY_DST,
         });
-        let src_tex_view = src_tex.create_default_view();
+        let src_tex_view = src_tex.create_view(&Default::default());
 
         let src_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: None,
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
             address_mode_w: wgpu::AddressMode::ClampToEdge,
@@ -56,12 +57,13 @@ impl CopyTex {
             mipmap_filter: wgpu::FilterMode::Nearest,
             lod_min_clamp: -100.0,
             lod_max_clamp: 100.0,
-            compare: wgpu::CompareFunction::Always,
+            compare: Some(wgpu::CompareFunction::Always),
+            anisotropy_clamp: None,
         });
 
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             label: None,
-            bindings: &[
+            entries: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStage::FRAGMENT,
@@ -70,11 +72,13 @@ impl CopyTex {
                         component_type: wgpu::TextureComponentType::Uint,
                         dimension: wgpu::TextureViewDimension::D2,
                     },
+                    count: None,
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
                     visibility: wgpu::ShaderStage::FRAGMENT,
                     ty: wgpu::BindingType::Sampler { comparison: false },
+                    count: None,
                 },
             ],
         });
@@ -82,12 +86,12 @@ impl CopyTex {
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
             label: None,
             layout: &bind_group_layout,
-            bindings: &[
-                wgpu::Binding {
+            entries: &[
+                wgpu::BindGroupEntry {
                     binding: 0,
                     resource: wgpu::BindingResource::TextureView(&src_tex_view),
                 },
-                wgpu::Binding {
+                wgpu::BindGroupEntry {
                     binding: 1,
                     resource: wgpu::BindingResource::Sampler(&src_sampler),
                 },
@@ -95,11 +99,14 @@ impl CopyTex {
         });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
+            label: None,
             bind_group_layouts: &[&bind_group_layout],
+            push_constant_ranges: &[],
         });
 
-        let vs_bytes = wgpu::read_spirv(
-            glsl_to_spirv::compile(
+        let vs_bytes = {
+            let mut buffer = Vec::new();
+            let file = glsl_to_spirv::compile(
                 include_str!("shaders/copy_tex.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
@@ -107,12 +114,14 @@ impl CopyTex {
                 println!("{}", e);
                 "Unable to compile shaders/copy_tex.vert"
             })
-            .unwrap(),
-        )
-        .unwrap();
+            .unwrap();
+            file.read_to_end(&mut buffer).unwrap();
+            buffer.chunks_exact(4).map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap())).collect::<Vec<_>>()
+        };
 
-        let fs_bytes = wgpu::read_spirv(
-            glsl_to_spirv::compile(
+        let fs_bytes = {
+            let mut buffer = Vec::new();
+            let file = glsl_to_spirv::compile(
                 include_str!("shaders/copy_tex.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
@@ -120,15 +129,17 @@ impl CopyTex {
                 println!("{}", e);
                 "Unable to compile shaders/frag.vert"
             })
-            .unwrap(),
-        )
-        .unwrap();
+            .unwrap();
+            file.read_to_end(&mut buffer).unwrap();
+            buffer.chunks_exact(4).map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap())).collect::<Vec<_>>()
+        };
 
-        let vs_module = device.create_shader_module(&vs_bytes);
-        let fs_module = device.create_shader_module(&fs_bytes);
+        let vs_module = device.create_shader_module(ShaderModuleSource::SpirV(vs_bytes.into()));
+        let fs_module = device.create_shader_module(ShaderModuleSource::SpirV(fs_bytes.into()));
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            layout: &pipeline_layout,
+            label: None,
+            layout: Some(&pipeline_layout),
             vertex_stage: wgpu::ProgrammableStageDescriptor {
                 module: &vs_module,
                 entry_point: "main",
@@ -140,6 +151,7 @@ impl CopyTex {
             rasterization_state: Some(wgpu::RasterizationStateDescriptor {
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: wgpu::CullMode::None,
+                clamp_depth: false,
                 depth_bias: 0,
                 depth_bias_slope_scale: 0.0,
                 depth_bias_clamp: 0.0,

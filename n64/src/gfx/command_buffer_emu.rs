@@ -13,6 +13,7 @@ use n64_math::{Color, Vec2};
 use std::convert::TryInto;
 use std::mem;
 use zerocopy::AsBytes;
+use wgpu::{TextureDataLayout, Operations, MapMode};
 
 enum Command {
     ColoredRect {
@@ -196,24 +197,25 @@ impl<'a> CommandBuffer<'a> {
                     color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
                         attachment: &dst.tex_view,
                         resolve_target: None,
-                        load_op: if self.clear {
-                            wgpu::LoadOp::Clear
-                        } else {
-                            wgpu::LoadOp::Load
-                        },
-                        store_op: wgpu::StoreOp::Store,
-                        clear_color: wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 1.0,
-                        },
+                        ops: Operations {
+                            load: if self.clear {
+                                wgpu::LoadOp::Clear(wgpu::Color {
+                                    r: 0.0,
+                                    g: 0.0,
+                                    b: 0.0,
+                                    a: 1.0,
+                                })
+                            } else {
+                                wgpu::LoadOp::Load
+                            },
+                            store: true,
+                        }
                     }],
                     depth_stencil_attachment: None,
                 });
 
-                render_pass.set_index_buffer(&graphics.quad_index_buf, 0, 0);
-                render_pass.set_vertex_buffer(0, &graphics.quad_vertex_buf, 0, 0);
+                render_pass.set_index_buffer(graphics.quad_index_buf.slice(..));
+                render_pass.set_vertex_buffer(0, graphics.quad_vertex_buf.slice(..));
 
                 {
                     let mut colored_rect_index = 0;
@@ -263,14 +265,15 @@ impl<'a> CommandBuffer<'a> {
                 wgpu::TextureCopyView {
                     texture: &dst.tex,
                     mip_level: 0,
-                    array_layer: 0,
                     origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
                 },
                 wgpu::BufferCopyView {
                     buffer: &dst.buffer,
-                    offset: 0,
-                    bytes_per_row: 4 * self.out_tex.width as u32,
-                    rows_per_image: self.out_tex.height as u32,
+                    layout: TextureDataLayout {
+                        offset: 0,
+                        bytes_per_row: 4 * self.out_tex.width as u32,
+                        rows_per_image: self.out_tex.height as u32,
+                    },
                 },
                 dst.tex_extent,
             );
@@ -278,24 +281,23 @@ impl<'a> CommandBuffer<'a> {
             encoder.finish()
         };
 
-        graphics.queue.submit(&[command_buf]);
+        graphics.queue.submit(Some(command_buf));
 
-        futures_executor::block_on(async {
+        {
             let mapped_colored_rect_dst_buffer = dst
                 .buffer
-                .map_read(0, (4 * self.out_tex.width * self.out_tex.height) as u64)
-                .await
-                .unwrap();
+                .slice(0..((4 * self.out_tex.width * self.out_tex.height) as u64))
+                .get_mapped_range();
 
             for (fb_color, mapped_color) in self
                 .out_tex
                 .data
                 .iter_mut()
-                .zip(mapped_colored_rect_dst_buffer.as_slice().chunks(4))
+                .zip(mapped_colored_rect_dst_buffer.chunks(4))
             {
                 *fb_color = Color::from_bytes(mapped_color.try_into().unwrap());
             }
-        });
+        }
 
         (
             self.colored_rect_count as i32,
