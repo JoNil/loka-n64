@@ -1,6 +1,5 @@
 use crate::{graphics_emu::Vertex, VideoMode};
 use std::{io::Read, mem, convert::TryInto};
-use wgpu::ShaderModuleSource;
 
 pub(crate) struct CopyTex {
     pub src_buffer: Box<[u8]>,
@@ -106,7 +105,7 @@ impl CopyTex {
 
         let vs_bytes = {
             let mut buffer = Vec::new();
-            let file = glsl_to_spirv::compile(
+            let mut file = glsl_to_spirv::compile(
                 include_str!("shaders/copy_tex.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
@@ -121,7 +120,7 @@ impl CopyTex {
 
         let fs_bytes = {
             let mut buffer = Vec::new();
-            let file = glsl_to_spirv::compile(
+            let mut file = glsl_to_spirv::compile(
                 include_str!("shaders/copy_tex.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
@@ -134,8 +133,8 @@ impl CopyTex {
             buffer.chunks_exact(4).map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap())).collect::<Vec<_>>()
         };
 
-        let vs_module = device.create_shader_module(ShaderModuleSource::SpirV(vs_bytes.into()));
-        let fs_module = device.create_shader_module(ShaderModuleSource::SpirV(fs_bytes.into()));
+        let vs_module = device.create_shader_module(wgpu::ShaderModuleSource::SpirV(vs_bytes.into()));
+        let fs_module = device.create_shader_module(wgpu::ShaderModuleSource::SpirV(fs_bytes.into()));
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,

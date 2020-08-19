@@ -13,6 +13,7 @@ impl DstTexture {
             label: None,
             size: (4 * width * height) as u64,
             usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
+            mapped_at_creation: false,
         });
 
         let tex_extent = wgpu::Extent3d {
@@ -23,7 +24,6 @@ impl DstTexture {
         let tex = device.create_texture(&wgpu::TextureDescriptor {
             label: None,
             size: tex_extent,
-            array_layer_count: 1,
             mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
@@ -32,7 +32,7 @@ impl DstTexture {
                 | wgpu::TextureUsage::COPY_SRC
                 | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
         });
-        let tex_view = tex.create_default_view();
+        let tex_view = tex.create_view(&Default::default());
 
         Self {
             buffer,

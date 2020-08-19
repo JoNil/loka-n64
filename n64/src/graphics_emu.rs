@@ -15,6 +15,7 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
+use wgpu::util::DeviceExt;
 
 pub(crate) mod colored_rect;
 pub(crate) mod copy_tex;
@@ -60,6 +61,7 @@ pub struct Graphics {
     pub(crate) keys_down: HashSet<VirtualKeyCode>,
 
     _window: Window,
+    _instance: wgpu::Instance,
     _adapter: wgpu::Adapter,
 
     pub(crate) surface: wgpu::Surface,
@@ -94,29 +96,33 @@ impl Graphics {
 
         let keys_down = HashSet::new();
 
-        let size = window.inner_size();
+        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
 
-        let surface = wgpu::Surface::create(&window);
+        let (size, surface) = unsafe {
+            let size = window.inner_size();
+            let surface = instance.create_surface(&window);
+            (size, surface)
+        };
 
         let (adapter, device, queue) = futures_executor::block_on(async {
-            let adapter = wgpu::Adapter::request(
-                &wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::Default,
-                    compatible_surface: Some(&surface),
-                },
-                wgpu::BackendBit::PRIMARY,
-            )
+            let adapter = instance
+            .request_adapter(&wgpu::RequestAdapterOptions {
+                power_preference: wgpu::PowerPreference::Default,
+                compatible_surface: Some(&surface),
+            })
             .await
             .unwrap();
 
             let (device, queue) = adapter
                 .request_device(&wgpu::DeviceDescriptor {
-                    extensions: wgpu::Extensions {
-                        anisotropic_filtering: false,
-                    },
+                    features: wgpu::Features::empty(),
                     limits: wgpu::Limits::default(),
-                })
-                .await;
+                    .. Default::default()
+                },
+                None,
+                )
+                .await
+                .unwrap();
 
             (adapter, Arc::new(device), queue)
         });
@@ -131,10 +137,18 @@ impl Graphics {
         let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
 
         let quad_vertex_buf =
-            device.create_buffer_with_data(QUAD_VERTEX_DATA.as_bytes(), wgpu::BufferUsage::VERTEX);
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: QUAD_VERTEX_DATA.as_bytes(),
+                usage: wgpu::BufferUsage::VERTEX,
+            });
 
         let quad_index_buf =
-            device.create_buffer_with_data(QUAD_INDEX_DATA.as_bytes(), wgpu::BufferUsage::INDEX);
+            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: QUAD_INDEX_DATA.as_bytes(),
+                usage: wgpu::BufferUsage::INDEX,
+            });
 
         let copy_tex = CopyTex::new(&device, &swap_chain_desc, video_mode);
         let colored_rect = ColoredRect::new(&device, dst_texture::TEXUTRE_FORMAT);
@@ -159,6 +173,7 @@ impl Graphics {
             keys_down,
 
             _window: window,
+            _instance: instance,
             _adapter: adapter,
 
             surface,
@@ -257,12 +272,17 @@ impl Graphics {
 
         let frame = self
             .swap_chain
-            .get_next_texture()
+            .get_current_frame()
             .expect("Timeout when acquiring next swap chain texture");
 
         let temp_buf = self
             .device
-            .create_buffer_with_data(&self.copy_tex.src_buffer, wgpu::BufferUsage::COPY_SRC);
+            .create_buffer_init(
+                &wgpu::util::BufferInitDescriptor {
+                    label: None,
+                    contents: &self.copy_tex.src_buffer,
+                    usage: wgpu::BufferUsage::COPY_SRC,
+                });
 
         let render_command_buf = {
             let mut encoder = self
@@ -272,14 +292,15 @@ impl Graphics {
             encoder.copy_buffer_to_texture(
                 wgpu::BufferCopyView {
                     buffer: &temp_buf,
-                    offset: 0,
-                    bytes_per_row: 4 * self.video_mode.width() as u32,
-                    rows_per_image: self.video_mode.height() as u32,
+                    layout: wgpu::TextureDataLayout {
+                        offset: 0,
+                        bytes_per_row: 4 * self.video_mode.width() as u32,
+                        rows_per_image: self.video_mode.height() as u32,
+                    },
                 },
                 wgpu::TextureCopyView {
                     texture: &self.copy_tex.src_tex,
                     mip_level: 0,
-                    array_layer: 0,
                     origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
                 },
                 self.copy_tex.src_tex_extent,
@@ -288,23 +309,24 @@ impl Graphics {
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                        attachment: &frame.view,
+                        attachment: &frame.output.view,
                         resolve_target: None,
-                        load_op: wgpu::LoadOp::Clear,
-                        store_op: wgpu::StoreOp::Store,
-                        clear_color: wgpu::Color {
-                            r: 0.0,
-                            g: 0.0,
-                            b: 0.0,
-                            a: 1.0,
-                        },
+                        ops: wgpu::Operations {
+                            load: wgpu::LoadOp::Clear(wgpu::Color {
+                                r: 0.0,
+                                g: 0.0,
+                                b: 0.0,
+                                a: 1.0,
+                            }),
+                            store: true,
+                        }
                     }],
                     depth_stencil_attachment: None,
                 });
                 render_pass.set_pipeline(&self.copy_tex.pipeline);
                 render_pass.set_bind_group(0, &self.copy_tex.bind_group, &[]);
-                render_pass.set_index_buffer(&self.quad_index_buf, 0, 0);
-                render_pass.set_vertex_buffer(0, &self.quad_vertex_buf, 0, 0);
+                render_pass.set_index_buffer(self.quad_index_buf.slice(..));
+                render_pass.set_vertex_buffer(0, self.quad_vertex_buf.slice(..));
                 render_pass.draw_indexed(0..(QUAD_INDEX_DATA.len() as u32), 0, 0..1);
             }
 
@@ -313,7 +335,7 @@ impl Graphics {
 
         let frame_end_time = current_time_us();
 
-        self.queue.submit(&[render_command_buf]);
+        self.queue.submit(Some(render_command_buf));
 
         frame_end_time
     }

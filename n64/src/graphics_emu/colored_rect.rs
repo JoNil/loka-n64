@@ -1,7 +1,6 @@
 use crate::graphics_emu::Vertex;
 use std::{io::Read, mem, convert::TryInto};
 use zerocopy::{AsBytes, FromBytes};
-use wgpu::ShaderModuleSource;
 
 pub const MAX_COLORED_RECTS: u64 = 4096;
 
@@ -47,7 +46,7 @@ impl ColoredRect {
 
         let vs_bytes = {
             let mut buffer = Vec::new();
-            let file = glsl_to_spirv::compile(
+            let mut file = glsl_to_spirv::compile(
                 include_str!("shaders/colored_rect.vert"),
                 glsl_to_spirv::ShaderType::Vertex,
             )
@@ -62,7 +61,7 @@ impl ColoredRect {
 
         let fs_bytes = {
             let mut buffer = Vec::new();
-            let file = glsl_to_spirv::compile(
+            let mut file = glsl_to_spirv::compile(
                 include_str!("shaders/colored_rect.frag"),
                 glsl_to_spirv::ShaderType::Fragment,
             )
@@ -77,8 +76,8 @@ impl ColoredRect {
         };
 
 
-        let vs_module = device.create_shader_module(ShaderModuleSource::SpirV(vs_bytes.into()));
-        let fs_module = device.create_shader_module(ShaderModuleSource::SpirV(fs_bytes.into()));
+        let vs_module = device.create_shader_module(wgpu::ShaderModuleSource::SpirV(vs_bytes.into()));
+        let fs_module = device.create_shader_module(wgpu::ShaderModuleSource::SpirV(fs_bytes.into()));
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,

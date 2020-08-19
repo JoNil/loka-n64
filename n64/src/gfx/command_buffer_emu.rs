@@ -13,7 +13,7 @@ use n64_math::{Color, Vec2};
 use std::convert::TryInto;
 use std::mem;
 use zerocopy::AsBytes;
-use wgpu::{TextureDataLayout, Operations, MapMode};
+use wgpu::util::DeviceExt;
 
 enum Command {
     ColoredRect {
@@ -160,9 +160,12 @@ impl<'a> CommandBuffer<'a> {
                 }
 
                 if !colored_rect_uniforms.is_empty() {
-                    let temp_buffer = graphics.device.create_buffer_with_data(
-                        colored_rect_uniforms.as_bytes(),
-                        wgpu::BufferUsage::COPY_SRC,
+                    let temp_buffer = graphics.device.create_buffer_init(
+                        &wgpu::util::BufferInitDescriptor {
+                            label: None,
+                            contents: colored_rect_uniforms.as_bytes(),
+                            usage: wgpu::BufferUsage::COPY_SRC,
+                        }
                     );
 
                     encoder.copy_buffer_to_buffer(
@@ -176,9 +179,12 @@ impl<'a> CommandBuffer<'a> {
                 }
 
                 if !textured_rect_uniforms.is_empty() {
-                    let temp_buffer = graphics.device.create_buffer_with_data(
-                        textured_rect_uniforms.as_bytes(),
-                        wgpu::BufferUsage::COPY_SRC,
+                    let temp_buffer = graphics.device.create_buffer_init(
+                        &wgpu::util::BufferInitDescriptor {
+                            label: None,
+                            contents: textured_rect_uniforms.as_bytes(),
+                            usage: wgpu::BufferUsage::COPY_SRC,
+                        }
                     );
 
                     encoder.copy_buffer_to_buffer(
@@ -197,7 +203,7 @@ impl<'a> CommandBuffer<'a> {
                     color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
                         attachment: &dst.tex_view,
                         resolve_target: None,
-                        ops: Operations {
+                        ops: wgpu::Operations {
                             load: if self.clear {
                                 wgpu::LoadOp::Clear(wgpu::Color {
                                     r: 0.0,
@@ -269,7 +275,7 @@ impl<'a> CommandBuffer<'a> {
                 },
                 wgpu::BufferCopyView {
                     buffer: &dst.buffer,
-                    layout: TextureDataLayout {
+                    layout: wgpu::TextureDataLayout {
                         offset: 0,
                         bytes_per_row: 4 * self.out_tex.width as u32,
                         rows_per_image: self.out_tex.height as u32,
