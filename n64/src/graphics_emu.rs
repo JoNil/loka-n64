@@ -117,7 +117,7 @@ impl Graphics {
                 .request_device(&wgpu::DeviceDescriptor {
                     features: wgpu::Features::empty(),
                     limits: wgpu::Limits::default(),
-                    .. Default::default()
+                    shader_validation: true,
                 },
                 None,
                 )

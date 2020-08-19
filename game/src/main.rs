@@ -1,4 +1,3 @@
-#![cfg_attr(windows, windows_subsystem = "windows")]
 #![cfg_attr(target_vendor = "nintendo64", feature(alloc_error_handler))]
 #![cfg_attr(target_vendor = "nintendo64", feature(global_asm))]
 #![cfg_attr(target_vendor = "nintendo64", feature(lang_items))]
