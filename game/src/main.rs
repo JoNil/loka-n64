@@ -28,6 +28,7 @@ mod camera;
 mod components;
 mod enemy_system;
 mod entity;
+mod font;
 mod map;
 mod maps;
 mod player;
@@ -142,6 +143,18 @@ fn main() {
                 world
                     .sprite_drawable
                     .draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
+
+                font::draw_text(&mut cb, " !\"#$%&", Vec2::new(1.0, 0.0));
+                font::draw_text(&mut cb, "'()+,-./", Vec2::new(1.0, 17.0));
+                font::draw_text(&mut cb, "0123456789", Vec2::new(1.0, 34.0));
+                font::draw_text(&mut cb, "ABCDEFGHIJ", Vec2::new(1.0, 51.0));
+                font::draw_text(&mut cb, "KLMNOPQRST", Vec2::new(1.0, 68.0));
+                font::draw_text(&mut cb, "UVWXYZ", Vec2::new(1.0, 68.0));
+                font::draw_text(&mut cb, "[\\]^_`", Vec2::new(1.0, 85.0));
+                font::draw_text(&mut cb, "abcdefghij", Vec2::new(1.0, 102.0));
+                font::draw_text(&mut cb, "klmnopqrst", Vec2::new(1.0, 119.0));
+                font::draw_text(&mut cb, "uvwxyz", Vec2::new(1.0, 136.0));
+                font::draw_text(&mut cb, "{|}~", Vec2::new(1.0, 153.0));
 
                 cb.run(&mut n64.graphics)
             };
