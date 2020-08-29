@@ -13,7 +13,7 @@ n64-types = { path = "../n64-types" }
 zerocopy = "0.3"
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
-cpal = "0.11"
+cpal = "0.12"
 futures-executor = "0.3"
 glsl-to-spirv = "0.1"
 lazy_static = "1"

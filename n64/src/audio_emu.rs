@@ -1,13 +1,11 @@
 use cpal::{
     self,
-    traits::{DeviceTrait, EventLoopTrait, HostTrait},
-    StreamData, UnknownTypeOutputBuffer,
+    traits::{DeviceTrait, HostTrait, StreamTrait}, SampleFormat,
 };
 use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
 use std::error::Error;
 use std::{
-    sync::mpsc::{channel, Receiver, Sender},
-    thread,
+    sync::mpsc::{channel, sync_channel, Receiver, Sender, SyncSender}, thread,
 };
 
 const BUFFER_NO_SAMPLES: usize = 2 * 512;
@@ -67,19 +65,20 @@ fn get_sample<T>(
 fn audio_thread(
     to_audio_receiver: Receiver<Buffer>,
     from_audio_sender: Sender<Buffer>,
+    exit_receiver: Receiver<()>,
 ) -> Result<(), Box<dyn Error>> {
     let host = cpal::default_host();
     let device = host
         .default_output_device()
         .ok_or("No output device available")?;
 
-    let format = device.default_output_format()?;
-    assert!(format.channels == 2);
+    let config = device
+    .supported_output_configs()?
+    .next()
+    .expect("no supported config?!")
+    .with_max_sample_rate();
 
-    let event_loop = host.event_loop();
-    let stream_id = event_loop.build_output_stream(&device, &format)?;
-
-    event_loop.play_stream(stream_id)?;
+    assert!(config.channels() == 2);
 
     let params = InterpolationParameters {
         sinc_len: 64,
@@ -90,7 +89,7 @@ fn audio_thread(
     };
 
     let mut resampler = SincFixedIn::<f32>::new(
-        format.sample_rate.0 as f64 / 22050.0,
+        config.sample_rate().0 as f64 / 22050.0,
         params,
         BUFFER_NO_SAMPLES / 2,
         2,
@@ -99,61 +98,62 @@ fn audio_thread(
     let mut current_buffer = None;
     let mut current_index = 0;
 
-    event_loop.run(move |stream_id, stream_result| {
-        let stream_data = match stream_result {
-            Ok(data) => data,
-            Err(err) => {
-                println!("Audio Stream Error {:?}: {}", stream_id, err);
-                return;
-            }
-        };
+    let sampel_format = config.sample_format();
+    let config = config.into();
 
-        match stream_data {
-            StreamData::Output {
-                buffer: UnknownTypeOutputBuffer::U16(mut buffer),
-            } => {
-                for elem in buffer.iter_mut() {
-                    *elem = get_sample(
-                        &mut resampler,
-                        &mut current_index,
-                        &mut current_buffer,
-                        &to_audio_receiver,
-                        &from_audio_sender,
-                        |sample| (sample + (u16::MAX / 2) as f32) as u16,
-                    );
-                }
+    let stream = match sampel_format {
+        SampleFormat::F32 => device.build_output_stream(&config, move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
+            for elem in buffer.iter_mut() {
+                *elem = get_sample(
+                    &mut resampler,
+                    &mut current_index,
+                    &mut current_buffer,
+                    &to_audio_receiver,
+                    &from_audio_sender,
+                    |sample| sample as f32,
+                );
             }
-            StreamData::Output {
-                buffer: UnknownTypeOutputBuffer::I16(mut buffer),
-            } => {
-                for elem in buffer.iter_mut() {
-                    *elem = get_sample(
-                        &mut resampler,
-                        &mut current_index,
-                        &mut current_buffer,
-                        &to_audio_receiver,
-                        &from_audio_sender,
-                        |sample| (sample / (i16::MAX as f32)) as i16,
-                    );
-                }
+        },
+        move |err| {
+            println!("Audio Error: {}", err);
+        }),
+        SampleFormat::I16 => device.build_output_stream(&config, move |buffer: &mut [i16], _: &cpal::OutputCallbackInfo| {
+            for elem in buffer.iter_mut() {
+                *elem = get_sample(
+                    &mut resampler,
+                    &mut current_index,
+                    &mut current_buffer,
+                    &to_audio_receiver,
+                    &from_audio_sender,
+                    |sample| (sample / (i16::MAX as f32)) as i16,
+                );
             }
-            StreamData::Output {
-                buffer: UnknownTypeOutputBuffer::F32(mut buffer),
-            } => {
-                for elem in buffer.iter_mut() {
-                    *elem = get_sample(
-                        &mut resampler,
-                        &mut current_index,
-                        &mut current_buffer,
-                        &to_audio_receiver,
-                        &from_audio_sender,
-                        |sample| sample as f32,
-                    );
-                }
+        },
+        move |err| {
+            println!("Audio Error: {}", err);
+        }),
+        SampleFormat::U16 => device.build_output_stream(&config, move |buffer: &mut [u16], _: &cpal::OutputCallbackInfo| {
+            for elem in buffer.iter_mut() {
+                *elem = get_sample(
+                    &mut resampler,
+                    &mut current_index,
+                    &mut current_buffer,
+                    &to_audio_receiver,
+                    &from_audio_sender,
+                    |sample| (sample + (u16::MAX / 2) as f32) as u16,
+                );
             }
-            _ => (),
-        }
-    });
+        },
+        move |err| {
+            println!("Audio Error: {}", err);
+        }),
+    }.unwrap();
+
+    stream.play().unwrap();
+
+    exit_receiver.recv().ok();
+
+    Ok(())
 }
 
 struct Buffer {
@@ -174,6 +174,7 @@ pub struct Audio {
     to_audio_sender: Sender<Buffer>,
     from_audio_receiver: Receiver<Buffer>,
     buffers: Vec<Buffer>,
+    exit_sender: SyncSender<()>,
 }
 
 impl Audio {
@@ -187,9 +188,10 @@ impl Audio {
 
         let (to_audio_sender, to_audio_receiver) = channel();
         let (from_audio_sender, from_audio_receiver) = channel();
+        let (exit_sender, exit_receiver) = sync_channel(0);
 
         thread::spawn(
-            move || match audio_thread(to_audio_receiver, from_audio_sender) {
+            move || match audio_thread(to_audio_receiver, from_audio_sender, exit_receiver) {
                 Ok(()) => (),
                 Err(e) => {
                     println!("Audio Error: {}", e);
@@ -201,6 +203,7 @@ impl Audio {
             to_audio_sender,
             from_audio_receiver,
             buffers,
+            exit_sender,
         }
     }
 
@@ -217,5 +220,11 @@ impl Audio {
                 .map_err(|_| println!("Failed to send buffer to audio system"))
                 .ok();
         }
+    }
+}
+
+impl Drop for Audio {
+    fn drop(&mut self) {
+        self.exit_sender.send(()).unwrap();
     }
 }
