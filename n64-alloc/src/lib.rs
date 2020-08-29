@@ -1,5 +1,4 @@
 #![no_std]
-
 #![allow(clippy::declare_interior_mutable_const)]
 #![allow(clippy::cast_ptr_alignment)]
 #![allow(clippy::needless_lifetimes)]

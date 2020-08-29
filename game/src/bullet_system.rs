@@ -108,7 +108,10 @@ impl BulletSystem {
 
                 if bullet.can_hit_player {
                     let player_bb = Aabb2::from_center_size(
-                        world.movable.pos(player.entity()).unwrap_or_else(Vec2::zero),
+                        world
+                            .movable
+                            .pos(player.entity())
+                            .unwrap_or_else(Vec2::zero),
                         SHIP_SIZE,
                     );
 

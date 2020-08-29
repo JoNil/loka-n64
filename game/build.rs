@@ -91,7 +91,7 @@ fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
 
 #[rustfmt::skip]
 macro_rules! TEXTURE_TEMPLATE { () => {
-r##"pub static {name}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes!({path:?}));
+r##"pub static {name}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes_align_as!(Color, {path:?}));
 "##
 }; }
 
@@ -101,7 +101,9 @@ r##"// This file is generated
 
 #![cfg_attr(rustfmt, rustfmt::skip)]
 
+use n64_math::Color;
 use n64::gfx::StaticTexture;
+use n64::include_bytes_align_as;
 
 {textures}"##
 }; }
@@ -142,7 +144,7 @@ fn parse_textures() -> Result<(), Box<dyn Error>> {
 
 #[rustfmt::skip]
 macro_rules! TILE_TEMPLATE { () => {
-r##"static {tile_ident}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes!({tile_path:?}));
+r##"static {tile_ident}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes_align_as!(Color, {tile_path:?}));
 "##
 }; }
 
@@ -327,7 +329,9 @@ r##"// This file is generated
 #![cfg_attr(rustfmt, rustfmt::skip)]
 
 use crate::map::{{StaticMapData, StaticObject}};
+use n64_math::Color;
 use n64::gfx::StaticTexture;
+use n64::include_bytes_align_as;
 
 {tiles}
 {maps}
@@ -471,7 +475,7 @@ fn load_wav(path: impl AsRef<Path>) -> Result<Vec<i16>, Box<dyn Error>> {
 
 #[rustfmt::skip]
 macro_rules! SOUND_TEMPLATE { () => {
-r##"pub static {name}: StaticSoundData = StaticSoundData {{ data: include_bytes!({path:?}) }};
+r##"pub static {name}: StaticSoundData = StaticSoundData {{ data: include_bytes_align_as!(i16, {path:?}) }};
 "##
 }; }
 
@@ -482,6 +486,7 @@ r##"// This file is generated
 #![cfg_attr(rustfmt, rustfmt::skip)]
 
 use crate::sound::StaticSoundData;
+use n64::include_bytes_align_as;
 
 {sounds}"##
 }; }

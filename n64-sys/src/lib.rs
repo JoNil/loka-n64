@@ -1,7 +1,6 @@
 #![no_std]
 #![feature(llvm_asm)]
 #![feature(core_intrinsics)]
-
 #![allow(clippy::missing_safety_doc)]
 
 extern crate alloc;

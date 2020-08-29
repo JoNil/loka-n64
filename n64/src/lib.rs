@@ -10,6 +10,7 @@ pub use n64_types::VideoMode;
 
 pub mod gfx;
 pub mod ipl3font;
+pub mod utils;
 
 mod framebuffer;
 

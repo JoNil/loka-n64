@@ -3,12 +3,7 @@ use crate::components::box_drawable::BoxDrawableComponent;
 use crate::components::health::HealthComponent;
 use crate::components::movable::MovableComponent;
 use crate::entity::{Entity, OwnedEntity};
-use crate::{
-    sound_mixer::SoundMixer,
-    sounds::EXPLOSION_0,
-    world::World,
-    Player,
-};
+use crate::{sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World, Player};
 use alloc::vec::Vec;
 use n64::current_time_us;
 use n64_math::{self, Color, Vec2};
