@@ -141,7 +141,7 @@ impl<'a> CommandBuffer<'a> {
                         } => {
                             graphics.textured_rect.upload_texture_data(
                                 &graphics.device,
-                                &mut encoder,
+                                &graphics.queue,
                                 texture,
                             );
 

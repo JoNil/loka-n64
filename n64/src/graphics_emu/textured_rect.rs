@@ -2,7 +2,6 @@ use crate::{gfx::Texture, graphics_emu::Vertex};
 use n64_math::Color;
 use std::{collections::HashMap, mem, io::Read, convert::TryInto};
 use zerocopy::{AsBytes, FromBytes};
-use wgpu::util::DeviceExt;
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
 
@@ -202,7 +201,7 @@ impl TexturedRect {
     pub(crate) fn upload_texture_data(
         &mut self,
         device: &wgpu::Device,
-        encoder: &mut wgpu::CommandEncoder,
+        queue: &wgpu::Queue,
         texture: &Texture,
     ) {
         if self.texture_cache.contains_key(&(texture.data as *const _)) {
@@ -247,19 +246,13 @@ impl TexturedRect {
             label: None,
         });
 
-        let mut temp_buffer: Box<[u8]> = {
-            let mut temp_buffer = Vec::new();
-            temp_buffer.resize_with(
-                (4 * texture.width * texture.height) as usize,
-                Default::default,
-            );
-            temp_buffer.into_boxed_slice()
-        };
+        let mut buffer = Vec::new();
+        buffer.resize_with(4 * texture.data.len(), Default::default);
 
         for (pixel, data) in texture
             .data
             .iter()
-            .zip(temp_buffer.chunks_exact_mut(4 as usize))
+            .zip(buffer.chunks_exact_mut(4 as usize))
         {
             let rgba = pixel.be_to_le().to_rgba();
 
@@ -269,28 +262,19 @@ impl TexturedRect {
             data[3] = (rgba[3] * 255.0) as u8;
         }
 
-        let temp_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: None,
-            contents: &temp_buffer,
-            usage: wgpu::BufferUsage::COPY_SRC,
-        });
-
-        encoder.copy_buffer_to_texture(
-            wgpu::BufferCopyView {
-                buffer: &temp_buf,
-                layout: wgpu::TextureDataLayout {
-                    offset: 0,
-                    bytes_per_row: 4 * texture.width as u32,
-                    rows_per_image: texture.height as u32,
-                }
-            },
+        queue.write_texture(
             wgpu::TextureCopyView {
                 texture: &tex,
                 mip_level: 0,
                 origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
             },
-            tex_extent,
-        );
+            &buffer,
+            wgpu::TextureDataLayout {
+                offset: 0,
+                bytes_per_row: 4 * texture.width as u32,
+                rows_per_image: texture.height as u32,
+            },
+            tex_extent);
 
         self.texture_cache.insert(
             texture.data as *const _,
