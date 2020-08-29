@@ -12,8 +12,8 @@ use crate::{
 use n64_math::{Color, Vec2};
 use std::convert::TryInto;
 use std::mem;
-use zerocopy::AsBytes;
 use wgpu::util::DeviceExt;
+use zerocopy::AsBytes;
 
 enum Command {
     ColoredRect {
@@ -160,13 +160,14 @@ impl<'a> CommandBuffer<'a> {
                 }
 
                 if !colored_rect_uniforms.is_empty() {
-                    let temp_buffer = graphics.device.create_buffer_init(
-                        &wgpu::util::BufferInitDescriptor {
-                            label: None,
-                            contents: colored_rect_uniforms.as_bytes(),
-                            usage: wgpu::BufferUsage::COPY_SRC,
-                        }
-                    );
+                    let temp_buffer =
+                        graphics
+                            .device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: None,
+                                contents: colored_rect_uniforms.as_bytes(),
+                                usage: wgpu::BufferUsage::COPY_SRC,
+                            });
 
                     encoder.copy_buffer_to_buffer(
                         &temp_buffer,
@@ -179,13 +180,14 @@ impl<'a> CommandBuffer<'a> {
                 }
 
                 if !textured_rect_uniforms.is_empty() {
-                    let temp_buffer = graphics.device.create_buffer_init(
-                        &wgpu::util::BufferInitDescriptor {
-                            label: None,
-                            contents: textured_rect_uniforms.as_bytes(),
-                            usage: wgpu::BufferUsage::COPY_SRC,
-                        }
-                    );
+                    let temp_buffer =
+                        graphics
+                            .device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: None,
+                                contents: textured_rect_uniforms.as_bytes(),
+                                usage: wgpu::BufferUsage::COPY_SRC,
+                            });
 
                     encoder.copy_buffer_to_buffer(
                         &temp_buffer,
@@ -215,7 +217,7 @@ impl<'a> CommandBuffer<'a> {
                                 wgpu::LoadOp::Load
                             },
                             store: true,
-                        }
+                        },
                     }],
                     depth_stencil_attachment: None,
                 });
@@ -290,6 +292,14 @@ impl<'a> CommandBuffer<'a> {
         graphics.queue.submit(Some(command_buf));
 
         {
+            futures_executor::block_on(async {
+                dst.buffer
+                    .slice(0..((4 * self.out_tex.width * self.out_tex.height) as u64))
+                    .map_async(wgpu::MapMode::Read)
+                    .await
+            })
+            .unwrap();
+
             let mapped_colored_rect_dst_buffer = dst
                 .buffer
                 .slice(0..((4 * self.out_tex.width * self.out_tex.height) as u64))
