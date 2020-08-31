@@ -3,11 +3,11 @@
 ## Build Environment Setup
 
 ```bash
-rustup install nightly-2020-05-14
+rustup install nightly
 
-cargo +nightly-2020-05-14 install -f --git https://github.com/rust-console/cargo-n64.git cargo-n64
+cargo +nightly install -f --git https://github.com/JoNil/cargo-n64.git cargo-n64
 
-rustup default nightly-2020-05-14
+rustup default nightly
 rustup component add rust-src
 rustup default stable
 ```
@@ -23,7 +23,7 @@ cargo run --package extract_boot_code -- "roms/Super Mario 64 (U) [!].z64"
 ## Build for N64
 
 ```bash
-cargo +nightly-2020-05-14 n64 build --ipl3 bootcode.bin -- --package game
+cargo +nightly n64 build --ipl3 bootcode.bin -- --package game
 ```
 
 ## Run for PC

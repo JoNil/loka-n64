@@ -19,7 +19,8 @@
 
 _start:
     // Initialize stack
-    lw $t0, OS_MEM_SIZE
+    li $t2, OS_MEM_SIZE
+    lw $t0, ($t2)
     li $t1, 0x7FFFFFF0
     addu $sp, $t0, $t1
 
@@ -46,7 +47,8 @@ _start:
 
     // Store the FS location for the OS
     la $t0, __rom_end
-    sw $t0, FS_START
+    li $t2, FS_START
+    sw $t0, ($t2)
 
     // Jump to Rust
     jal main

@@ -250,11 +250,11 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
             &mut out_tex,
             15,
             45,
-            YELLOW,
+            GREEN,
             alloc::format!("{}", args).as_bytes(),
         );
     } else {
-        ipl3font::draw_str(&mut out_tex, 15, 45, YELLOW, b"No Message");
+        ipl3font::draw_str(&mut out_tex, 15, 45, GREEN, b"No Message");
     }
 
     unsafe {

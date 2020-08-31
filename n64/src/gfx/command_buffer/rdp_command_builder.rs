@@ -276,8 +276,8 @@ impl RdpCommandBuilder {
     pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
         let mut l = top_left.x();
         let mut t = top_left.y();
-        let mut r = bottom_right.x();
-        let mut b = bottom_right.y();
+        let r = bottom_right.x();
+        let b = bottom_right.y();
 
         if r < 0.0 || b < 0.0 {
             // Outside drawing area.
@@ -313,8 +313,8 @@ impl RdpCommandBuilder {
     ) -> &mut RdpCommandBuilder {
         let mut l = top_left.x();
         let mut t = top_left.y();
-        let mut r = bottom_right.x();
-        let mut b = bottom_right.y();
+        let r = bottom_right.x();
+        let b = bottom_right.y();
 
         if r < 0.0 || b < 0.0 {
             // Outside drawing area.
