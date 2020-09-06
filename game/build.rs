@@ -9,7 +9,7 @@ use std::{
     io::BufReader,
     path::{Path, PathBuf},
 };
-use tiled::{Map, Tileset};
+use tiled::{Map, Tileset, LayerData};
 use zerocopy::AsBytes;
 
 struct Image {
@@ -378,15 +378,17 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
         let mut layers = Vec::new();
 
         for layer in map.layers.iter() {
-            for row in layer.tiles.iter() {
-                for tile in row.iter() {
-                    if let Some(id) = used_tile_ids_map.get(&tile.gid) {
-                        layers.push(*id);
-                    } else {
-                        let new_id = used_tile_ids.len().try_into().unwrap();
-                        used_tile_ids_map.insert(tile.gid, new_id);
-                        used_tile_ids.push(tile.gid);
-                        layers.push(new_id);
+            if let LayerData::Finite(tiles) = &layer.tiles {
+                for row in tiles.iter() {
+                    for tile in row.iter() {
+                        if let Some(id) = used_tile_ids_map.get(&tile.gid) {
+                            layers.push(*id);
+                        } else {
+                            let new_id = used_tile_ids.len().try_into().unwrap();
+                            used_tile_ids_map.insert(tile.gid, new_id);
+                            used_tile_ids.push(tile.gid);
+                            layers.push(new_id);
+                        }
                     }
                 }
             }
