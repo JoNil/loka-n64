@@ -8,6 +8,7 @@ use n64_math::Vec2;
 pub struct StaticObject {
     pub x: f32,
     pub y: f32,
+    pub texture: &'static StaticTexture,
 }
 
 pub struct StaticMapData {
@@ -43,6 +44,7 @@ impl Map {
                         object.x / video_mode.width() as f32,
                         object.y / video_mode.height() as f32,
                     ),
+                    object.texture.as_texture(),
                 );
             }
         }

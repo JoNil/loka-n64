@@ -1,11 +1,11 @@
-use crate::bullet_system::BulletSystem;
+use crate::{bullet_system::BulletSystem, components::sprite_drawable::SpriteDrawableComponent};
 use crate::components::box_drawable::BoxDrawableComponent;
 use crate::components::health::HealthComponent;
 use crate::components::movable::MovableComponent;
 use crate::entity::{Entity, OwnedEntity};
 use crate::{sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World, Player};
 use alloc::vec::Vec;
-use n64::current_time_us;
+use n64::{current_time_us, gfx::Texture};
 use n64_math::{self, Color, Vec2};
 
 pub const ENEMY_SIZE: Vec2 = Vec2::new(0.05, 0.05);
@@ -62,7 +62,7 @@ impl EnemySystem {
         }
     }
 
-    pub fn spawn_enemy(&mut self, world: &mut World, pos: Vec2) {
+    pub fn spawn_enemy(&mut self, world: &mut World, pos: Vec2, texture: Texture<'static>) {
         let entity = world.entity.create();
         world.movable.add(
             &entity,
@@ -71,15 +71,11 @@ impl EnemySystem {
                 speed: Vec2::zero(),
             },
         );
-        world.box_drawable.add(
+        world.sprite_drawable.add(
             &entity,
-            BoxDrawableComponent {
-                size: ENEMY_SIZE,
-                color: Color::from_rgb(
-                    n64_math::random_f32(),
-                    n64_math::random_f32(),
-                    n64_math::random_f32(),
-                ),
+            SpriteDrawableComponent {
+                size: Vec2::new(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
+                texture,
             },
         );
         world.health.add(&entity, HealthComponent { health: 100 });

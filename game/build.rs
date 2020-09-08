@@ -1,5 +1,4 @@
 use n64_math::Color;
-use std::convert::TryInto;
 use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
@@ -9,7 +8,8 @@ use std::{
     io::BufReader,
     path::{Path, PathBuf},
 };
-use tiled::{Map, Tileset, LayerData};
+use std::{collections::HashSet, convert::TryInto};
+use tiled::{LayerData, Map, ObjectTemplate, Tileset};
 use zerocopy::AsBytes;
 
 struct Image {
@@ -173,6 +173,8 @@ fn load_tile_image(
     map_path: &Path,
     tileset: &Tileset,
     tileset_image_cache: &mut HashMap<PathBuf, Image>,
+    expected_width: i32,
+    expected_height: i32,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut effective_gid = gid - tileset.first_gid;
     let tile_width = tileset.tile_width;
@@ -185,18 +187,19 @@ fn load_tile_image(
 
         let image_path = tileset
             .source
-            .clone()
-            .map(PathBuf::from)
-            .unwrap_or_else(|| map_path.to_path_buf())
+            .as_ref()
+            .map(Path::new)
+            .unwrap_or_else(|| Path::new(map_path))
             .with_file_name(&tileset_image.source);
 
         if effective_gid < image_tiles {
+            assert!(tile_width == expected_width as u32);
+            assert!(tile_height == expected_height as u32);
+
             let image = tileset_image_cache
                 .entry(image_path.clone())
                 .or_insert_with(|| {
-                    if let Some(source) = &tileset.source {
-                        println!("rerun-if-changed={}", source);
-                    }
+                    println!("rerun-if-changed={:?}", image_path);
                     load_png(image_path).unwrap()
                 });
 
@@ -229,6 +232,31 @@ fn load_tile_image(
         effective_gid -= image_tiles;
     }
 
+    for tile in &tileset.tiles {
+        if let Some(image) = tile.images.get(0) {
+            if tile.id == effective_gid {
+                let image_path = tileset
+                    .source
+                    .as_ref()
+                    .map(Path::new)
+                    .unwrap_or_else(|| Path::new(map_path))
+                    .with_file_name(&image.source);
+
+                let image = tileset_image_cache
+                    .entry(image_path.clone())
+                    .or_insert_with(|| {
+                        println!("rerun-if-changed={:?}", image_path);
+                        load_png(image_path).unwrap()
+                    });
+
+                assert!(image.width == expected_width);
+                assert!(image.height == expected_height);
+
+                return Ok(image.data.clone());
+            }
+        }
+    }
+
     Err(format!("GID {} Not Found In Tileset Images", gid).into())
 }
 
@@ -258,7 +286,8 @@ fn parse_map_tiles(
         let tile_path = tile_path.to_str().ok_or("Bad Path")?;
 
         let tileset = find_tileset_with_gid(*id, &map.tilesets)?;
-        let tile_image = load_tile_image(*id, map_path, tileset, tileset_image_cache)?;
+        let tile_image =
+            load_tile_image(*id, map_path, tileset, tileset_image_cache, width, height)?;
 
         write_binary_file_if_changed(&tile_path, &tile_image)?;
 
@@ -282,25 +311,82 @@ fn parse_map_tiles(
 }
 
 #[rustfmt::skip]
-macro_rules! OBJECT_TEMPLATE { () => {
-r##"    StaticObject {{ x: {x}_f32, y: {y}_f32 }},
+macro_rules! OBJECT_TEXTURE_TEMPLATE { () => {
+r##"static {object_texture_ident}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes_align_as!(Color, {object_texture_path:?}));
 "##
 }; }
 
-fn parse_map_objects(map: &Map) -> Result<Vec<String>, Box<dyn Error>> {
+#[rustfmt::skip]
+macro_rules! OBJECT_TEMPLATE { () => {
+r##"    StaticObject {{
+        x: {x}_f32,
+        y: {y}_f32,
+        texture: &{object_texture_ident},
+    }},
+"##
+}; }
+
+fn parse_map_objects(
+    map: &Map,
+    out_dir: &str,
+    map_path: &Path,
+    tileset_image_cache: &mut HashMap<PathBuf, Image>,
+    emitted_object_texture: &mut HashSet<String>,
+) -> Result<(Vec<String>, Vec<String>), Box<dyn Error>> {
     let mut objects = Vec::new();
+    let mut object_textures = Vec::new();
 
     for object_group in &map.object_groups {
         for object in &object_group.objects {
-            objects.push(format!(
-                OBJECT_TEMPLATE!(),
-                x = object.x - 57.0 / 2.0,
-                y = object.y - 42.0 / 2.0
-            ));
+            if let Some(ObjectTemplate {
+                object: Some(template_object),
+                tileset: Some(tileset),
+            }) = &object.template.as_deref()
+            {
+                let object_texture_ident = format!(
+                    "OBJECT_TEXTURE_{}_{}",
+                    tileset.name.to_uppercase(),
+                    template_object.gid
+                );
+
+                objects.push(format!(
+                    OBJECT_TEMPLATE!(),
+                    x = object.x - template_object.width / 2.0,
+                    y = object.y - template_object.height / 2.0,
+                    object_texture_ident = object_texture_ident,
+                ));
+
+                if !emitted_object_texture.contains(&object_texture_ident) {
+                    let object_texture_path = Path::new(out_dir)
+                        .join(format!("object_{}_{}", tileset.name, template_object.gid))
+                        .with_extension("ntex");
+
+                    let texture_image = load_tile_image(
+                        template_object.gid,
+                        map_path,
+                        tileset,
+                        tileset_image_cache,
+                        template_object.width as i32,
+                        template_object.height as i32,
+                    )?;
+
+                    write_binary_file_if_changed(&object_texture_path, &texture_image)?;
+
+                    object_textures.push(format!(
+                        OBJECT_TEXTURE_TEMPLATE!(),
+                        object_texture_ident = object_texture_ident,
+                        width = template_object.width as i32,
+                        height = template_object.height as i32,
+                        object_texture_path = object_texture_path,
+                    ));
+
+                    emitted_object_texture.insert(object_texture_ident);
+                }
+            }
         }
     }
 
-    Ok(objects)
+    Ok((objects, object_textures))
 }
 
 #[rustfmt::skip]
@@ -308,6 +394,7 @@ macro_rules! MAP_TEMPLATE { () => {
 r##"static {tiles_name_ident}: &[&StaticTexture] = &[
 {map_tile_refs}];
 
+{object_textures}
 pub static {objects_name_ident}: &[&[StaticObject]] = &[&[
 {objects}]];
 
@@ -349,6 +436,7 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
     used_tile_ids.push(0);
 
     let mut tileset_image_cache = HashMap::new();
+    let mut emitted_object_texture = HashSet::new();
 
     for path in fs::read_dir("maps")?
         .filter_map(|e| e.ok())
@@ -411,7 +499,13 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
         write_binary_file_if_changed(map_data_path, &layers)?;
 
-        let objects = parse_map_objects(&map)?;
+        let (objects, object_textures) = parse_map_objects(
+            &map,
+            out_dir,
+            &path,
+            &mut tileset_image_cache,
+            &mut emitted_object_texture,
+        )?;
 
         let map_name_ident = uppercase_name.to_string();
         let tiles_name_ident = format!("{}_TILES", &uppercase_name);
@@ -431,6 +525,7 @@ fn parse_maps(out_dir: &str) -> Result<(), Box<dyn Error>> {
             tile_width = tile_width,
             tile_height = tile_height,
             map_data_path = map_data_path,
+            object_textures = object_textures.join(""),
             objects = objects.join(""),
             objects_name_ident = objects_name_ident,
         );
