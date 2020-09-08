@@ -1,4 +1,5 @@
 use n64_math::Color;
+use image::DynamicImage;
 use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
@@ -58,7 +59,7 @@ fn write_binary_file_if_changed(
     Ok(())
 }
 
-fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
+fn load_png(path: impl AsRef<Path>, rotate_180: bool) -> Result<Image, Box<dyn Error>> {
     println!("rerun-if-changed={}", path.as_ref().to_string_lossy());
 
     let file = File::open(path.as_ref())
@@ -74,6 +75,15 @@ fn load_png(path: impl AsRef<Path>) -> Result<Image, Box<dyn Error>> {
     {
         return Err("Image format not supported!".into());
     }
+
+    let mut image = image::ImageBuffer::from_raw(info.width, info.height, buf).unwrap();
+
+    if rotate_180 {
+        let rotated_image = DynamicImage::ImageRgba8(image).rotate180();
+        image = rotated_image.into_rgba();
+    }
+
+    let buf = image.into_raw();
 
     let mut data = Vec::with_capacity((2 * info.width * info.height) as usize);
 
@@ -118,7 +128,7 @@ fn parse_textures() -> Result<(), Box<dyn Error>> {
     {
         if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
             let out_path = path.canonicalize()?.with_extension("ntex");
-            let image = load_png(path.as_path())?;
+            let image = load_png(path.as_path(), false)?;
 
             write_binary_file_if_changed(&out_path, &image.data)?;
 
@@ -175,6 +185,7 @@ fn load_tile_image(
     tileset_image_cache: &mut HashMap<PathBuf, Image>,
     expected_width: i32,
     expected_height: i32,
+    rotate_180: bool,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut effective_gid = gid - tileset.first_gid;
     let tile_width = tileset.tile_width;
@@ -200,7 +211,7 @@ fn load_tile_image(
                 .entry(image_path.clone())
                 .or_insert_with(|| {
                     println!("rerun-if-changed={:?}", image_path);
-                    load_png(image_path).unwrap()
+                    load_png(image_path, rotate_180).unwrap()
                 });
 
             let mut res = Vec::new();
@@ -246,7 +257,7 @@ fn load_tile_image(
                     .entry(image_path.clone())
                     .or_insert_with(|| {
                         println!("rerun-if-changed={:?}", image_path);
-                        load_png(image_path).unwrap()
+                        load_png(image_path, rotate_180).unwrap()
                     });
 
                 assert!(image.width == expected_width);
@@ -287,7 +298,7 @@ fn parse_map_tiles(
 
         let tileset = find_tileset_with_gid(*id, &map.tilesets)?;
         let tile_image =
-            load_tile_image(*id, map_path, tileset, tileset_image_cache, width, height)?;
+            load_tile_image(*id, map_path, tileset, tileset_image_cache, width, height, false)?;
 
         write_binary_file_if_changed(&tile_path, &tile_image)?;
 
@@ -344,9 +355,10 @@ fn parse_map_objects(
             }) = &object.template.as_deref()
             {
                 let object_texture_ident = format!(
-                    "OBJECT_TEXTURE_{}_{}",
+                    "OBJECT_TEXTURE_{}_{}{}",
                     tileset.name.to_uppercase(),
-                    template_object.gid
+                    template_object.gid,
+                    if template_object.rotation == 180.0 { "_ROT_180" } else { "" },
                 );
 
                 objects.push(format!(
@@ -368,6 +380,7 @@ fn parse_map_objects(
                         tileset_image_cache,
                         template_object.width as i32,
                         template_object.height as i32,
+                        template_object.rotation == 180.0,
                     )?;
 
                     write_binary_file_if_changed(&object_texture_path, &texture_image)?;

@@ -19,6 +19,7 @@ n64-sys = { path = "../n64-sys" }
 
 [build-dependencies]
 hound = "3"
+image = { version = "0.23", default-features = false }
 n64-math = { path = "../n64-math" }
 png = { version = "0.16", default-features = false }
 tiled = { git = "https://github.com/JoNil/rs-tiled.git" }

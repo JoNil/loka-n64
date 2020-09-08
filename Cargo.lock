@@ -133,6 +133,11 @@ version = "0.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 
 [[package]]
+name = "bytemuck"
+version = "1.4.1"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
 name = "byteorder"
 version = "1.3.4"
 source = "git+https://github.com/JoNil/byteorder.git#c3fdc44b70d58f762490599fa75ed64c49a7945c"
@@ -542,6 +547,7 @@ version = "0.1.0"
 dependencies = [
  "hashbrown 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)",
  "hound 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "image 0.23.9 (registry+https://github.com/rust-lang/crates.io-index)",
  "n64 0.1.0",
  "n64-alloc 0.1.0",
  "n64-math 0.1.0",
@@ -735,6 +741,18 @@ dependencies = [
 name = "hound"
 version = "3.4.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
+
+[[package]]
+name = "image"
+version = "0.23.9"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "bytemuck 1.4.1 (registry+https://github.com/rust-lang/crates.io-index)",
+ "byteorder 1.3.4 (git+https://github.com/JoNil/byteorder.git)",
+ "num-iter 0.1.41 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-rational 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
+]
 
 [[package]]
 name = "inplace_it"
@@ -1168,6 +1186,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 dependencies = [
  "autocfg 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-bigint 0.2.6 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-integer 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
+ "num-traits 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
+]
+
+[[package]]
+name = "num-rational"
+version = "0.3.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+dependencies = [
+ "autocfg 1.0.1 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-integer 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)",
  "num-traits 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)",
 ]
@@ -2173,6 +2201,7 @@ dependencies = [
 "checksum block-buffer 0.3.3 (registry+https://github.com/rust-lang/crates.io-index)" = "a076c298b9ecdb530ed9d967e74a6027d6a7478924520acddcddc24c1c8ab3ab"
 "checksum bumpalo 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "2e8c087f005730276d1096a652e92a8bacee2e2472bcc9715a74d2bec38b5820"
 "checksum byte-tools 0.2.0 (registry+https://github.com/rust-lang/crates.io-index)" = "560c32574a12a89ecd91f5e742165893f86e3ab98d21f8ea548658eb9eef5f40"
+"checksum bytemuck 1.4.1 (registry+https://github.com/rust-lang/crates.io-index)" = "41aa2ec95ca3b5c54cf73c91acf06d24f4495d5f1b1c12506ae3483d646177ac"
 "checksum byteorder 1.3.4 (git+https://github.com/JoNil/byteorder.git)" = "<none>"
 "checksum calloop 0.4.4 (registry+https://github.com/rust-lang/crates.io-index)" = "7aa2097be53a00de9e8fc349fea6d76221f398f5c4fa550d420669906962d160"
 "checksum cc 1.0.59 (registry+https://github.com/rust-lang/crates.io-index)" = "66120af515773fb005778dc07c261bd201ec8ce50bd6e7144c927753fe013381"
@@ -2235,6 +2264,7 @@ dependencies = [
 "checksum hashbrown 0.9.0 (registry+https://github.com/rust-lang/crates.io-index)" = "00d63df3d41950fb462ed38308eea019113ad1508da725bbedcd0fa5a85ef5f7"
 "checksum hibitset 0.6.3 (registry+https://github.com/rust-lang/crates.io-index)" = "93a1bb8316a44459a7d14253c4d28dd7395cbd23cc04a68c46e851b8e46d64b1"
 "checksum hound 3.4.0 (registry+https://github.com/rust-lang/crates.io-index)" = "8a164bb2ceaeff4f42542bdb847c41517c78a60f5649671b2a07312b6e117549"
+"checksum image 0.23.9 (registry+https://github.com/rust-lang/crates.io-index)" = "974e194911d1f7efe3cd8a8f9db3b767e43536327e899e8bc9a12ef5711b74d2"
 "checksum inplace_it 0.3.2 (registry+https://github.com/rust-lang/crates.io-index)" = "dd01a2a73f2f399df96b22dc88ea687ef4d76226284e7531ae3c7ee1dc5cb534"
 "checksum instant 0.1.6 (registry+https://github.com/rust-lang/crates.io-index)" = "5b141fdc7836c525d4d594027d318c84161ca17aaf8113ab1f81ab93ae897485"
 "checksum iovec 0.1.4 (registry+https://github.com/rust-lang/crates.io-index)" = "b2b3ea6ff95e175473f8ffe6a7eb7c00d054240321b84c57051175fe3c1e075e"
@@ -2280,6 +2310,7 @@ dependencies = [
 "checksum num-integer 0.1.43 (registry+https://github.com/rust-lang/crates.io-index)" = "8d59457e662d541ba17869cf51cf177c0b5f0cbf476c66bdc90bf1edac4f875b"
 "checksum num-iter 0.1.41 (registry+https://github.com/rust-lang/crates.io-index)" = "7a6e6b7c748f995c4c29c5f5ae0248536e04a5739927c74ec0fa564805094b9f"
 "checksum num-rational 0.2.4 (registry+https://github.com/rust-lang/crates.io-index)" = "5c000134b5dbf44adc5cb772486d335293351644b801551abe8f75c84cfa4aef"
+"checksum num-rational 0.3.0 (registry+https://github.com/rust-lang/crates.io-index)" = "a5b4d7360f362cfb50dde8143501e6940b22f644be75a4cc90b2d81968908138"
 "checksum num-traits 0.2.12 (registry+https://github.com/rust-lang/crates.io-index)" = "ac267bcc07f48ee5f8935ab0d24f316fb722d7a1292e2913f0cc196b29ffd611"
 "checksum num_enum 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ca565a7df06f3d4b485494f25ba05da1435950f4dc263440eda7a6fa9b8e36e4"
 "checksum num_enum_derive 0.4.3 (registry+https://github.com/rust-lang/crates.io-index)" = "ffa5a33ddddfee04c0283a7653987d634e880347e96b5b2ed64de07efb59db9d"
