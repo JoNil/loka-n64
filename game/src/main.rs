@@ -233,6 +233,9 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
+
+    const GREEN: Color = Color::new(0b00011_10000_00011_1);
+
     let mut out_tex = n64::gfx::TextureMut::new(VIDEO_MODE.width(), VIDEO_MODE.height(), unsafe {
         core::slice::from_raw_parts_mut(n64_sys::vi::get_vi_buffer(), VIDEO_MODE.size() as usize)
     });
