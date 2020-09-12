@@ -25,6 +25,7 @@ enum Command {
         upper_left: Vec2,
         lower_right: Vec2,
         texture: Texture<'static>,
+        blend_color: u32,
     },
 }
 
@@ -87,13 +88,14 @@ impl<'a> CommandBuffer<'a> {
         upper_left: Vec2,
         lower_right: Vec2,
         texture: Texture<'static>,
-        _blend_color: Option<u32>,
+        blend_color: Option<u32>,
     ) -> &mut Self {
         self.textured_rect_count += 1;
         self.cache.commands.push(Command::TexturedRect {
             upper_left,
             lower_right,
             texture,
+            blend_color: if let Some(blend_color) = blend_color { blend_color } else { 0xff_ff_ff_ff },
         });
 
         self
@@ -139,6 +141,7 @@ impl<'a> CommandBuffer<'a> {
                             upper_left,
                             lower_right,
                             texture,
+                            blend_color,
                         } => {
                             graphics.textured_rect.upload_texture_data(
                                 &graphics.device,
@@ -155,6 +158,12 @@ impl<'a> CommandBuffer<'a> {
                             textured_rect_uniforms.push(TexturedRectUniforms {
                                 offset: [offset_x, offset_y],
                                 scale: [scale.x(), scale.y()],
+                                blend_color: [
+                                    ((blend_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((blend_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((blend_color >> 8) & 0xff) as f32 / 255.0,
+                                    ((blend_color >> 0) & 0xff) as f32 / 255.0,
+                                ],
                             });
                         }
                     }

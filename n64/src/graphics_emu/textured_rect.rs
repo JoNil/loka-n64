@@ -10,6 +10,7 @@ pub const MAX_TEXTURED_RECTS: u64 = 4096;
 pub(crate) struct TexturedRectUniforms {
     pub offset: [f32; 2],
     pub scale: [f32; 2],
+    pub blend_color: [f32; 4],
 }
 
 pub(crate) struct UploadedTexture {

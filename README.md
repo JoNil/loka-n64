@@ -52,3 +52,4 @@ cargo run
 - http://krikzz.com/pub/support/everdrive-64/x-series/dev/
 - https://dragonminded.com/n64dev/Reality%20Coprocessor.pdf
 - https://github.com/Themaister/parallel-rdp
+- http://ultra64.ca/files/documentation/online-manuals/man/pro-man/pro12/index12.6.html
