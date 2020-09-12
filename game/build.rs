@@ -85,8 +85,11 @@ fn load_png(path: impl AsRef<Path>, rotate_180: bool, size: Option<(i32, i32)>) 
 
     if let Some((width, height)) = size {
         if info.width != width.try_into().unwrap() || info.height != height.try_into().unwrap() {
-            let scaled_image = DynamicImage::ImageRgba8(image).resize(
-                (width + 1) as u32, height as u32, FilterType::Gaussian);
+            let scaled_image = DynamicImage::ImageRgba8(image).resize_exact(
+                width as u32, height as u32, FilterType::Gaussian);
+
+
+
             image = scaled_image.into_rgba();
         }
     }
