@@ -1,7 +1,7 @@
-use crate::{bullet_system::BulletSystem, components::sprite_drawable::SpriteDrawableComponent};
 use crate::components::health::HealthComponent;
 use crate::components::movable::MovableComponent;
 use crate::entity::{Entity, OwnedEntity};
+use crate::{bullet_system::BulletSystem, components::sprite_drawable::SpriteDrawableComponent};
 use crate::{sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World, Player};
 use alloc::vec::Vec;
 use n64::{current_time_us, gfx::Texture};
@@ -108,8 +108,8 @@ impl EnemySystem {
             if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
                 if let (Some(movable), Some(sprite_drawable)) = (
                     world.movable.lookup(&enemy.entity).copied(),
-                    world.sprite_drawable.lookup(&enemy.entity).copied()) {
-
+                    world.sprite_drawable.lookup(&enemy.entity).copied(),
+                ) {
                     //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                     bullet_system.shoot_bullet_enemy(
                         world,

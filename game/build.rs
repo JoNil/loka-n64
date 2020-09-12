@@ -1,5 +1,5 @@
+use image::{imageops::FilterType, DynamicImage};
 use n64_math::Color;
-use image::{DynamicImage, imageops::FilterType};
 use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
@@ -59,7 +59,11 @@ fn write_binary_file_if_changed(
     Ok(())
 }
 
-fn load_png(path: impl AsRef<Path>, rotate_180: bool, size: Option<(i32, i32)>) -> Result<Image, Box<dyn Error>> {
+fn load_png(
+    path: impl AsRef<Path>,
+    rotate_180: bool,
+    size: Option<(i32, i32)>,
+) -> Result<Image, Box<dyn Error>> {
     println!("rerun-if-changed={}", path.as_ref().to_string_lossy());
 
     let file = File::open(path.as_ref())
@@ -85,10 +89,10 @@ fn load_png(path: impl AsRef<Path>, rotate_180: bool, size: Option<(i32, i32)>) 
 
     if let Some((width, height)) = size {
         if info.width != width.try_into().unwrap() || info.height != height.try_into().unwrap() {
-
             let buf = image.into_raw();
 
-            let mut color_in = Vec::with_capacity((3 * info.width * info.height).try_into().unwrap());
+            let mut color_in =
+                Vec::with_capacity((3 * info.width * info.height).try_into().unwrap());
             let mut alpha_in = Vec::with_capacity((info.width * info.height).try_into().unwrap());
 
             for p in buf.chunks_exact(4) {
@@ -98,14 +102,22 @@ fn load_png(path: impl AsRef<Path>, rotate_180: bool, size: Option<(i32, i32)>) 
                 alpha_in.push(p[3]);
             }
 
-            let color_image = image::ImageBuffer::from_raw(info.width, info.height, color_in).unwrap();
-            let alpha_image = image::ImageBuffer::from_raw(info.width, info.height, alpha_in).unwrap();
+            let color_image =
+                image::ImageBuffer::from_raw(info.width, info.height, color_in).unwrap();
+            let alpha_image =
+                image::ImageBuffer::from_raw(info.width, info.height, alpha_in).unwrap();
 
             let scaled_color_image = DynamicImage::ImageRgb8(color_image).resize_exact(
-                width as u32, height as u32, FilterType::Gaussian);
+                width as u32,
+                height as u32,
+                FilterType::Gaussian,
+            );
 
             let scaled_alpha_image = DynamicImage::ImageLuma8(alpha_image).resize_exact(
-                width as u32, height as u32, FilterType::Nearest);
+                width as u32,
+                height as u32,
+                FilterType::Nearest,
+            );
 
             let color_out = scaled_color_image.into_rgb();
             let alpha_out = scaled_alpha_image.into_luma();
@@ -274,7 +286,8 @@ fn load_tile_image(
                 for y in 0..tile_height {
                     for x in 0..tile_width {
                         let out_index = 2 * (x + tile_width * y) as usize;
-                        let image_index = 2 * ((start_x + x) + image_stride * (start_y + y)) as usize;
+                        let image_index =
+                            2 * ((start_x + x) + image_stride * (start_y + y)) as usize;
 
                         res[out_index] = image.data[image_index];
                         res[out_index + 1] = image.data[image_index + 1];
@@ -297,7 +310,7 @@ fn load_tile_image(
                     .map(Path::new)
                     .unwrap_or_else(|| Path::new(map_path))
                     .with_file_name(&image.source);
-    
+
                 println!("rerun-if-changed={:?}", image_path);
                 let image = load_png(image_path, rotate_180, Some((width, height))).unwrap();
 
@@ -335,8 +348,15 @@ fn parse_map_tiles(
         let tile_path = tile_path.to_str().ok_or("Bad Path")?;
 
         let tileset = find_tileset_with_gid(*id, &map.tilesets)?;
-        let tile_image =
-            load_tile_image(*id, map_path, tileset, tileset_image_cache, width, height, false)?;
+        let tile_image = load_tile_image(
+            *id,
+            map_path,
+            tileset,
+            tileset_image_cache,
+            width,
+            height,
+            false,
+        )?;
 
         write_binary_file_if_changed(&tile_path, &tile_image)?;
 
@@ -396,7 +416,11 @@ fn parse_map_objects(
                     "OBJECT_TEXTURE_{}_{}{}_{}X{}",
                     tileset.name.to_uppercase(),
                     template_object.gid,
-                    if template_object.rotation == 180.0 { "_ROT_180" } else { "" },
+                    if template_object.rotation == 180.0 {
+                        "_ROT_180"
+                    } else {
+                        ""
+                    },
                     template_object.width,
                     template_object.height,
                 );
@@ -423,8 +447,10 @@ fn parse_map_objects(
                         template_object.rotation == 180.0,
                     )?;
 
-                    assert!(dbg!(texture_image.len()) ==
-                        2 * template_object.width as usize * template_object.height as usize);
+                    assert!(
+                        dbg!(texture_image.len())
+                            == 2 * template_object.width as usize * template_object.height as usize
+                    );
 
                     write_binary_file_if_changed(&object_texture_path, &texture_image)?;
 

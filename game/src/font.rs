@@ -3,7 +3,7 @@ use n64::gfx::{CommandBuffer, StaticTexture};
 use n64_math::Vec2;
 
 pub fn draw_text(cb: &mut CommandBuffer, text: &str, upper_left: Vec2) {
-    static atlas: &[&StaticTexture] = &[
+    static ATLAS: &[&StaticTexture] = &[
         &FONT_1_SPACE,
         &FONT_1_EXCLAMATION,
         &FONT_1_DBL_QUOTE,
@@ -108,11 +108,11 @@ pub fn draw_text(cb: &mut CommandBuffer, text: &str, upper_left: Vec2) {
             next_pos,
             next_pos + Vec2::new(16.0, 16.0),
             match ch {
-                ' '..='~' => atlas[(ch as usize) - (' ' as usize)],
+                ' '..='~' => ATLAS[(ch as usize) - (' ' as usize)],
                 _ => &FONT_1_BAD,
             }
             .as_texture(),
         );
-        next_pos += Vec2::new(16.0, 0.0);
+        next_pos += Vec2::new(11.0, 0.0);
     }
 }

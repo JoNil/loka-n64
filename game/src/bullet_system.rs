@@ -91,7 +91,8 @@ impl BulletSystem {
 
                 if bullet.can_hit_enemy {
                     for enemy in enemy_system.enemies_mut() {
-                        if let Some(sprite_drawable) = world.sprite_drawable.lookup(enemy.entity()) {
+                        if let Some(sprite_drawable) = world.sprite_drawable.lookup(enemy.entity())
+                        {
                             let enemy_bb = Aabb2::from_center_size(
                                 world.movable.pos(enemy.entity()).unwrap_or_else(Vec2::zero),
                                 sprite_drawable.size,
