@@ -1,6 +1,6 @@
 use crate::components::box_drawable::BoxDrawableComponent;
 use crate::components::movable::MovableComponent;
-use crate::enemy_system::{EnemySystem, ENEMY_SIZE};
+use crate::enemy_system::EnemySystem;
 use crate::entity::OwnedEntity;
 use crate::{camera::Camera, world::World, Player, SHIP_SIZE};
 use alloc::vec::Vec;
@@ -91,17 +91,19 @@ impl BulletSystem {
 
                 if bullet.can_hit_enemy {
                     for enemy in enemy_system.enemies_mut() {
-                        let enemy_bb = Aabb2::from_center_size(
-                            world.movable.pos(enemy.entity()).unwrap_or_else(Vec2::zero),
-                            ENEMY_SIZE,
-                        );
-
-                        if bullet_bb.collides(&enemy_bb) {
-                            world.health.damage(
-                                enemy.entity(),
-                                50 + (n64_math::random_f32() * 20.0) as i32,
+                        if let Some(sprite_drawable) = world.sprite_drawable.lookup(enemy.entity()) {
+                            let enemy_bb = Aabb2::from_center_size(
+                                world.movable.pos(enemy.entity()).unwrap_or_else(Vec2::zero),
+                                sprite_drawable.size,
                             );
-                            delete = true;
+
+                            if bullet_bb.collides(&enemy_bb) {
+                                world.health.damage(
+                                    enemy.entity(),
+                                    50 + (n64_math::random_f32() * 20.0) as i32,
+                                );
+                                delete = true;
+                            }
                         }
                     }
                 }

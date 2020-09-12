@@ -44,7 +44,7 @@ impl Player {
         );
         world
             .health
-            .add(&player.entity, HealthComponent { health: 1000 });
+            .add(&player.entity, HealthComponent { health: 10000 });
 
         player
     }
