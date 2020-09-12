@@ -146,21 +146,21 @@ fn main() {
 
 
                 if false {
-                    font::draw_text(&mut cb, " !\"#$%&", Vec2::new(1.0, 0.0));
-                    font::draw_text(&mut cb, "'()+,-./", Vec2::new(1.0, 17.0));
-                    font::draw_text(&mut cb, "0123456789", Vec2::new(1.0, 34.0));
-                    font::draw_text(&mut cb, ":;<=>?@", Vec2::new(1.0, 51.0));
-                    font::draw_text(&mut cb, "ABCDEFGHIJ", Vec2::new(1.0, 68.0));
-                    font::draw_text(&mut cb, "KLMNOPQRST", Vec2::new(1.0, 85.0));
-                    font::draw_text(&mut cb, "UVWXYZ", Vec2::new(1.0, 102.0));
-                    font::draw_text(&mut cb, "[\\]^_`", Vec2::new(1.0, 119.0));
-                    font::draw_text(&mut cb, "abcdefghij", Vec2::new(1.0, 136.0));
-                    font::draw_text(&mut cb, "klmnopqrst", Vec2::new(1.0, 153.0));
-                    font::draw_text(&mut cb, "uvwxyz", Vec2::new(1.0, 170.0));
-                    font::draw_text(&mut cb, "{|}~", Vec2::new(1.0, 187.0));
+                    font::draw_text(&mut cb, " !\"#$%&", Vec2::new(1.0, 0.0), 0xffffffff);
+                    font::draw_text(&mut cb, "'()+,-./", Vec2::new(1.0, 17.0), 0xffffffff);
+                    font::draw_text(&mut cb, "0123456789", Vec2::new(1.0, 34.0), 0xffffffff);
+                    font::draw_text(&mut cb, ":;<=>?@", Vec2::new(1.0, 51.0), 0xffffffff);
+                    font::draw_text(&mut cb, "ABCDEFGHIJ", Vec2::new(1.0, 68.0), 0xffffffff);
+                    font::draw_text(&mut cb, "KLMNOPQRST", Vec2::new(1.0, 85.0), 0xffffffff);
+                    font::draw_text(&mut cb, "UVWXYZ", Vec2::new(1.0, 102.0), 0xffffffff);
+                    font::draw_text(&mut cb, "[\\]^_`", Vec2::new(1.0, 119.0), 0xffffffff);
+                    font::draw_text(&mut cb, "abcdefghij", Vec2::new(1.0, 136.0), 0xffffffff);
+                    font::draw_text(&mut cb, "klmnopqrst", Vec2::new(1.0, 153.0), 0xffffffff);
+                    font::draw_text(&mut cb, "uvwxyz", Vec2::new(1.0, 170.0), 0xffffffff);
+                    font::draw_text(&mut cb, "{|}~", Vec2::new(1.0, 187.0), 0xffffffff);
                 }
 
-                font::draw_number(&mut cb, player.score(), Vec2::new(300.0, 10.0));
+                font::draw_number(&mut cb, player.score(), Vec2::new(300.0, 10.0), 0x0000efff);
                 font::draw_number(
                     &mut cb,
                     world
@@ -169,6 +169,7 @@ fn main() {
                         .map(|hc| hc.health)
                         .unwrap_or(0),
                     Vec2::new(300.0, 215.0),
+                    0xaf0000ff,
                 );
 
                 #[cfg(target_vendor = "nintendo64")]
@@ -177,24 +178,27 @@ fn main() {
                         &mut cb,
                         n64_alloc::BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
                         Vec2::new(100.0, 160.0),
+                        0xff0000ff,
                     );
                     font::draw_number(
                         &mut cb,
                         n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
                         Vec2::new(100.0, 180.0),
+                        0xff0000ff,
                     );
                     font::draw_number(
                         &mut cb,
                         *n64_alloc::PAGE_OFFSET.lock() as i32,
                         Vec2::new(100.0, 200.0),
+                        0xff0000ff,
                     );
                 }
 
                 {
-                    font::draw_number(&mut cb, (dt * 1000.0 * 1000.0) as i32, Vec2::new(100.0, 10.0));
-                    font::draw_number(&mut cb, frame_used_time as i32, Vec2::new(200.0, 10.0));
-                    font::draw_number(&mut cb, last_colored_rect_count, Vec2::new(100.0, 30.0));
-                    font::draw_number(&mut cb, last_textured_rect_count, Vec2::new(200.0, 30.0));
+                    font::draw_number(&mut cb, (dt * 1000.0 * 1000.0) as i32, Vec2::new(100.0, 10.0), 0x00af00ff);
+                    font::draw_number(&mut cb, frame_used_time as i32, Vec2::new(200.0, 10.0), 0x00af00ff);
+                    font::draw_number(&mut cb, last_colored_rect_count, Vec2::new(100.0, 30.0), 0x00af00ff);
+                    font::draw_number(&mut cb, last_textured_rect_count, Vec2::new(200.0, 30.0), 0x00af00ff);
                 }
 
                 cb.run(&mut n64.graphics)

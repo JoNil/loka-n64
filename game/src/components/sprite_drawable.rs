@@ -33,6 +33,7 @@ impl System {
                     (upper_left - camera.pos) * screen_size,
                     (lower_right - camera.pos) * screen_size,
                     component.texture,
+                    None,
                 );
             }
         }

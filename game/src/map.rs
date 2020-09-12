@@ -101,6 +101,7 @@ impl Map {
                         upper_left - camera_pixel_pos,
                         lower_right - camera_pixel_pos,
                         self.data.tiles[(tile - 1) as usize].as_texture(),
+                        None,
                     );
                 }
             }

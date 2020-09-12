@@ -87,11 +87,12 @@ impl<'a> CommandBuffer<'a> {
             .set_other_modes(
                 OTHER_MODE_CYCLE_TYPE_FILL
                     | OTHER_MODE_CYCLE_TYPE_COPY
-                    | OTHER_MODE_CYCLE_TYPE_2_CYCLE
+                    | OTHER_MODE_CYCLE_TYPE_1_CYCLE
                     | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_FORCE_BLEND,
             )
+            .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
             .set_fill_color(color)
             .fill_rectangle(upper_left, lower_right - Vec2::new(1.0, 1.0));
 
@@ -103,6 +104,7 @@ impl<'a> CommandBuffer<'a> {
         upper_left: Vec2,
         lower_right: Vec2,
         texture: Texture<'static>,
+        blend_color: Option<u32>,
     ) -> &mut Self {
         self.textured_rect_count += 1;
         self.cache
@@ -113,9 +115,17 @@ impl<'a> CommandBuffer<'a> {
                     | OTHER_MODE_BI_LERP_0
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_B_M2A_0_1
+                    | if let Some(_) = blend_color { OTHER_MODE_B_M1A_0_2 } else { 0 }
                     | OTHER_MODE_FORCE_BLEND
                     | OTHER_MODE_IMAGE_READ_EN,
-            )
+            );
+
+        if let Some(blend_color) = blend_color {
+            self.cache.rdp.set_blend_color(blend_color);
+        }
+        
+        self.cache
+            .rdp
             .set_texture_image(
                 FORMAT_RGBA,
                 SIZE_OF_PIXEL_16B,

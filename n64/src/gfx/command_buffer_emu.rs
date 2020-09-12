@@ -87,6 +87,7 @@ impl<'a> CommandBuffer<'a> {
         upper_left: Vec2,
         lower_right: Vec2,
         texture: Texture<'static>,
+        _blend_color: Option<u32>,
     ) -> &mut Self {
         self.textured_rect_count += 1;
         self.cache.commands.push(Command::TexturedRect {

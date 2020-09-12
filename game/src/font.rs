@@ -110,12 +110,12 @@ fn digit_to_char(digit: u8) -> char {
     }
 }
 
-pub fn draw_number(cb: &mut CommandBuffer,  mut number: i32, upper_right: Vec2) {
+pub fn draw_number(cb: &mut CommandBuffer,  mut number: i32, upper_right: Vec2, color: u32) {
     let mut negative = false;
     let mut next_pos = upper_right - GLYPH_SIZE;
 
     if number == 0 {
-        draw_char(cb, '0', next_pos);
+        draw_char(cb, '0', next_pos, color);
         next_pos -= GLYPH_SIZE;
         return;
     }
@@ -126,27 +126,27 @@ pub fn draw_number(cb: &mut CommandBuffer,  mut number: i32, upper_right: Vec2) 
     }
 
     while number > 0 {
-        draw_char(cb, digit_to_char((number % 10) as u8), next_pos);
+        draw_char(cb, digit_to_char((number % 10) as u8), next_pos, color);
         next_pos -= GLYPH_SIZE;
         number /= 10;
     }
 
     if negative {
-        draw_char(cb, '-', next_pos);
+        draw_char(cb, '-', next_pos, color);
     }
 }
 
-pub fn draw_text(cb: &mut CommandBuffer, text: &str, upper_left: Vec2) {
+pub fn draw_text(cb: &mut CommandBuffer, text: &str, upper_left: Vec2, color: u32) {
 
     let mut next_pos = upper_left;
 
     for ch in text.chars() {
-        draw_char(cb, ch, next_pos);
+        draw_char(cb, ch, next_pos, color);
         next_pos += GLYPH_SIZE;
     }
 }
 
-pub fn draw_char(cb: &mut CommandBuffer, ch: char, pos: Vec2) {
+pub fn draw_char(cb: &mut CommandBuffer, ch: char, pos: Vec2, color: u32) {
     cb.add_textured_rect(
         pos,
         pos + Vec2::new(16.0, 16.0),
@@ -155,5 +155,6 @@ pub fn draw_char(cb: &mut CommandBuffer, ch: char, pos: Vec2) {
             _ => &FONT_1_BAD,
         }
         .as_texture(),
+        Some(color),
     );
 }

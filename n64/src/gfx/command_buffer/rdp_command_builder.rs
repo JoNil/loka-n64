@@ -98,6 +98,8 @@ pub const FORMAT_I: u8 = 4; // Set_Tile/Set_Texture_Image/Set_Color_Image: Image
 pub const COMMAND_SET_COLOR_IMAGE: u64 = 0xff;
 pub const COMMAND_SET_SCISSOR: u64 = 0xed;
 pub const COMMAND_SET_OTHER_MODE: u64 = 0xef;
+pub const COMMAND_SET_BLEND_COLOR: u64 = 0xf9;
+pub const COMMAND_SET_FOG_COLOR: u64 = 0xf8;
 pub const COMMAND_SET_FILL_COLOR: u64 = 0xf7;
 pub const COMMAND_SET_COMBINE_MODE: u64 = 0xfc;
 pub const COMMAND_SET_TEXTURE_IMAGE: u64 = 0xfd;
@@ -162,6 +164,24 @@ impl RdpCommandBuilder {
     pub fn set_other_modes(&mut self, flags: u64) -> &mut RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
             (COMMAND_SET_OTHER_MODE << 56) | (flags & ((1 << 56) - 1)) | 0x0000_000F_0000_0000,
+        ));
+        self
+    }
+
+    #[inline]
+    pub fn set_blend_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
+        self.commands.as_mut().unwrap().push(RdpCommand(
+            (COMMAND_SET_BLEND_COLOR << 56)
+                | (color as u64),
+        ));
+        self
+    }
+
+    #[inline]
+    pub fn set_fog_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
+        self.commands.as_mut().unwrap().push(RdpCommand(
+            (COMMAND_SET_FOG_COLOR << 56)
+                | (color as u64),
         ));
         self
     }
