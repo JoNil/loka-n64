@@ -19,7 +19,7 @@ pub fn draw_text(cb: &mut CommandBuffer, text: &str, upper_left: Vec2) {
         &FONT_1_COMMA,
         &FONT_1_DASH,
         &FONT_1_DOT,
-        &FONT_1_PLUS,
+        &FONT_1_SLASH,
         &FONT_1_0,
         &FONT_1_1,
         &FONT_1_2,
