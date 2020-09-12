@@ -85,12 +85,41 @@ fn load_png(path: impl AsRef<Path>, rotate_180: bool, size: Option<(i32, i32)>) 
 
     if let Some((width, height)) = size {
         if info.width != width.try_into().unwrap() || info.height != height.try_into().unwrap() {
-            let scaled_image = DynamicImage::ImageRgba8(image).resize_exact(
+
+            let buf = image.into_raw();
+
+            let mut color_in = Vec::with_capacity((3 * info.width * info.height).try_into().unwrap());
+            let mut alpha_in = Vec::with_capacity((info.width * info.height).try_into().unwrap());
+
+            for p in buf.chunks_exact(4) {
+                color_in.push(p[0]);
+                color_in.push(p[1]);
+                color_in.push(p[2]);
+                alpha_in.push(p[3]);
+            }
+
+            let color_image = image::ImageBuffer::from_raw(info.width, info.height, color_in).unwrap();
+            let alpha_image = image::ImageBuffer::from_raw(info.width, info.height, alpha_in).unwrap();
+
+            let scaled_color_image = DynamicImage::ImageRgb8(color_image).resize_exact(
                 width as u32, height as u32, FilterType::Gaussian);
 
+            let scaled_alpha_image = DynamicImage::ImageLuma8(alpha_image).resize_exact(
+                width as u32, height as u32, FilterType::Nearest);
 
+            let color_out = scaled_color_image.into_rgb();
+            let alpha_out = scaled_alpha_image.into_luma();
 
-            image = scaled_image.into_rgba();
+            let mut out_buf = Vec::with_capacity((4 * width * height).try_into().unwrap());
+
+            for (color, alpha) in color_out.chunks_exact(3).zip(alpha_out.iter()) {
+                out_buf.push(color[0]);
+                out_buf.push(color[1]);
+                out_buf.push(color[2]);
+                out_buf.push(*alpha);
+            }
+
+            image = image::ImageBuffer::from_raw(width as u32, height as u32, out_buf).unwrap();
         }
     }
 
