@@ -10,7 +10,6 @@ const UNKNOWN: usize = 48;
 const GLYPH_SIZE: usize = 23;
 const GLYPH_ADDR: usize = 0xB000_0B70;
 
-#[inline]
 pub fn draw_str(out_tex: &mut TextureMut, mut x: i32, mut y: i32, color: Color, string: &[u8]) {
     let start_x = x;
 
@@ -37,68 +36,6 @@ pub fn draw_str(out_tex: &mut TextureMut, mut x: i32, mut y: i32, color: Color, 
 
         draw_char(out_tex, x, y, color, ch);
         x += GLYPH_WIDTH + KERNING;
-    }
-}
-
-#[inline]
-fn digit_to_hex_char(digit: u8) -> u8 {
-    match digit {
-        0..=9 => b'0' + digit,
-        10..=15 => b'A' + (digit - 10),
-        _ => panic!(),
-    }
-}
-
-#[inline]
-pub fn draw_hex(out_tex: &mut TextureMut, mut x: i32, y: i32, color: Color, mut number: u32) {
-    if number == 0 {
-        draw_char(out_tex, x, y, color, b'0');
-        return;
-    }
-
-    while number > 0 {
-        draw_char(
-            out_tex,
-            x,
-            y,
-            color,
-            digit_to_hex_char((number & 0xF) as u8),
-        );
-        x -= GLYPH_WIDTH + KERNING;
-        number >>= 4;
-    }
-}
-
-#[inline]
-fn digit_to_char(digit: u8) -> u8 {
-    match digit {
-        0..=9 => b'0' + digit,
-        _ => panic!(),
-    }
-}
-
-#[inline]
-pub fn draw_number(out_tex: &mut TextureMut, mut x: i32, y: i32, color: Color, mut number: i32) {
-    let mut negative = false;
-
-    if number == 0 {
-        draw_char(out_tex, x, y, color, b'0');
-        return;
-    }
-
-    if number < 0 {
-        number = number.abs();
-        negative = true;
-    }
-
-    while number > 0 {
-        draw_char(out_tex, x, y, color, digit_to_char((number % 10) as u8));
-        x -= GLYPH_WIDTH + KERNING;
-        number /= 10;
-    }
-
-    if negative {
-        draw_char(out_tex, x, y, color, b'-');
     }
 }
 

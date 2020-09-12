@@ -39,8 +39,6 @@ mod textures;
 mod world;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);
-const GREEN: Color = Color::new(0b00011_10000_00011_1);
-const BLUE: Color = Color::new(0b00011_00011_10000_1);
 
 const VIDEO_MODE: VideoMode = VideoMode::Pal {
     width: 320,
@@ -71,6 +69,9 @@ fn main() {
     let mut last_frame_begin_time = current_time_us();
     let mut frame_used_time = 0;
     let mut dt;
+
+    let mut last_colored_rect_count = 0;
+    let mut last_textured_rect_count = 0;
 
     loop {
         frame_begin_time = current_time_us();
@@ -143,70 +144,64 @@ fn main() {
                     .sprite_drawable
                     .draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
 
-                font::draw_text(&mut cb, " !\"#$%&", Vec2::new(1.0, 0.0));
-                font::draw_text(&mut cb, "'()+,-./", Vec2::new(1.0, 17.0));
-                font::draw_text(&mut cb, "0123456789", Vec2::new(1.0, 34.0));
-                font::draw_text(&mut cb, ":;<=>?@", Vec2::new(1.0, 51.0));
-                font::draw_text(&mut cb, "ABCDEFGHIJ", Vec2::new(1.0, 68.0));
-                font::draw_text(&mut cb, "KLMNOPQRST", Vec2::new(1.0, 85.0));
-                font::draw_text(&mut cb, "UVWXYZ", Vec2::new(1.0, 102.0));
-                font::draw_text(&mut cb, "[\\]^_`", Vec2::new(1.0, 119.0));
-                font::draw_text(&mut cb, "abcdefghij", Vec2::new(1.0, 136.0));
-                font::draw_text(&mut cb, "klmnopqrst", Vec2::new(1.0, 153.0));
-                font::draw_text(&mut cb, "uvwxyz", Vec2::new(1.0, 170.0));
-                font::draw_text(&mut cb, "{|}~", Vec2::new(1.0, 187.0));
 
-                cb.run(&mut n64.graphics)
-            };
+                if false {
+                    font::draw_text(&mut cb, " !\"#$%&", Vec2::new(1.0, 0.0));
+                    font::draw_text(&mut cb, "'()+,-./", Vec2::new(1.0, 17.0));
+                    font::draw_text(&mut cb, "0123456789", Vec2::new(1.0, 34.0));
+                    font::draw_text(&mut cb, ":;<=>?@", Vec2::new(1.0, 51.0));
+                    font::draw_text(&mut cb, "ABCDEFGHIJ", Vec2::new(1.0, 68.0));
+                    font::draw_text(&mut cb, "KLMNOPQRST", Vec2::new(1.0, 85.0));
+                    font::draw_text(&mut cb, "UVWXYZ", Vec2::new(1.0, 102.0));
+                    font::draw_text(&mut cb, "[\\]^_`", Vec2::new(1.0, 119.0));
+                    font::draw_text(&mut cb, "abcdefghij", Vec2::new(1.0, 136.0));
+                    font::draw_text(&mut cb, "klmnopqrst", Vec2::new(1.0, 153.0));
+                    font::draw_text(&mut cb, "uvwxyz", Vec2::new(1.0, 170.0));
+                    font::draw_text(&mut cb, "{|}~", Vec2::new(1.0, 187.0));
+                }
 
-            {
-                let mut fb = n64.framebuffer.next_buffer();
-
-                ipl3font::draw_number(&mut fb, 300, 10, BLUE, player.score());
-                ipl3font::draw_number(
-                    &mut fb,
-                    300,
-                    215,
-                    BLUE,
+                font::draw_number(&mut cb, player.score(), Vec2::new(300.0, 10.0));
+                font::draw_number(
+                    &mut cb,
                     world
                         .health
                         .lookup(player.entity())
                         .map(|hc| hc.health)
                         .unwrap_or(0),
+                    Vec2::new(300.0, 215.0),
                 );
 
                 #[cfg(target_vendor = "nintendo64")]
                 {
-                    ipl3font::draw_number(
-                        &mut fb,
-                        100,
-                        160,
-                        RED,
+                    font::draw_number(
+                        &mut cb,
                         n64_alloc::BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
+                        Vec2::new(100.0, 160.0),
                     );
-                    ipl3font::draw_number(
-                        &mut fb,
-                        100,
-                        180,
-                        RED,
+                    font::draw_number(
+                        &mut cb,
                         n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
+                        Vec2::new(100.0, 180.0),
                     );
-                    ipl3font::draw_number(
-                        &mut fb,
-                        100,
-                        200,
-                        RED,
+                    font::draw_number(
+                        &mut cb,
                         *n64_alloc::PAGE_OFFSET.lock() as i32,
+                        Vec2::new(100.0, 200.0),
                     );
                 }
 
                 {
-                    ipl3font::draw_number(&mut fb, 100, 10, RED, (dt * 1000.0 * 1000.0) as i32);
-                    ipl3font::draw_number(&mut fb, 200, 10, RED, frame_used_time as i32);
-                    ipl3font::draw_number(&mut fb, 100, 30, GREEN, colored_rect_count);
-                    ipl3font::draw_number(&mut fb, 200, 30, GREEN, textured_rect_count);
+                    font::draw_number(&mut cb, (dt * 1000.0 * 1000.0) as i32, Vec2::new(100.0, 10.0));
+                    font::draw_number(&mut cb, frame_used_time as i32, Vec2::new(200.0, 10.0));
+                    font::draw_number(&mut cb, last_colored_rect_count, Vec2::new(100.0, 30.0));
+                    font::draw_number(&mut cb, last_textured_rect_count, Vec2::new(200.0, 30.0));
                 }
-            }
+
+                cb.run(&mut n64.graphics)
+            };
+
+            last_colored_rect_count = colored_rect_count;
+            last_textured_rect_count = textured_rect_count;
 
             let frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
             frame_used_time = frame_end_time - frame_begin_time;
