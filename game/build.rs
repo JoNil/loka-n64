@@ -1,5 +1,5 @@
 use n64_math::Color;
-use image::DynamicImage;
+use image::{DynamicImage, imageops::FilterType};
 use std::env;
 use std::error::Error;
 use std::ffi::OsStr;
@@ -59,7 +59,7 @@ fn write_binary_file_if_changed(
     Ok(())
 }
 
-fn load_png(path: impl AsRef<Path>, rotate_180: bool) -> Result<Image, Box<dyn Error>> {
+fn load_png(path: impl AsRef<Path>, rotate_180: bool, size: Option<(i32, i32)>) -> Result<Image, Box<dyn Error>> {
     println!("rerun-if-changed={}", path.as_ref().to_string_lossy());
 
     let file = File::open(path.as_ref())
@@ -83,9 +83,19 @@ fn load_png(path: impl AsRef<Path>, rotate_180: bool) -> Result<Image, Box<dyn E
         image = rotated_image.into_rgba();
     }
 
+    if let Some((width, height)) = size {
+        if info.width != width.try_into().unwrap() || info.height != height.try_into().unwrap() {
+            let scaled_image = DynamicImage::ImageRgba8(image).resize(
+                (width + 1) as u32, height as u32, FilterType::Gaussian);
+            image = scaled_image.into_rgba();
+        }
+    }
+
+    let image_width = image.width().try_into().unwrap();
+    let image_height = image.height().try_into().unwrap();
     let buf = image.into_raw();
 
-    let mut data = Vec::with_capacity((2 * info.width * info.height) as usize);
+    let mut data = Vec::with_capacity((2 * image_width * image_height) as usize);
 
     for pixel in buf.chunks_exact(4) {
         let color = Color::from_bytes(pixel.try_into()?);
@@ -93,8 +103,8 @@ fn load_png(path: impl AsRef<Path>, rotate_180: bool) -> Result<Image, Box<dyn E
     }
 
     Ok(Image {
-        width: info.width as i32,
-        height: info.height as i32,
+        width: image_width,
+        height: image_height,
         data,
     })
 }
@@ -128,7 +138,7 @@ fn parse_textures() -> Result<(), Box<dyn Error>> {
     {
         if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
             let out_path = path.canonicalize()?.with_extension("ntex");
-            let image = load_png(path.as_path(), false)?;
+            let image = load_png(path.as_path(), false, None)?;
 
             write_binary_file_if_changed(&out_path, &image.data)?;
 
@@ -183,64 +193,67 @@ fn load_tile_image(
     map_path: &Path,
     tileset: &Tileset,
     tileset_image_cache: &mut HashMap<PathBuf, Image>,
-    expected_width: i32,
-    expected_height: i32,
+    width: i32,
+    height: i32,
     rotate_180: bool,
 ) -> Result<Vec<u8>, Box<dyn Error>> {
     let mut effective_gid = gid - tileset.first_gid;
-    let tile_width = tileset.tile_width;
-    let tile_height = tileset.tile_height;
-    let tile_size = tile_width * tile_height;
 
-    for tileset_image in tileset.images.iter() {
-        let image_size = (tileset_image.width * tileset_image.height) as u32;
-        let image_tiles = image_size / tile_size;
+    {
+        let tile_width = tileset.tile_width;
+        let tile_height = tileset.tile_height;
+        let tile_size = tile_width * tile_height;
 
-        let image_path = tileset
-            .source
-            .as_ref()
-            .map(Path::new)
-            .unwrap_or_else(|| Path::new(map_path))
-            .with_file_name(&tileset_image.source);
+        for tileset_image in tileset.images.iter() {
+            let image_size = (tileset_image.width * tileset_image.height) as u32;
+            let image_tiles = image_size / tile_size;
 
-        if effective_gid < image_tiles {
-            assert!(tile_width == expected_width as u32);
-            assert!(tile_height == expected_height as u32);
+            let image_path = tileset
+                .source
+                .as_ref()
+                .map(Path::new)
+                .unwrap_or_else(|| Path::new(map_path))
+                .with_file_name(&tileset_image.source);
 
-            let image = tileset_image_cache
-                .entry(image_path.clone())
-                .or_insert_with(|| {
-                    println!("rerun-if-changed={:?}", image_path);
-                    load_png(image_path, rotate_180).unwrap()
-                });
+            if effective_gid < image_tiles {
+                assert!(tile_width == width as u32);
+                assert!(tile_height == height as u32);
 
-            let mut res = Vec::new();
-            res.resize_with(2 * tile_size as usize, Default::default);
+                let image = tileset_image_cache
+                    .entry(image_path.clone())
+                    .or_insert_with(|| {
+                        println!("rerun-if-changed={:?}", image_path);
+                        load_png(image_path, rotate_180, None).unwrap()
+                    });
 
-            let image_width_tiles = image.width as u32 / tile_width;
+                let mut res = Vec::new();
+                res.resize_with(2 * tile_size as usize, Default::default);
 
-            let tile_x = effective_gid % image_width_tiles;
-            let tile_y = effective_gid / image_width_tiles;
+                let image_width_tiles = image.width as u32 / tile_width;
 
-            let start_x = tile_x * tile_width;
-            let start_y = tile_y * tile_height;
+                let tile_x = effective_gid % image_width_tiles;
+                let tile_y = effective_gid / image_width_tiles;
 
-            let image_stride = image.width as u32;
+                let start_x = tile_x * tile_width;
+                let start_y = tile_y * tile_height;
 
-            for y in 0..tile_height {
-                for x in 0..tile_width {
-                    let out_index = 2 * (x + tile_width * y) as usize;
-                    let image_index = 2 * ((start_x + x) + image_stride * (start_y + y)) as usize;
+                let image_stride = image.width as u32;
 
-                    res[out_index] = image.data[image_index];
-                    res[out_index + 1] = image.data[image_index + 1];
+                for y in 0..tile_height {
+                    for x in 0..tile_width {
+                        let out_index = 2 * (x + tile_width * y) as usize;
+                        let image_index = 2 * ((start_x + x) + image_stride * (start_y + y)) as usize;
+
+                        res[out_index] = image.data[image_index];
+                        res[out_index + 1] = image.data[image_index + 1];
+                    }
                 }
+
+                return Ok(res);
             }
 
-            return Ok(res);
+            effective_gid -= image_tiles;
         }
-
-        effective_gid -= image_tiles;
     }
 
     for tile in &tileset.tiles {
@@ -252,16 +265,9 @@ fn load_tile_image(
                     .map(Path::new)
                     .unwrap_or_else(|| Path::new(map_path))
                     .with_file_name(&image.source);
-
-                let image = tileset_image_cache
-                    .entry(image_path.clone())
-                    .or_insert_with(|| {
-                        println!("rerun-if-changed={:?}", image_path);
-                        load_png(image_path, rotate_180).unwrap()
-                    });
-
-                assert!(image.width == expected_width);
-                assert!(image.height == expected_height);
+    
+                println!("rerun-if-changed={:?}", image_path);
+                let image = load_png(image_path, rotate_180, Some((width, height))).unwrap();
 
                 return Ok(image.data.clone());
             }
@@ -355,10 +361,12 @@ fn parse_map_objects(
             }) = &object.template.as_deref()
             {
                 let object_texture_ident = format!(
-                    "OBJECT_TEXTURE_{}_{}{}",
+                    "OBJECT_TEXTURE_{}_{}{}_{}X{}",
                     tileset.name.to_uppercase(),
                     template_object.gid,
                     if template_object.rotation == 180.0 { "_ROT_180" } else { "" },
+                    template_object.width,
+                    template_object.height,
                 );
 
                 objects.push(format!(
@@ -382,6 +390,9 @@ fn parse_map_objects(
                         template_object.height as i32,
                         template_object.rotation == 180.0,
                     )?;
+
+                    assert!(dbg!(texture_image.len()) ==
+                        2 * template_object.width as usize * template_object.height as usize);
 
                     write_binary_file_if_changed(&object_texture_path, &texture_image)?;
 
