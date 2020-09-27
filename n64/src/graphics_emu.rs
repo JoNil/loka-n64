@@ -1,6 +1,7 @@
 use crate::{current_time_us, framebuffer::Framebuffer, VideoMode};
 use colored_rect::ColoredRect;
 use copy_tex::CopyTex;
+use mesh::Mesh;
 use std::collections::HashSet;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -8,6 +9,7 @@ use std::sync::{Arc, Mutex};
 use std::thread;
 use std::thread_local;
 use textured_rect::TexturedRect;
+use wgpu::util::DeviceExt;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -15,11 +17,11 @@ use winit::{
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};
-use wgpu::util::DeviceExt;
 
 pub(crate) mod colored_rect;
 pub(crate) mod copy_tex;
 pub(crate) mod dst_texture;
+pub(crate) mod mesh;
 pub(crate) mod textured_rect;
 
 const SCALE: i32 = 2;
@@ -76,6 +78,7 @@ pub struct Graphics {
     pub(crate) copy_tex: CopyTex,
     pub(crate) colored_rect: ColoredRect,
     pub(crate) textured_rect: TexturedRect,
+    pub(crate) mesh: Mesh,
 
     pub(crate) device_poll_thread_run: Arc<AtomicBool>,
     pub(crate) device_poll_thread: Option<thread::JoinHandle<()>>,
@@ -106,20 +109,21 @@ impl Graphics {
 
         let (adapter, device, queue) = futures_executor::block_on(async {
             let adapter = instance
-            .request_adapter(&wgpu::RequestAdapterOptions {
-                power_preference: wgpu::PowerPreference::Default,
-                compatible_surface: Some(&surface),
-            })
-            .await
-            .unwrap();
+                .request_adapter(&wgpu::RequestAdapterOptions {
+                    power_preference: wgpu::PowerPreference::Default,
+                    compatible_surface: Some(&surface),
+                })
+                .await
+                .unwrap();
 
             let (device, queue) = adapter
-                .request_device(&wgpu::DeviceDescriptor {
-                    features: wgpu::Features::empty(),
-                    limits: wgpu::Limits::default(),
-                    shader_validation: true,
-                },
-                None,
+                .request_device(
+                    &wgpu::DeviceDescriptor {
+                        features: wgpu::Features::empty(),
+                        limits: wgpu::Limits::default(),
+                        shader_validation: true,
+                    },
+                    None,
                 )
                 .await
                 .unwrap();
@@ -136,23 +140,22 @@ impl Graphics {
         };
         let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
 
-        let quad_vertex_buf =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: QUAD_VERTEX_DATA.as_bytes(),
-                usage: wgpu::BufferUsage::VERTEX,
-            });
+        let quad_vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: None,
+            contents: QUAD_VERTEX_DATA.as_bytes(),
+            usage: wgpu::BufferUsage::VERTEX,
+        });
 
-        let quad_index_buf =
-            device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-                label: None,
-                contents: QUAD_INDEX_DATA.as_bytes(),
-                usage: wgpu::BufferUsage::INDEX,
-            });
+        let quad_index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: None,
+            contents: QUAD_INDEX_DATA.as_bytes(),
+            usage: wgpu::BufferUsage::INDEX,
+        });
 
         let copy_tex = CopyTex::new(&device, &swap_chain_desc, video_mode);
         let colored_rect = ColoredRect::new(&device, dst_texture::TEXUTRE_FORMAT);
         let textured_rect = TexturedRect::new(&device, dst_texture::TEXUTRE_FORMAT);
+        let mesh = Mesh::new(&device, &queue, dst_texture::TEXUTRE_FORMAT);
 
         window.set_visible(true);
 
@@ -188,6 +191,7 @@ impl Graphics {
             copy_tex,
             colored_rect,
             textured_rect,
+            mesh,
 
             device_poll_thread_run,
             device_poll_thread,
@@ -277,12 +281,11 @@ impl Graphics {
 
         let temp_buf = self
             .device
-            .create_buffer_init(
-                &wgpu::util::BufferInitDescriptor {
-                    label: None,
-                    contents: &self.copy_tex.src_buffer,
-                    usage: wgpu::BufferUsage::COPY_SRC,
-                });
+            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: None,
+                contents: &self.copy_tex.src_buffer,
+                usage: wgpu::BufferUsage::COPY_SRC,
+            });
 
         let render_command_buf = {
             let mut encoder = self
@@ -319,7 +322,7 @@ impl Graphics {
                                 a: 1.0,
                             }),
                             store: true,
-                        }
+                        },
                     }],
                     depth_stencil_attachment: None,
                 });

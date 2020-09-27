@@ -1,5 +1,5 @@
 use super::TextureMut;
-use crate::gfx::Texture;
+use crate::{gfx::Texture, graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
 use crate::{
     graphics::QUAD_INDEX_DATA,
     graphics_emu::{
@@ -10,8 +10,8 @@ use crate::{
     },
 };
 use n64_math::{Color, Vec2, Vec3};
-use std::convert::TryInto;
 use std::mem;
+use std::{convert::TryInto, ptr};
 use wgpu::util::DeviceExt;
 use zerocopy::AsBytes;
 
@@ -26,6 +26,14 @@ enum Command {
         lower_right: Vec2,
         texture: Texture<'static>,
         blend_color: u32,
+    },
+    Mesh {
+        verts: Vec<Vec3>,
+        uvs: Vec<Vec2>,
+        colors: Vec<u32>,
+        indices: Vec<u8>,
+        transform: [[f32; 4]; 4],
+        texture: Option<Texture<'static>>,
     },
 }
 
@@ -47,6 +55,7 @@ pub struct CommandBuffer<'a> {
     clear: bool,
     colored_rect_count: u32,
     textured_rect_count: u32,
+    mesh_count: u32,
     cache: &'a mut CommandBufferCache,
 }
 
@@ -57,6 +66,7 @@ impl<'a> CommandBuffer<'a> {
             clear: false,
             colored_rect_count: 0,
             textured_rect_count: 0,
+            mesh_count: 0,
             cache,
         }
     }
@@ -114,6 +124,17 @@ impl<'a> CommandBuffer<'a> {
         transform: &[[f32; 4]; 4],
         texture: Option<Texture<'static>>,
     ) -> &mut Self {
+        self.mesh_count += 1;
+
+        self.cache.commands.push(Command::Mesh {
+            verts: verts.to_owned(),
+            uvs: uvs.to_owned(),
+            colors: colors.to_owned(),
+            indices: indices.iter().flatten().copied().collect(),
+            transform: *transform,
+            texture,
+        });
+
         self
     }
 
@@ -123,6 +144,7 @@ impl<'a> CommandBuffer<'a> {
 
         assert!(self.colored_rect_count <= MAX_COLORED_RECTS as u32);
         assert!(self.textured_rect_count <= MAX_TEXTURED_RECTS as u32);
+        assert!(self.mesh_count <= MAX_MESHES as u32);
 
         let command_buf = {
             let mut encoder = graphics
@@ -133,6 +155,7 @@ impl<'a> CommandBuffer<'a> {
                     Vec::with_capacity(self.colored_rect_count as usize);
                 let mut textured_rect_uniforms =
                     Vec::with_capacity(self.textured_rect_count as usize);
+                let mut mesh_uniforms = Vec::with_capacity(self.mesh_count as usize);
 
                 for command in &self.cache.commands {
                     match command {
@@ -182,6 +205,32 @@ impl<'a> CommandBuffer<'a> {
                                 ],
                             });
                         }
+                        Command::Mesh {
+                            verts,
+                            uvs,
+                            colors,
+                            indices,
+                            transform,
+                            texture,
+                        } => {
+                            if let Some(texture) = texture {
+                                graphics.mesh.upload_texture_data(
+                                    &graphics.device,
+                                    &graphics.queue,
+                                    texture,
+                                );
+                            }
+
+                            mesh_uniforms.push(MeshUniforms {
+                                transform: *transform,
+                                blend_color: [
+                                    ((0xffffffffu32 >> 24) & 0xff) as f32 / 255.0,
+                                    ((0xffffffffu32 >> 16) & 0xff) as f32 / 255.0,
+                                    ((0xffffffffu32 >> 8) & 0xff) as f32 / 255.0,
+                                    ((0xffffffffu32 >> 0) & 0xff) as f32 / 255.0,
+                                ],
+                            });
+                        }
                     }
                 }
 
@@ -224,6 +273,25 @@ impl<'a> CommandBuffer<'a> {
                             as u64,
                     );
                 }
+
+                if !mesh_uniforms.is_empty() {
+                    let temp_buffer =
+                        graphics
+                            .device
+                            .create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                                label: None,
+                                contents: mesh_uniforms.as_bytes(),
+                                usage: wgpu::BufferUsage::COPY_SRC,
+                            });
+
+                    encoder.copy_buffer_to_buffer(
+                        &temp_buffer,
+                        0,
+                        &graphics.mesh.shader_storage_buffer,
+                        0,
+                        (mesh_uniforms.len() * mem::size_of::<MeshUniforms>()) as u64,
+                    );
+                }
             }
 
             {
@@ -248,16 +316,17 @@ impl<'a> CommandBuffer<'a> {
                     depth_stencil_attachment: None,
                 });
 
-                render_pass.set_index_buffer(graphics.quad_index_buf.slice(..));
-                render_pass.set_vertex_buffer(0, graphics.quad_vertex_buf.slice(..));
-
                 {
                     let mut colored_rect_index = 0;
                     let mut textured_rect_index = 0;
+                    let mut mesh_index = 0;
 
                     for command in &self.cache.commands {
                         match command {
                             Command::ColoredRect { .. } => {
+                                render_pass.set_index_buffer(graphics.quad_index_buf.slice(..));
+                                render_pass
+                                    .set_vertex_buffer(0, graphics.quad_vertex_buf.slice(..));
                                 render_pass.set_pipeline(&graphics.colored_rect.pipeline);
                                 render_pass.set_bind_group(
                                     0,
@@ -272,13 +341,16 @@ impl<'a> CommandBuffer<'a> {
                                 colored_rect_index += 1;
                             }
                             Command::TexturedRect { texture, .. } => {
+                                render_pass.set_index_buffer(graphics.quad_index_buf.slice(..));
+                                render_pass
+                                    .set_vertex_buffer(0, graphics.quad_vertex_buf.slice(..));
                                 render_pass.set_pipeline(&graphics.textured_rect.pipeline);
                                 render_pass.set_bind_group(
                                     0,
                                     &graphics
                                         .textured_rect
                                         .texture_cache
-                                        .get(&(texture.data as *const _))
+                                        .get(&(texture.data.as_ptr() as _))
                                         .unwrap()
                                         .bind_group,
                                     &[],
@@ -289,6 +361,41 @@ impl<'a> CommandBuffer<'a> {
                                     textured_rect_index..(textured_rect_index + 1),
                                 );
                                 textured_rect_index += 1;
+                            }
+                            Command::Mesh {
+                                verts,
+                                uvs,
+                                colors,
+                                indices,
+                                transform,
+                                texture,
+                            } => {
+                                let tex_key = if let Some(texture) = texture {
+                                    texture.data.as_ptr() as _
+                                } else {
+                                    0
+                                };
+
+                                render_pass.set_index_buffer(graphics.quad_index_buf.slice(..));
+                                render_pass
+                                    .set_vertex_buffer(0, graphics.quad_vertex_buf.slice(..));
+                                render_pass.set_pipeline(&graphics.mesh.pipeline);
+                                render_pass.set_bind_group(
+                                    0,
+                                    &graphics
+                                        .mesh
+                                        .texture_cache
+                                        .get(&tex_key)
+                                        .unwrap()
+                                        .bind_group,
+                                    &[],
+                                );
+                                render_pass.draw_indexed(
+                                    0..(QUAD_INDEX_DATA.len() as u32),
+                                    0,
+                                    mesh_index..(mesh_index + 1),
+                                );
+                                mesh_index += 1;
                             }
                         }
                     }

@@ -1,6 +1,6 @@
 use crate::{gfx::Texture, graphics_emu::Vertex};
 use n64_math::Color;
-use std::{collections::HashMap, mem, io::Read, convert::TryInto};
+use std::{collections::HashMap, convert::TryInto, io::Read, mem};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
@@ -29,7 +29,7 @@ pub(crate) struct TexturedRect {
     pub pipeline: wgpu::RenderPipeline,
     pub shader_storage_buffer: wgpu::Buffer,
     pub sampler: wgpu::Sampler,
-    pub texture_cache: HashMap<*const [Color], UploadedTexture>,
+    pub texture_cache: HashMap<usize, UploadedTexture>,
 }
 
 impl TexturedRect {
@@ -84,7 +84,10 @@ impl TexturedRect {
             })
             .unwrap();
             file.read_to_end(&mut buffer).unwrap();
-            buffer.chunks_exact(4).map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap())).collect::<Vec<_>>()
+            buffer
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect::<Vec<_>>()
         };
 
         let fs_bytes = {
@@ -99,11 +102,16 @@ impl TexturedRect {
             })
             .unwrap();
             file.read_to_end(&mut buffer).unwrap();
-            buffer.chunks_exact(4).map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap())).collect::<Vec<_>>()
+            buffer
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .collect::<Vec<_>>()
         };
 
-        let vs_module = device.create_shader_module(wgpu::ShaderModuleSource::SpirV(vs_bytes.into()));
-        let fs_module = device.create_shader_module(wgpu::ShaderModuleSource::SpirV(fs_bytes.into()));
+        let vs_module =
+            device.create_shader_module(wgpu::ShaderModuleSource::SpirV(vs_bytes.into()));
+        let fs_module =
+            device.create_shader_module(wgpu::ShaderModuleSource::SpirV(fs_bytes.into()));
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
@@ -205,7 +213,10 @@ impl TexturedRect {
         queue: &wgpu::Queue,
         texture: &Texture,
     ) {
-        if self.texture_cache.contains_key(&(texture.data as *const _)) {
+        if self
+            .texture_cache
+            .contains_key(&(texture.data.as_ptr() as _))
+        {
             return;
         }
 
@@ -232,8 +243,9 @@ impl TexturedRect {
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(self.shader_storage_buffer.slice(0..(MAX_TEXTURED_RECTS
-                        * mem::size_of::<TexturedRectUniforms>() as u64)))
+                    resource: wgpu::BindingResource::Buffer(self.shader_storage_buffer.slice(
+                        0..(MAX_TEXTURED_RECTS * mem::size_of::<TexturedRectUniforms>() as u64),
+                    )),
                 },
                 wgpu::BindGroupEntry {
                     binding: 1,
@@ -250,11 +262,7 @@ impl TexturedRect {
         let mut buffer = Vec::new();
         buffer.resize_with(4 * texture.data.len(), Default::default);
 
-        for (pixel, data) in texture
-            .data
-            .iter()
-            .zip(buffer.chunks_exact_mut(4 as usize))
-        {
+        for (pixel, data) in texture.data.iter().zip(buffer.chunks_exact_mut(4 as usize)) {
             let rgba = pixel.be_to_le().to_rgba();
 
             data[0] = (rgba[0] * 255.0) as u8;
@@ -275,10 +283,11 @@ impl TexturedRect {
                 bytes_per_row: 4 * texture.width as u32,
                 rows_per_image: texture.height as u32,
             },
-            tex_extent);
+            tex_extent,
+        );
 
         self.texture_cache.insert(
-            texture.data as *const _,
+            texture.data.as_ptr() as _,
             UploadedTexture {
                 tex_format,
                 tex_extent,
