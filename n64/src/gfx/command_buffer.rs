@@ -6,6 +6,160 @@ use rdp_command_builder::*;
 
 mod rdp_command_builder;
 
+fn float_to_unsigned_int_frac(val: f32) -> (u16, u16) {
+
+    if 0.0 >= val {
+        return (u16::MAX, u16::MAX);
+    }
+
+    let integer_part = libm::floorf(val);
+
+    if (u16::MAX as f32) < integer_part {
+        return (u16::MAX, u16::MAX);
+    }
+
+    let fractal_part = val - integer_part;
+
+    (integer_part as u16, libm::floorf(fractal_part * ((1 << 16) as f32)) as u16)
+}
+
+fn float_to_signed_int_frac(val: f32) -> (i16, u16) {
+
+    let integer_part = libm::floorf(val);
+
+    if (i16::MAX as f32) < integer_part {
+        return (i16::MAX, u16::MAX)
+    }
+    else if (i16::MIN as f32) > integer_part {
+        return (i16::MIN, u16::MAX)
+    }
+
+    let fractal_part = val - integer_part;
+
+    (integer_part as i16, libm::floorf(fractal_part * ((1 << 16) as f32)) as u16)
+}
+
+// Dx/Dy of edge from p0 to p1.
+// Dx/Dy (kx + m = y)
+// x = (y-m)/k
+// dx : 1/k
+fn edge_slope(p0: Vec3, p1: Vec3) -> (i16, u16) {
+    // TODO: ZERO DIVISION 
+    if 0.01 > libm::fabsf(p1.1 - p0.1) {
+        //panic!("edge_slope");
+        return (0, 0);
+        if p1.0 > p0.0 {
+            return (i16::MAX, u16::MAX);
+        }
+        else {
+            return (i16::MIN, u16::MAX);
+        }
+    }
+    float_to_signed_int_frac((p1.0 - p0.0) / (p1.1 - p0.1))
+}
+
+// kx + m = y
+// kx0 + m = y0
+// kx1 + m = y1
+// k(x1 - x0) = y1 - y0
+// k = (y1 - y0)/(x1-x0)
+// x0 * (y1 - y0)/(x1-x0) + m = y0
+// m = y0 - x0*k
+fn slope_x_from_y(p0: Vec3, p1: Vec3, y: f32) -> (u16, u16) {
+    // kx + m = y
+    // k = (p1y-p0y)/(p1x-p0x)
+    // m = y0 - x0*k
+    // x = (y-m)/k = (y- (y0 - x0*k))/k = y/k - y0/k + x0
+    // x =  x0 + (y - y0)/k
+    // x = p0x + (y - p0.y)*(p1x-p0x) / (p1y-p0y)
+    // TODO ZERO DIVISION
+    if 1.0 > libm::fabsf(p1.1 - p0.1) {
+        //panic!("slope_x_from_y");
+        return float_to_unsigned_int_frac(p0.0);
+    }
+
+    let x = p0.0 + (y - p0.1)*(p1.0 - p0.0) / (p1.1 - p0.1);
+
+    //panic!("slope_x_from_y\n{}\n{}\ny{}\nx{}\n{:?}",
+    //p0, p1,
+    //y, x,
+    //float_to_int_frac(x));
+
+    float_to_unsigned_int_frac(x)
+}
+
+// X coordinate of the intersection of the edge from p0 to p1 and the sub-scanline at (or higher than) p0.y
+fn slope_y_next_subpixel_intersection(p0: Vec3, p1: Vec3) -> (u16, u16){
+    let y = libm::ceilf(p0.1*4.0) / 4.0;
+
+    slope_x_from_y(p0, p1, y)
+}
+
+fn slope_y_prev_scanline_intersection(p0: Vec3, p1: Vec3) -> (u16, u16){
+    let y = libm::floorf(p0.1);
+
+    slope_x_from_y(p0, p1, y)
+}
+
+fn int_frac_greater(a_integer : u16, a_fraction : u16, b_integer : u16, b_fraction : u16) -> bool
+{
+    if a_integer == b_integer
+    {
+        a_fraction > b_fraction
+    }
+    else
+    {
+        a_integer > b_integer
+    }
+}
+
+// p0  y postive down
+// p1  
+// p2
+// p2 - p0 slope vs p1-p0 slope.
+// 2_0 slope > 1_0 slope => left major
+// 2_0 slope = (p2x-p0x)/(p2_y-p0_y)
+// 1_0 slope = (p1x-p0x)/(p1_y-p0_y)
+//   p2_y-p0_y > 0 && p1_y-p0_y > 0
+// (p2x-p0x)/(p2_y-p0_y) > (p1x-p0x)/(p1_y-p0_y)
+// if and only if (since denominators are positive)
+//   (p2x-p0x)*(p1_y-p0_y) > (p1x-p0x)*(p2_y-p0_y)
+fn is_triangle_right_major(p0 : Vec3, p1 : Vec3, p2 : Vec3) -> bool
+{
+    //if p1.1 == p2.1 {
+    //    // Flat bottom
+    //    return false;
+    //}
+
+    // Counter clockwise order?
+    // (p0 - p1)x(p2 - p1) > 0 (area)
+    // (p0x - p1x)   (p2x - p1x)    0
+    // (p0y - p1y) x (p2y - p1y)  = 0
+    //      0             0         Z
+
+    // Z = (p0x - p1x)*(p2y - p1y) - (p2x - p1x)*(p0y - p1y);
+    // Z > 0 => (p0x - p1x)*(p2y - p1y) > (p2x - p1x)*(p0y - p1y)
+
+    return (p0.0 - p1.0)*(p2.1 - p1.1) < (p2.0 - p1.0)*(p0.1 - p1.1);
+    //return (p2.0-p0.0)*(p1.1-p0.1) < (p1.0-p0.0)*(p2.1-p0.1);
+}
+
+// Sort so that v0.1 <= v1.1 <= v2.1
+fn sorted_triangle(v0 : Vec3, v1 : Vec3, v2 : Vec3) -> (Vec3, Vec3, Vec3) {
+    if v0.1 > v1.1 {
+        sorted_triangle(v1, v0, v2)
+    }
+    else if v0.1 > v2.1 {
+        sorted_triangle(v2, v0, v1)
+    }
+    else if v1.1 > v2.1 {
+        sorted_triangle(v0, v2, v1)
+    }
+    else {
+        (v0, v1, v2)
+    }
+}
+
 pub struct CommandBufferCache {
     rdp: RdpCommandBuilder,
 }
@@ -172,6 +326,113 @@ impl<'a> CommandBuffer<'a> {
         transform: &[[f32; 4]; 4],
         texture: Option<Texture<'static>>,
     ) -> &mut Self {
+
+        self.cache
+            .rdp
+            .set_fill_color(Color::new(0b10000_00011_00011_1));
+            
+        // Set triangle mode fill
+         self.cache
+            .rdp
+            .set_other_modes(3u64 <<52);
+        for triangle in indices {
+            // TODO: Transform before sort
+            let mut v0 = verts[triangle[0] as usize];
+            let mut v1 = verts[triangle[1] as usize];
+            let mut v2 = verts[triangle[2] as usize];
+
+            let x_limit = 320.0;
+            let y_limit = 240.0;
+            
+            if false {
+                //let scale = 64.0;
+    //
+                //v0.0 = libm::fmaxf(libm::fminf( 0.5 * x_limit * (1.0 + v0.0), x_limit), 0.0);
+                //v1.0 = libm::fmaxf(libm::fminf( 0.5 * x_limit * (1.0 + v1.0), x_limit), 0.0);
+                //v2.0 = libm::fmaxf(libm::fminf( 0.5 * x_limit * (1.0 + v2.0), x_limit), 0.0);
+                //v0.1 = libm::fmaxf(libm::fminf( 0.5 * y_limit * (1.0 + v0.1), y_limit), 0.0);
+                //v1.1 = libm::fmaxf(libm::fminf( 0.5 * y_limit * (1.0 + v1.1), y_limit), 0.0);
+                //v2.1 = libm::fmaxf(libm::fminf( 0.5 * y_limit * (1.0 + v2.1), y_limit), 0.0);
+                
+                v0.0 = libm::fmaxf(libm::fminf( 0.5 * 32.0 * (1.0 + v0.0), x_limit), 0.0);
+                v1.0 = libm::fmaxf(libm::fminf( 0.5 * 32.0 * (1.0 + v1.0), x_limit), 0.0);
+                v2.0 = libm::fmaxf(libm::fminf( 0.5 * 32.0 * (1.0 + v2.0), x_limit), 0.0);
+                v0.1 = libm::fmaxf(libm::fminf( 0.5 * 32.0 * (1.0 + v0.1), y_limit), 0.0);
+                v1.1 = libm::fmaxf(libm::fminf( 0.5 * 32.0 * (1.0 + v1.1), y_limit), 0.0);
+                v2.1 = libm::fmaxf(libm::fminf( 0.5 * 32.0 * (1.0 + v2.1), y_limit), 0.0);
+            }
+            else {
+                
+                v0.0 = libm::fmaxf(libm::fminf(v0.0, x_limit), 0.0);
+                v1.0 = libm::fmaxf(libm::fminf(v1.0, x_limit), 0.0);
+                v2.0 = libm::fmaxf(libm::fminf(v2.0, x_limit), 0.0);
+                v0.1 = libm::fmaxf(libm::fminf(v0.1, y_limit), 0.0);
+                v1.1 = libm::fmaxf(libm::fminf(v1.1, y_limit), 0.0);
+                v2.1 = libm::fmaxf(libm::fminf(v2.1, y_limit), 0.0);
+                
+            }
+
+            // Vh is the highest point (smallest y value)
+            // Vl is the lowest point (largest y value)
+            let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
+            
+            // panic!("V012\n{}\n{}\n{}\nVLMH\n{}\n{}\n{}", v0, v1, v2, vl, vm, vh);
+
+            //TODO: Actual intersections (low with subpixel, mid & high with previous scanline)
+            //
+            let (l_int, l_frac) = slope_y_next_subpixel_intersection(vm, vl);
+            let (m_int, m_frac) = slope_y_prev_scanline_intersection(vh, vm);
+            let (h_int, h_frac) = slope_y_prev_scanline_intersection(vh, vl);
+
+            // panic!("{}\n{}\n{}\n{}\n{}\n{}", l_int, l_frac, m_int, m_frac, h_int, h_frac);
+
+            //panic!("x{:x?}\n{}\nx{:x?}\n{}\nx{:x?}\n{}", l_slope_int, l_slope_frac, m_slope_int, m_slope_frac, h_slope_int, h_slope_frac);
+
+            let (l_slope_int, l_slope_frac) = edge_slope(vl, vm);
+            let (m_slope_int, m_slope_frac) = edge_slope(vm, vh);
+            let (h_slope_int, h_slope_frac) = edge_slope(vl, vh);
+            //panic!("{}.{}>{}.{}\n{}", m_int, m_frac, h_int, h_frac, int_frac_greater(m_int, m_frac, h_int, h_frac));
+
+            let right_major = true; //is_triangle_right_major(vh, vm, vl);
+
+            //if !right_major {
+             //   return self;
+           // }
+
+            self.cache.rdp.edge_coefficients(
+                false,
+                false,
+                false,
+                right_major,//int_frac_greater(l_int, l_frac, m_int, m_frac),
+                0,
+                0,
+                vl.1,
+                vm.1,
+                vh.1,
+                l_int,
+                l_frac,
+                m_int,
+                m_frac,
+                h_int,
+                h_frac,
+                l_slope_int,
+                l_slope_frac,
+                m_slope_int,
+                m_slope_frac,
+                h_slope_int,
+                h_slope_frac,
+            );
+            
+            /*panic!(
+                "Vl {} {}\nVm {} {}\nVh {} {}\nLY,X {} {} {}\nMY,X {} {} {}\nHY,X {} {} {}",
+            vl.1, vl.0,
+            vm.1, vm.0,
+            vh.1, vh.0,
+            vl.1, l_int, l_frac,
+            vm.1, m_int, m_frac,
+            vh.1, h_int, h_frac
+            );*/
+        }
         self
     }
 

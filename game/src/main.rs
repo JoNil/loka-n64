@@ -45,6 +45,9 @@ mod textures;
 mod weapon;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);
+const GREEN: Color = Color::new(0b00011_10000_00011_1);
+const BLUE: Color = Color::new(0b0011_00011_10000_1);
+const WHITE: Color = Color::new(0b11111_11111_11111_1);
 
 const VIDEO_MODE: VideoMode = VideoMode::Pal {
     width: 320,
@@ -78,6 +81,8 @@ fn main() {
     let mut last_colored_rect_count = 0;
     let mut last_textured_rect_count = 0;
 
+    let mut odd_frame = false;
+
     loop {
         frame_begin_time = current_time_us();
 
@@ -85,6 +90,7 @@ fn main() {
             dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;
             last_frame_begin_time = frame_begin_time;
         }
+        odd_frame = !odd_frame;
 
         n64::debugln!("test test test test test test test test test");
 
@@ -125,6 +131,7 @@ fn main() {
                 cb.clear();
 
                 map.render(&mut cb, VIDEO_MODE, &camera);
+
                 box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
                 sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
@@ -143,6 +150,86 @@ fn main() {
                         ],
                         None,
                     );
+
+                    let x_limit = 320.0;
+                    let y_limit = 240.0;
+
+                    let x_off = x_limit * 0.5;
+                    let y_off = y_limit * 0.5;
+                    let x_scale = x_limit * 0.125;
+                    let y_scale = y_limit * 0.125;
+
+                    let speed = 0.05; // 0.05
+                    let t = speed * (frame_begin_time as f32) / 1e6;
+                    let p = 2.0943951023931954923084289221863 as f32;
+                    let v0 = vec3(
+                        x_off + x_scale * libm::cosf(t),
+                        y_off + y_scale * libm::sinf(t),
+                        0.0,
+                    );
+                    let v1 = vec3(
+                        x_off + x_scale * libm::cosf(t + p),
+                        y_off + y_scale * libm::sinf(t + p),
+                        0.0,
+                    );
+                    let v2 = vec3(
+                        x_off + x_scale * libm::cosf(t - p),
+                        y_off + y_scale * libm::sinf(t - p),
+                        0.0,
+                    );
+
+                    // Scale?
+                    cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
+                    cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 10.0, v1.1 + 10.0), GREEN);
+                    cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 10.0, v2.1 + 10.0), BLUE);
+
+                    let text_off = if odd_frame { 0.0 } else { 17.0 * 3.0 };
+                    font::draw_text(
+                        &mut cb,
+                        &alloc::format!(" v0 {:.4?} {:.4?}", v0.0, v0.1),
+                        Vec2::new(1.0, 51.0 + text_off),
+                        0xcccccccc,
+                    );
+                    font::draw_text(
+                        &mut cb,
+                        &alloc::format!(" v1 {:.4?} {:.4?}", v1.0, v1.1),
+                        Vec2::new(1.0, 68.0 + text_off),
+                        0xcccccccc,
+                    );
+                    font::draw_text(
+                        &mut cb,
+                        &alloc::format!(" v2 {:.4?} {:.4?}", v2.0, v2.1),
+                        Vec2::new(1.0, 85.0 + text_off),
+                        0xcccccccc,
+                    );
+
+                    if true {
+                        cb.add_mesh_indexed(
+                            &[
+                                v0, //vec3(0.0, 0.5, 0.0),
+                                v1, //vec3(-0.5, -0.20, 0.0),
+                                v2, //vec3(0.5, -0.30, 0.0),
+                            ],
+                            &[vec2(0.5, 1.0), vec2(0.0, 0.0), vec2(1.0, 0.0)],
+                            &[0xff_00_00_ff, 0x00_ff_00_ff, 0x00_00_ff_ff],
+                            &[[0, 1, 2]],
+                            &[
+                                [1.0, 0.0, 0.0, 0.0],
+                                [0.0, 1.0, 0.0, 0.0],
+                                [0.0, 0.0, 1.0, 0.0],
+                                [0.0, 0.0, 0.0, 1.0],
+                            ],
+                            None,
+                        );
+                    }
+
+                    cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 2.0, v0.1 + 2.0), WHITE);
+                    cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 2.0, v1.1 + 2.0), WHITE);
+                    cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 2.0, v2.1 + 2.0), WHITE);
+
+                    font::draw_text(&mut cb, "x", Vec2::new(1.0, 51.0 + text_off), 0xcccccccc);
+                    font::draw_text(&mut cb, "x", Vec2::new(1.0, 68.0 + text_off), 0xcccccccc);
+                    font::draw_text(&mut cb, "x", Vec2::new(1.0, 85.0 + text_off), 0xcccccccc);
                 }
 
                 if false {

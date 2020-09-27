@@ -8,6 +8,7 @@ edition = "2018"
 
 [dependencies]
 hashbrown = { version = "0.11", default-features = false }
+libm = "0.2"
 n64 = { path = "../n64" }
 n64-math = { path = "../n64-math" }
 zerocopy = "0.6"

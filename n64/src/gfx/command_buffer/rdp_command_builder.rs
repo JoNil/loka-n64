@@ -105,6 +105,7 @@ pub const COMMAND_SET_COMBINE_MODE: u64 = 0xfc;
 pub const COMMAND_SET_TEXTURE_IMAGE: u64 = 0xfd;
 pub const COMMAND_SET_TILE: u64 = 0xf5;
 pub const COMMAND_LOAD_TILE: u64 = 0xf4;
+pub const COMMAND_EDGE_COEFFICIENTS: u64 = 0xc8;
 pub const COMMAND_FILL_RECTANGLE: u64 = 0xf6;
 pub const COMMAND_TEXTURE_RECTANGLE: u64 = 0xe4;
 pub const COMMAND_SYNC_FULL: u64 = 0xe9;
@@ -293,6 +294,90 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
+    pub fn edge_coefficients(
+        &mut self,
+        shade: bool,
+        texture: bool,
+        z_buffer: bool,
+        right_major: bool,
+        level: u8,
+        tile: u8,
+        y_low_minor: f32,
+        y_mid_minor: f32,
+        y_high_major: f32,
+        x_low_int: u16,
+        x_low_frac: u16,
+        x_mid_int: u16,
+        x_mid_frac: u16,
+        x_high_int: u16,
+        x_high_frac: u16,
+        inv_slope_low_int: i16,
+        inv_slope_low_frac: u16,
+        inv_slope_mid_int: i16,
+        inv_slope_mid_frac: u16,
+        inv_slope_high_int: i16,
+        inv_slope_high_frac: u16,
+    ) -> &mut RdpCommandBuilder {
+        //self.set_other_modes(3u64 <<52);
+        //self.set_fill_color(Color::new(0b00000_11111_11111_1));
+
+        // panic!("LMH xi_xf_y\n{} {} {}\n{} {} {}\n{} {} {}\nslope i f\n{} {}\n{} {}\n{} {}\n dir {}",
+        //         x_low_int, x_low_frac, y_low_minor,
+        //         x_mid_int, x_mid_frac, y_mid_minor,
+        //         x_high_int, x_high_frac, y_high_major,
+        //         inv_slope_low_int, inv_slope_low_frac,
+        //         inv_slope_mid_int, inv_slope_mid_frac,
+        //         inv_slope_high_int, inv_slope_high_frac,
+        //         right_major);
+
+        //panic!("LMH slope i f\n{} {}\n{} {}\n{} {}",
+        //    inv_slope_low_int, inv_slope_low_frac,
+        //    inv_slope_mid_int, inv_slope_mid_frac,
+        //    inv_slope_high_int, inv_slope_high_frac);
+
+        let mut buffer = self.commands.as_mut().unwrap();
+        let mut command = COMMAND_EDGE_COEFFICIENTS;
+        if shade {
+            command |= 0x4;
+        }
+        if texture {
+            command |= 0x2;
+        }
+        if z_buffer {
+            command |= 0x1;
+        }
+
+        buffer.push(RdpCommand(
+            (command << 56)
+                | if right_major {1u64 << 55} else {0u64}
+                | (to_fixpoint_s_11_2(y_low_minor)) << 32
+                | (to_fixpoint_s_11_2(y_mid_minor)) << 16
+                | (to_fixpoint_s_11_2(y_high_major)) << 0,
+        ));
+        // SIC Should be i L, H, M order
+        buffer.push(RdpCommand(
+            (x_low_int as u64) << 48
+                | (x_low_frac as u64) << 32
+                | (inv_slope_low_int as u16 as u64) << 16
+                | (inv_slope_low_frac as u64) << 0,
+        ));
+        buffer.push(RdpCommand(
+            (x_high_int as u64) << 48
+                | (x_high_frac as u64) << 32
+                | (inv_slope_high_int as u16 as u64) << 16
+                | (inv_slope_high_frac as u64) << 0,
+        ));
+        buffer.push(RdpCommand(
+            (x_mid_int as u64) << 48
+                | (x_mid_frac as u64) << 32
+                | (inv_slope_mid_int as u16 as u64) << 16
+                | (inv_slope_mid_frac as u64) << 0,
+        ));
+
+        self
+    }
+
+    #[inline]
     pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
         let mut l = top_left.x();
         let mut t = top_left.y();
@@ -319,6 +404,7 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_10_2_as_integer(l) << 12)
                 | (to_fixpoint_10_2_as_integer(t)),
         ));
+        
         self
     }
 
@@ -403,6 +489,11 @@ impl RdpCommandBuilder {
 #[inline]
 fn to_fixpoint_10_2_as_integer(val: f32) -> u64 {
     ((val as i16) * (1 << 2) & 0xffc) as u64
+}
+
+#[inline]
+fn to_fixpoint_s_11_2(val: f32) -> u64 {
+    ((val * (1 << 2) as f32) as i16 & 0x3fff) as u64
 }
 
 #[inline]
