@@ -1,6 +1,6 @@
 use super::{Texture, TextureMut};
 use crate::graphics::Graphics;
-use n64_math::{Color, Vec2};
+use n64_math::{Color, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
 
@@ -107,23 +107,24 @@ impl<'a> CommandBuffer<'a> {
         blend_color: Option<u32>,
     ) -> &mut Self {
         self.textured_rect_count += 1;
-        self.cache
-            .rdp
-            .sync_tile()
-            .set_other_modes(
-                OTHER_MODE_SAMPLE_TYPE
-                    | OTHER_MODE_BI_LERP_0
-                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
-                    | OTHER_MODE_B_M2A_0_1
-                    | if let Some(_) = blend_color { OTHER_MODE_B_M1A_0_2 } else { 0 }
-                    | OTHER_MODE_FORCE_BLEND
-                    | OTHER_MODE_IMAGE_READ_EN,
-            );
+        self.cache.rdp.sync_tile().set_other_modes(
+            OTHER_MODE_SAMPLE_TYPE
+                | OTHER_MODE_BI_LERP_0
+                | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
+                | OTHER_MODE_B_M2A_0_1
+                | if let Some(_) = blend_color {
+                    OTHER_MODE_B_M1A_0_2
+                } else {
+                    0
+                }
+                | OTHER_MODE_FORCE_BLEND
+                | OTHER_MODE_IMAGE_READ_EN,
+        );
 
         if let Some(blend_color) = blend_color {
             self.cache.rdp.set_blend_color(blend_color);
         }
-        
+
         self.cache
             .rdp
             .set_texture_image(
@@ -159,6 +160,18 @@ impl<'a> CommandBuffer<'a> {
                 Vec2::new(0.0, 0.0),
                 Vec2::new(32.0, 32.0),
             );
+        self
+    }
+
+    pub fn add_mesh_indexed(
+        &mut self,
+        verts: &[Vec3],
+        uvs: &[Vec2],
+        colors: &[u32],
+        indices: &[u8],
+        transform: &[[f32; 4]; 4],
+        texture: Option<Texture<'static>>,
+    ) -> &mut Self {
         self
     }
 

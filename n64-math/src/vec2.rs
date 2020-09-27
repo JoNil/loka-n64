@@ -8,6 +8,11 @@ use core::{
 #[repr(C)]
 pub struct Vec2(pub f32, pub f32);
 
+#[inline]
+pub const fn vec2(x: f32, y: f32) -> Vec2 {
+    Vec2::new(x, y)
+}
+
 impl Vec2 {
     /// Creates a new `Vec2`.
     #[inline]

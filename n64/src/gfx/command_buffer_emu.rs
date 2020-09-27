@@ -9,7 +9,7 @@ use crate::{
         Graphics,
     },
 };
-use n64_math::{Color, Vec2};
+use n64_math::{Color, Vec2, Vec3};
 use std::convert::TryInto;
 use std::mem;
 use wgpu::util::DeviceExt;
@@ -95,9 +95,25 @@ impl<'a> CommandBuffer<'a> {
             upper_left,
             lower_right,
             texture,
-            blend_color: if let Some(blend_color) = blend_color { blend_color } else { 0xff_ff_ff_ff },
+            blend_color: if let Some(blend_color) = blend_color {
+                blend_color
+            } else {
+                0xff_ff_ff_ff
+            },
         });
 
+        self
+    }
+
+    pub fn add_mesh_indexed(
+        &mut self,
+        verts: &[Vec3],
+        uvs: &[Vec2],
+        colors: &[u32],
+        indices: &[u8],
+        transform: &[[f32; 4]; 4],
+        texture: Option<Texture<'static>>,
+    ) -> &mut Self {
         self
     }
 

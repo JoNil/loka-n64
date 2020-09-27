@@ -18,7 +18,7 @@ use n64::{
     gfx::{CommandBuffer, CommandBufferCache},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
-use n64_math::{Color, Vec2};
+use n64_math::{vec2, vec3, Color, Vec2, Vec3};
 use player::{Player, SHIP_SIZE};
 use sound_mixer::SoundMixer;
 use world::World;
@@ -144,6 +144,23 @@ fn main() {
                     .sprite_drawable
                     .draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
 
+                cb.add_mesh_indexed(
+                    &[
+                        vec3(0.0, 0.5, 0.0),
+                        vec3(-0.5, -0.25, 0.0),
+                        vec3(0.5, -0.25, 0.0),
+                    ],
+                    &[vec2(0.5, 1.0), vec2(0.0, 0.0), vec2(1.0, 0.0)],
+                    &[0xff_00_00_ff, 0x00_ff_00_ff, 0x00_00_ff_ff],
+                    &[0, 1, 2],
+                    &[
+                        [1.0, 0.0, 0.0, 0.0],
+                        [0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ],
+                    None,
+                );
 
                 if false {
                     font::draw_text(&mut cb, " !\"#$%&", Vec2::new(1.0, 0.0), 0xffffffff);
@@ -195,10 +212,30 @@ fn main() {
                 }
 
                 {
-                    font::draw_number(&mut cb, (dt * 1000.0 * 1000.0) as i32, Vec2::new(100.0, 10.0), 0x00af00ff);
-                    font::draw_number(&mut cb, frame_used_time as i32, Vec2::new(200.0, 10.0), 0x00af00ff);
-                    font::draw_number(&mut cb, last_colored_rect_count, Vec2::new(100.0, 30.0), 0x00af00ff);
-                    font::draw_number(&mut cb, last_textured_rect_count, Vec2::new(200.0, 30.0), 0x00af00ff);
+                    font::draw_number(
+                        &mut cb,
+                        (dt * 1000.0 * 1000.0) as i32,
+                        Vec2::new(100.0, 10.0),
+                        0x00af00ff,
+                    );
+                    font::draw_number(
+                        &mut cb,
+                        frame_used_time as i32,
+                        Vec2::new(200.0, 10.0),
+                        0x00af00ff,
+                    );
+                    font::draw_number(
+                        &mut cb,
+                        last_colored_rect_count,
+                        Vec2::new(100.0, 30.0),
+                        0x00af00ff,
+                    );
+                    font::draw_number(
+                        &mut cb,
+                        last_textured_rect_count,
+                        Vec2::new(200.0, 30.0),
+                        0x00af00ff,
+                    );
                 }
 
                 cb.run(&mut n64.graphics)
@@ -237,7 +274,6 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-
     const GREEN: Color = Color::new(0b00011_10000_00011_1);
 
     let mut out_tex = n64::gfx::TextureMut::new(VIDEO_MODE.width(), VIDEO_MODE.height(), unsafe {
