@@ -4,6 +4,7 @@ mod aabb2;
 mod color;
 mod hash;
 mod vec2;
+mod vec3;
 
 pub mod rand;
 
@@ -12,3 +13,4 @@ pub use color::Color;
 pub use hash::{BuildFnvHasher, FnvHasher};
 pub use rand::{random_f32, random_f64, random_u32, random_u64};
 pub use vec2::Vec2;
+pub use vec3::Vec3;
