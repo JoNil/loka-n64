@@ -110,7 +110,7 @@ impl<'a> CommandBuffer<'a> {
         verts: &[Vec3],
         uvs: &[Vec2],
         colors: &[u32],
-        indices: &[u8],
+        indices: &[[u8; 3]],
         transform: &[[f32; 4]; 4],
         texture: Option<Texture<'static>>,
     ) -> &mut Self {
