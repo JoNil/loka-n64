@@ -1,5 +1,4 @@
 use crate::{gfx::Texture, graphics_emu::Vertex};
-use n64_math::Color;
 use std::{collections::HashMap, convert::TryInto, io::Read, mem};
 use zerocopy::{AsBytes, FromBytes};
 

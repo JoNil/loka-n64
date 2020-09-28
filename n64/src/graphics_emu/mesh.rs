@@ -1,4 +1,4 @@
-use crate::{gfx::Texture, graphics_emu::Vertex};
+use crate::{gfx::Texture};
 use n64_math::Color;
 use std::{collections::HashMap, convert::TryInto, io::Read, mem};
 use zerocopy::{AsBytes, FromBytes};
@@ -9,7 +9,6 @@ pub const MAX_MESHES: u64 = 4096;
 #[derive(Clone, Copy, Debug, AsBytes, FromBytes)]
 pub(crate) struct MeshUniforms {
     pub transform: [[f32; 4]; 4],
-    pub blend_color: [f32; 4],
 }
 
 pub(crate) struct UploadedTexture {
@@ -154,7 +153,7 @@ impl Mesh {
             vertex_state: wgpu::VertexStateDescriptor {
                 index_format: wgpu::IndexFormat::Uint16,
                 vertex_buffers: &[wgpu::VertexBufferDescriptor {
-                    stride: mem::size_of::<Vertex>() as wgpu::BufferAddress,
+                    stride: 9 * mem::size_of::<f32>() as wgpu::BufferAddress,
                     step_mode: wgpu::InputStepMode::Vertex,
                     attributes: &[
                         wgpu::VertexAttributeDescriptor {
@@ -166,6 +165,11 @@ impl Mesh {
                             format: wgpu::VertexFormat::Float2,
                             offset: 3 * mem::size_of::<f32>() as u64,
                             shader_location: 1,
+                        },
+                        wgpu::VertexAttributeDescriptor {
+                            format: wgpu::VertexFormat::Float4,
+                            offset: 5 * mem::size_of::<f32>() as u64,
+                            shader_location: 2,
                         },
                     ],
                 }],

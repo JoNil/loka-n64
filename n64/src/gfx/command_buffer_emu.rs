@@ -10,10 +10,10 @@ use crate::{
     },
 };
 use n64_math::{Color, Vec2, Vec3};
+use std::convert::TryInto;
 use std::mem;
-use std::{convert::TryInto, ptr};
 use wgpu::util::DeviceExt;
-use zerocopy::AsBytes;
+use zerocopy::{AsBytes, FromBytes};
 
 enum Command {
     ColoredRect {
@@ -34,6 +34,7 @@ enum Command {
         indices: Vec<u8>,
         transform: [[f32; 4]; 4],
         texture: Option<Texture<'static>>,
+        buffer_index: usize,
     },
 }
 
@@ -133,6 +134,7 @@ impl<'a> CommandBuffer<'a> {
             indices: indices.iter().flatten().copied().collect(),
             transform: *transform,
             texture,
+            buffer_index: 0,
         });
 
         self
@@ -150,6 +152,10 @@ impl<'a> CommandBuffer<'a> {
             let mut encoder = graphics
                 .device
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
+
+            let mut render_pass_vertex_buffers = Vec::new();
+            let mut render_pass_index_buffers = Vec::new();
+
             {
                 let mut colored_rect_uniforms =
                     Vec::with_capacity(self.colored_rect_count as usize);
@@ -157,7 +163,7 @@ impl<'a> CommandBuffer<'a> {
                     Vec::with_capacity(self.textured_rect_count as usize);
                 let mut mesh_uniforms = Vec::with_capacity(self.mesh_count as usize);
 
-                for command in &self.cache.commands {
+                for command in &mut self.cache.commands {
                     match command {
                         Command::ColoredRect {
                             upper_left,
@@ -198,10 +204,10 @@ impl<'a> CommandBuffer<'a> {
                                 offset: [offset_x, offset_y],
                                 scale: [scale.x(), scale.y()],
                                 blend_color: [
-                                    ((blend_color >> 24) & 0xff) as f32 / 255.0,
-                                    ((blend_color >> 16) & 0xff) as f32 / 255.0,
-                                    ((blend_color >> 8) & 0xff) as f32 / 255.0,
-                                    ((blend_color >> 0) & 0xff) as f32 / 255.0,
+                                    ((*blend_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((*blend_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((*blend_color >> 8) & 0xff) as f32 / 255.0,
+                                    (*blend_color & 0xff) as f32 / 255.0,
                                 ],
                             });
                         }
@@ -212,7 +218,64 @@ impl<'a> CommandBuffer<'a> {
                             indices,
                             transform,
                             texture,
+                            buffer_index,
+                            ..
                         } => {
+                            #[repr(C)]
+                            #[derive(Clone, Copy, AsBytes, FromBytes)]
+                            pub(crate) struct MeshVertex {
+                                pos: [f32; 3],
+                                tex_coord: [f32; 2],
+                                color: [f32; 4],
+                            }
+
+                            assert!(verts.len() == uvs.len());
+                            assert!(verts.len() == colors.len());
+
+                            let mut vertices = Vec::with_capacity(verts.len());
+
+                            for (v, (t, c)) in verts.iter().zip(uvs.iter().zip(colors.iter())) {
+                                vertices.push(MeshVertex {
+                                    pos: (*v).into(),
+                                    tex_coord: (*t).into(),
+                                    color: [
+                                        ((*c >> 24) & 0xff) as f32 / 255.0,
+                                        ((*c >> 16) & 0xff) as f32 / 255.0,
+                                        ((*c >> 8) & 0xff) as f32 / 255.0,
+                                        (*c & 0xff) as f32 / 255.0,
+                                    ],
+                                });
+                            }
+
+                            render_pass_vertex_buffers.push(graphics.device.create_buffer_init(
+                                &wgpu::util::BufferInitDescriptor {
+                                    label: None,
+                                    contents: vertices.as_bytes(),
+                                    usage: wgpu::BufferUsage::VERTEX,
+                                },
+                            ));
+
+                            render_pass_index_buffers.push(
+                                graphics.device.create_buffer_init(
+                                    &wgpu::util::BufferInitDescriptor {
+                                        label: None,
+                                        contents: indices
+                                            .iter()
+                                            .map(|v| *v as u16)
+                                            .collect::<Vec<u16>>()
+                                            .as_bytes(),
+                                        usage: wgpu::BufferUsage::INDEX,
+                                    },
+                                ),
+                            );
+
+                            assert!(render_pass_vertex_buffers.len() > 0);
+                            assert!(
+                                render_pass_vertex_buffers.len() == render_pass_index_buffers.len()
+                            );
+
+                            *buffer_index = render_pass_vertex_buffers.len() - 1;
+
                             if let Some(texture) = texture {
                                 graphics.mesh.upload_texture_data(
                                     &graphics.device,
@@ -223,12 +286,6 @@ impl<'a> CommandBuffer<'a> {
 
                             mesh_uniforms.push(MeshUniforms {
                                 transform: *transform,
-                                blend_color: [
-                                    ((0xffffffffu32 >> 24) & 0xff) as f32 / 255.0,
-                                    ((0xffffffffu32 >> 16) & 0xff) as f32 / 255.0,
-                                    ((0xffffffffu32 >> 8) & 0xff) as f32 / 255.0,
-                                    ((0xffffffffu32 >> 0) & 0xff) as f32 / 255.0,
-                                ],
                             });
                         }
                     }
@@ -363,12 +420,10 @@ impl<'a> CommandBuffer<'a> {
                                 textured_rect_index += 1;
                             }
                             Command::Mesh {
-                                verts,
-                                uvs,
-                                colors,
                                 indices,
-                                transform,
                                 texture,
+                                buffer_index,
+                                ..
                             } => {
                                 let tex_key = if let Some(texture) = texture {
                                     texture.data.as_ptr() as _
@@ -376,9 +431,13 @@ impl<'a> CommandBuffer<'a> {
                                     0
                                 };
 
-                                render_pass.set_index_buffer(graphics.quad_index_buf.slice(..));
-                                render_pass
-                                    .set_vertex_buffer(0, graphics.quad_vertex_buf.slice(..));
+                                render_pass.set_index_buffer(
+                                    render_pass_index_buffers[*buffer_index].slice(..),
+                                );
+                                render_pass.set_vertex_buffer(
+                                    0,
+                                    render_pass_vertex_buffers[*buffer_index].slice(..),
+                                );
                                 render_pass.set_pipeline(&graphics.mesh.pipeline);
                                 render_pass.set_bind_group(
                                     0,
@@ -391,7 +450,7 @@ impl<'a> CommandBuffer<'a> {
                                     &[],
                                 );
                                 render_pass.draw_indexed(
-                                    0..(QUAD_INDEX_DATA.len() as u32),
+                                    0..(indices.len() as u32),
                                     0,
                                     mesh_index..(mesh_index + 1),
                                 );

@@ -18,7 +18,7 @@ use n64::{
     gfx::{CommandBuffer, CommandBufferCache},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
-use n64_math::{vec2, vec3, Color, Vec2, Vec3};
+use n64_math::{vec2, vec3, Color, Vec2};
 use player::{Player, SHIP_SIZE};
 use sound_mixer::SoundMixer;
 use world::World;
