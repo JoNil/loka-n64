@@ -2,9 +2,10 @@ use core::{
     f32, fmt,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+use zerocopy::{AsBytes, FromBytes};
 
 /// A 2-dimensional vector.
-#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
+#[derive(AsBytes, FromBytes, Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
 #[repr(C)]
 pub struct Vec2(pub f32, pub f32);
 

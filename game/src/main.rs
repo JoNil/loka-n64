@@ -31,6 +31,7 @@ mod entity;
 mod font;
 mod map;
 mod maps;
+mod model;
 mod models;
 mod player;
 mod sound;

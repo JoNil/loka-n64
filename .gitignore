@@ -4,3 +4,8 @@
 *.bin
 *.ntex
 *.nsnd
+*.nvert
+*.nuv
+*.ncol
+*.nind
+*.blend1

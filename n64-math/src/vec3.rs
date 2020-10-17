@@ -3,6 +3,7 @@ use core::{
     fmt,
     ops::{Add, AddAssign, Div, DivAssign, Mul, MulAssign, Neg, Sub, SubAssign},
 };
+use zerocopy::{AsBytes, FromBytes};
 
 const ZERO: Vec3 = Vec3::new(0.0, 0.0, 0.0);
 const ONE: Vec3 = Vec3::new(1.0, 1.0, 1.0);
@@ -11,7 +12,7 @@ const Y_AXIS: Vec3 = Vec3::new(0.0, 1.0, 0.0);
 const Z_AXIS: Vec3 = Vec3::new(0.0, 0.0, 1.0);
 
 /// A 3-dimensional vector without SIMD support.
-#[derive(Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
+#[derive(AsBytes, FromBytes, Clone, Copy, PartialEq, PartialOrd, Debug, Default)]
 #[repr(C)]
 pub struct Vec3(pub f32, pub f32, pub f32);
 

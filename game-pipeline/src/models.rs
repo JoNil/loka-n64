@@ -1,12 +1,17 @@
+use crate::utils::{write_binary_file_if_changed, write_file_if_changed};
 use blend::{Blend, Instance};
 use n64_math::{Vec2, Vec3};
-
-use crate::utils::write_file_if_changed;
 use std::{env, error::Error, ffi::OsStr, fs};
+use zerocopy::AsBytes;
 
 #[rustfmt::skip]
 macro_rules! MODEL_TEMPLATE { () => {
-r##"pub static {name}: StaticSoundData = StaticSoundData {{ data: include_bytes_align_as!(i16, {path:?}) }};
+r##"pub static {name}: StaticModelData = StaticModelData {{
+    verts: include_bytes_align_as!(Vec3, {verts_path:?}),
+    uvs: include_bytes_align_as!(Vec2, {uvs_path:?}),
+    colors: include_bytes_align_as!(u32, {colors_path:?}),
+    indices: include_bytes_align_as!(u8, {indices_path:?}),
+}};
 "##
 }; }
 
@@ -16,27 +21,22 @@ r##"// This file is generated
 
 #![cfg_attr(rustfmt, rustfmt::skip)]
 
-//use crate::sound::StaticSoundData;
-//use n64::include_bytes_align_as;
+use crate::model::StaticModelData;
+use n64::include_bytes_align_as;
+use n64_math::{{Vec2, Vec3}};
 
 {models}"##
 }; }
 
 #[derive(Debug)]
-struct Mesh {
+struct Model {
     verts: Vec<Vec3>,
     uvs: Vec<Vec2>,
     colors: Vec<u32>,
     indices: Vec<u8>,
 }
 
-#[derive(Debug)]
-struct Object {
-    name: String,
-    mesh: Mesh,
-}
-
-/*fn instance_to_mesh(mesh: Instance) -> Option<Mesh> {
+fn parse_model(mesh: Instance) -> Option<Model> {
     if !mesh.is_valid("mpoly")
         || !mesh.is_valid("mloop")
         || !mesh.is_valid("mloopuv")
@@ -107,73 +107,63 @@ struct Object {
             indexi += 2;
         }
     }
-
-    let faces: Vec<_> = (&verts_array_buff[..])
-        .chunks(3)
-        .enumerate()
-        .map(|(i, pos)| {
-            (
-                [pos[0], pos[1], pos[2]],
-                [
-                    normal_buffer[i * 3],
-                    normal_buffer[i * 3 + 1],
-                    normal_buffer[i * 3 + 2],
-                ],
-                [uv_buffer[i * 2], uv_buffer[i * 2 + 1]],
-            )
-        })
-        .collect::<Vec<Vertex>>();
-
-    let faces: Vec<_> = faces.chunks(3).map(|f| [f[0], f[1], f[2]]).collect();
-
-    Some(Mesh { faces })
-}*/
+    
+    Some(Model {
+        verts: vec![Default::default(); 16],
+        uvs: vec![Default::default(); 16],
+        colors: vec![Default::default(); 16],
+        indices: vec![Default::default(); 16],
+    })
+}
 
 pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
     let mut models = String::new();
 
-    /*for path in fs::read_dir("models")?
+    for path in fs::read_dir("models")?
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("blend")))
     {
-        let blend = Blend::from_path(&path);
+        if let Some(file_name) = path.file_stem().map(|n| n.to_string_lossy()) {
+            let blend = Blend::from_path(&path);
 
-        for obj in blend.get_by_code(*b"OB") {
-            if obj.is_valid("data") && obj.get("data").code()[0..=1] == *b"ME" {
-                let name = obj.get("id").get_string("name");
-                let position = obj.get_f32_vec("loc");
-                let scale = obj.get_f32_vec("size");
-                let rotation = obj.get_f32_vec("rot");
+            for obj in blend.get_by_code(*b"OB") {
+                if obj.is_valid("data") && obj.get("data").code()[0..=1] == *b"ME" {
+                    let model_name = obj.get("id").get_string("name");
+                    let model_name = model_name.trim_start_matches("OB");
+                    let data = obj.get("data");
 
-                let data = obj.get("data");
+                    let name = format!("{}_{}", file_name, model_name);
+                    let out_base_path = path.canonicalize()?.with_file_name(&name);
 
-                if let Some(mesh) = instance_to_mesh(data) {
-                    objects.push(Object {
-                        name: obj.get("id").get_string("name"),
-                        location: [loc[0], loc[1], loc[2]],
-                        rotation: [rot[0], rot[1], rot[2]],
-                        scale: [size[0], size[1], size[2]],
-                        mesh,
-                    });
+                    if let Some(model) = parse_model(data) {
+                        let verts_path = out_base_path.with_extension("nvert");
+                        let uvs_path = out_base_path.with_extension("nuv");
+                        let colors_path = out_base_path.with_extension("ncol");
+                        let indices_path = out_base_path.with_extension("nind");
+
+                        write_binary_file_if_changed(&verts_path, model.verts.as_bytes())?;
+                        write_binary_file_if_changed(&uvs_path, model.uvs.as_bytes())?;
+                        write_binary_file_if_changed(&colors_path, model.colors.as_bytes())?;
+                        write_binary_file_if_changed(&indices_path, model.indices.as_bytes())?;
+
+                        models.push_str(&format!(
+                            MODEL_TEMPLATE!(),
+                            name = name.to_uppercase(),
+                            verts_path = verts_path,
+                            uvs_path = uvs_path,
+                            colors_path = colors_path,
+                            indices_path = indices_path,
+                        ));
+                    }
                 }
             }
         }
+    }
 
-        panic!("{:?}", path);*/
+    let models = format!(MODELS_TEMPLATE!(), models = models);
 
-    /*write_binary_file_if_changed(&out_path, wav.as_bytes())?;
-
-        models.push_str(&format!(
-            MODEL_TEMPLATE!(),
-            name = name.to_uppercase(),
-            path = out_path,
-        ));
-    }*/
-
-    //let models = format!(MODELS_TEMPLATE!(), models = models);
-
-    //write_file_if_changed(env::current_dir()?.join("src").join("models.rs"), models)?;
+    write_file_if_changed(env::current_dir()?.join("src").join("models.rs"), models)?;
 
     Ok(())
 }
