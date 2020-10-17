@@ -63,7 +63,6 @@ fn parse_model(mesh: Instance) -> Option<Model> {
     }
 
     let mut uv_buffer = vec![0f32; face_indice_count * 2];
-    let mut normal_buffer = vec![0f32; face_indice_count * 3];
     let mut verts_array_buff = vec![0f32; face_indice_count * 3];
 
     for face in &faces {
@@ -89,12 +88,6 @@ fn parse_model(mesh: Instance) -> Option<Model> {
                 verts_array_buff[index_count * 3 + 1] = co[1];
                 verts_array_buff[index_count * 3 + 2] = co[2];
 
-                //Normals are compressed into 16 bit integers
-                let no = vert.get_i16_vec("no");
-                normal_buffer[index_count * 3] = f32::from(no[0]) / 32767.0;
-                normal_buffer[index_count * 3 + 1] = f32::from(no[1]) / 32767.0;
-                normal_buffer[index_count * 3 + 2] = f32::from(no[2]) / 32767.0;
-
                 let uv = uvs[index as usize].get_f32_vec("uv");
                 let uv_x = uv[0];
                 let uv_y = uv[1];
@@ -107,7 +100,7 @@ fn parse_model(mesh: Instance) -> Option<Model> {
             indexi += 2;
         }
     }
-    
+
     Some(Model {
         verts: vec![Default::default(); 16],
         uvs: vec![Default::default(); 16],
