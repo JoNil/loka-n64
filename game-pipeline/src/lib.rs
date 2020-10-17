@@ -8,9 +8,9 @@ pub mod textures;
 pub mod utils;
 
 pub fn run(out_dir: &str) -> Result<(), Box<dyn Error>> {
-    //textures::parse()?;
-    //maps::parse(out_dir)?;
-    //sounds::parse()?;
+    textures::parse()?;
+    maps::parse(out_dir)?;
+    sounds::parse()?;
     models::parse()?;
 
     Ok(())

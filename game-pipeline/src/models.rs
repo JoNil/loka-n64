@@ -1,6 +1,7 @@
 use crate::utils::{write_binary_file_if_changed, write_file_if_changed};
+use assert_into::AssertInto;
 use blend::{Blend, Instance};
-use meshopt::generate_vertex_remap;
+use meshopt::{generate_vertex_remap, remap_index_buffer, remap_vertex_buffer};
 use n64_math::{Vec2, Vec3};
 use std::{env, error::Error, ffi::OsStr, fs};
 use zerocopy::AsBytes;
@@ -48,10 +49,9 @@ fn parse_model(mesh: Instance) -> Option<Model> {
 
     let faces = mesh.get_iter("mpoly").collect::<Vec<_>>();
     let loops = mesh.get_iter("mloop").collect::<Vec<_>>();
-    let uvs = mesh.get_iter("mloopuv").collect::<Vec<_>>();
-    let verts = mesh.get_iter("mvert").collect::<Vec<_>>();
+    let muvs = mesh.get_iter("mloopuv").collect::<Vec<_>>();
+    let mverts = mesh.get_iter("mvert").collect::<Vec<_>>();
 
-    let mut index_count = 0;
     let mut face_indice_count = 0;
     for face in &faces {
         let len = face.get_i32("totloop");
@@ -63,8 +63,10 @@ fn parse_model(mesh: Instance) -> Option<Model> {
         }
     }
 
-    let mut verts_array_buff = vec![Vec3::zero(); face_indice_count];
-    let mut uv_buffer = vec![Vec2::<ero(); face_indice_count];
+    let mut verts = vec![Vec3::zero(); face_indice_count];
+    let mut uvs = vec![Vec2::zero(); face_indice_count];
+
+    let mut index_count = 0;
 
     for face in &faces {
         let len = face.get_i32("totloop");
@@ -72,28 +74,21 @@ fn parse_model(mesh: Instance) -> Option<Model> {
         let mut indexi = 1;
 
         while indexi < len {
-            let mut index;
-
             for l in 0..3 {
-                if (indexi - 1) + l < len {
-                    index = start + (indexi - 1) + l;
+                let index = if (indexi - 1) + l < len {
+                    start + (indexi - 1) + l
                 } else {
-                    index = start;
-                }
+                    start
+                };
 
                 let v = loops[index as usize].get_i32("v");
-                let vert = &verts[v as usize];
+                let vert = &mverts[v as usize];
 
                 let co = vert.get_f32_vec("co");
-                verts_array_buff[index_count * 3] = co[0];
-                verts_array_buff[index_count * 3 + 1] = co[1];
-                verts_array_buff[index_count * 3 + 2] = co[2];
+                verts[index_count as usize] = Vec3::new(co[0], co[1], co[2]);
 
-                let uv = uvs[index as usize].get_f32_vec("uv");
-                let uv_x = uv[0];
-                let uv_y = uv[1];
-                uv_buffer[index_count * 2] = uv_x;
-                uv_buffer[index_count * 2 + 1] = uv_y;
+                let uv = muvs[index as usize].get_f32_vec("uv");
+                uvs[index_count as usize] = Vec2::new(uv[0], uv[1]);
 
                 index_count += 1;
             }
@@ -102,13 +97,21 @@ fn parse_model(mesh: Instance) -> Option<Model> {
         }
     }
 
-    let vertex_remap = generate_vertex_remap(, None)
+    let vertex_remap = generate_vertex_remap(&verts, None);
+    let verts = remap_vertex_buffer(&verts, vertex_remap.0, &vertex_remap.1);
+    let uvs = remap_vertex_buffer(&uvs, vertex_remap.0, &vertex_remap.1);
+
+    let indices = remap_index_buffer(None, face_indice_count, &vertex_remap.1)
+        .iter()
+        .copied()
+        .map(|i| i.assert_into())
+        .collect::<Vec<u8>>();
 
     Some(Model {
-        verts: vec![Default::default(); 16],
-        uvs: vec![Default::default(); 16],
-        colors: vec![Default::default(); 16],
-        indices: vec![Default::default(); 16],
+        verts,
+        uvs,
+        colors: vec![0x801010ff; vertex_remap.0],
+        indices,
     })
 }
 
@@ -120,6 +123,8 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("blend")))
     {
+        println!("rerun-if-changed={:?}", &path);
+
         if let Some(file_name) = path.file_stem().map(|n| n.to_string_lossy()) {
             let blend = Blend::from_path(&path);
 

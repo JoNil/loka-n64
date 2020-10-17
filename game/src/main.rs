@@ -13,6 +13,7 @@ use camera::Camera;
 use enemy_system::EnemySystem;
 use map::Map;
 use maps::MAP_1;
+use models::SHIP_3_BODY;
 use n64::{
     self, current_time_us,
     gfx::{CommandBuffer, CommandBufferCache},
@@ -146,23 +147,22 @@ fn main() {
                     .sprite_drawable
                     .draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
 
-                cb.add_mesh_indexed(
-                    &[
-                        vec3(0.0, 0.5, 0.0),
-                        vec3(-0.5, -0.25, 0.0),
-                        vec3(0.5, -0.25, 0.0),
-                    ],
-                    &[vec2(0.5, 1.0), vec2(0.0, 0.0), vec2(1.0, 0.0)],
-                    &[0xff_00_00_ff, 0x00_ff_00_ff, 0x00_00_ff_ff],
-                    &[[0, 1, 2]],
-                    &[
-                        [1.0, 0.0, 0.0, 0.0],
-                        [0.0, 1.0, 0.0, 0.0],
-                        [0.0, 0.0, 1.0, 0.0],
-                        [0.0, 0.0, 0.0, 1.0],
-                    ],
-                    None,
-                );
+                {
+                    let ship_3 = SHIP_3_BODY.as_model_data();
+                    cb.add_mesh_indexed(
+                        &ship_3.verts,
+                        &ship_3.uvs,
+                        &ship_3.colors,
+                        &ship_3.indices,
+                        &[
+                            [0.1, 0.0, 0.0, 0.0],
+                            [0.0, 0.1, 0.0, 0.0],
+                            [0.0, 0.0, 0.1, 0.0],
+                            [0.0, 0.0, 0.0, 1.0],
+                        ],
+                        None,
+                    );
+                }
 
                 if false {
                     font::draw_text(&mut cb, " !\"#$%&", Vec2::new(1.0, 0.0), 0xffffffff);

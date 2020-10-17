@@ -258,7 +258,7 @@ fn parse_map_objects(
                     )?;
 
                     assert!(
-                        dbg!(texture_image.len())
+                        texture_image.len()
                             == 2 * template_object.width as usize * template_object.height as usize
                     );
 

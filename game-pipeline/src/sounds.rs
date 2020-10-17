@@ -56,7 +56,7 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
     {
         if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
             let out_path = path.canonicalize()?.with_extension("nsnd");
-            let wav = load_wav(dbg!(&path))?;
+            let wav = load_wav(&path)?;
 
             write_binary_file_if_changed(&out_path, wav.as_bytes())?;
 
