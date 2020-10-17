@@ -1,5 +1,6 @@
 use crate::utils::{write_binary_file_if_changed, write_file_if_changed};
 use blend::{Blend, Instance};
+use meshopt::generate_vertex_remap;
 use n64_math::{Vec2, Vec3};
 use std::{env, error::Error, ffi::OsStr, fs};
 use zerocopy::AsBytes;
@@ -62,8 +63,8 @@ fn parse_model(mesh: Instance) -> Option<Model> {
         }
     }
 
-    let mut uv_buffer = vec![0f32; face_indice_count * 2];
-    let mut verts_array_buff = vec![0f32; face_indice_count * 3];
+    let mut verts_array_buff = vec![Vec3::zero(); face_indice_count];
+    let mut uv_buffer = vec![Vec2::<ero(); face_indice_count];
 
     for face in &faces {
         let len = face.get_i32("totloop");
@@ -100,6 +101,8 @@ fn parse_model(mesh: Instance) -> Option<Model> {
             indexi += 2;
         }
     }
+
+    let vertex_remap = generate_vertex_remap(, None)
 
     Some(Model {
         verts: vec![Default::default(); 16],
