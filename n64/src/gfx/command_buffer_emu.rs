@@ -223,7 +223,7 @@ impl<'a> CommandBuffer<'a> {
                         } => {
                             #[repr(C)]
                             #[derive(Clone, Copy, AsBytes, FromBytes)]
-                            pub(crate) struct MeshVertex {
+                            pub struct MeshVertex {
                                 pos: [f32; 3],
                                 tex_coord: [f32; 2],
                                 color: [f32; 4],

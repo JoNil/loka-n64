@@ -31,6 +31,7 @@ mod entity;
 mod font;
 mod map;
 mod maps;
+mod models;
 mod player;
 mod sound;
 mod sound_mixer;
