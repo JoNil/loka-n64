@@ -9,8 +9,8 @@ use crate::{
         Graphics,
     },
 };
+use assert_into::AssertInto;
 use n64_math::{Color, Vec2, Vec3};
-use std::convert::TryInto;
 use std::mem;
 use wgpu::util::DeviceExt;
 use zerocopy::{AsBytes, FromBytes};
@@ -269,7 +269,7 @@ impl<'a> CommandBuffer<'a> {
                                 ),
                             );
 
-                            assert!(render_pass_vertex_buffers.len() > 0);
+                            assert!(!render_pass_vertex_buffers.is_empty());
                             assert!(
                                 render_pass_vertex_buffers.len() == render_pass_index_buffers.len()
                             );
@@ -503,7 +503,7 @@ impl<'a> CommandBuffer<'a> {
                 .iter_mut()
                 .zip(mapped_colored_rect_dst_buffer.chunks(4))
             {
-                *fb_color = Color::from_bytes(mapped_color.try_into().unwrap());
+                *fb_color = Color::from_bytes(mapped_color.assert_into());
             }
         }
 

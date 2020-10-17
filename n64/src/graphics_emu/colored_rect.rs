@@ -1,5 +1,6 @@
 use crate::graphics_emu::Vertex;
-use std::{io::Read, mem, convert::TryInto};
+use assert_into::AssertInto;
+use std::{io::Read, mem};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_COLORED_RECTS: u64 = 4096;
@@ -56,7 +57,10 @@ impl ColoredRect {
             })
             .unwrap();
             file.read_to_end(&mut buffer).unwrap();
-            buffer.chunks_exact(4).map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap())).collect::<Vec<_>>()
+            buffer
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
+                .collect::<Vec<_>>()
         };
 
         let fs_bytes = {
@@ -71,13 +75,16 @@ impl ColoredRect {
             })
             .unwrap();
             file.read_to_end(&mut buffer).unwrap();
-            buffer.chunks_exact(4).map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap())).collect::<Vec<_>>()
-
+            buffer
+                .chunks_exact(4)
+                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
+                .collect::<Vec<_>>()
         };
 
-
-        let vs_module = device.create_shader_module(wgpu::ShaderModuleSource::SpirV(vs_bytes.into()));
-        let fs_module = device.create_shader_module(wgpu::ShaderModuleSource::SpirV(fs_bytes.into()));
+        let vs_module =
+            device.create_shader_module(wgpu::ShaderModuleSource::SpirV(vs_bytes.into()));
+        let fs_module =
+            device.create_shader_module(wgpu::ShaderModuleSource::SpirV(fs_bytes.into()));
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
@@ -130,16 +137,17 @@ impl ColoredRect {
             mapped_at_creation: false,
         });
 
-        let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            label: None,
-            layout: &bind_group_layout,
-            entries: &[wgpu::BindGroupEntry {
-                binding: 0,
-                resource: wgpu::BindingResource::Buffer(
-                    shader_storage_buffer.slice(0..(MAX_COLORED_RECTS * mem::size_of::<ColoredRectUniforms>() as u64)),
-                ),
-            }],
-        });
+        let bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                label: None,
+                layout: &bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::Buffer(shader_storage_buffer.slice(
+                        0..(MAX_COLORED_RECTS * mem::size_of::<ColoredRectUniforms>() as u64),
+                    )),
+                }],
+            });
 
         Self {
             bind_group_layout,

@@ -1,5 +1,6 @@
 use crate::{gfx::Texture, graphics_emu::Vertex};
-use std::{collections::HashMap, convert::TryInto, io::Read, mem};
+use assert_into::AssertInto;
+use std::{collections::HashMap, io::Read, mem};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
@@ -85,7 +86,7 @@ impl TexturedRect {
             file.read_to_end(&mut buffer).unwrap();
             buffer
                 .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
                 .collect::<Vec<_>>()
         };
 
@@ -103,7 +104,7 @@ impl TexturedRect {
             file.read_to_end(&mut buffer).unwrap();
             buffer
                 .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
                 .collect::<Vec<_>>()
         };
 

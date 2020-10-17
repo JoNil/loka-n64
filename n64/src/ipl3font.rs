@@ -75,7 +75,7 @@ pub fn draw_char(out_tex: &mut TextureMut, x: i32, y: i32, color: Color, ch: u8)
 
 #[cfg(not(target_vendor = "nintendo64"))]
 pub fn draw_char(out_tex: &mut TextureMut, x: i32, y: i32, color: Color, ch: u8) {
-    use core::convert::TryInto;
+    use assert_into::AssertInto;
 
     let ipl3 = std::include_bytes!("../../bootcode.bin");
 
@@ -84,7 +84,7 @@ pub fn draw_char(out_tex: &mut TextureMut, x: i32, y: i32, color: Color, ch: u8)
     let mut address = (GLYPH_ADDR - 64) + index * GLYPH_SIZE;
     let mut shift = (4 - (address & 3)) * 8 - 1;
     address &= 0x0FFF_FFFC;
-    let mut bits = u32::from_be_bytes(ipl3[address..(address + 4)].try_into().unwrap());
+    let mut bits = u32::from_be_bytes(ipl3[address..(address + 4)].assert_into());
 
     for yy in y..(y + GLYPH_HEIGHT) {
         if yy < 0 {
@@ -102,7 +102,7 @@ pub fn draw_char(out_tex: &mut TextureMut, x: i32, y: i32, color: Color, ch: u8)
 
             if shift == 0 {
                 address += 4;
-                bits = u32::from_be_bytes(ipl3[address..(address + 4)].try_into().unwrap());
+                bits = u32::from_be_bytes(ipl3[address..(address + 4)].assert_into());
                 shift = 31;
             } else {
                 shift -= 1;

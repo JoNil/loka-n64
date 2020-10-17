@@ -1,6 +1,7 @@
-use crate::{gfx::Texture};
+use crate::gfx::Texture;
+use assert_into::AssertInto;
 use n64_math::Color;
-use std::{collections::HashMap, convert::TryInto, io::Read, mem};
+use std::{collections::HashMap, io::Read, mem};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_MESHES: u64 = 4096;
@@ -88,7 +89,7 @@ impl Mesh {
             file.read_to_end(&mut buffer).unwrap();
             buffer
                 .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
                 .collect::<Vec<_>>()
         };
 
@@ -106,7 +107,7 @@ impl Mesh {
             file.read_to_end(&mut buffer).unwrap();
             buffer
                 .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.try_into().unwrap()))
+                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
                 .collect::<Vec<_>>()
         };
 

@@ -7,7 +7,8 @@ edition = "2018"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cfg-if = "0.1"
+assert_into = "1"
+cfg-if = "1"
 n64-math = { path = "../n64-math" }
 n64-types = { path = "../n64-types" }
 zerocopy = "0.3"
@@ -17,9 +18,9 @@ cpal = "0.12"
 futures-executor = "0.3"
 glsl-to-spirv = "0.1"
 lazy_static = "1"
-rubato = "0.4"
+rubato = "0.5"
 wgpu = "0.6"
-winit = "0.22"
+winit = "0.23"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-sys = { path = "../n64-sys" }
