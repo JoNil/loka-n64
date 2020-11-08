@@ -105,7 +105,7 @@ const GLYPH_SIZE: Vec2 = Vec2::new(11.0, 0.0);
 #[inline]
 fn digit_to_char(digit: u8) -> char {
     match digit {
-        0..=9 => ('0' as u8 + digit) as char,
+        0..=9 => (b'0' + digit) as char,
         _ => panic!(),
     }
 }

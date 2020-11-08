@@ -1,5 +1,13 @@
 use zerocopy::{AsBytes, FromBytes, Unaligned};
 
+#[macro_export]
+macro_rules! color {
+    ($val:expr) => {
+        #[allow(clippy::inconsistent_digit_grouping)]
+        Color::new($val)
+    };
+}
+
 #[repr(C, packed)]
 #[derive(Clone, Copy, Debug, Default, AsBytes, FromBytes, Unaligned)]
 pub struct Color {
