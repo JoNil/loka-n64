@@ -4,6 +4,7 @@
 #![cfg_attr(target_vendor = "nintendo64", feature(panic_info_message))]
 #![cfg_attr(target_vendor = "nintendo64", feature(start))]
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
+#![allow(clippy::inconsistent_digit_grouping)]
 
 extern crate alloc;
 
@@ -40,7 +41,7 @@ mod sounds;
 mod textures;
 mod world;
 
-const RED: Color = color!(0b10000_00011_00011_1);
+const RED: Color = Color::new(0b10000_00011_00011_1);
 
 const VIDEO_MODE: VideoMode = VideoMode::Pal {
     width: 320,

@@ -1,6 +1,8 @@
+#![allow(clippy::inconsistent_digit_grouping)]
+
 use crate::gfx::Texture;
 use assert_into::AssertInto;
-use n64_math::{color, Color};
+use n64_math::Color;
 use std::{collections::HashMap, io::Read, mem};
 use zerocopy::{AsBytes, FromBytes};
 
@@ -215,7 +217,7 @@ impl Mesh {
         };
 
         {
-            let data = [color!(0b11111_11111_11111_1)];
+            let data = [Color::new(0b11111_11111_11111_1)];
 
             let texture = Texture {
                 width: 1,
