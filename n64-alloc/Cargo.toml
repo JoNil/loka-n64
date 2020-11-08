@@ -15,4 +15,4 @@ edition = "2018"
 
 [dependencies]
 memory_units = "0.4.0"
-spin = "0.5"
+spin = "0.7"
