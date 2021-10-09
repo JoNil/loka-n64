@@ -8,7 +8,7 @@ struct Uniforms {
     vec4 u_offset_and_scale;
 };
 
-layout(std430, set = 0, binding = 0) buffer Locals {
+layout(std430, set = 0, binding = 0) readonly buffer Locals {
     Uniforms uniforms[];
 };
 

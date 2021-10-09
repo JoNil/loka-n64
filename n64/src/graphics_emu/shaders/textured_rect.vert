@@ -10,7 +10,7 @@ struct Uniforms {
     vec4 u_blend_color;
 };
 
-layout(std430, set = 0, binding = 0) buffer Locals {
+layout(std430, set = 0, binding = 0) readonly buffer Locals {
     Uniforms uniforms[];
 };
 

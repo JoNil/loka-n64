@@ -1,6 +1,5 @@
-use crate::graphics_emu::Vertex;
-use assert_into::AssertInto;
-use std::{io::Read, mem};
+use crate::graphics_emu::{shader, Vertex};
+use std::mem;
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_COLORED_RECTS: u64 = 4096;
@@ -41,50 +40,11 @@ impl ColoredRect {
             push_constant_ranges: &[],
         });
 
-        let vs_bytes = {
-            let mut buffer = Vec::new();
-            let mut file = glsl_to_spirv::compile(
-                include_str!("shaders/colored_rect.vert"),
-                glsl_to_spirv::ShaderType::Vertex,
-            )
-            .map_err(|e| {
-                println!("{}", e);
-                "Unable to compile shaders/colored_rect.vert"
-            })
-            .unwrap();
-            file.read_to_end(&mut buffer).unwrap();
-            buffer
-                .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
-                .collect::<Vec<_>>()
-        };
-
-        let fs_bytes = {
-            let mut buffer = Vec::new();
-            let mut file = glsl_to_spirv::compile(
-                include_str!("shaders/colored_rect.frag"),
-                glsl_to_spirv::ShaderType::Fragment,
-            )
-            .map_err(|e| {
-                println!("{}", e);
-                "Unable to compile shaders/colored_rect.frag"
-            })
-            .unwrap();
-            file.read_to_end(&mut buffer).unwrap();
-            buffer
-                .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
-                .collect::<Vec<_>>()
-        };
-
-        let vs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::SpirV(vs_bytes.into()),
-        });
-        let fs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::SpirV(fs_bytes.into()),
-        });
+        let (vs_module, fs_module) = shader::compile(
+            device,
+            include_str!("shaders/colored_rect.vert"),
+            include_str!("shaders/colored_rect.frag"),
+        );
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,

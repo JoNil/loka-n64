@@ -1,6 +1,8 @@
-use crate::{gfx::Texture, graphics_emu::Vertex};
-use assert_into::AssertInto;
-use std::{collections::HashMap, io::Read, mem, num::NonZeroU32};
+use crate::{
+    gfx::Texture,
+    graphics_emu::{shader, Vertex},
+};
+use std::{collections::HashMap, mem, num::NonZeroU32};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
@@ -43,7 +45,7 @@ impl TexturedRect {
                     binding: 1,
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
                         view_dimension: wgpu::TextureViewDimension::D2,
                         multisampled: false,
                     },
@@ -54,7 +56,7 @@ impl TexturedRect {
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler {
                         comparison: false,
-                        filtering: false,
+                        filtering: true,
                     },
                     count: None,
                 },
@@ -68,50 +70,11 @@ impl TexturedRect {
             push_constant_ranges: &[],
         });
 
-        let vs_bytes = {
-            let mut buffer = Vec::new();
-            let mut file = glsl_to_spirv::compile(
-                include_str!("shaders/textured_rect.vert"),
-                glsl_to_spirv::ShaderType::Vertex,
-            )
-            .map_err(|e| {
-                println!("{}", e);
-                "Unable to compile shaders/textured_rect.vert"
-            })
-            .unwrap();
-            file.read_to_end(&mut buffer).unwrap();
-            buffer
-                .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
-                .collect::<Vec<_>>()
-        };
-
-        let fs_bytes = {
-            let mut buffer = Vec::new();
-            let mut file = glsl_to_spirv::compile(
-                include_str!("shaders/textured_rect.frag"),
-                glsl_to_spirv::ShaderType::Fragment,
-            )
-            .map_err(|e| {
-                println!("{}", e);
-                "Unable to compile shaders/textured_rect.frag"
-            })
-            .unwrap();
-            file.read_to_end(&mut buffer).unwrap();
-            buffer
-                .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
-                .collect::<Vec<_>>()
-        };
-
-        let vs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::SpirV(vs_bytes.into()),
-        });
-        let fs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::SpirV(fs_bytes.into()),
-        });
+        let (vs_module, fs_module) = shader::compile(
+            device,
+            include_str!("shaders/textured_rect.vert"),
+            include_str!("shaders/textured_rect.frag"),
+        );
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,

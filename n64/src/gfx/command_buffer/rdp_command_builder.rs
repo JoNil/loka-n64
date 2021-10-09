@@ -170,19 +170,19 @@ impl RdpCommandBuilder {
 
     #[inline]
     pub fn set_blend_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
-            (COMMAND_SET_BLEND_COLOR << 56)
-                | (color as u64),
-        ));
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand((COMMAND_SET_BLEND_COLOR << 56) | (color as u64)));
         self
     }
 
     #[inline]
     pub fn set_fog_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
-            (COMMAND_SET_FOG_COLOR << 56)
-                | (color as u64),
-        ));
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand((COMMAND_SET_FOG_COLOR << 56) | (color as u64)));
         self
     }
 

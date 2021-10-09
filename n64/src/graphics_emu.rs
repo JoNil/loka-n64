@@ -25,6 +25,8 @@ pub(crate) mod dst_texture;
 pub(crate) mod mesh;
 pub(crate) mod textured_rect;
 
+mod shader;
+
 const SCALE: i32 = 2;
 
 #[repr(C)]

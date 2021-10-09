@@ -10,7 +10,7 @@ struct Uniforms {
     mat4 u_transform;
 };
 
-layout(std430, set = 0, binding = 0) buffer Locals {
+layout(std430, set = 0, binding = 0) readonly buffer Locals {
     Uniforms uniforms[];
 };
 

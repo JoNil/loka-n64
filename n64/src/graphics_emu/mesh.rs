@@ -1,9 +1,8 @@
 #![allow(clippy::inconsistent_digit_grouping)]
 
-use crate::gfx::Texture;
-use assert_into::AssertInto;
+use crate::{gfx::Texture, graphics_emu::shader};
 use n64_math::Color;
-use std::{collections::HashMap, io::Read, mem, num::NonZeroU32};
+use std::{collections::HashMap, mem, num::NonZeroU32};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_MESHES: u64 = 4096;
@@ -48,7 +47,7 @@ impl Mesh {
                     binding: 1,
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
                         view_dimension: wgpu::TextureViewDimension::D2,
                         multisampled: false,
                     },
@@ -59,7 +58,7 @@ impl Mesh {
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler {
                         comparison: false,
-                        filtering: false,
+                        filtering: true,
                     },
                     count: None,
                 },
@@ -73,50 +72,11 @@ impl Mesh {
             push_constant_ranges: &[],
         });
 
-        let vs_bytes = {
-            let mut buffer = Vec::new();
-            let mut file = glsl_to_spirv::compile(
-                include_str!("shaders/mesh.vert"),
-                glsl_to_spirv::ShaderType::Vertex,
-            )
-            .map_err(|e| {
-                println!("{}", e);
-                "Unable to compile shaders/mesh.vert"
-            })
-            .unwrap();
-            file.read_to_end(&mut buffer).unwrap();
-            buffer
-                .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
-                .collect::<Vec<_>>()
-        };
-
-        let fs_bytes = {
-            let mut buffer = Vec::new();
-            let mut file = glsl_to_spirv::compile(
-                include_str!("shaders/mesh.frag"),
-                glsl_to_spirv::ShaderType::Fragment,
-            )
-            .map_err(|e| {
-                println!("{}", e);
-                "Unable to compile shaders/mesh.frag"
-            })
-            .unwrap();
-            file.read_to_end(&mut buffer).unwrap();
-            buffer
-                .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
-                .collect::<Vec<_>>()
-        };
-
-        let vs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::SpirV(vs_bytes.into()),
-        });
-        let fs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::SpirV(fs_bytes.into()),
-        });
+        let (vs_module, fs_module) = shader::compile(
+            device,
+            include_str!("shaders/mesh.vert"),
+            include_str!("shaders/mesh.frag"),
+        );
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,

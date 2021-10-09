@@ -1,7 +1,8 @@
-use assert_into::AssertInto;
-
-use crate::{graphics_emu::Vertex, VideoMode};
-use std::{io::Read, mem};
+use crate::{
+    graphics_emu::{shader, Vertex},
+    VideoMode,
+};
+use std::mem;
 
 pub(crate) struct CopyTex {
     pub src_buffer: Box<[u8]>,
@@ -103,50 +104,11 @@ impl CopyTex {
             push_constant_ranges: &[],
         });
 
-        let vs_bytes = {
-            let mut buffer = Vec::new();
-            let mut file = glsl_to_spirv::compile(
-                include_str!("shaders/copy_tex.vert"),
-                glsl_to_spirv::ShaderType::Vertex,
-            )
-            .map_err(|e| {
-                println!("{}", e);
-                "Unable to compile shaders/copy_tex.vert"
-            })
-            .unwrap();
-            file.read_to_end(&mut buffer).unwrap();
-            buffer
-                .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
-                .collect::<Vec<_>>()
-        };
-
-        let fs_bytes = {
-            let mut buffer = Vec::new();
-            let mut file = glsl_to_spirv::compile(
-                include_str!("shaders/copy_tex.frag"),
-                glsl_to_spirv::ShaderType::Fragment,
-            )
-            .map_err(|e| {
-                println!("{}", e);
-                "Unable to compile shaders/frag.vert"
-            })
-            .unwrap();
-            file.read_to_end(&mut buffer).unwrap();
-            buffer
-                .chunks_exact(4)
-                .map(|chunk| u32::from_le_bytes(chunk.assert_into()))
-                .collect::<Vec<_>>()
-        };
-
-        let vs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::SpirV(vs_bytes.into()),
-        });
-        let fs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
-            label: None,
-            source: wgpu::ShaderSource::SpirV(fs_bytes.into()),
-        });
+        let (vs_module, fs_module) = shader::compile(
+            device,
+            include_str!("shaders/copy_tex.vert"),
+            include_str!("shaders/copy_tex.frag"),
+        );
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,

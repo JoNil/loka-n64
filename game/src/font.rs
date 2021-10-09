@@ -110,7 +110,7 @@ fn digit_to_char(digit: u8) -> char {
     }
 }
 
-pub fn draw_number(cb: &mut CommandBuffer,  mut number: i32, upper_right: Vec2, color: u32) {
+pub fn draw_number(cb: &mut CommandBuffer, mut number: i32, upper_right: Vec2, color: u32) {
     let mut negative = false;
     let mut next_pos = upper_right - GLYPH_SIZE;
 
@@ -137,7 +137,6 @@ pub fn draw_number(cb: &mut CommandBuffer,  mut number: i32, upper_right: Vec2, 
 }
 
 pub fn draw_text(cb: &mut CommandBuffer, text: &str, upper_left: Vec2, color: u32) {
-
     let mut next_pos = upper_left;
 
     for ch in text.chars() {
