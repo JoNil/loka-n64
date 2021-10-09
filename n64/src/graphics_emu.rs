@@ -142,7 +142,7 @@ impl Graphics {
             format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: wgpu::PresentMode::Mailbox,
+            present_mode: wgpu::PresentMode::Fifo,
         };
 
         surface.configure(&device, &surface_config);
