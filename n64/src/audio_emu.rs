@@ -1,11 +1,13 @@
 use cpal::{
     self,
-    traits::{DeviceTrait, HostTrait, StreamTrait}, SampleFormat,
+    traits::{DeviceTrait, HostTrait, StreamTrait},
+    SampleFormat,
 };
 use rubato::{InterpolationParameters, InterpolationType, Resampler, SincFixedIn, WindowFunction};
 use std::error::Error;
 use std::{
-    sync::mpsc::{channel, sync_channel, Receiver, Sender, SyncSender}, thread,
+    sync::mpsc::{channel, sync_channel, Receiver, Sender, SyncSender},
+    thread,
 };
 
 const BUFFER_NO_SAMPLES: usize = 2 * 512;
@@ -21,9 +23,10 @@ fn get_sample<T>(
 ) -> T {
     if current_buffer.is_none() {
         if let Ok(buffer) = to_audio_receiver.try_recv() {
-            let mut channels = Vec::new();
-            channels.push(Vec::with_capacity(BUFFER_NO_SAMPLES / 2));
-            channels.push(Vec::with_capacity(BUFFER_NO_SAMPLES / 2));
+            let mut channels = vec![
+                Vec::with_capacity(BUFFER_NO_SAMPLES / 2),
+                Vec::with_capacity(BUFFER_NO_SAMPLES / 2),
+            ];
 
             for frame in buffer.samples.chunks_exact(2) {
                 channels[0].push(frame[0] as f32 / (i16::MAX as f32));
@@ -73,10 +76,10 @@ fn audio_thread(
         .ok_or("No output device available")?;
 
     let config = device
-    .supported_output_configs()?
-    .next()
-    .expect("no supported config?!")
-    .with_max_sample_rate();
+        .supported_output_configs()?
+        .next()
+        .expect("no supported config?!")
+        .with_max_sample_rate();
 
     assert!(config.channels() == 2);
 
@@ -102,52 +105,62 @@ fn audio_thread(
     let config = config.into();
 
     let stream = match sampel_format {
-        SampleFormat::F32 => device.build_output_stream(&config, move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
-            for elem in buffer.iter_mut() {
-                *elem = get_sample(
-                    &mut resampler,
-                    &mut current_index,
-                    &mut current_buffer,
-                    &to_audio_receiver,
-                    &from_audio_sender,
-                    |sample| sample as f32,
-                );
-            }
-        },
-        move |err| {
-            println!("Audio Error: {}", err);
-        }),
-        SampleFormat::I16 => device.build_output_stream(&config, move |buffer: &mut [i16], _: &cpal::OutputCallbackInfo| {
-            for elem in buffer.iter_mut() {
-                *elem = get_sample(
-                    &mut resampler,
-                    &mut current_index,
-                    &mut current_buffer,
-                    &to_audio_receiver,
-                    &from_audio_sender,
-                    |sample| (sample / (i16::MAX as f32)) as i16,
-                );
-            }
-        },
-        move |err| {
-            println!("Audio Error: {}", err);
-        }),
-        SampleFormat::U16 => device.build_output_stream(&config, move |buffer: &mut [u16], _: &cpal::OutputCallbackInfo| {
-            for elem in buffer.iter_mut() {
-                *elem = get_sample(
-                    &mut resampler,
-                    &mut current_index,
-                    &mut current_buffer,
-                    &to_audio_receiver,
-                    &from_audio_sender,
-                    |sample| (sample + (u16::MAX / 2) as f32) as u16,
-                );
-            }
-        },
-        move |err| {
-            println!("Audio Error: {}", err);
-        }),
-    }.unwrap();
+        SampleFormat::F32 => device.build_output_stream(
+            &config,
+            move |buffer: &mut [f32], _: &cpal::OutputCallbackInfo| {
+                for elem in buffer.iter_mut() {
+                    *elem = get_sample(
+                        &mut resampler,
+                        &mut current_index,
+                        &mut current_buffer,
+                        &to_audio_receiver,
+                        &from_audio_sender,
+                        |sample| sample as f32,
+                    );
+                }
+            },
+            move |err| {
+                println!("Audio Error: {}", err);
+            },
+        ),
+        SampleFormat::I16 => device.build_output_stream(
+            &config,
+            move |buffer: &mut [i16], _: &cpal::OutputCallbackInfo| {
+                for elem in buffer.iter_mut() {
+                    *elem = get_sample(
+                        &mut resampler,
+                        &mut current_index,
+                        &mut current_buffer,
+                        &to_audio_receiver,
+                        &from_audio_sender,
+                        |sample| (sample / (i16::MAX as f32)) as i16,
+                    );
+                }
+            },
+            move |err| {
+                println!("Audio Error: {}", err);
+            },
+        ),
+        SampleFormat::U16 => device.build_output_stream(
+            &config,
+            move |buffer: &mut [u16], _: &cpal::OutputCallbackInfo| {
+                for elem in buffer.iter_mut() {
+                    *elem = get_sample(
+                        &mut resampler,
+                        &mut current_index,
+                        &mut current_buffer,
+                        &to_audio_receiver,
+                        &from_audio_sender,
+                        |sample| (sample + (u16::MAX / 2) as f32) as u16,
+                    );
+                }
+            },
+            move |err| {
+                println!("Audio Error: {}", err);
+            },
+        ),
+    }
+    .unwrap();
 
     stream.play().unwrap();
 
@@ -190,14 +203,14 @@ impl Audio {
         let (from_audio_sender, from_audio_receiver) = channel();
         let (exit_sender, exit_receiver) = sync_channel(0);
 
-        thread::spawn(
-            move || match audio_thread(to_audio_receiver, from_audio_sender, exit_receiver) {
+        thread::spawn(move || {
+            match audio_thread(to_audio_receiver, from_audio_sender, exit_receiver) {
                 Ok(()) => (),
                 Err(e) => {
                     println!("Audio Error: {}", e);
                 }
-            },
-        );
+            }
+        });
 
         Self {
             to_audio_sender,

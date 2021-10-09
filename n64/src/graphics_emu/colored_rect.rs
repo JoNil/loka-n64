@@ -14,10 +14,6 @@ pub(crate) struct ColoredRectUniforms {
 }
 
 pub(crate) struct ColoredRect {
-    pub bind_group_layout: wgpu::BindGroupLayout,
-    pub pipeline_layout: wgpu::PipelineLayout,
-    pub vs_module: wgpu::ShaderModule,
-    pub fs_module: wgpu::ShaderModule,
     pub pipeline: wgpu::RenderPipeline,
     pub shader_storage_buffer: wgpu::Buffer,
     pub bind_group: wgpu::BindGroup,
@@ -150,10 +146,6 @@ impl ColoredRect {
             });
 
         Self {
-            bind_group_layout,
-            pipeline_layout,
-            vs_module,
-            fs_module,
             pipeline,
             shader_storage_buffer,
             bind_group,

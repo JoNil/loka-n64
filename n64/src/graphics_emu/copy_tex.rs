@@ -7,13 +7,7 @@ pub(crate) struct CopyTex {
     pub src_buffer: Box<[u8]>,
     pub src_tex_extent: wgpu::Extent3d,
     pub src_tex: wgpu::Texture,
-    pub src_tex_view: wgpu::TextureView,
-    pub src_sampler: wgpu::Sampler,
-    pub bind_group_layout: wgpu::BindGroupLayout,
     pub bind_group: wgpu::BindGroup,
-    pub pipeline_layout: wgpu::PipelineLayout,
-    pub vs_module: wgpu::ShaderModule,
-    pub fs_module: wgpu::ShaderModule,
     pub pipeline: wgpu::RenderPipeline,
 }
 
@@ -201,13 +195,7 @@ impl CopyTex {
             src_buffer,
             src_tex_extent,
             src_tex,
-            src_tex_view,
-            src_sampler,
-            bind_group_layout,
             bind_group,
-            pipeline_layout,
-            vs_module,
-            fs_module,
             pipeline,
         }
     }

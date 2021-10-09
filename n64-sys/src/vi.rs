@@ -88,7 +88,7 @@ pub fn init(video_mode: VideoMode, fb: &mut [Color]) {
             write_volatile(VI_DRAM_ADDR, fb.as_mut_ptr() as usize);
             write_volatile(VI_H_WIDTH, video_mode.width() as usize);
             write_volatile(VI_V_INTR, 0x200);
-            write_volatile(VI_TIMING, 0x0040_4233A);
+            write_volatile(VI_TIMING, 0x0404_233A);
             write_volatile(VI_V_SYNC, 0x0000_0271);
             write_volatile(VI_H_SYNC, 0x0015_0C69);
             write_volatile(VI_H_SYNC_LEAP, 0x0C6F_0C6E);

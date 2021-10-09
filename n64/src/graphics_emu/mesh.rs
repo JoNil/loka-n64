@@ -15,18 +15,11 @@ pub(crate) struct MeshUniforms {
 }
 
 pub(crate) struct UploadedTexture {
-    pub tex_format: wgpu::TextureFormat,
-    pub tex_extent: wgpu::Extent3d,
-    pub tex: wgpu::Texture,
-    pub tex_view: wgpu::TextureView,
     pub bind_group: wgpu::BindGroup,
 }
 
 pub(crate) struct Mesh {
     pub bind_group_layout: wgpu::BindGroupLayout,
-    pub pipeline_layout: wgpu::PipelineLayout,
-    pub vs_module: wgpu::ShaderModule,
-    pub fs_module: wgpu::ShaderModule,
     pub pipeline: wgpu::RenderPipeline,
     pub shader_storage_buffer: wgpu::Buffer,
     pub sampler: wgpu::Sampler,
@@ -207,9 +200,6 @@ impl Mesh {
 
         let mut mesh = Self {
             bind_group_layout,
-            pipeline_layout,
-            vs_module,
-            fs_module,
             pipeline,
             shader_storage_buffer,
             sampler,
@@ -217,6 +207,7 @@ impl Mesh {
         };
 
         {
+            #[allow(clippy::unusual_byte_groupings)]
             let data = [Color::new(0b11111_11111_11111_1)];
 
             let texture = Texture {
@@ -225,7 +216,7 @@ impl Mesh {
                 data: &data,
             };
 
-            mesh.upload_texture_data_internal(&device, &queue, 0, &texture);
+            mesh.upload_texture_data_internal(device, queue, 0, &texture);
         }
 
         mesh
@@ -285,7 +276,7 @@ impl Mesh {
         let mut buffer = Vec::new();
         buffer.resize_with(4 * texture.data.len(), Default::default);
 
-        for (pixel, data) in texture.data.iter().zip(buffer.chunks_exact_mut(4 as usize)) {
+        for (pixel, data) in texture.data.iter().zip(buffer.chunks_exact_mut(4_usize)) {
             let rgba = pixel.be_to_le().to_rgba();
 
             data[0] = (rgba[0] * 255.0) as u8;
@@ -309,16 +300,8 @@ impl Mesh {
             tex_extent,
         );
 
-        self.texture_cache.insert(
-            key,
-            UploadedTexture {
-                tex_format,
-                tex_extent,
-                tex,
-                tex_view,
-                bind_group,
-            },
-        );
+        self.texture_cache
+            .insert(key, UploadedTexture { bind_group });
     }
 
     pub(crate) fn upload_texture_data(

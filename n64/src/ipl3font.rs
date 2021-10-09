@@ -30,7 +30,7 @@ pub fn draw_str(out_tex: &mut TextureMut, mut x: i32, mut y: i32, color: Color, 
             continue;
         }
 
-        if ch >= b'a' && ch <= b'z' {
+        if (b'a'..=b'z').contains(&ch) {
             ch -= b'a' - b'A';
         }
 
