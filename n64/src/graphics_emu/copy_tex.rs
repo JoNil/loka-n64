@@ -64,7 +64,7 @@ impl CopyTex {
                     binding: 0,
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Uint,
+                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
                         view_dimension: wgpu::TextureViewDimension::D2,
                         multisampled: false,
                     },
@@ -74,8 +74,8 @@ impl CopyTex {
                     binding: 1,
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler {
-                        filtering: false,
-                        comparison: false,
+                        filtering: true,
+                        comparison: true,
                     },
                     count: None,
                 },

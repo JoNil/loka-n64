@@ -71,7 +71,6 @@ pub struct Graphics {
     pub(crate) queue: wgpu::Queue,
 
     pub(crate) surface: wgpu::Surface,
-    pub(crate) surface_format: wgpu::TextureFormat,
     pub(crate) surface_config: wgpu::SurfaceConfiguration,
 
     pub(crate) quad_vertex_buf: wgpu::Buffer,
@@ -190,7 +189,6 @@ impl Graphics {
 
             surface,
             surface_config,
-            surface_format,
 
             quad_vertex_buf,
             quad_index_buf,
@@ -316,12 +314,14 @@ impl Graphics {
             );
 
             {
+                let view = frame
+                    .texture
+                    .create_view(&wgpu::TextureViewDescriptor::default());
+
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: None,
                     color_attachments: &[wgpu::RenderPassColorAttachment {
-                        view: &frame
-                            .texture
-                            .create_view(&wgpu::TextureViewDescriptor::default()),
+                        view: &view,
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color {
