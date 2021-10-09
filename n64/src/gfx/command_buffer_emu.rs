@@ -12,6 +12,7 @@ use crate::{
 use assert_into::AssertInto;
 use n64_math::{Color, Vec2, Vec3};
 use std::mem;
+use std::num::NonZeroU32;
 use wgpu::util::DeviceExt;
 use zerocopy::{AsBytes, FromBytes};
 
@@ -251,7 +252,7 @@ impl<'a> CommandBuffer<'a> {
                                 &wgpu::util::BufferInitDescriptor {
                                     label: None,
                                     contents: vertices.as_bytes(),
-                                    usage: wgpu::BufferUsage::VERTEX,
+                                    usage: wgpu::BufferUsages::VERTEX,
                                 },
                             ));
 
@@ -264,7 +265,7 @@ impl<'a> CommandBuffer<'a> {
                                             .map(|v| *v as u16)
                                             .collect::<Vec<u16>>()
                                             .as_bytes(),
-                                        usage: wgpu::BufferUsage::INDEX,
+                                        usage: wgpu::BufferUsages::INDEX,
                                     },
                                 ),
                             );
@@ -298,7 +299,7 @@ impl<'a> CommandBuffer<'a> {
                             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                                 label: None,
                                 contents: colored_rect_uniforms.as_bytes(),
-                                usage: wgpu::BufferUsage::COPY_SRC,
+                                usage: wgpu::BufferUsages::COPY_SRC,
                             });
 
                     encoder.copy_buffer_to_buffer(
@@ -318,7 +319,7 @@ impl<'a> CommandBuffer<'a> {
                             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                                 label: None,
                                 contents: textured_rect_uniforms.as_bytes(),
-                                usage: wgpu::BufferUsage::COPY_SRC,
+                                usage: wgpu::BufferUsages::COPY_SRC,
                             });
 
                     encoder.copy_buffer_to_buffer(
@@ -338,7 +339,7 @@ impl<'a> CommandBuffer<'a> {
                             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                                 label: None,
                                 contents: mesh_uniforms.as_bytes(),
-                                usage: wgpu::BufferUsage::COPY_SRC,
+                                usage: wgpu::BufferUsages::COPY_SRC,
                             });
 
                     encoder.copy_buffer_to_buffer(
@@ -353,8 +354,9 @@ impl<'a> CommandBuffer<'a> {
 
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                        attachment: &dst.tex_view,
+                    label: None,
+                    color_attachments: &[wgpu::RenderPassColorAttachment {
+                        view: &dst.tex_view,
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: if self.clear {
@@ -381,7 +383,10 @@ impl<'a> CommandBuffer<'a> {
                     for command in &self.cache.commands {
                         match command {
                             Command::ColoredRect { .. } => {
-                                render_pass.set_index_buffer(graphics.quad_index_buf.slice(..));
+                                render_pass.set_index_buffer(
+                                    graphics.quad_index_buf.slice(..),
+                                    wgpu::IndexFormat::Uint16,
+                                );
                                 render_pass
                                     .set_vertex_buffer(0, graphics.quad_vertex_buf.slice(..));
                                 render_pass.set_pipeline(&graphics.colored_rect.pipeline);
@@ -398,7 +403,10 @@ impl<'a> CommandBuffer<'a> {
                                 colored_rect_index += 1;
                             }
                             Command::TexturedRect { texture, .. } => {
-                                render_pass.set_index_buffer(graphics.quad_index_buf.slice(..));
+                                render_pass.set_index_buffer(
+                                    graphics.quad_index_buf.slice(..),
+                                    wgpu::IndexFormat::Uint16,
+                                );
                                 render_pass
                                     .set_vertex_buffer(0, graphics.quad_vertex_buf.slice(..));
                                 render_pass.set_pipeline(&graphics.textured_rect.pipeline);
@@ -433,6 +441,7 @@ impl<'a> CommandBuffer<'a> {
 
                                 render_pass.set_index_buffer(
                                     render_pass_index_buffers[*buffer_index].slice(..),
+                                    wgpu::IndexFormat::Uint16,
                                 );
                                 render_pass.set_vertex_buffer(
                                     0,
@@ -462,17 +471,18 @@ impl<'a> CommandBuffer<'a> {
             }
 
             encoder.copy_texture_to_buffer(
-                wgpu::TextureCopyView {
+                wgpu::ImageCopyTexture {
                     texture: &dst.tex,
                     mip_level: 0,
                     origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
+                    aspect: wgpu::TextureAspect::All,
                 },
-                wgpu::BufferCopyView {
+                wgpu::ImageCopyBuffer {
                     buffer: &dst.buffer,
-                    layout: wgpu::TextureDataLayout {
+                    layout: wgpu::ImageDataLayout {
                         offset: 0,
-                        bytes_per_row: 4 * self.out_tex.width as u32,
-                        rows_per_image: self.out_tex.height as u32,
+                        bytes_per_row: NonZeroU32::new(4 * self.out_tex.width as u32),
+                        rows_per_image: NonZeroU32::new(self.out_tex.height as u32),
                     },
                 },
                 dst.tex_extent,

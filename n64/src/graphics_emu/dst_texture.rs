@@ -12,14 +12,14 @@ impl DstTexture {
         let buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: (4 * width * height) as u64,
-            usage: wgpu::BufferUsage::MAP_READ | wgpu::BufferUsage::COPY_DST,
+            usage: wgpu::BufferUsages::MAP_READ | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
         let tex_extent = wgpu::Extent3d {
             width: width as u32,
             height: height as u32,
-            depth: 1,
+            depth_or_array_layers: 1,
         };
         let tex = device.create_texture(&wgpu::TextureDescriptor {
             label: None,
@@ -28,9 +28,9 @@ impl DstTexture {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: TEXUTRE_FORMAT,
-            usage: wgpu::TextureUsage::COPY_DST
-                | wgpu::TextureUsage::COPY_SRC
-                | wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+            usage: wgpu::TextureUsages::COPY_DST
+                | wgpu::TextureUsages::COPY_SRC
+                | wgpu::TextureUsages::RENDER_ATTACHMENT,
         });
         let tex_view = tex.create_view(&Default::default());
 

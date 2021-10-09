@@ -3,7 +3,7 @@
 use crate::gfx::Texture;
 use assert_into::AssertInto;
 use n64_math::Color;
-use std::{collections::HashMap, io::Read, mem};
+use std::{collections::HashMap, io::Read, mem, num::NonZeroU32};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_MESHES: u64 = 4096;
@@ -36,28 +36,31 @@ impl Mesh {
             entries: &[
                 wgpu::BindGroupLayoutEntry {
                     binding: 0,
-                    visibility: wgpu::ShaderStage::VERTEX,
-                    ty: wgpu::BindingType::StorageBuffer {
-                        dynamic: false,
-                        readonly: true,
+                    visibility: wgpu::ShaderStages::VERTEX,
+                    ty: wgpu::BindingType::Buffer {
+                        ty: wgpu::BufferBindingType::Storage { read_only: true },
+                        has_dynamic_offset: false,
                         min_binding_size: None,
                     },
                     count: None,
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
-                    visibility: wgpu::ShaderStage::FRAGMENT,
-                    ty: wgpu::BindingType::SampledTexture {
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Texture {
+                        sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                        view_dimension: wgpu::TextureViewDimension::D2,
                         multisampled: false,
-                        component_type: wgpu::TextureComponentType::Float,
-                        dimension: wgpu::TextureViewDimension::D2,
                     },
                     count: None,
                 },
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
-                    visibility: wgpu::ShaderStage::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler { comparison: false },
+                    visibility: wgpu::ShaderStages::FRAGMENT,
+                    ty: wgpu::BindingType::Sampler {
+                        comparison: false,
+                        filtering: false,
+                    },
                     count: None,
                 },
             ],
@@ -106,79 +109,84 @@ impl Mesh {
                 .collect::<Vec<_>>()
         };
 
-        let vs_module =
-            device.create_shader_module(wgpu::ShaderModuleSource::SpirV(vs_bytes.into()));
-        let fs_module =
-            device.create_shader_module(wgpu::ShaderModuleSource::SpirV(fs_bytes.into()));
+        let vs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: wgpu::ShaderSource::SpirV(vs_bytes.into()),
+        });
+        let fs_module = device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+            label: None,
+            source: wgpu::ShaderSource::SpirV(fs_bytes.into()),
+        });
 
         let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
-            vertex_stage: wgpu::ProgrammableStageDescriptor {
+            vertex: wgpu::VertexState {
                 module: &vs_module,
                 entry_point: "main",
-            },
-            fragment_stage: Some(wgpu::ProgrammableStageDescriptor {
-                module: &fs_module,
-                entry_point: "main",
-            }),
-            rasterization_state: Some(wgpu::RasterizationStateDescriptor {
-                front_face: wgpu::FrontFace::Ccw,
-                cull_mode: wgpu::CullMode::None,
-                clamp_depth: false,
-                depth_bias: 0,
-                depth_bias_slope_scale: 0.0,
-                depth_bias_clamp: 0.0,
-            }),
-            primitive_topology: wgpu::PrimitiveTopology::TriangleList,
-            color_states: &[wgpu::ColorStateDescriptor {
-                format: dst_tex_format,
-                color_blend: wgpu::BlendDescriptor {
-                    src_factor: wgpu::BlendFactor::SrcAlpha,
-                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                    operation: wgpu::BlendOperation::Add,
-                },
-                alpha_blend: wgpu::BlendDescriptor {
-                    src_factor: wgpu::BlendFactor::One,
-                    dst_factor: wgpu::BlendFactor::Zero,
-                    operation: wgpu::BlendOperation::Add,
-                },
-                write_mask: wgpu::ColorWrite::ALL,
-            }],
-            depth_stencil_state: None,
-            vertex_state: wgpu::VertexStateDescriptor {
-                index_format: wgpu::IndexFormat::Uint16,
-                vertex_buffers: &[wgpu::VertexBufferDescriptor {
-                    stride: 9 * mem::size_of::<f32>() as wgpu::BufferAddress,
-                    step_mode: wgpu::InputStepMode::Vertex,
+                buffers: &[wgpu::VertexBufferLayout {
+                    array_stride: 9 * mem::size_of::<f32>() as wgpu::BufferAddress,
+                    step_mode: wgpu::VertexStepMode::Vertex,
                     attributes: &[
-                        wgpu::VertexAttributeDescriptor {
-                            format: wgpu::VertexFormat::Float3,
+                        wgpu::VertexAttribute {
+                            format: wgpu::VertexFormat::Float32x3,
                             offset: 0,
                             shader_location: 0,
                         },
-                        wgpu::VertexAttributeDescriptor {
-                            format: wgpu::VertexFormat::Float2,
+                        wgpu::VertexAttribute {
+                            format: wgpu::VertexFormat::Float32x2,
                             offset: 3 * mem::size_of::<f32>() as u64,
                             shader_location: 1,
                         },
-                        wgpu::VertexAttributeDescriptor {
-                            format: wgpu::VertexFormat::Float4,
+                        wgpu::VertexAttribute {
+                            format: wgpu::VertexFormat::Float32x4,
                             offset: 5 * mem::size_of::<f32>() as u64,
                             shader_location: 2,
                         },
                     ],
                 }],
             },
-            sample_count: 1,
-            sample_mask: !0,
-            alpha_to_coverage_enabled: false,
+            primitive: wgpu::PrimitiveState {
+                topology: wgpu::PrimitiveTopology::TriangleList,
+                strip_index_format: None,
+                front_face: wgpu::FrontFace::Ccw,
+                cull_mode: None,
+                clamp_depth: false,
+                polygon_mode: wgpu::PolygonMode::Fill,
+                conservative: false,
+            },
+            depth_stencil: None,
+            multisample: wgpu::MultisampleState {
+                count: 1,
+                mask: !0,
+                alpha_to_coverage_enabled: false,
+            },
+            fragment: Some(wgpu::FragmentState {
+                module: &fs_module,
+                entry_point: "main",
+                targets: &[wgpu::ColorTargetState {
+                    format: dst_tex_format,
+                    blend: Some(wgpu::BlendState {
+                        color: wgpu::BlendComponent {
+                            src_factor: wgpu::BlendFactor::SrcAlpha,
+                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                            operation: wgpu::BlendOperation::Add,
+                        },
+                        alpha: wgpu::BlendComponent {
+                            src_factor: wgpu::BlendFactor::One,
+                            dst_factor: wgpu::BlendFactor::Zero,
+                            operation: wgpu::BlendOperation::Add,
+                        },
+                    }),
+                    write_mask: wgpu::ColorWrites::ALL,
+                }],
+            }),
         });
 
         let shader_storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
             size: MAX_MESHES * mem::size_of::<MeshUniforms>() as u64,
-            usage: wgpu::BufferUsage::STORAGE | wgpu::BufferUsage::COPY_DST,
+            usage: wgpu::BufferUsages::STORAGE | wgpu::BufferUsages::COPY_DST,
             mapped_at_creation: false,
         });
 
@@ -194,6 +202,7 @@ impl Mesh {
             lod_max_clamp: 100.0,
             compare: None,
             anisotropy_clamp: None,
+            border_color: None,
         });
 
         let texture_cache = HashMap::new();
@@ -238,7 +247,7 @@ impl Mesh {
         let tex_extent = wgpu::Extent3d {
             width: texture.width as u32,
             height: texture.height as u32,
-            depth: 1,
+            depth_or_array_layers: 1,
         };
         let tex = device.create_texture(&wgpu::TextureDescriptor {
             label: None,
@@ -247,7 +256,7 @@ impl Mesh {
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: tex_format,
-            usage: wgpu::TextureUsage::COPY_DST | wgpu::TextureUsage::SAMPLED,
+            usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
         });
         let tex_view = tex.create_view(&Default::default());
 
@@ -257,8 +266,7 @@ impl Mesh {
                 wgpu::BindGroupEntry {
                     binding: 0,
                     resource: wgpu::BindingResource::Buffer(
-                        self.shader_storage_buffer
-                            .slice(0..(MAX_MESHES * mem::size_of::<MeshUniforms>() as u64)),
+                        self.shader_storage_buffer.as_entire_buffer_binding(),
                     ),
                 },
                 wgpu::BindGroupEntry {
@@ -286,16 +294,17 @@ impl Mesh {
         }
 
         queue.write_texture(
-            wgpu::TextureCopyView {
+            wgpu::ImageCopyTexture {
                 texture: &tex,
                 mip_level: 0,
                 origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
+                aspect: wgpu::TextureAspect::All,
             },
             &buffer,
-            wgpu::TextureDataLayout {
+            wgpu::ImageDataLayout {
                 offset: 0,
-                bytes_per_row: 4 * texture.width as u32,
-                rows_per_image: texture.height as u32,
+                bytes_per_row: NonZeroU32::new(4 * texture.width as u32),
+                rows_per_image: NonZeroU32::new(texture.height as u32),
             },
             tex_extent,
         );

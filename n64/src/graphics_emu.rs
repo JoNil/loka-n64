@@ -99,7 +99,7 @@ impl Graphics {
 
         let keys_down = HashSet::new();
 
-        let instance = wgpu::Instance::new(wgpu::BackendBit::PRIMARY);
+        let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
 
         let (size, surface) = unsafe {
             let size = window.inner_size();
@@ -110,7 +110,8 @@ impl Graphics {
         let (adapter, device, queue) = futures_executor::block_on(async {
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
-                    power_preference: wgpu::PowerPreference::Default,
+                    power_preference: wgpu::PowerPreference::HighPerformance,
+                    force_fallback_adapter: false,
                     compatible_surface: Some(&surface),
                 })
                 .await
@@ -119,9 +120,9 @@ impl Graphics {
             let (device, queue) = adapter
                 .request_device(
                     &wgpu::DeviceDescriptor {
+                        label: None,
                         features: wgpu::Features::empty(),
                         limits: wgpu::Limits::default(),
-                        shader_validation: true,
                     },
                     None,
                 )
@@ -132,7 +133,7 @@ impl Graphics {
         });
 
         let swap_chain_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsage::OUTPUT_ATTACHMENT,
+            usage: wgpu::TextureUsages::OUTPUT_ATTACHMENT,
             format: wgpu::TextureFormat::Bgra8Unorm,
             width: size.width,
             height: size.height,
@@ -143,13 +144,13 @@ impl Graphics {
         let quad_vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
             contents: QUAD_VERTEX_DATA.as_bytes(),
-            usage: wgpu::BufferUsage::VERTEX,
+            usage: wgpu::BufferUsages::VERTEX,
         });
 
         let quad_index_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
             contents: QUAD_INDEX_DATA.as_bytes(),
-            usage: wgpu::BufferUsage::INDEX,
+            usage: wgpu::BufferUsages::INDEX,
         });
 
         let copy_tex = CopyTex::new(&device, &swap_chain_desc, video_mode);
@@ -284,7 +285,7 @@ impl Graphics {
             .create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: None,
                 contents: &self.copy_tex.src_buffer,
-                usage: wgpu::BufferUsage::COPY_SRC,
+                usage: wgpu::BufferUsages::COPY_SRC,
             });
 
         let render_command_buf = {
@@ -311,8 +312,9 @@ impl Graphics {
 
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                    color_attachments: &[wgpu::RenderPassColorAttachmentDescriptor {
-                        attachment: &frame.output.view,
+                    label: None,
+                    color_attachments: &[wgpu::RenderPassColorAttachment {
+                        view: &frame.output.view,
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -328,7 +330,8 @@ impl Graphics {
                 });
                 render_pass.set_pipeline(&self.copy_tex.pipeline);
                 render_pass.set_bind_group(0, &self.copy_tex.bind_group, &[]);
-                render_pass.set_index_buffer(self.quad_index_buf.slice(..));
+                render_pass
+                    .set_index_buffer(self.quad_index_buf.slice(..), wgpu::IndexFormat::Uint16);
                 render_pass.set_vertex_buffer(0, self.quad_vertex_buf.slice(..));
                 render_pass.draw_indexed(0..(QUAD_INDEX_DATA.len() as u32), 0, 0..1);
             }
