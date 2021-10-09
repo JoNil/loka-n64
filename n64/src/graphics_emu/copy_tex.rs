@@ -52,7 +52,7 @@ impl CopyTex {
             mipmap_filter: wgpu::FilterMode::Nearest,
             lod_min_clamp: -100.0,
             lod_max_clamp: 100.0,
-            compare: Some(wgpu::CompareFunction::Always),
+            compare: None,
             anisotropy_clamp: None,
             border_color: None,
         });
@@ -75,7 +75,7 @@ impl CopyTex {
                     visibility: wgpu::ShaderStages::FRAGMENT,
                     ty: wgpu::BindingType::Sampler {
                         filtering: true,
-                        comparison: true,
+                        comparison: false,
                     },
                     count: None,
                 },
