@@ -77,11 +77,9 @@ fn audio_thread(
 
     let config = device
         .supported_output_configs()?
-        .next()
+        .find(|config| config.channels() == 2)
         .expect("no supported config?!")
         .with_max_sample_rate();
-
-    assert!(config.channels() == 2);
 
     let params = InterpolationParameters {
         sinc_len: 64,
