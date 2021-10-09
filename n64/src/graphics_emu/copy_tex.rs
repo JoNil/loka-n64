@@ -14,7 +14,7 @@ pub(crate) struct CopyTex {
 impl CopyTex {
     pub(crate) fn new(
         device: &wgpu::Device,
-        swap_chain_desc: &wgpu::SwapChainDescriptor,
+        surface_format: wgpu::TextureFormat,
         video_mode: VideoMode,
     ) -> Self {
         let src_buffer = {
@@ -190,7 +190,7 @@ impl CopyTex {
                 module: &fs_module,
                 entry_point: "main",
                 targets: &[wgpu::ColorTargetState {
-                    format: swap_chain_desc.format,
+                    format: surface_format,
                     blend: Some(wgpu::BlendState::REPLACE),
                     write_mask: wgpu::ColorWrites::ALL,
                 }],

@@ -3,6 +3,7 @@ use colored_rect::ColoredRect;
 use copy_tex::CopyTex;
 use mesh::Mesh;
 use std::collections::HashSet;
+use std::num::NonZeroU32;
 use std::process::exit;
 use std::sync::atomic::{AtomicBool, Ordering};
 use std::sync::{Arc, Mutex};
@@ -66,11 +67,12 @@ pub struct Graphics {
     _instance: wgpu::Instance,
     _adapter: wgpu::Adapter,
 
-    pub(crate) surface: wgpu::Surface,
     pub(crate) device: Arc<wgpu::Device>,
     pub(crate) queue: wgpu::Queue,
-    pub(crate) swap_chain_desc: wgpu::SwapChainDescriptor,
-    pub(crate) swap_chain: wgpu::SwapChain,
+
+    pub(crate) surface: wgpu::Surface,
+    pub(crate) surface_format: wgpu::TextureFormat,
+    pub(crate) surface_config: wgpu::SurfaceConfiguration,
 
     pub(crate) quad_vertex_buf: wgpu::Buffer,
     pub(crate) quad_index_buf: wgpu::Buffer,
@@ -132,14 +134,17 @@ impl Graphics {
             (adapter, Arc::new(device), queue)
         });
 
-        let swap_chain_desc = wgpu::SwapChainDescriptor {
-            usage: wgpu::TextureUsages::OUTPUT_ATTACHMENT,
-            format: wgpu::TextureFormat::Bgra8Unorm,
+        let surface_format = surface.get_preferred_format(&adapter).unwrap();
+
+        let surface_config = wgpu::SurfaceConfiguration {
+            usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            format: surface_format,
             width: size.width,
             height: size.height,
-            present_mode: wgpu::PresentMode::Fifo,
+            present_mode: wgpu::PresentMode::Mailbox,
         };
-        let swap_chain = device.create_swap_chain(&surface, &swap_chain_desc);
+
+        surface.configure(&device, &surface_config);
 
         let quad_vertex_buf = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: None,
@@ -153,7 +158,7 @@ impl Graphics {
             usage: wgpu::BufferUsages::INDEX,
         });
 
-        let copy_tex = CopyTex::new(&device, &swap_chain_desc, video_mode);
+        let copy_tex = CopyTex::new(&device, surface_format, video_mode);
         let colored_rect = ColoredRect::new(&device, dst_texture::TEXUTRE_FORMAT);
         let textured_rect = TexturedRect::new(&device, dst_texture::TEXUTRE_FORMAT);
         let mesh = Mesh::new(&device, &queue, dst_texture::TEXUTRE_FORMAT);
@@ -180,11 +185,12 @@ impl Graphics {
             _instance: instance,
             _adapter: adapter,
 
-            surface,
             device,
             queue,
-            swap_chain_desc,
-            swap_chain,
+
+            surface,
+            surface_config,
+            surface_format,
 
             quad_vertex_buf,
             quad_index_buf,
@@ -211,11 +217,9 @@ impl Graphics {
                             event: WindowEvent::Resized(size),
                             ..
                         } => {
-                            self.swap_chain_desc.width = size.width;
-                            self.swap_chain_desc.height = size.height;
-                            self.swap_chain = self
-                                .device
-                                .create_swap_chain(&self.surface, &self.swap_chain_desc);
+                            self.surface_config.width = size.width;
+                            self.surface_config.height = size.height;
+                            self.surface.configure(&self.device, &self.surface_config);
                         }
                         event::Event::WindowEvent { event, .. } => match event {
                             WindowEvent::KeyboardInput {
@@ -276,8 +280,8 @@ impl Graphics {
         }
 
         let frame = self
-            .swap_chain
-            .get_current_frame()
+            .surface
+            .get_current_texture()
             .expect("Timeout when acquiring next swap chain texture");
 
         let temp_buf = self
@@ -294,18 +298,19 @@ impl Graphics {
                 .create_command_encoder(&wgpu::CommandEncoderDescriptor { label: None });
 
             encoder.copy_buffer_to_texture(
-                wgpu::BufferCopyView {
+                wgpu::ImageCopyBuffer {
                     buffer: &temp_buf,
-                    layout: wgpu::TextureDataLayout {
+                    layout: wgpu::ImageDataLayout {
                         offset: 0,
-                        bytes_per_row: 4 * self.video_mode.width() as u32,
-                        rows_per_image: self.video_mode.height() as u32,
+                        bytes_per_row: NonZeroU32::new(4 * self.video_mode.width() as u32),
+                        rows_per_image: NonZeroU32::new(self.video_mode.height() as u32),
                     },
                 },
-                wgpu::TextureCopyView {
+                wgpu::ImageCopyTexture {
                     texture: &self.copy_tex.src_tex,
                     mip_level: 0,
                     origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
+                    aspect: wgpu::TextureAspect::All,
                 },
                 self.copy_tex.src_tex_extent,
             );
@@ -314,7 +319,9 @@ impl Graphics {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: None,
                     color_attachments: &[wgpu::RenderPassColorAttachment {
-                        view: &frame.output.view,
+                        view: &frame
+                            .texture
+                            .create_view(&wgpu::TextureViewDescriptor::default()),
                         resolve_target: None,
                         ops: wgpu::Operations {
                             load: wgpu::LoadOp::Clear(wgpu::Color {
@@ -342,6 +349,8 @@ impl Graphics {
         let frame_end_time = current_time_us();
 
         self.queue.submit(Some(render_command_buf));
+
+        frame.present();
 
         frame_end_time
     }
