@@ -377,7 +377,7 @@ pub fn parse(out_dir: &str) -> Result<(), Box<dyn Error>> {
         let (map_tiles, map_tile_refs) = parse_map_tiles(
             out_dir,
             &path,
-            &name,
+            name,
             &uppercase_name,
             &map,
             &used_tile_ids,

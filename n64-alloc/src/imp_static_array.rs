@@ -19,7 +19,7 @@ pub(crate) unsafe fn alloc_pages(pages: Pages) -> Result<NonNull<u8>, AllocErr> 
     if end < SCRATCH_LEN_BYTES {
         let ptr = SCRATCH_HEAP.0[*offset..end].as_mut_ptr() as *mut u8;
         *offset = end;
-        NonNull::new(ptr).ok_or_else(|| AllocErr)
+        NonNull::new(ptr).ok_or(AllocErr)
     } else {
         Err(AllocErr)
     }

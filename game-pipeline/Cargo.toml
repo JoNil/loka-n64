@@ -13,6 +13,6 @@ hound = "3"
 image = { version = "0.23", default-features = false }
 meshopt = "0.1"
 n64-math = { path = "../n64-math" }
-png = { version = "0.16", default-features = false }
+png = { version = "0.17", default-features = false }
 tiled = { git = "https://github.com/JoNil/rs-tiled.git" }
-zerocopy = "0.3"
+zerocopy = "0.6"

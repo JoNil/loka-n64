@@ -13,7 +13,7 @@ use wgpu::util::DeviceExt;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
-    platform::desktop::EventLoopExtDesktop,
+    platform::run_return::EventLoopExtRunReturn,
     window::Window,
 };
 use zerocopy::{AsBytes, FromBytes};

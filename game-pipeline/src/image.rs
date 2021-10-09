@@ -19,13 +19,15 @@ pub(crate) fn load_png(
     let file = File::open(path.as_ref())
         .map_err(|e| format!("Unable to open {}: {}", path.as_ref().to_string_lossy(), e))?;
     let decoder = png::Decoder::new(file);
-    let (info, mut reader) = decoder.read_info()?;
-    let mut buf = vec![0; info.buffer_size()];
+    let mut reader = decoder.read_info()?;
+    let mut buf = vec![0; reader.output_buffer_size()];
     reader.next_frame(&mut buf)?;
 
-    if info.color_type != png::ColorType::RGBA
+    let info = reader.info();
+
+    if info.color_type != png::ColorType::Rgba
         || info.bit_depth != png::BitDepth::Eight
-        || info.buffer_size() != (4 * info.width * info.height) as usize
+        || reader.output_buffer_size() != (4 * info.width * info.height) as usize
     {
         return Err("Image format not supported!".into());
     }
@@ -34,7 +36,7 @@ pub(crate) fn load_png(
 
     if rotate_180 {
         let rotated_image = DynamicImage::ImageRgba8(image).rotate180();
-        image = rotated_image.into_rgba();
+        image = rotated_image.into_rgba8();
     }
 
     if let Some((width, height)) = size {
@@ -68,8 +70,8 @@ pub(crate) fn load_png(
                 FilterType::Nearest,
             );
 
-            let color_out = scaled_color_image.into_rgb();
-            let alpha_out = scaled_alpha_image.into_luma();
+            let color_out = scaled_color_image.into_rgb8();
+            let alpha_out = scaled_alpha_image.into_luma8();
 
             let mut out_buf = Vec::with_capacity((4 * width * height).assert_into());
 
