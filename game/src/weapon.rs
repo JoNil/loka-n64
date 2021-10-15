@@ -1,4 +1,4 @@
 pub enum Weapon {
-    Projectile,
+    Bullet,
     Missile,
 }

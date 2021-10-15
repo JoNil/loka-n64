@@ -6,7 +6,11 @@ use crate::entity::{Entity, OwnedEntity};
 use crate::missile_system::{self, MissileSystem};
 use crate::weapon::Weapon;
 use crate::{
-    camera::Camera, sound_mixer::SoundMixer, sounds::SHOOT_1, textures::SHIP_2_SMALL, world::World,
+    camera::Camera,
+    sound_mixer::SoundMixer,
+    sounds::{SHOOT_1, SHOOT_2},
+    textures::SHIP_2_SMALL,
+    world::World,
 };
 use n64::{current_time_us, Controllers};
 use n64_math::Vec2;
@@ -14,7 +18,7 @@ use n64_math::Vec2;
 const PLAYTER_START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_SPEED: f32 = 0.35;
 const SHIP_SHOOT_DELAY_MS: i32 = 150;
-const SHIP_SHOOT_MISSILE_DELAY_MS: i32 = 300;
+const SHIP_SHOOT_MISSILE_DELAY_MS: i32 = 1000;
 pub const SHIP_SIZE: Vec2 = Vec2::new(32.0 / 320.0, 32.0 / 240.0);
 
 pub struct Player {
@@ -96,7 +100,7 @@ impl Player {
             let now = current_time_us();
 
             match self.weapon {
-                Weapon::Projectile => {
+                Weapon::Bullet => {
                     if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS as i64 * 1000
                         && controllers.z()
                     {
@@ -113,11 +117,21 @@ impl Player {
                     if now - self.last_shoot_time > SHIP_SHOOT_MISSILE_DELAY_MS as i64 * 1000
                         && controllers.z()
                     {
-                        sound_mixer.play_sound(SHOOT_1.as_sound_data());
+                        sound_mixer.play_sound(SHOOT_2.as_sound_data());
                         missile_system.shoot_missile(
                             world,
                             movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(0.0, movable.speed.y() - 1.25),
+                        );
+                        missile_system.shoot_missile(
+                            world,
+                            movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                            Vec2::new(0.25, movable.speed.y() - 1.25),
+                        );
+                        missile_system.shoot_missile(
+                            world,
+                            movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                            Vec2::new(-0.25, movable.speed.y() - 1.25),
                         );
                         self.last_shoot_time = now;
                     }
