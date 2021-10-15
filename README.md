@@ -5,7 +5,7 @@
 ```bash
 rustup install nightly
 
-cargo +nightly install -f --git https://github.com/JoNil/cargo-n64.git --branch main cargo-n64
+cargo +nightly install -f --git https://github.com/JoNil/cargo-n64.git --branch master cargo-n64
 
 rustup default nightly
 rustup component add rust-src
