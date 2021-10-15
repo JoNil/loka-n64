@@ -13,6 +13,7 @@ use camera::Camera;
 use enemy_system::EnemySystem;
 use map::Map;
 use maps::MAP_1;
+use missile_system::MissileSystem;
 use models::SHIP_3_BODY;
 use n64::{
     self, current_time_us,
@@ -32,6 +33,7 @@ mod entity;
 mod font;
 mod map;
 mod maps;
+mod missile_system;
 mod model;
 mod models;
 mod player;
@@ -39,6 +41,7 @@ mod sound;
 mod sound_mixer;
 mod sounds;
 mod textures;
+mod weapon;
 mod world;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);
@@ -63,6 +66,7 @@ fn main() {
     let mut camera = Camera::new(start_pos);
     let mut player = Player::new(&mut world, start_pos);
     let mut bullet_system = BulletSystem::new();
+    let mut missile_system = MissileSystem::new();
     let mut enemy_system = EnemySystem::new();
     let mut command_buffer_cache = CommandBufferCache::new();
 
@@ -103,11 +107,13 @@ fn main() {
                 &mut world,
                 &n64.controllers,
                 &mut bullet_system,
+                &mut missile_system,
                 &mut sound_mixer,
                 &camera,
             );
 
             bullet_system.update(&mut world, &mut enemy_system, &mut player, &camera);
+            missile_system.update(&mut world, &mut enemy_system, &mut player, &camera);
 
             world.movable.simulate(dt);
 

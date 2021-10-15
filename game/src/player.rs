@@ -3,6 +3,8 @@ use crate::components::health::HealthComponent;
 use crate::components::movable::MovableComponent;
 use crate::components::sprite_drawable::SpriteDrawableComponent;
 use crate::entity::{Entity, OwnedEntity};
+use crate::missile_system::{self, MissileSystem};
+use crate::weapon::Weapon;
 use crate::{
     camera::Camera, sound_mixer::SoundMixer, sounds::SHOOT_1, textures::SHIP_2_SMALL, world::World,
 };
@@ -12,12 +14,14 @@ use n64_math::Vec2;
 const PLAYTER_START_POS: Vec2 = Vec2::new(0.5, 0.8);
 const SHIP_SPEED: f32 = 0.35;
 const SHIP_SHOOT_DELAY_MS: i32 = 150;
+const SHIP_SHOOT_MISSILE_DELAY_MS: i32 = 300;
 pub const SHIP_SIZE: Vec2 = Vec2::new(32.0 / 320.0, 32.0 / 240.0);
 
 pub struct Player {
     entity: OwnedEntity,
     score: i32,
     last_shoot_time: i64,
+    weapon: Weapon,
 }
 
 impl Player {
@@ -26,6 +30,7 @@ impl Player {
             entity: world.entity.create(),
             score: 0,
             last_shoot_time: 0,
+            weapon: Weapon::Missile,
         };
 
         world.movable.add(
@@ -66,6 +71,7 @@ impl Player {
         world: &mut World,
         controllers: &Controllers,
         bullet_system: &mut BulletSystem,
+        missile_system: &mut MissileSystem,
         sound_mixer: &mut SoundMixer,
         camera: &Camera,
     ) {
@@ -89,14 +95,33 @@ impl Player {
         if let Some(movable) = world.movable.lookup(&self.entity).copied() {
             let now = current_time_us();
 
-            if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS as i64 * 1000 && controllers.z() {
-                sound_mixer.play_sound(SHOOT_1.as_sound_data());
-                bullet_system.shoot_bullet(
-                    world,
-                    movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                    Vec2::new(0.0, movable.speed.y() - 1.25),
-                );
-                self.last_shoot_time = now;
+            match self.weapon {
+                Weapon::Projectile => {
+                    if now - self.last_shoot_time > SHIP_SHOOT_DELAY_MS as i64 * 1000
+                        && controllers.z()
+                    {
+                        sound_mixer.play_sound(SHOOT_1.as_sound_data());
+                        bullet_system.shoot_bullet(
+                            world,
+                            movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                            Vec2::new(0.0, movable.speed.y() - 1.25),
+                        );
+                        self.last_shoot_time = now;
+                    }
+                }
+                Weapon::Missile => {
+                    if now - self.last_shoot_time > SHIP_SHOOT_MISSILE_DELAY_MS as i64 * 1000
+                        && controllers.z()
+                    {
+                        sound_mixer.play_sound(SHOOT_1.as_sound_data());
+                        missile_system.shoot_missile(
+                            world,
+                            movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                            Vec2::new(0.0, movable.speed.y() - 1.25),
+                        );
+                        self.last_shoot_time = now;
+                    }
+                }
             }
         }
     }

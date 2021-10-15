@@ -53,6 +53,10 @@ impl OwnedEntity {
             },
         }
     }
+
+    pub fn entity(&self) -> Entity {
+        self.e
+    }
 }
 
 impl Drop for OwnedEntity {
