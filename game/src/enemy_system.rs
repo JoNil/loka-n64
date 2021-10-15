@@ -134,7 +134,6 @@ impl EnemySystem {
         }
     }
 
-    #[allow(dead_code)]
     #[inline]
     pub fn enemies(&self) -> &[Enemy] {
         &self.enemies

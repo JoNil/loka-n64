@@ -108,6 +108,7 @@ fn main() {
                 &n64.controllers,
                 &mut bullet_system,
                 &mut missile_system,
+                &enemy_system,
                 &mut sound_mixer,
                 &camera,
             );

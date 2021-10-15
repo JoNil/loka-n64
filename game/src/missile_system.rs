@@ -1,5 +1,5 @@
 use crate::components::box_drawable::BoxDrawableComponent;
-use crate::components::movable::MovableComponent;
+use crate::components::movable::{self, MovableComponent};
 use crate::enemy_system::EnemySystem;
 use crate::entity::{Entity, OwnedEntity};
 use crate::{camera::Camera, world::World, Player, SHIP_SIZE};
@@ -10,7 +10,7 @@ const MISSILE_SIZE: Vec2 = Vec2::new(4.0 * 0.00825, 4.0 * 0.00825);
 
 struct Missile {
     entity: OwnedEntity,
-    target: Entity,
+    target: Option<Entity>,
 }
 
 pub struct MissileSystem {
@@ -24,7 +24,13 @@ impl MissileSystem {
         }
     }
 
-    pub fn shoot_missile(&mut self, world: &mut World, pos: Vec2, speed: Vec2) {
+    pub fn shoot_missile(
+        &mut self,
+        world: &mut World,
+        pos: Vec2,
+        speed: Vec2,
+        target: Option<Entity>,
+    ) {
         let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
         let entity = world.entity.create();
@@ -43,8 +49,6 @@ impl MissileSystem {
             },
         );
 
-        let target = entity.entity();
-
         self.missiles.push(Missile { entity, target });
     }
 
@@ -60,7 +64,17 @@ impl MissileSystem {
         let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
         for (i, missile) in self.missiles.iter_mut().enumerate() {
-            if let Some(movable) = world.movable.lookup(&missile.entity) {
+            let target_pos = missile.target.and_then(|target| world.movable.pos(&target));
+
+            if let Some(movable) = world.movable.lookup_mut(&missile.entity) {
+                if let Some(target_pos) = target_pos {
+                    let towords_target = (target_pos - movable.pos).normalize();
+                    let speed_dir = movable.speed.normalize();
+                    let new_speed_dir = (0.2 * towords_target + 0.8 * speed_dir).normalize();
+                    let new_speed = new_speed_dir * movable.speed.length();
+                    movable.speed = new_speed;
+                }
+
                 let mut delete = false;
                 let missile_bb = Aabb2::from_center_size(movable.pos, MISSILE_SIZE);
 

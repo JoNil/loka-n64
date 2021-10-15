@@ -1,7 +1,8 @@
 use crate::bullet_system::BulletSystem;
 use crate::components::health::HealthComponent;
-use crate::components::movable::MovableComponent;
+use crate::components::movable::{self, MovableComponent};
 use crate::components::sprite_drawable::SpriteDrawableComponent;
+use crate::enemy_system::{self, EnemySystem};
 use crate::entity::{Entity, OwnedEntity};
 use crate::missile_system::{self, MissileSystem};
 use crate::weapon::Weapon;
@@ -12,6 +13,7 @@ use crate::{
     textures::SHIP_2_SMALL,
     world::World,
 };
+use alloc::vec::Vec;
 use n64::{current_time_us, Controllers};
 use n64_math::Vec2;
 
@@ -76,6 +78,7 @@ impl Player {
         controllers: &Controllers,
         bullet_system: &mut BulletSystem,
         missile_system: &mut MissileSystem,
+        enemy_system: &EnemySystem,
         sound_mixer: &mut SoundMixer,
         camera: &Camera,
     ) {
@@ -118,20 +121,46 @@ impl Player {
                         && controllers.z()
                     {
                         sound_mixer.play_sound(SHOOT_2.as_sound_data());
+
+                        let player_pos = movable.pos;
+
+                        let mut distances = enemy_system
+                            .enemies()
+                            .iter()
+                            .filter_map(|e| {
+                                if let Some(pos) = world.movable.pos(e.entity()) {
+                                    Some((pos, e))
+                                } else {
+                                    None
+                                }
+                            })
+                            .map(|(pos, e)| ((player_pos - pos).length(), e))
+                            .take(3)
+                            .collect::<Vec<_>>();
+
+                        distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+                        let target_1 = distances.get(0).map(|(d, e)| *e);
+                        let target_2 = distances.get(1).map(|(d, e)| *e);
+                        let target_3 = distances.get(2).map(|(d, e)| *e);
+
                         missile_system.shoot_missile(
                             world,
                             movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                            Vec2::new(0.0, movable.speed.y() - 1.25),
+                            Vec2::new(0.0, movable.speed.y() - 0.5),
+                            target_1.map(|e| *e.entity()),
                         );
                         missile_system.shoot_missile(
                             world,
                             movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                            Vec2::new(0.25, movable.speed.y() - 1.25),
+                            Vec2::new(0.15, movable.speed.y() - 0.5),
+                            target_2.map(|e| *e.entity()),
                         );
                         missile_system.shoot_missile(
                             world,
                             movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                            Vec2::new(-0.25, movable.speed.y() - 1.25),
+                            Vec2::new(-0.15, movable.speed.y() - 0.5),
+                            target_3.map(|e| *e.entity()),
                         );
                         self.last_shoot_time = now;
                     }
