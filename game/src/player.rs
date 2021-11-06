@@ -135,10 +135,9 @@ impl Player {
                                 }
                             })
                             .map(|(pos, e)| ((player_pos - pos).length(), e))
-                            .take(3)
                             .collect::<Vec<_>>();
 
-                        distances.sort_by(|a, b| b.0.partial_cmp(&a.0).unwrap());
+                        distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
                         let target_1 = distances.get(0).map(|(d, e)| *e);
                         let target_2 = distances.get(1).map(|(d, e)| *e);

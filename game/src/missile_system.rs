@@ -70,7 +70,7 @@ impl MissileSystem {
                 if let Some(target_pos) = target_pos {
                     let towords_target = (target_pos - movable.pos).normalize();
                     let speed_dir = movable.speed.normalize();
-                    let new_speed_dir = (0.2 * towords_target + 0.8 * speed_dir).normalize();
+                    let new_speed_dir = (0.05 * towords_target + 0.95 * speed_dir).normalize();
                     let new_speed = new_speed_dir * movable.speed.length();
                     movable.speed = new_speed;
                 }
