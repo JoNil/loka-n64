@@ -6,6 +6,8 @@
 extern crate alloc;
 
 pub mod ai;
+pub mod ed;
+pub mod pi;
 pub mod rdp;
 pub mod si;
 pub mod sys;
