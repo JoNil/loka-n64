@@ -88,7 +88,7 @@ fn main() {
             last_frame_begin_time = frame_begin_time;
         }
 
-        n64::debug("test test test test test test test test test\r\n");
+        n64::debugln!("test test test test test test test test test");
 
         {
             // Update

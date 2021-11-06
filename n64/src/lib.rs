@@ -2,6 +2,8 @@
 
 extern crate alloc;
 
+use core::fmt;
+
 pub use audio::Audio;
 pub use controllers::Controllers;
 pub use framebuffer::{slow_cpu_clear, Framebuffer};
@@ -82,16 +84,37 @@ cfg_if::cfg_if! {
     }
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(target_vendor = "nintendo64")] {
-        #[inline]
-        pub fn debug(s: &str) {
-            n64_sys::ed::usb_write(s.as_bytes());
-        }
-    } else {
-        #[inline]
-        pub fn debug(s: &str) {
-            println!("{}", s);
-        }
+pub struct DebugWrite;
+
+#[cfg(target_vendor = "nintendo64")]
+impl fmt::Write for DebugWrite {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        n64_sys::ed::usb_write(s.as_bytes());
+        Ok(())
     }
+}
+
+#[cfg(not(target_vendor = "nintendo64"))]
+impl fmt::Write for DebugWrite {
+    fn write_str(&mut self, s: &str) -> fmt::Result {
+        print!("{}", s);
+        Ok(())
+    }
+}
+
+#[macro_export]
+macro_rules! debug {
+    ($($arg:tt)*) => {
+        <$crate::DebugWrite as core::fmt::Write>::write_fmt(&mut $crate::DebugWrite, format_args!($($arg)*)).ok()
+    };
+}
+
+#[macro_export]
+macro_rules! debugln {
+    ($fmt:expr) => {
+        $crate::debug!(concat!($fmt, "\r\n"))
+    };
+    ($fmt:expr, $($arg:tt)*) => {
+        $crate::debug!(concat!($fmt, "\r\n"), $($arg)*)
+    };
 }
