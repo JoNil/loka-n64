@@ -45,6 +45,12 @@ impl N64 {
         let graphics = Graphics::new(video_mode, &mut framebuffer);
         let controllers = Controllers::new();
 
+        #[cfg(target_vendor = "nintendo64")]
+        n64_sys::pi::init();
+
+        #[cfg(target_vendor = "nintendo64")]
+        n64_sys::ed::init();
+
         N64 {
             audio,
             framebuffer,
@@ -72,6 +78,20 @@ cfg_if::cfg_if! {
         #[inline]
         pub fn current_time_us() -> i64 {
             (BEGINNING.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i64
+        }
+    }
+}
+
+cfg_if::cfg_if! {
+    if #[cfg(target_vendor = "nintendo64")] {
+        #[inline]
+        pub fn debug(s: &str) {
+            n64_sys::ed::usb_write(s.as_bytes());
+        }
+    } else {
+        #[inline]
+        pub fn debug(s: &str) {
+            println!("{}", s);
         }
     }
 }

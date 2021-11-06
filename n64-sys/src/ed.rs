@@ -2,6 +2,9 @@ use crate::pi;
 
 const REG_BASE: usize = 0xBF80_0000;
 
+const REG_SYS_CFG: u16 = 0x8000;
+const REG_KEY: u16 = 0x8004;
+
 const REG_USB_CFG: u16 = 0x0004;
 const REG_USB_DAT: u16 = 0x0400;
 
@@ -28,12 +31,15 @@ fn register_write(reg: u16, val: u32) {
 }
 
 fn register_read(reg: u16) -> u32 {
-    let val = 0;
+    let mut val = 0;
     pi::read(&mut val as *mut u32 as _, 4, REG_BASE + reg as usize);
     return val;
 }
 
 pub fn init() {
+    register_write(REG_KEY, 0xAA55);
+    register_write(REG_SYS_CFG, 0);
+
     let mut buff = [0u8; 512];
     register_write(REG_USB_CFG, USB_CMD_RD_NOP); //turn off usb r/w activity
 
@@ -54,7 +60,7 @@ fn can_write() -> bool {
 }
 
 fn usb_busy() -> bool {
-    let timeout = 0;
+    let mut timeout = 0;
 
     while (register_read(REG_USB_CFG) & USB_STA_ACT) != 0 {
         timeout += 1;
@@ -98,7 +104,7 @@ pub fn usb_read(dst: &mut [u8]) -> bool {
 
 pub fn usb_write(src: &[u8]) -> bool {
     let mut remaining = src.len();
-    let src = src.as_ptr();
+    let mut src = src.as_ptr();
 
     register_write(REG_USB_CFG, USB_CMD_WR_NOP);
 

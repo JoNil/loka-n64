@@ -19,6 +19,18 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
 }
 
 #[inline]
+pub unsafe fn data_cache_hit_writeback_invalidate_single(addr: usize) {
+    let mut addr = addr & 0xffff_fffc;
+
+    llvm_asm!("cache $0, ($1)"
+    :
+    : "i" (0x15), "r" (addr)
+    :
+    : "volatile"
+    );
+}
+
+#[inline]
 pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
     let mut addr = (block.as_ptr() as usize) & 0xffff_fffc;
     let mut len = block.len() * size_of::<T>();
@@ -34,6 +46,18 @@ pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
         len -= 4;
         addr += 4;
     }
+}
+
+#[inline]
+pub unsafe fn data_cache_hit_writeback_single(addr: usize) {
+    let mut addr = addr & 0xffff_fffc;
+
+    llvm_asm!("cache $0, ($1)"
+    :
+    : "i" (0x19), "r" (addr)
+    :
+    : "volatile"
+    );
 }
 
 #[inline]
