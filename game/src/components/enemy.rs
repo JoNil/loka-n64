@@ -3,7 +3,7 @@ use super::{
     sprite_drawable::SpriteDrawableComponent,
 };
 use crate::{
-    entity::Entity, impl_system, sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World,
+    entity::Entity, impl_component, sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World,
 };
 use n64::{current_time_us, gfx::Texture};
 use n64_math::Vec2;
@@ -43,6 +43,8 @@ pub struct Enemy {
     waypoint_step: f32,
 }
 
+impl_component!(Enemy);
+
 pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
     let entity = world.entity.create();
     world.movable.add(
@@ -71,35 +73,31 @@ pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
     );
 }
 
-impl System {
-    pub fn update(&mut self, world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
-        let now = current_time_us();
+pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
+    let now = current_time_us();
 
-        for (enemy, entity) in self.components_and_entities_mut() {
-            if !world.health.is_alive(entity) {
-                sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
-                world.player.add_score(1000);
-                entity.despawn();
-            }
-
-            if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
-                if let (Some(movable), Some(sprite_drawable)) = (
-                    world.movable.lookup(entity).copied(),
-                    world.sprite_drawable.lookup(entity).copied(),
-                ) {
-                    //sound_mixer.play_sound(SHOOT_0.as_sound_data());
-                    shoot_bullet_enemy(
-                        world,
-                        movable.pos + Vec2::new(0.0, sprite_drawable.size.y() / 2.0),
-                        Vec2::new(0.0, 1.25),
-                    );
-                    enemy.last_shoot_time = now;
-                }
-            }
-
-            ai(world, enemy, entity, dt);
+    for (enemy, entity) in world.enemy.components_and_entities_mut() {
+        if !world.health.is_alive(entity) {
+            sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
+            world.player.add_score(1000);
+            entity.despawn();
         }
+
+        if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
+            if let (Some(movable), Some(sprite_drawable)) = (
+                world.movable.lookup(entity).copied(),
+                world.sprite_drawable.lookup(entity).copied(),
+            ) {
+                //sound_mixer.play_sound(SHOOT_0.as_sound_data());
+                shoot_bullet_enemy(
+                    world,
+                    movable.pos + Vec2::new(0.0, sprite_drawable.size.y() / 2.0),
+                    Vec2::new(0.0, 1.25),
+                );
+                enemy.last_shoot_time = now;
+            }
+        }
+
+        ai(world, enemy, entity, dt);
     }
 }
-
-impl_system!(Enemy);

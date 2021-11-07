@@ -12,16 +12,16 @@ pub trait Remover {
 }
 
 #[macro_export]
-macro_rules! impl_system {
+macro_rules! impl_component {
     ($component_ident: ident) => {
         #[allow(dead_code)]
-        pub struct System {
+        pub struct Storage {
             components: alloc::vec::Vec<$component_ident>,
             entities: alloc::vec::Vec<crate::entity::Entity>,
             map: hashbrown::HashMap<crate::entity::Entity, usize, n64_math::BuildFnvHasher>,
         }
 
-        impl System {
+        impl Storage {
             #[allow(dead_code)]
             pub fn new() -> Self {
                 Self {
@@ -94,7 +94,7 @@ macro_rules! impl_system {
             }
         }
 
-        impl crate::components::Remover for System {
+        impl crate::components::Remover for Storage {
             fn remove(&mut self, entity: crate::entity::Entity) {
                 if let Some(&index) = self.map.get(&entity) {
                     let last = self.components.len() - 1;

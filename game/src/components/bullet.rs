@@ -1,4 +1,4 @@
-use crate::{camera::Camera, impl_system, world::World};
+use crate::{camera::Camera, impl_component, world::World};
 use n64_math::{Aabb2, Color, Vec2};
 
 use super::{box_drawable::BoxDrawableComponent, movable::MovableComponent, player::SHIP_SIZE};
@@ -10,6 +10,8 @@ struct Bullet {
     can_hit_player: bool,
     can_hit_enemy: bool,
 }
+
+impl_component!(Bullet);
 
 pub fn shoot_bullet(world: &mut World, pos: Vec2, speed: Vec2) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
@@ -57,61 +59,55 @@ pub fn shoot_bullet_enemy(world: &mut World, pos: Vec2, speed: Vec2) {
     );
 }
 
-impl System {
-    pub fn update(&mut self, world: &mut World, camera: &Camera) {
-        let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
+pub fn update(world: &mut World, camera: &Camera) {
+    let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
-        for (bullet, entity) in self.components_and_entities() {
-            if let Some(movable) = world.movable.lookup(entity) {
-                let mut delete = false;
-                let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
+    for (bullet, entity) in world.bullet.components_and_entities() {
+        if let Some(movable) = world.movable.lookup(entity) {
+            let mut delete = false;
+            let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 
-                if !bullet_bb.collides(&camera_bb) {
-                    delete = true;
-                }
+            if !bullet_bb.collides(&camera_bb) {
+                delete = true;
+            }
 
-                if bullet.can_hit_enemy {
-                    for enemy_entity in world.enemy.entities() {
-                        if let Some(sprite_drawable) = world.sprite_drawable.lookup(*enemy_entity) {
-                            let enemy_bb = Aabb2::from_center_size(
-                                world.movable.pos(*enemy_entity).unwrap_or_else(Vec2::zero),
-                                sprite_drawable.size,
-                            );
-
-                            if bullet_bb.collides(&enemy_bb) {
-                                world.health.damage(
-                                    *enemy_entity,
-                                    50 + (n64_math::random_f32() * 20.0) as i32,
-                                );
-                                delete = true;
-                            }
-                        }
-                    }
-                }
-
-                if bullet.can_hit_player {
-                    for player_entity in world.player.entities() {
-                        let player_bb = Aabb2::from_center_size(
-                            world.movable.pos(*player_entity).unwrap_or_else(Vec2::zero),
-                            SHIP_SIZE,
+            if bullet.can_hit_enemy {
+                for enemy_entity in world.enemy.entities() {
+                    if let Some(sprite_drawable) = world.sprite_drawable.lookup(*enemy_entity) {
+                        let enemy_bb = Aabb2::from_center_size(
+                            world.movable.pos(*enemy_entity).unwrap_or_else(Vec2::zero),
+                            sprite_drawable.size,
                         );
 
-                        if bullet_bb.collides(&player_bb) {
-                            world.health.damage(
-                                *player_entity,
-                                50 + (n64_math::random_f32() * 20.0) as i32,
-                            );
+                        if bullet_bb.collides(&enemy_bb) {
+                            world
+                                .health
+                                .damage(*enemy_entity, 50 + (n64_math::random_f32() * 20.0) as i32);
                             delete = true;
                         }
                     }
                 }
+            }
 
-                if delete {
-                    entity.despawn();
+            if bullet.can_hit_player {
+                for player_entity in world.player.entities() {
+                    let player_bb = Aabb2::from_center_size(
+                        world.movable.pos(*player_entity).unwrap_or_else(Vec2::zero),
+                        SHIP_SIZE,
+                    );
+
+                    if bullet_bb.collides(&player_bb) {
+                        world
+                            .health
+                            .damage(*player_entity, 50 + (n64_math::random_f32() * 20.0) as i32);
+                        delete = true;
+                    }
                 }
+            }
+
+            if delete {
+                entity.despawn();
             }
         }
     }
 }
-
-impl_system!(Bullet);
