@@ -9,7 +9,11 @@
 extern crate alloc;
 
 use crate::components::{
-    box_drawable, bullet, enemy, health, missile, movable, player, sprite_drawable,
+    box_drawable, bullet, enemy,
+    health::{self, Health},
+    missile, movable,
+    player::{self, Player},
+    sprite_drawable,
 };
 use camera::Camera;
 use components::player::spawn_player;
@@ -97,20 +101,11 @@ fn main() {
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
             bullet::update(&mut world, &camera);
             missile::update(&mut world, &camera);
-            movable::simulate(&mut world.movable, dt);
+            movable::simulate(&mut world, dt);
 
-            world.entities.gc(&mut [
-                &mut world.movable,
-                &mut world.box_drawable,
-                &mut world.sprite_drawable,
-                &mut world.health,
-                &mut world.bullet,
-                &mut world.missile,
-                &mut world.enemy,
-                &mut world.player,
-            ]);
+            world.gc();
 
-            if !health::is_alive(&world.health, player) {
+            if !health::is_alive(&world, player) {
                 break;
             }
         }
@@ -132,20 +127,8 @@ fn main() {
                 cb.clear();
 
                 map.render(&mut cb, VIDEO_MODE, &camera);
-                box_drawable::draw(
-                    &world.box_drawable,
-                    &world.movable,
-                    &mut cb,
-                    VIDEO_MODE,
-                    &camera,
-                );
-                sprite_drawable::draw(
-                    &world.sprite_drawable,
-                    &world.movable,
-                    &mut cb,
-                    VIDEO_MODE,
-                    &camera,
-                );
+                box_drawable::draw(&world, &mut cb, VIDEO_MODE, &camera);
+                sprite_drawable::draw(&world, &mut cb, VIDEO_MODE, &camera);
 
                 {
                     let ship_3 = SHIP_3_BODY.as_model_data();
@@ -181,13 +164,16 @@ fn main() {
 
                 font::draw_number(
                     &mut cb,
-                    world.player.lookup(player).map(|p| p.score).unwrap_or(0),
+                    world.lookup::<Player>(player).map(|p| p.score).unwrap_or(0),
                     Vec2::new(300.0, 10.0),
                     0x0000efff,
                 );
                 font::draw_number(
                     &mut cb,
-                    world.health.lookup(player).map(|hc| hc.health).unwrap_or(0),
+                    world
+                        .lookup::<Health>(player)
+                        .map(|hc| hc.health)
+                        .unwrap_or(0),
                     Vec2::new(300.0, 215.0),
                     0xaf0000ff,
                 );

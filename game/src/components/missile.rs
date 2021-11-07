@@ -1,14 +1,11 @@
 use super::{
-    box_drawable::{self, BoxDrawable},
+    box_drawable::BoxDrawable,
+    enemy::Enemy,
     health,
     movable::{self, Movable},
+    sprite_drawable::SpriteDrawable,
 };
-use crate::{
-    camera::Camera,
-    entity::{Entity, EntitySystem},
-    impl_component,
-    world::World,
-};
+use crate::{camera::Camera, entity::Entity, world::World};
 use n64_math::{Aabb2, Color, Vec2};
 
 const MISSILE_SIZE: Vec2 = Vec2::new(4.0 * 0.00825, 4.0 * 0.00825);
@@ -18,46 +15,36 @@ struct Missile {
     target: Option<Entity>,
 }
 
-impl_component!(Missile);
-
-pub fn shoot_missile(
-    entity_system: &mut EntitySystem,
-    movable: &mut movable::Storage,
-    box_drawable: &mut box_drawable::Storage,
-    missile: &mut Storage,
-    pos: Vec2,
-    speed: Vec2,
-    target: Option<Entity>,
-) {
+pub fn shoot_missile(world: &mut World, pos: Vec2, speed: Vec2, target: Option<Entity>) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-    let entity = entity_system.create();
-    movable.add(
+    let entity = world.entities.create();
+    world.add(
         entity,
         Movable {
             pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
         },
     );
-    box_drawable.add(
+    world.add(
         entity,
         BoxDrawable {
             size: MISSILE_SIZE,
             color: Color::from_rgb(1.0, 0.4, 0.4),
         },
     );
-    missile.add(entity, Missile { target });
+    world.add(entity, Missile { target });
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
-    for (missile, entity) in world.missile.components_and_entities() {
+    for (missile, entity) in world.components_and_entities::<Missile>() {
         let target_pos = missile
             .target
-            .and_then(|target| movable::pos(&world.movable, target));
+            .and_then(|target| movable::pos(world, target));
 
-        if let Some(movable) = world.movable.lookup_mut(entity) {
+        if let Some(movable) = world.lookup_mut::<Movable>(entity) {
             if let Some(target_pos) = target_pos {
                 let towords_target = (target_pos - movable.pos).normalize();
                 let speed_dir = movable.speed.normalize();
@@ -73,16 +60,16 @@ pub fn update(world: &mut World, camera: &Camera) {
                 delete = true;
             }
 
-            for enemy_entity in world.enemy.entities() {
-                if let Some(sprite_drawable) = world.sprite_drawable.lookup(*enemy_entity) {
+            for enemy_entity in world.entities::<Enemy>() {
+                if let Some(sprite_drawable) = world.lookup::<SpriteDrawable>(*enemy_entity) {
                     let enemy_bb = Aabb2::from_center_size(
-                        movable::pos(&world.movable, *enemy_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(world, *enemy_entity).unwrap_or_else(Vec2::zero),
                         sprite_drawable.size,
                     );
 
                     if missile_bb.collides(&enemy_bb) {
                         health::damage(
-                            &mut world.health,
+                            world,
                             *enemy_entity,
                             100 + (n64_math::random_f32() * 50.0) as i32,
                         );

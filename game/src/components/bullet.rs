@@ -1,10 +1,12 @@
 use super::{
-    box_drawable::{self, BoxDrawable},
+    box_drawable::BoxDrawable,
+    enemy::Enemy,
     health,
     movable::{self, Movable},
-    player::SHIP_SIZE,
+    player::{Player, SHIP_SIZE},
+    sprite_drawable::SpriteDrawable,
 };
-use crate::{camera::Camera, entity::EntitySystem, impl_component, world::World};
+use crate::{camera::Camera, world::World};
 use n64_math::{Aabb2, Color, Vec2};
 
 const BULLET_SIZE: Vec2 = Vec2::new(0.00825, 0.00825);
@@ -15,34 +17,25 @@ struct Bullet {
     can_hit_enemy: bool,
 }
 
-impl_component!(Bullet);
-
-pub fn shoot_bullet(
-    entity_system: &mut EntitySystem,
-    movable: &mut movable::Storage,
-    box_drawable: &mut box_drawable::Storage,
-    bullet: &mut Storage,
-    pos: Vec2,
-    speed: Vec2,
-) {
+pub fn shoot_bullet(world: &mut World, pos: Vec2, speed: Vec2) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-    let entity = entity_system.create();
-    movable.add(
+    let entity = world.entities.create();
+    world.add(
         entity,
         Movable {
             pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
         },
     );
-    box_drawable.add(
+    world.add(
         entity,
         BoxDrawable {
             size: BULLET_SIZE,
             color: Color::from_rgb(0.2, 0.2, 0.9),
         },
     );
-    bullet.add(
+    world.add(
         entity,
         Bullet {
             can_hit_player: false,
@@ -51,24 +44,17 @@ pub fn shoot_bullet(
     );
 }
 
-pub fn shoot_bullet_enemy(
-    entity_system: &mut EntitySystem,
-    movable: &mut movable::Storage,
-    box_drawable: &mut box_drawable::Storage,
-    bullet: &mut Storage,
-    pos: Vec2,
-    speed: Vec2,
-) {
-    let entity = entity_system.create();
-    movable.add(entity, Movable { pos, speed });
-    box_drawable.add(
+pub fn shoot_bullet_enemy(world: &mut World, pos: Vec2, speed: Vec2) {
+    let entity = world.entities.create();
+    world.add(entity, Movable { pos, speed });
+    world.add(
         entity,
         BoxDrawable {
             size: BULLET_SIZE,
             color: Color::from_rgb(0.9, 0.2, 0.2),
         },
     );
-    bullet.add(
+    world.add(
         entity,
         Bullet {
             can_hit_player: true,
@@ -80,8 +66,8 @@ pub fn shoot_bullet_enemy(
 pub fn update(world: &mut World, camera: &Camera) {
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
-    for (bullet, entity) in world.bullet.components_and_entities() {
-        if let Some(movable) = world.movable.lookup(entity) {
+    for (bullet, entity) in world.components_and_entities::<Bullet>() {
+        if let Some(movable) = world.lookup::<Movable>(entity) {
             let mut delete = false;
             let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
 
@@ -90,16 +76,16 @@ pub fn update(world: &mut World, camera: &Camera) {
             }
 
             if bullet.can_hit_enemy {
-                for enemy_entity in world.enemy.entities() {
-                    if let Some(sprite_drawable) = world.sprite_drawable.lookup(*enemy_entity) {
+                for enemy_entity in world.entities::<Enemy>() {
+                    if let Some(sprite_drawable) = world.lookup::<SpriteDrawable>(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
-                            movable::pos(&world.movable, *enemy_entity).unwrap_or_else(Vec2::zero),
+                            movable::pos(&world, *enemy_entity).unwrap_or_else(Vec2::zero),
                             sprite_drawable.size,
                         );
 
                         if bullet_bb.collides(&enemy_bb) {
                             health::damage(
-                                &mut world.health,
+                                world,
                                 *enemy_entity,
                                 50 + (n64_math::random_f32() * 20.0) as i32,
                             );
@@ -110,15 +96,15 @@ pub fn update(world: &mut World, camera: &Camera) {
             }
 
             if bullet.can_hit_player {
-                for player_entity in world.player.entities() {
+                for player_entity in world.entities::<Player>() {
                     let player_bb = Aabb2::from_center_size(
-                        movable::pos(&world.movable, *player_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(world, *player_entity).unwrap_or_else(Vec2::zero),
                         SHIP_SIZE,
                     );
 
                     if bullet_bb.collides(&player_bb) {
                         health::damage(
-                            &mut world.health,
+                            world,
                             *player_entity,
                             50 + (n64_math::random_f32() * 20.0) as i32,
                         );

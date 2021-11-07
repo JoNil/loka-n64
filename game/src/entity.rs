@@ -1,4 +1,4 @@
-use crate::components::Remover;
+use crate::type_map::TypeMap;
 use alloc::{collections::VecDeque, vec::Vec};
 use core::num::Wrapping;
 use spin::{Mutex, MutexGuard, Once};
@@ -77,7 +77,7 @@ impl EntitySystem {
         self.generation[entity.index() as usize] == entity.generation()
     }
 
-    pub fn gc(&mut self, removers: &mut [&mut dyn Remover]) {
+    pub fn gc(&mut self, components: &mut TypeMap, removers: &[fn(&mut TypeMap, Entity)]) {
         let mut remove_list = entity_remove_list();
 
         for entity in remove_list.iter() {
@@ -86,8 +86,8 @@ impl EntitySystem {
                 self.generation[index as usize] += Wrapping(1);
                 self.free_indices.push_back(index);
 
-                for remover in removers.iter_mut() {
-                    remover.remove(*entity);
+                for remover in removers.iter() {
+                    remover(components, *entity);
                 }
             }
         }

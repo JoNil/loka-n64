@@ -5,7 +5,7 @@ use super::{
     player,
     sprite_drawable::SpriteDrawable,
 };
-use crate::{impl_component, sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World};
+use crate::{sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World};
 use n64::{current_time_us, gfx::Texture};
 use n64_math::Vec2;
 
@@ -24,26 +24,24 @@ pub struct Enemy {
     waypoint_step: f32,
 }
 
-impl_component!(Enemy);
-
 pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
     let entity = world.entities.create();
-    world.movable.add(
+    world.add(
         entity,
         Movable {
             pos,
             speed: Vec2::zero(),
         },
     );
-    world.sprite_drawable.add(
+    world.add(
         entity,
         SpriteDrawable {
             size: Vec2::new(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
             texture,
         },
     );
-    world.health.add(entity, Health { health: 100 });
-    world.enemy.add(
+    world.add(entity, Health { health: 100 });
+    world.add(
         entity,
         Enemy {
             shoot_speed: 500 + (n64_math::random_f32() * 200.0) as i32,
@@ -57,24 +55,21 @@ pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
     let now = current_time_us();
 
-    for (enemy, entity) in world.enemy.components_and_entities_mut() {
-        if !health::is_alive(&world.health, entity) {
+    for (enemy, entity) in world.components_and_entities_mut::<Enemy>() {
+        if !health::is_alive(world, entity) {
             sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
-            player::add_score(&mut world.player, 1000);
+            player::add_score(world, 1000);
             entity.despawn();
         }
 
         if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
             if let (Some(movable), Some(sprite_drawable)) = (
-                world.movable.lookup(entity).copied(),
-                world.sprite_drawable.lookup(entity).copied(),
+                world.lookup::<Movable>(entity).copied(),
+                world.lookup::<SpriteDrawable>(entity).copied(),
             ) {
                 //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                 shoot_bullet_enemy(
-                    &mut world.entities,
-                    &mut world.movable,
-                    &mut world.box_drawable,
-                    &mut world.bullet,
+                    world,
                     movable.pos + Vec2::new(0.0, sprite_drawable.size.y() / 2.0),
                     Vec2::new(0.0, 1.25),
                 );
@@ -87,8 +82,8 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
 }
 
 fn ai(world: &mut World, dt: f32) {
-    for (enemy, entity) in world.enemy.components_and_entities_mut() {
-        if let Some(movable) = world.movable.lookup_mut(entity) {
+    for (enemy, entity) in world.components_and_entities_mut::<Enemy>() {
+        if let Some(movable) = world.lookup_mut::<Movable>(entity) {
             if enemy.waypoint_step >= 1.0 {
                 enemy.waypoint_step -= 1.0;
                 enemy.waypoint += 1;

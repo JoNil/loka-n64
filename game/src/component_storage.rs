@@ -4,6 +4,10 @@ use crate::entity::Entity;
 use alloc::vec::Vec;
 use hashbrown::HashMap;
 
+trait ComponentRemover {
+    fn remove(&mut self);
+}
+
 pub struct Storage<T> {
     components: Vec<T>,
     entities: Vec<Entity>,

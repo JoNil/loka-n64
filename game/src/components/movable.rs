@@ -1,5 +1,4 @@
-use crate::entity::Entity;
-use crate::impl_component;
+use crate::{entity::Entity, world::World};
 use n64_math::Vec2;
 
 #[derive(Copy, Clone)]
@@ -8,14 +7,12 @@ pub struct Movable {
     pub speed: Vec2,
 }
 
-impl_component!(Movable);
-
-pub fn pos(movable: &Storage, entity: Entity) -> Option<Vec2> {
-    movable.lookup(entity).map(|c| c.pos)
+pub fn pos(world: &World, entity: Entity) -> Option<Vec2> {
+    world.lookup::<Movable>(entity).map(|c| c.pos)
 }
 
-pub fn simulate(movable: &mut Storage, dt: f32) {
-    for component in movable.components_mut() {
+pub fn simulate(world: &mut World, dt: f32) {
+    for component in world.components_mut::<Movable>() {
         component.pos += dt * component.speed;
     }
 }

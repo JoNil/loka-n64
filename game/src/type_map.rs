@@ -7,23 +7,6 @@ use hashbrown::{hash_map, HashMap};
 use n64_math::BuildFnvHasher;
 use std::any::{Any, TypeId};
 
-/// Prepared key-value pair
-pub struct KvPair(TypeId, Box<dyn Any>);
-
-impl KvPair {
-    pub fn new<T: 'static>(value: T) -> Self {
-        KvPair(TypeId::of::<T>(), Box::new(value))
-    }
-
-    pub fn extract<T: 'static>(self) -> Result<T, Self> {
-        let KvPair(key, value) = self;
-        value
-            .downcast()
-            .map(|boxed| *boxed)
-            .map_err(|e| KvPair(key, e))
-    }
-}
-
 /// A view into an occupied entry in a `TypeMap`.
 #[derive(Debug)]
 pub struct OccupiedEntry<'a, T> {
@@ -115,16 +98,6 @@ impl TypeMap {
     #[inline]
     pub fn new() -> Self {
         Self { map: None }
-    }
-
-    /// Insert a prepared `KvPair` into this `TypeMap`.
-    ///
-    /// If a value of this type already exists, it will be returned.
-    pub fn insert_kv_pair(&mut self, KvPair(key, value): KvPair) -> Option<KvPair> {
-        self.map
-            .get_or_insert_with(|| HashMap::default())
-            .insert(key, value)
-            .map(|old_value| KvPair(key, old_value))
     }
 
     /// Insert a value into this `TypeMap`.

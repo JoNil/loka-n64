@@ -1,5 +1,5 @@
-use crate::components::movable;
-use crate::{camera::Camera, impl_component};
+use super::movable::Movable;
+use crate::{camera::Camera, world::World};
 use n64::{gfx::CommandBuffer, VideoMode};
 use n64_math::{Color, Vec2};
 
@@ -9,17 +9,9 @@ pub struct BoxDrawable {
     pub color: Color,
 }
 
-impl_component!(BoxDrawable);
-
-pub fn draw(
-    box_drawable: &Storage,
-    movalbe: &movable::Storage,
-    cb: &mut CommandBuffer,
-    video_mode: VideoMode,
-    camera: &Camera,
-) {
-    for (component, entity) in box_drawable.components_and_entities() {
-        if let Some(movable) = movalbe.lookup(entity) {
+pub fn draw(world: &World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
+    for (component, entity) in world.components_and_entities::<BoxDrawable>() {
+        if let Some(movable) = world.lookup::<Movable>(entity) {
             let half_size = component.size / 2.0;
 
             let upper_left = movable.pos - half_size;

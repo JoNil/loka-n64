@@ -1,21 +1,18 @@
-use crate::entity::Entity;
-use crate::impl_component;
+use crate::{entity::Entity, world::World};
 
 #[derive(Copy, Clone)]
 pub struct Health {
     pub health: i32,
 }
 
-impl_component!(Health);
-
-pub fn damage(health: &mut Storage, entity: Entity, damage: i32) {
-    if let Some(component) = health.lookup_mut(entity) {
+pub fn damage(world: &mut World, entity: Entity, damage: i32) {
+    if let Some(component) = world.lookup_mut::<Health>(entity) {
         component.health = i32::max(0, component.health - damage);
     }
 }
 
-pub fn is_alive(health: &Storage, entity: Entity) -> bool {
-    if let Some(component) = health.lookup(entity) {
+pub fn is_alive(world: &World, entity: Entity) -> bool {
+    if let Some(component) = world.lookup::<Health>(entity) {
         component.health > 0
     } else {
         false

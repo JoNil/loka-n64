@@ -1,6 +1,5 @@
 use crate::{
     component_storage::Storage,
-    components::{box_drawable, bullet, enemy, health, missile, movable, player, sprite_drawable},
     entity::{Entity, EntitySystem},
     type_map::TypeMap,
 };
@@ -9,14 +8,7 @@ use core::any::type_name;
 pub struct World {
     pub entities: EntitySystem,
     components: TypeMap,
-    pub movable: movable::Storage,
-    pub box_drawable: box_drawable::Storage,
-    pub sprite_drawable: sprite_drawable::Storage,
-    pub health: health::Storage,
-    pub bullet: bullet::Storage,
-    pub missile: missile::Storage,
-    pub enemy: enemy::Storage,
-    pub player: player::Storage,
+    removers: Vec<fn(&mut TypeMap, Entity)>,
 }
 
 impl World {
@@ -24,22 +16,20 @@ impl World {
         Self {
             entities: EntitySystem::new(),
             components: TypeMap::new(),
-            movable: movable::Storage::new(),
-            box_drawable: box_drawable::Storage::new(),
-            sprite_drawable: sprite_drawable::Storage::new(),
-            health: health::Storage::new(),
-            bullet: bullet::Storage::new(),
-            missile: missile::Storage::new(),
-            enemy: enemy::Storage::new(),
-            player: player::Storage::new(),
+            removers: Vec::new(),
         }
     }
 
     pub fn add<T: 'static>(&mut self, entity: Entity, component: T) {
-        let entry = self
-            .components
-            .entry::<Storage<T>>()
-            .or_insert_with(|| Storage::<T>::new());
+        let entry = self.components.entry::<Storage<T>>().or_insert_with(|| {
+            self.removers.push(|components, entity| {
+                let entry = components
+                    .get_mut::<Storage<T>>()
+                    .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+                entry.remove(entity);
+            });
+            Storage::<T>::new()
+        });
         entry.add(entity, component);
     }
 
@@ -99,5 +89,10 @@ impl World {
             .get_mut::<Storage<T>>()
             .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
         entry.components_and_entities_mut()
+    }
+
+    pub fn gc(&mut self) {
+        self.entities
+            .gc(&mut self.components, self.removers.as_slice());
     }
 }
