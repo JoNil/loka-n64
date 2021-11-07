@@ -130,10 +130,10 @@ fn main() {
                 {
                     let ship_3 = SHIP_3_BODY.as_model_data();
                     cb.add_mesh_indexed(
-                        &ship_3.verts,
-                        &ship_3.uvs,
-                        &ship_3.colors,
-                        &ship_3.indices,
+                        ship_3.verts,
+                        ship_3.uvs,
+                        ship_3.colors,
+                        ship_3.indices,
                         &[
                             [0.1, 0.0, 0.0, 0.0],
                             [0.0, 0.1, 0.0, 0.0],
