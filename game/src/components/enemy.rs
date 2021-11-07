@@ -1,5 +1,8 @@
 use super::{
-    bullet::shoot_bullet_enemy, health::HealthComponent, movable::MovableComponent,
+    bullet::shoot_bullet_enemy,
+    health::{self, HealthComponent},
+    movable::MovableComponent,
+    player,
     sprite_drawable::SpriteDrawableComponent,
 };
 use crate::{
@@ -77,9 +80,9 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
     let now = current_time_us();
 
     for (enemy, entity) in world.enemy.components_and_entities_mut() {
-        if !world.health.is_alive(entity) {
+        if !health::is_alive(&world.health, entity) {
             sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
-            world.player.add_score(1000);
+            player::add_score(&mut world.player, 1000);
             entity.despawn();
         }
 

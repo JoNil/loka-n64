@@ -16,12 +16,12 @@ impl_component!(SpriteDrawableComponent);
 
 pub fn draw(
     sprite_drawable: &Storage,
-    movalbe: &movable::System,
+    movalbe: &movable::Storage,
     cb: &mut CommandBuffer,
     video_mode: VideoMode,
     camera: &Camera,
 ) {
-    for (component, entity) in self.components_and_entities() {
+    for (component, entity) in sprite_drawable.components_and_entities() {
         if let Some(movable) = movalbe.lookup(entity) {
             let half_size = component.size / 2.0;
 

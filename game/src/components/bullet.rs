@@ -1,7 +1,11 @@
+use super::{
+    box_drawable::BoxDrawableComponent,
+    health,
+    movable::{self, MovableComponent},
+    player::SHIP_SIZE,
+};
 use crate::{camera::Camera, impl_component, world::World};
 use n64_math::{Aabb2, Color, Vec2};
-
-use super::{box_drawable::BoxDrawableComponent, movable::MovableComponent, player::SHIP_SIZE};
 
 const BULLET_SIZE: Vec2 = Vec2::new(0.00825, 0.00825);
 
@@ -75,14 +79,16 @@ pub fn update(world: &mut World, camera: &Camera) {
                 for enemy_entity in world.enemy.entities() {
                     if let Some(sprite_drawable) = world.sprite_drawable.lookup(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
-                            world.movable.pos(*enemy_entity).unwrap_or_else(Vec2::zero),
+                            movable::pos(&world.movable, *enemy_entity).unwrap_or_else(Vec2::zero),
                             sprite_drawable.size,
                         );
 
                         if bullet_bb.collides(&enemy_bb) {
-                            world
-                                .health
-                                .damage(*enemy_entity, 50 + (n64_math::random_f32() * 20.0) as i32);
+                            health::damage(
+                                &mut world.health,
+                                *enemy_entity,
+                                50 + (n64_math::random_f32() * 20.0) as i32,
+                            );
                             delete = true;
                         }
                     }
@@ -92,14 +98,16 @@ pub fn update(world: &mut World, camera: &Camera) {
             if bullet.can_hit_player {
                 for player_entity in world.player.entities() {
                     let player_bb = Aabb2::from_center_size(
-                        world.movable.pos(*player_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(&world.movable, *player_entity).unwrap_or_else(Vec2::zero),
                         SHIP_SIZE,
                     );
 
                     if bullet_bb.collides(&player_bb) {
-                        world
-                            .health
-                            .damage(*player_entity, 50 + (n64_math::random_f32() * 20.0) as i32);
+                        health::damage(
+                            &mut world.health,
+                            *player_entity,
+                            50 + (n64_math::random_f32() * 20.0) as i32,
+                        );
                         delete = true;
                     }
                 }

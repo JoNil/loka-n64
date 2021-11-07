@@ -18,7 +18,7 @@ pub fn draw(
     video_mode: VideoMode,
     camera: &Camera,
 ) {
-    for (component, entity) in self.components_and_entities() {
+    for (component, entity) in box_drawable.components_and_entities() {
         if let Some(movable) = movalbe.lookup(entity) {
             let half_size = component.size / 2.0;
 

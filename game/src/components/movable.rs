@@ -15,7 +15,7 @@ pub fn pos(movable: &Storage, entity: Entity) -> Option<Vec2> {
 }
 
 pub fn simulate(movable: &mut Storage, dt: f32) {
-    for component in movalbe.components_mut() {
+    for component in movable.components_mut() {
         component.pos += dt * component.speed;
     }
 }

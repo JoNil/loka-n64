@@ -1,4 +1,8 @@
-use super::{box_drawable::BoxDrawableComponent, movable::MovableComponent};
+use super::{
+    box_drawable::BoxDrawableComponent,
+    health,
+    movable::{self, MovableComponent},
+};
 use crate::{camera::Camera, entity::Entity, impl_component, world::World};
 use n64_math::{Aabb2, Color, Vec2};
 
@@ -36,7 +40,9 @@ pub fn update(world: &mut World, camera: &Camera) {
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
     for (missile, entity) in world.missile.components_and_entities() {
-        let target_pos = missile.target.and_then(|target| world.movable.pos(target));
+        let target_pos = missile
+            .target
+            .and_then(|target| movable::pos(&world.movable, target));
 
         if let Some(movable) = world.movable.lookup_mut(entity) {
             if let Some(target_pos) = target_pos {
@@ -57,14 +63,16 @@ pub fn update(world: &mut World, camera: &Camera) {
             for enemy_entity in world.enemy.entities() {
                 if let Some(sprite_drawable) = world.sprite_drawable.lookup(*enemy_entity) {
                     let enemy_bb = Aabb2::from_center_size(
-                        world.movable.pos(*enemy_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(&world.movable, *enemy_entity).unwrap_or_else(Vec2::zero),
                         sprite_drawable.size,
                     );
 
                     if missile_bb.collides(&enemy_bb) {
-                        world
-                            .health
-                            .damage(*enemy_entity, 100 + (n64_math::random_f32() * 50.0) as i32);
+                        health::damage(
+                            &mut world.health,
+                            *enemy_entity,
+                            100 + (n64_math::random_f32() * 50.0) as i32,
+                        );
                         delete = true;
                     }
                 }

@@ -5,28 +5,28 @@ use crate::{
 
 pub struct World {
     pub entity: EntitySystem,
-    pub movable: movable::System,
-    pub box_drawable: box_drawable::System,
-    pub sprite_drawable: sprite_drawable::System,
-    pub health: health::System,
-    pub bullet: bullet::System,
-    pub missile: missile::System,
-    pub enemy: enemy::System,
-    pub player: player::System,
+    pub movable: movable::Storage,
+    pub box_drawable: box_drawable::Storage,
+    pub sprite_drawable: sprite_drawable::Storage,
+    pub health: health::Storage,
+    pub bullet: bullet::Storage,
+    pub missile: missile::Storage,
+    pub enemy: enemy::Storage,
+    pub player: player::Storage,
 }
 
 impl World {
     pub fn new() -> Self {
         Self {
             entity: EntitySystem::new(),
-            movable: movable::System::new(),
-            box_drawable: box_drawable::System::new(),
-            sprite_drawable: sprite_drawable::System::new(),
-            health: health::System::new(),
-            bullet: bullet::System::new(),
-            missile: missile::System::new(),
-            enemy: enemy::System::new(),
-            player: player::System::new(),
+            movable: movable::Storage::new(),
+            box_drawable: box_drawable::Storage::new(),
+            sprite_drawable: sprite_drawable::Storage::new(),
+            health: health::Storage::new(),
+            bullet: bullet::Storage::new(),
+            missile: missile::Storage::new(),
+            enemy: enemy::Storage::new(),
+            player: player::Storage::new(),
         }
     }
 }

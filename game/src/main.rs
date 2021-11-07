@@ -8,6 +8,9 @@
 
 extern crate alloc;
 
+use crate::components::{
+    box_drawable, bullet, enemy, health, missile, movable, player, sprite_drawable,
+};
 use camera::Camera;
 use components::player::spawn_player;
 use map::Map;
@@ -88,16 +91,11 @@ fn main() {
 
             camera.update(&n64.controllers, dt, &VIDEO_MODE);
 
-            world.enemy.update(&mut world, &mut sound_mixer, dt);
-
-            world
-                .player
-                .update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
-
-            world.bullet.update(&mut world, &camera);
-            world.missile.update(&mut world, &camera);
-
-            world.movable.simulate(dt);
+            enemy::update(&mut world, &mut sound_mixer, dt);
+            player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
+            bullet::update(&mut world, &camera);
+            missile::update(&mut world, &camera);
+            movable::simulate(&mut world.movable, dt);
 
             world.entity.gc(&mut [
                 &mut world.movable,
@@ -110,7 +108,7 @@ fn main() {
                 &mut world.player,
             ]);
 
-            if !world.health.is_alive(player) {
+            if !health::is_alive(&world.health, player) {
                 break;
             }
         }
@@ -132,12 +130,20 @@ fn main() {
                 cb.clear();
 
                 map.render(&mut cb, VIDEO_MODE, &camera);
-                world
-                    .box_drawable
-                    .draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
-                world
-                    .sprite_drawable
-                    .draw(&world.movable, &mut cb, VIDEO_MODE, &camera);
+                box_drawable::draw(
+                    &world.box_drawable,
+                    &world.movable,
+                    &mut cb,
+                    VIDEO_MODE,
+                    &camera,
+                );
+                sprite_drawable::draw(
+                    &world.sprite_drawable,
+                    &world.movable,
+                    &mut cb,
+                    VIDEO_MODE,
+                    &camera,
+                );
 
                 {
                     let ship_3 = SHIP_3_BODY.as_model_data();

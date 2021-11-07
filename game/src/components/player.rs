@@ -1,6 +1,9 @@
 use super::{
-    bullet::shoot_bullet, health::HealthComponent, missile::shoot_missile,
-    movable::MovableComponent, sprite_drawable::SpriteDrawableComponent,
+    bullet::shoot_bullet,
+    health::HealthComponent,
+    missile::shoot_missile,
+    movable::{self, MovableComponent},
+    sprite_drawable::SpriteDrawableComponent,
 };
 use crate::{
     camera::Camera,
@@ -65,13 +68,12 @@ pub fn add_score(player: &mut Storage, score: i32) {
 }
 
 pub fn update(
-    player: &mut Storage,
     world: &mut World,
     controllers: &Controllers,
     sound_mixer: &mut SoundMixer,
     camera: &Camera,
 ) {
-    for (player, entity) in player.components_and_entities_mut() {
+    for (player, entity) in world.player.components_and_entities_mut() {
         let controller_x = controllers.x();
         let controller_y = controllers.y();
 
@@ -119,7 +121,7 @@ pub fn update(
                             .entities()
                             .iter()
                             .filter_map(|e| {
-                                if let Some(pos) = world.movable.pos(*e) {
+                                if let Some(pos) = movable::pos(&world.movable, *e) {
                                     Some((pos, e))
                                 } else {
                                     None
