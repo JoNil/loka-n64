@@ -26,6 +26,7 @@ use sound_mixer::SoundMixer;
 use world::World;
 
 mod camera;
+mod component_storage;
 mod components;
 mod entity;
 mod font;
