@@ -25,7 +25,7 @@ impl World {
     }
 
     pub fn add<T: 'static>(&mut self, entity: Entity, component: T) {
-        if !self.components.contains::<T>() {
+        if !self.components.contains::<Storage<T>>() {
             self.components.insert(Storage::<T>::new());
             self.removers.push(|components, entity| {
                 let entry = components
@@ -43,7 +43,17 @@ impl World {
         entry.borrow_mut().add(entity, component);
     }
 
-    pub fn get<T: 'static>(&self) -> Rc<RefCell<Storage<T>>> {
+    pub fn get<T: 'static>(&mut self) -> Rc<RefCell<Storage<T>>> {
+        if !self.components.contains::<Storage<T>>() {
+            self.components.insert(Storage::<T>::new());
+            self.removers.push(|components, entity| {
+                let entry = components
+                    .get::<Storage<T>>()
+                    .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+                entry.borrow_mut().remove(entity);
+            });
+        }
+
         self.components
             .get::<Storage<T>>()
             .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()))

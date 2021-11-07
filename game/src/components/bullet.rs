@@ -4,7 +4,7 @@ use super::{
     health::{self, Health},
     movable::{self, Movable},
     player::{Player, SHIP_SIZE},
-    sprite_drawable::{self, SpriteDrawable},
+    sprite_drawable::SpriteDrawable,
 };
 use crate::{camera::Camera, world::World};
 use n64_math::{Aabb2, Color, Vec2};

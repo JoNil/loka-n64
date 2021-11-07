@@ -12,7 +12,7 @@ pub struct SpriteDrawable {
     pub texture: Texture<'static>,
 }
 
-pub fn draw(world: &World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
+pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     let sprite_drawable = world.get::<SpriteDrawable>();
     let sprite_drawable = sprite_drawable.borrow();
     let movable = world.get::<Movable>();

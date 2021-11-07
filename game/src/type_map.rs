@@ -7,7 +7,7 @@ use core::{
     any::{Any, TypeId},
     cell::RefCell,
 };
-use hashbrown::{hash_map, HashMap};
+use hashbrown::HashMap;
 use n64_math::BuildFnvHasher;
 
 #[derive(Debug, Default)]

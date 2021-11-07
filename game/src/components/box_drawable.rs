@@ -9,7 +9,7 @@ pub struct BoxDrawable {
     pub color: Color,
 }
 
-pub fn draw(world: &World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
+pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     let box_drawable = world.get::<BoxDrawable>();
     let box_drawable = box_drawable.borrow();
     let movable = world.get::<Movable>();

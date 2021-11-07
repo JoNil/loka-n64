@@ -127,8 +127,8 @@ fn main() {
                 cb.clear();
 
                 map.render(&mut cb, VIDEO_MODE, &camera);
-                box_drawable::draw(&world, &mut cb, VIDEO_MODE, &camera);
-                sprite_drawable::draw(&world, &mut cb, VIDEO_MODE, &camera);
+                box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+                sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
                 {
                     let ship_3 = SHIP_3_BODY.as_model_data();
