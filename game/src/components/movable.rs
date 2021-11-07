@@ -1,5 +1,6 @@
-use crate::{component_storage::Storage, entity::Entity, world::World};
 use n64_math::Vec2;
+
+use crate::ecs::{component_storage::Storage, entity::Entity, world::World};
 
 #[derive(Copy, Clone)]
 pub struct Movable {

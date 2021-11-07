@@ -1,5 +1,3 @@
-// From https://github.com/kardeiz/type-map
-
 #![allow(dead_code)]
 
 use alloc::rc::Rc;

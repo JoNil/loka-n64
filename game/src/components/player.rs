@@ -8,13 +8,11 @@ use super::{
 };
 use crate::{
     camera::Camera,
-    component_storage::Storage,
-    entity::Entity,
+    ecs::{component_storage::Storage, entity::Entity, world::World},
     sound_mixer::SoundMixer,
     sounds::{SHOOT_1, SHOOT_2},
     textures::SHIP_2_SMALL,
     weapon::Weapon,
-    world::World,
 };
 use n64::{current_time_us, Controllers};
 use n64_math::Vec2;

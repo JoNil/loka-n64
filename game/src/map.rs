@@ -1,4 +1,4 @@
-use crate::{camera::Camera, components::enemy::spawn_enemy, world::World};
+use crate::{camera::Camera, components::enemy::spawn_enemy, ecs::world::World};
 use n64::{
     gfx::{CommandBuffer, StaticTexture},
     VideoMode,

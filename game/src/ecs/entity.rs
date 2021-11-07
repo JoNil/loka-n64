@@ -1,7 +1,8 @@
-use crate::type_map::TypeMap;
 use alloc::{collections::VecDeque, vec::Vec};
 use core::num::Wrapping;
 use spin::{Mutex, MutexGuard, Once};
+
+use super::type_map::TypeMap;
 
 const INDEX_BITS: u32 = 24;
 const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;

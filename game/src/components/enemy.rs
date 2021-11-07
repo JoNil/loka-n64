@@ -5,7 +5,7 @@ use super::{
     player::{self, Player},
     sprite_drawable::SpriteDrawable,
 };
-use crate::{sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World};
+use crate::{ecs::world::World, sound_mixer::SoundMixer, sounds::EXPLOSION_0};
 use n64::{current_time_us, gfx::Texture};
 use n64_math::Vec2;
 

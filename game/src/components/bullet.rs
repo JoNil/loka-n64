@@ -6,7 +6,7 @@ use super::{
     player::{Player, SHIP_SIZE},
     sprite_drawable::SpriteDrawable,
 };
-use crate::{camera::Camera, world::World};
+use crate::{camera::Camera, ecs::world::World};
 use n64_math::{Aabb2, Color, Vec2};
 
 const BULLET_SIZE: Vec2 = Vec2::new(0.00825, 0.00825);

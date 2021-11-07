@@ -1,5 +1,5 @@
 use super::movable::Movable;
-use crate::{camera::Camera, world::World};
+use crate::{camera::Camera, ecs::world::World};
 use n64::{
     gfx::{CommandBuffer, Texture},
     VideoMode,

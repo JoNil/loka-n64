@@ -5,7 +5,10 @@ use super::{
     movable::{self, Movable},
     sprite_drawable::SpriteDrawable,
 };
-use crate::{camera::Camera, entity::Entity, world::World};
+use crate::{
+    camera::Camera,
+    ecs::{entity::Entity, world::World},
+};
 use n64_math::{Aabb2, Color, Vec2};
 
 const MISSILE_SIZE: Vec2 = Vec2::new(4.0 * 0.00825, 4.0 * 0.00825);

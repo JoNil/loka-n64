@@ -1,6 +1,5 @@
 #![allow(dead_code)]
-
-use crate::entity::Entity;
+use super::entity::Entity;
 use alloc::vec::Vec;
 use hashbrown::HashMap;
 

@@ -1,12 +1,10 @@
-use crate::{
-    component_storage::Storage,
+use crate::ecs::component_storage::Storage;
+use alloc::rc::Rc;
+use core::{any::type_name, cell::RefCell};
+
+use super::{
     entity::{Entity, EntitySystem},
     type_map::TypeMap,
-};
-use alloc::rc::Rc;
-use core::{
-    any::type_name,
-    cell::{Ref, RefCell, RefMut},
 };
 
 pub struct World {

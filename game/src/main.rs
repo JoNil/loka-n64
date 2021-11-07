@@ -17,6 +17,7 @@ use crate::components::{
 };
 use camera::Camera;
 use components::player::spawn_player;
+use ecs::world::World;
 use map::Map;
 use maps::MAP_1;
 use models::SHIP_3_BODY;
@@ -27,12 +28,10 @@ use n64::{
 };
 use n64_math::{Color, Vec2};
 use sound_mixer::SoundMixer;
-use world::World;
 
 mod camera;
-mod component_storage;
 mod components;
-mod entity;
+mod ecs;
 mod font;
 mod map;
 mod maps;
@@ -42,9 +41,7 @@ mod sound;
 mod sound_mixer;
 mod sounds;
 mod textures;
-mod type_map;
 mod weapon;
-mod world;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);
 
