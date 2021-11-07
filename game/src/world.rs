@@ -4,6 +4,7 @@ use crate::{
     entity::{Entity, EntitySystem},
     type_map::TypeMap,
 };
+use core::any::type_name;
 
 pub struct World {
     pub entities: EntitySystem,
@@ -42,41 +43,61 @@ impl World {
         entry.add(entity, component);
     }
 
-    /*pub fn lookup(&self, entity: Entity) -> Option<&T> {
-        if let Some(&index) = self.map.get(&entity) {
-            return Some(&self.components[index]);
-        }
-
-        None
+    pub fn lookup<T: 'static>(&self, entity: Entity) -> Option<&T> {
+        let entry = self
+            .components
+            .get::<Storage<T>>()
+            .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+        entry.lookup(entity)
     }
 
-    pub fn lookup_mut(&mut self, entity: Entity) -> Option<&mut T> {
-        if let Some(&index) = self.map.get(&entity) {
-            return Some(&mut self.components[index]);
-        }
-
-        None
+    pub fn lookup_mut<T: 'static>(&mut self, entity: Entity) -> Option<&mut T> {
+        let entry = self
+            .components
+            .get_mut::<Storage<T>>()
+            .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+        entry.lookup_mut(entity)
     }
 
-    pub fn components(&self) -> &[T] {
-        &self.components
+    pub fn components<T: 'static>(&self) -> &[T] {
+        let entry = self
+            .components
+            .get::<Storage<T>>()
+            .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+        entry.components()
     }
 
-    pub fn components_mut(&mut self) -> &mut [T] {
-        &mut self.components
+    pub fn components_mut<T: 'static>(&mut self) -> &mut [T] {
+        let entry = self
+            .components
+            .get_mut::<Storage<T>>()
+            .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+        entry.components_mut()
     }
 
-    pub fn entities(&self) -> &[Entity] {
-        &self.entities
+    pub fn entities<T: 'static>(&self) -> &[Entity] {
+        let entry = self
+            .components
+            .get::<Storage<T>>()
+            .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+        entry.entities()
     }
 
-    pub fn components_and_entities(&self) -> impl Iterator<Item = (&T, Entity)> {
-        self.components.iter().zip(self.entities.iter().copied())
+    pub fn components_and_entities<T: 'static>(&self) -> impl Iterator<Item = (&T, Entity)> {
+        let entry = self
+            .components
+            .get::<Storage<T>>()
+            .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+        entry.components_and_entities()
     }
 
-    pub fn components_and_entities_mut(&mut self) -> impl Iterator<Item = (&mut T, Entity)> {
-        self.components
-            .iter_mut()
-            .zip(self.entities.iter().copied())
-    }*/
+    pub fn components_and_entities_mut<T: 'static>(
+        &mut self,
+    ) -> impl Iterator<Item = (&mut T, Entity)> {
+        let entry = self
+            .components
+            .get_mut::<Storage<T>>()
+            .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
+        entry.components_and_entities_mut()
+    }
 }
