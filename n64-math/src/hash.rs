@@ -18,11 +18,13 @@ impl Hasher for FnvHasher {
         }
         *self = FnvHasher(hash);
     }
+
     fn finish(&self) -> u64 {
         self.0
     }
 }
 
+#[derive(Default)]
 pub struct BuildFnvHasher;
 
 impl BuildHasher for BuildFnvHasher {

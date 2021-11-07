@@ -37,6 +37,7 @@ mod sound;
 mod sound_mixer;
 mod sounds;
 mod textures;
+mod type_map;
 mod weapon;
 mod world;
 
