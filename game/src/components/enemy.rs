@@ -5,9 +5,7 @@ use super::{
     player,
     sprite_drawable::SpriteDrawableComponent,
 };
-use crate::{
-    entity::Entity, impl_component, sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World,
-};
+use crate::{impl_component, sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World};
 use n64::{current_time_us, gfx::Texture};
 use n64_math::Vec2;
 
@@ -17,26 +15,6 @@ static ENEMY_WAYPOINT: [Vec2; 4] = [
     Vec2::new(0.6, 0.6),
     Vec2::new(0.4, 0.6),
 ];
-
-fn ai(world: &mut World, enemy: &mut Enemy, _entity: Entity, dt: f32) {
-    if let Some(movable) = world.movable.lookup_mut(_entity) {
-        if enemy.waypoint_step >= 1.0 {
-            enemy.waypoint_step -= 1.0;
-            enemy.waypoint += 1;
-            if enemy.waypoint >= ENEMY_WAYPOINT.len() {
-                enemy.waypoint = 0;
-            }
-        }
-
-        let a_waypoint = (enemy.waypoint + 1) % ENEMY_WAYPOINT.len();
-        let speed_a = ENEMY_WAYPOINT[a_waypoint] - ENEMY_WAYPOINT[enemy.waypoint];
-        let b_waypoint = (a_waypoint + 1) % ENEMY_WAYPOINT.len();
-        let speed_b = ENEMY_WAYPOINT[b_waypoint] - ENEMY_WAYPOINT[a_waypoint];
-
-        movable.speed = (1.0 - enemy.waypoint_step) * speed_a + enemy.waypoint_step * speed_b;
-        enemy.waypoint_step += dt;
-    }
-}
 
 #[derive(Copy, Clone)]
 pub struct Enemy {
@@ -93,14 +71,39 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
             ) {
                 //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                 shoot_bullet_enemy(
-                    world,
+                    &mut world.entity,
+                    &mut world.movable,
+                    &mut world.box_drawable,
+                    &mut world.bullet,
                     movable.pos + Vec2::new(0.0, sprite_drawable.size.y() / 2.0),
                     Vec2::new(0.0, 1.25),
                 );
                 enemy.last_shoot_time = now;
             }
         }
+    }
 
-        ai(world, enemy, entity, dt);
+    ai(world, dt);
+}
+
+fn ai(world: &mut World, dt: f32) {
+    for (enemy, entity) in world.enemy.components_and_entities_mut() {
+        if let Some(movable) = world.movable.lookup_mut(entity) {
+            if enemy.waypoint_step >= 1.0 {
+                enemy.waypoint_step -= 1.0;
+                enemy.waypoint += 1;
+                if enemy.waypoint >= ENEMY_WAYPOINT.len() {
+                    enemy.waypoint = 0;
+                }
+            }
+
+            let a_waypoint = (enemy.waypoint + 1) % ENEMY_WAYPOINT.len();
+            let speed_a = ENEMY_WAYPOINT[a_waypoint] - ENEMY_WAYPOINT[enemy.waypoint];
+            let b_waypoint = (a_waypoint + 1) % ENEMY_WAYPOINT.len();
+            let speed_b = ENEMY_WAYPOINT[b_waypoint] - ENEMY_WAYPOINT[a_waypoint];
+
+            movable.speed = (1.0 - enemy.waypoint_step) * speed_a + enemy.waypoint_step * speed_b;
+            enemy.waypoint_step += dt;
+        }
     }
 }

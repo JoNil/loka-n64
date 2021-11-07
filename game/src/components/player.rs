@@ -101,7 +101,10 @@ pub fn update(
                     {
                         sound_mixer.play_sound(SHOOT_1.as_sound_data());
                         shoot_bullet(
-                            world,
+                            &mut world.entity,
+                            &mut world.movable,
+                            &mut world.box_drawable,
+                            &mut world.bullet,
                             movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(0.0, movable.speed.y() - 1.25),
                         );
@@ -116,12 +119,14 @@ pub fn update(
 
                         let player_pos = movable.pos;
 
+                        let movable_storage = &world.movable;
+
                         let mut distances = world
                             .enemy
                             .entities()
                             .iter()
                             .filter_map(|e| {
-                                if let Some(pos) = movable::pos(&world.movable, *e) {
+                                if let Some(pos) = movable::pos(movable_storage, *e) {
                                     Some((pos, e))
                                 } else {
                                     None
@@ -137,19 +142,28 @@ pub fn update(
                         let target_3 = distances.get(2).map(|(_, e)| *e);
 
                         shoot_missile(
-                            world,
+                            &mut world.entity,
+                            &mut world.movable,
+                            &mut world.box_drawable,
+                            &mut world.missile,
                             movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(0.0, movable.speed.y() - 0.5),
                             target_1,
                         );
                         shoot_missile(
-                            world,
+                            &mut world.entity,
+                            &mut world.movable,
+                            &mut world.box_drawable,
+                            &mut world.missile,
                             movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(0.15, movable.speed.y() - 0.5),
                             target_2,
                         );
                         shoot_missile(
-                            world,
+                            &mut world.entity,
+                            &mut world.movable,
+                            &mut world.box_drawable,
+                            &mut world.missile,
                             movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(-0.15, movable.speed.y() - 0.5),
                             target_3,

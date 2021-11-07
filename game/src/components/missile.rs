@@ -1,9 +1,14 @@
 use super::{
-    box_drawable::BoxDrawableComponent,
+    box_drawable::{self, BoxDrawableComponent},
     health,
     movable::{self, MovableComponent},
 };
-use crate::{camera::Camera, entity::Entity, impl_component, world::World};
+use crate::{
+    camera::Camera,
+    entity::{Entity, EntitySystem},
+    impl_component,
+    world::World,
+};
 use n64_math::{Aabb2, Color, Vec2};
 
 const MISSILE_SIZE: Vec2 = Vec2::new(4.0 * 0.00825, 4.0 * 0.00825);
@@ -15,25 +20,33 @@ struct Missile {
 
 impl_component!(Missile);
 
-pub fn shoot_missile(world: &mut World, pos: Vec2, speed: Vec2, target: Option<Entity>) {
+pub fn shoot_missile(
+    entity_system: &mut EntitySystem,
+    movable: &mut movable::Storage,
+    box_drawable: &mut box_drawable::Storage,
+    missile: &mut Storage,
+    pos: Vec2,
+    speed: Vec2,
+    target: Option<Entity>,
+) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-    let entity = world.entity.create();
-    world.movable.add(
+    let entity = entity_system.create();
+    movable.add(
         entity,
         MovableComponent {
             pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
         },
     );
-    world.box_drawable.add(
+    box_drawable.add(
         entity,
         BoxDrawableComponent {
             size: MISSILE_SIZE,
             color: Color::from_rgb(1.0, 0.4, 0.4),
         },
     );
-    world.missile.add(entity, Missile { target });
+    missile.add(entity, Missile { target });
 }
 
 pub fn update(world: &mut World, camera: &Camera) {

@@ -1,10 +1,10 @@
 use super::{
-    box_drawable::BoxDrawableComponent,
+    box_drawable::{self, BoxDrawableComponent},
     health,
     movable::{self, MovableComponent},
     player::SHIP_SIZE,
 };
-use crate::{camera::Camera, impl_component, world::World};
+use crate::{camera::Camera, entity::EntitySystem, impl_component, world::World};
 use n64_math::{Aabb2, Color, Vec2};
 
 const BULLET_SIZE: Vec2 = Vec2::new(0.00825, 0.00825);
@@ -17,25 +17,32 @@ struct Bullet {
 
 impl_component!(Bullet);
 
-pub fn shoot_bullet(world: &mut World, pos: Vec2, speed: Vec2) {
+pub fn shoot_bullet(
+    entity_system: &mut EntitySystem,
+    movable: &mut movable::Storage,
+    box_drawable: &mut box_drawable::Storage,
+    bullet: &mut Storage,
+    pos: Vec2,
+    speed: Vec2,
+) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-    let entity = world.entity.create();
-    world.movable.add(
+    let entity = entity_system.create();
+    movable.add(
         entity,
         MovableComponent {
             pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
         },
     );
-    world.box_drawable.add(
+    box_drawable.add(
         entity,
         BoxDrawableComponent {
             size: BULLET_SIZE,
             color: Color::from_rgb(0.2, 0.2, 0.9),
         },
     );
-    world.bullet.add(
+    bullet.add(
         entity,
         Bullet {
             can_hit_player: false,
@@ -44,17 +51,24 @@ pub fn shoot_bullet(world: &mut World, pos: Vec2, speed: Vec2) {
     );
 }
 
-pub fn shoot_bullet_enemy(world: &mut World, pos: Vec2, speed: Vec2) {
-    let entity = world.entity.create();
-    world.movable.add(entity, MovableComponent { pos, speed });
-    world.box_drawable.add(
+pub fn shoot_bullet_enemy(
+    entity_system: &mut EntitySystem,
+    movable: &mut movable::Storage,
+    box_drawable: &mut box_drawable::Storage,
+    bullet: &mut Storage,
+    pos: Vec2,
+    speed: Vec2,
+) {
+    let entity = entity_system.create();
+    movable.add(entity, MovableComponent { pos, speed });
+    box_drawable.add(
         entity,
         BoxDrawableComponent {
             size: BULLET_SIZE,
             color: Color::from_rgb(0.9, 0.2, 0.2),
         },
     );
-    world.bullet.add(
+    bullet.add(
         entity,
         Bullet {
             can_hit_player: true,
