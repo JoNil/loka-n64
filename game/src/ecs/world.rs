@@ -1,5 +1,5 @@
 use crate::ecs::storage::Storage;
-use alloc::{rc::Rc, vec::Vec};
+use alloc::{boxed::Box, rc::Rc, vec::Vec};
 use core::{any::type_name, cell::RefCell, mem};
 
 use super::{
