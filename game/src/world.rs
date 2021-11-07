@@ -4,7 +4,7 @@ use crate::{
 };
 
 pub struct World {
-    pub entity: EntitySystem,
+    pub entities: EntitySystem,
     pub movable: movable::Storage,
     pub box_drawable: box_drawable::Storage,
     pub sprite_drawable: sprite_drawable::Storage,
@@ -18,7 +18,7 @@ pub struct World {
 impl World {
     pub fn new() -> Self {
         Self {
-            entity: EntitySystem::new(),
+            entities: EntitySystem::new(),
             movable: movable::Storage::new(),
             box_drawable: box_drawable::Storage::new(),
             sprite_drawable: sprite_drawable::Storage::new(),

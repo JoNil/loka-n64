@@ -34,7 +34,7 @@ pub struct Player {
 impl_component!(Player);
 
 pub fn spawn_player(world: &mut World, start_pos: Vec2) -> Entity {
-    let entity = world.entity.create();
+    let entity = world.entities.create();
     world.movable.add(
         entity,
         MovableComponent {
@@ -101,7 +101,7 @@ pub fn update(
                     {
                         sound_mixer.play_sound(SHOOT_1.as_sound_data());
                         shoot_bullet(
-                            &mut world.entity,
+                            &mut world.entities,
                             &mut world.movable,
                             &mut world.box_drawable,
                             &mut world.bullet,
@@ -136,7 +136,7 @@ pub fn update(
                         let target_3 = distances.get(2).map(|(_, e)| *e);
 
                         shoot_missile(
-                            &mut world.entity,
+                            &mut world.entities,
                             &mut world.movable,
                             &mut world.box_drawable,
                             &mut world.missile,
@@ -145,7 +145,7 @@ pub fn update(
                             target_1,
                         );
                         shoot_missile(
-                            &mut world.entity,
+                            &mut world.entities,
                             &mut world.movable,
                             &mut world.box_drawable,
                             &mut world.missile,
@@ -154,7 +154,7 @@ pub fn update(
                             target_2,
                         );
                         shoot_missile(
-                            &mut world.entity,
+                            &mut world.entities,
                             &mut world.movable,
                             &mut world.box_drawable,
                             &mut world.missile,

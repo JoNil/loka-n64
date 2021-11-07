@@ -99,7 +99,7 @@ fn main() {
             missile::update(&mut world, &camera);
             movable::simulate(&mut world.movable, dt);
 
-            world.entity.gc(&mut [
+            world.entities.gc(&mut [
                 &mut world.movable,
                 &mut world.box_drawable,
                 &mut world.sprite_drawable,

@@ -27,7 +27,7 @@ pub struct Enemy {
 impl_component!(Enemy);
 
 pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
-    let entity = world.entity.create();
+    let entity = world.entities.create();
     world.movable.add(
         entity,
         MovableComponent {
@@ -71,7 +71,7 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
             ) {
                 //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                 shoot_bullet_enemy(
-                    &mut world.entity,
+                    &mut world.entities,
                     &mut world.movable,
                     &mut world.box_drawable,
                     &mut world.bullet,
