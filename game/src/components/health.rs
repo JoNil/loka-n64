@@ -1,4 +1,4 @@
-use crate::ecs::{component_storage::Storage, entity::Entity};
+use crate::ecs::{storage::Storage, entity::Entity};
 
 #[derive(Copy, Clone)]
 pub struct Health {

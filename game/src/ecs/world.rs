@@ -1,4 +1,4 @@
-use crate::ecs::component_storage::Storage;
+use crate::ecs::storage::Storage;
 use alloc::{rc::Rc, vec::Vec};
 use core::{any::type_name, cell::RefCell};
 

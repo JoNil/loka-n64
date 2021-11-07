@@ -8,7 +8,7 @@ use super::{
 };
 use crate::{
     camera::Camera,
-    ecs::{component_storage::Storage, entity::Entity, world::World},
+    ecs::{storage::Storage, entity::Entity, world::World},
     sound_mixer::SoundMixer,
     sounds::{SHOOT_1, SHOOT_2},
     textures::SHIP_2_SMALL,
