@@ -125,13 +125,7 @@ pub fn update(
                             .enemy
                             .entities()
                             .iter()
-                            .filter_map(|e| {
-                                if let Some(pos) = movable::pos(movable_storage, *e) {
-                                    Some((pos, e))
-                                } else {
-                                    None
-                                }
-                            })
+                            .filter_map(|e| movable::pos(movable_storage, *e).map(|pos| (pos, e)))
                             .map(|(pos, e)| ((player_pos - pos).length(), *e))
                             .collect::<Vec<_>>();
 
