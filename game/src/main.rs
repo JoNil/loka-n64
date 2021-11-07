@@ -8,12 +8,10 @@
 
 extern crate alloc;
 
-use bullet_system::BulletSystem;
 use camera::Camera;
-use enemy_system::EnemySystem;
+use components::player::spawn_player;
 use map::Map;
 use maps::MAP_1;
-use missile_system::MissileSystem;
 use models::SHIP_3_BODY;
 use n64::{
     self, current_time_us,
@@ -21,22 +19,17 @@ use n64::{
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
 use n64_math::{Color, Vec2};
-use player::{Player, SHIP_SIZE};
 use sound_mixer::SoundMixer;
 use world::World;
 
-mod bullet_system;
 mod camera;
 mod components;
-mod enemy_system;
 mod entity;
 mod font;
 mod map;
 mod maps;
-mod missile_system;
 mod model;
 mod models;
-mod player;
 mod sound;
 mod sound_mixer;
 mod sounds;
@@ -64,13 +57,11 @@ fn main() {
 
     let mut sound_mixer = SoundMixer::new();
     let mut camera = Camera::new(start_pos);
-    let mut player = Player::new(&mut world, start_pos);
-    let mut bullet_system = BulletSystem::new();
-    let mut missile_system = MissileSystem::new();
-    let mut enemy_system = EnemySystem::new();
     let mut command_buffer_cache = CommandBufferCache::new();
 
-    map.spawn_enemies(&mut world, &mut enemy_system, &VIDEO_MODE);
+    let player = spawn_player(&mut world, start_pos);
+
+    map.spawn_enemies(&mut world, &VIDEO_MODE);
 
     let mut frame_begin_time;
     let mut last_frame_begin_time = current_time_us();
@@ -97,26 +88,14 @@ fn main() {
 
             camera.update(&n64.controllers, dt, &VIDEO_MODE);
 
-            enemy_system.update(
-                &mut world,
-                &mut bullet_system,
-                &mut player,
-                &mut sound_mixer,
-                dt,
-            );
+            world.enemy.update(&mut world, &mut sound_mixer, dt);
 
-            player.update(
-                &mut world,
-                &n64.controllers,
-                &mut bullet_system,
-                &mut missile_system,
-                &enemy_system,
-                &mut sound_mixer,
-                &camera,
-            );
+            world
+                .player
+                .update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
 
-            bullet_system.update(&mut world, &mut enemy_system, &mut player, &camera);
-            missile_system.update(&mut world, &mut enemy_system, &mut player, &camera);
+            world.bullet.update(&mut world, &camera);
+            world.missile.update(&mut world, &camera);
 
             world.movable.simulate(dt);
 
@@ -125,9 +104,13 @@ fn main() {
                 &mut world.box_drawable,
                 &mut world.sprite_drawable,
                 &mut world.health,
+                &mut world.bullet,
+                &mut world.missile,
+                &mut world.enemy,
+                &mut world.player,
             ]);
 
-            if !world.health.is_alive(player.entity()) {
+            if !world.health.is_alive(player) {
                 break;
             }
         }
@@ -188,14 +171,15 @@ fn main() {
                     font::draw_text(&mut cb, "{|}~", Vec2::new(1.0, 187.0), 0xffffffff);
                 }
 
-                font::draw_number(&mut cb, player.score(), Vec2::new(300.0, 10.0), 0x0000efff);
                 font::draw_number(
                     &mut cb,
-                    world
-                        .health
-                        .lookup(player.entity())
-                        .map(|hc| hc.health)
-                        .unwrap_or(0),
+                    world.player.lookup(player).map(|p| p.score).unwrap_or(0),
+                    Vec2::new(300.0, 10.0),
+                    0x0000efff,
+                );
+                font::draw_number(
+                    &mut cb,
+                    world.health.lookup(player).map(|hc| hc.health).unwrap_or(0),
                     Vec2::new(300.0, 215.0),
                     0xaf0000ff,
                 );

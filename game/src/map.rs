@@ -1,4 +1,4 @@
-use crate::{camera::Camera, enemy_system::EnemySystem, world::World};
+use crate::{camera::Camera, components::enemy::spawn_enemy, world::World};
 use n64::{
     gfx::{CommandBuffer, StaticTexture},
     VideoMode,
@@ -30,15 +30,10 @@ impl Map {
         Self { data }
     }
 
-    pub fn spawn_enemies(
-        &self,
-        world: &mut World,
-        enemy_system: &mut EnemySystem,
-        video_mode: &VideoMode,
-    ) {
+    pub fn spawn_enemies(&self, world: &mut World, video_mode: &VideoMode) {
         for objects in self.data.objects {
             for object in *objects {
-                enemy_system.spawn_enemy(
+                spawn_enemy(
                     world,
                     Vec2::new(
                         object.x / video_mode.width() as f32,

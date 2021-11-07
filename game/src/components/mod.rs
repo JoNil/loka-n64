@@ -1,10 +1,14 @@
 pub mod box_drawable;
+pub mod bullet;
+pub mod enemy;
 pub mod health;
+pub mod missile;
 pub mod movable;
+pub mod player;
 pub mod sprite_drawable;
 
 pub trait Remover {
-    fn remove(&mut self, entity: &crate::entity::Entity);
+    fn remove(&mut self, entity: crate::entity::Entity);
 }
 
 #[macro_export]
@@ -31,15 +35,15 @@ macro_rules! impl_system {
             }
 
             #[allow(dead_code)]
-            pub fn add(&mut self, entity: &crate::entity::Entity, component: $component_ident) {
+            pub fn add(&mut self, entity: crate::entity::Entity, component: $component_ident) {
                 self.components.push(component);
-                self.entities.push(*entity);
-                self.map.insert(*entity, self.components.len() - 1);
+                self.entities.push(entity);
+                self.map.insert(entity, self.components.len() - 1);
             }
 
             #[allow(dead_code)]
-            pub fn lookup(&self, entity: &crate::entity::Entity) -> Option<&$component_ident> {
-                if let Some(&index) = self.map.get(entity) {
+            pub fn lookup(&self, entity: crate::entity::Entity) -> Option<&$component_ident> {
+                if let Some(&index) = self.map.get(&entity) {
                     return Some(&self.components[index]);
                 }
 
@@ -49,9 +53,9 @@ macro_rules! impl_system {
             #[allow(dead_code)]
             pub fn lookup_mut(
                 &mut self,
-                entity: &crate::entity::Entity,
+                entity: crate::entity::Entity,
             ) -> Option<&mut $component_ident> {
-                if let Some(&index) = self.map.get(entity) {
+                if let Some(&index) = self.map.get(&entity) {
                     return Some(&mut self.components[index]);
                 }
 
@@ -66,6 +70,11 @@ macro_rules! impl_system {
             #[allow(dead_code)]
             pub fn components_mut(&mut self) -> &mut [$component_ident] {
                 &mut self.components
+            }
+
+            #[allow(dead_code)]
+            pub fn entities(&self) -> &[crate::entity::Entity] {
+                &self.entities
             }
 
             #[allow(dead_code)]
@@ -86,8 +95,8 @@ macro_rules! impl_system {
         }
 
         impl crate::components::Remover for System {
-            fn remove(&mut self, entity: &crate::entity::Entity) {
-                if let Some(&index) = self.map.get(entity) {
+            fn remove(&mut self, entity: crate::entity::Entity) {
+                if let Some(&index) = self.map.get(&entity) {
                     let last = self.components.len() - 1;
                     let last_entity = self.entities[last];
 
@@ -98,7 +107,7 @@ macro_rules! impl_system {
                     self.entities.remove(last);
 
                     self.map.insert(last_entity, index);
-                    self.map.remove(entity);
+                    self.map.remove(&entity);
                 }
             }
         }

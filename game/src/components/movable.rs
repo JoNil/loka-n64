@@ -9,7 +9,7 @@ pub struct MovableComponent {
 }
 
 impl System {
-    pub fn pos(&self, entity: &Entity) -> Option<Vec2> {
+    pub fn pos(&self, entity: Entity) -> Option<Vec2> {
         self.lookup(entity).map(|c| c.pos)
     }
 

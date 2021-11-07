@@ -18,7 +18,7 @@ impl System {
         camera: &Camera,
     ) {
         for (component, entity) in self.components_and_entities() {
-            if let Some(movable) = movalbe.lookup(&entity) {
+            if let Some(movable) = movalbe.lookup(entity) {
                 let half_size = component.size / 2.0;
 
                 let upper_left = movable.pos - half_size;
