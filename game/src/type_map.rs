@@ -1,5 +1,7 @@
 // From https://github.com/kardeiz/type-map
 
+#![allow(dead_code)]
+
 use core::marker::PhantomData;
 use hashbrown::{hash_map, HashMap};
 use n64_math::BuildFnvHasher;
