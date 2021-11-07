@@ -1,7 +1,7 @@
 use super::{
-    box_drawable::{self, BoxDrawableComponent},
+    box_drawable::{self, BoxDrawable},
     health,
-    movable::{self, MovableComponent},
+    movable::{self, Movable},
 };
 use crate::{
     camera::Camera,
@@ -34,14 +34,14 @@ pub fn shoot_missile(
     let entity = entity_system.create();
     movable.add(
         entity,
-        MovableComponent {
+        Movable {
             pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
         },
     );
     box_drawable.add(
         entity,
-        BoxDrawableComponent {
+        BoxDrawable {
             size: MISSILE_SIZE,
             color: Color::from_rgb(1.0, 0.4, 0.4),
         },

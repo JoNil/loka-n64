@@ -1,9 +1,9 @@
 use super::{
     bullet::shoot_bullet_enemy,
-    health::{self, HealthComponent},
-    movable::MovableComponent,
+    health::{self, Health},
+    movable::Movable,
     player,
-    sprite_drawable::SpriteDrawableComponent,
+    sprite_drawable::SpriteDrawable,
 };
 use crate::{impl_component, sound_mixer::SoundMixer, sounds::EXPLOSION_0, world::World};
 use n64::{current_time_us, gfx::Texture};
@@ -30,19 +30,19 @@ pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
     let entity = world.entities.create();
     world.movable.add(
         entity,
-        MovableComponent {
+        Movable {
             pos,
             speed: Vec2::zero(),
         },
     );
     world.sprite_drawable.add(
         entity,
-        SpriteDrawableComponent {
+        SpriteDrawable {
             size: Vec2::new(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
             texture,
         },
     );
-    world.health.add(entity, HealthComponent { health: 100 });
+    world.health.add(entity, Health { health: 100 });
     world.enemy.add(
         entity,
         Enemy {

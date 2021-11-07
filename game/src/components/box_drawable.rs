@@ -4,12 +4,12 @@ use n64::{gfx::CommandBuffer, VideoMode};
 use n64_math::{Color, Vec2};
 
 #[derive(Copy, Clone)]
-pub struct BoxDrawableComponent {
+pub struct BoxDrawable {
     pub size: Vec2,
     pub color: Color,
 }
 
-impl_component!(BoxDrawableComponent);
+impl_component!(BoxDrawable);
 
 pub fn draw(
     box_drawable: &Storage,

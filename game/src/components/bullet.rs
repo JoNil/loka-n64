@@ -1,7 +1,7 @@
 use super::{
-    box_drawable::{self, BoxDrawableComponent},
+    box_drawable::{self, BoxDrawable},
     health,
-    movable::{self, MovableComponent},
+    movable::{self, Movable},
     player::SHIP_SIZE,
 };
 use crate::{camera::Camera, entity::EntitySystem, impl_component, world::World};
@@ -30,14 +30,14 @@ pub fn shoot_bullet(
     let entity = entity_system.create();
     movable.add(
         entity,
-        MovableComponent {
+        Movable {
             pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
         },
     );
     box_drawable.add(
         entity,
-        BoxDrawableComponent {
+        BoxDrawable {
             size: BULLET_SIZE,
             color: Color::from_rgb(0.2, 0.2, 0.9),
         },
@@ -60,10 +60,10 @@ pub fn shoot_bullet_enemy(
     speed: Vec2,
 ) {
     let entity = entity_system.create();
-    movable.add(entity, MovableComponent { pos, speed });
+    movable.add(entity, Movable { pos, speed });
     box_drawable.add(
         entity,
-        BoxDrawableComponent {
+        BoxDrawable {
             size: BULLET_SIZE,
             color: Color::from_rgb(0.9, 0.2, 0.2),
         },

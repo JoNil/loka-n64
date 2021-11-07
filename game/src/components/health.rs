@@ -2,11 +2,11 @@ use crate::entity::Entity;
 use crate::impl_component;
 
 #[derive(Copy, Clone)]
-pub struct HealthComponent {
+pub struct Health {
     pub health: i32,
 }
 
-impl_component!(HealthComponent);
+impl_component!(Health);
 
 pub fn damage(health: &mut Storage, entity: Entity, damage: i32) {
     if let Some(component) = health.lookup_mut(entity) {

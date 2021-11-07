@@ -1,9 +1,9 @@
 use super::{
     bullet::shoot_bullet,
-    health::HealthComponent,
+    health::Health,
     missile::shoot_missile,
-    movable::{self, MovableComponent},
-    sprite_drawable::SpriteDrawableComponent,
+    movable::{self, Movable},
+    sprite_drawable::SpriteDrawable,
 };
 use crate::{
     camera::Camera,
@@ -37,19 +37,19 @@ pub fn spawn_player(world: &mut World, start_pos: Vec2) -> Entity {
     let entity = world.entities.create();
     world.movable.add(
         entity,
-        MovableComponent {
+        Movable {
             pos: start_pos + PLAYTER_START_POS,
             speed: Vec2::new(0.0, 0.0),
         },
     );
     world.sprite_drawable.add(
         entity,
-        SpriteDrawableComponent {
+        SpriteDrawable {
             size: SHIP_SIZE,
             texture: SHIP_2_SMALL.as_texture(),
         },
     );
-    world.health.add(entity, HealthComponent { health: 10000 });
+    world.health.add(entity, Health { health: 10000 });
     world.player.add(
         entity,
         Player {

@@ -7,12 +7,12 @@ use n64::{
 use n64_math::Vec2;
 
 #[derive(Copy, Clone)]
-pub struct SpriteDrawableComponent {
+pub struct SpriteDrawable {
     pub size: Vec2,
     pub texture: Texture<'static>,
 }
 
-impl_component!(SpriteDrawableComponent);
+impl_component!(SpriteDrawable);
 
 pub fn draw(
     sprite_drawable: &Storage,
