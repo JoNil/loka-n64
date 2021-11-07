@@ -14,6 +14,7 @@ use crate::{
     textures::SHIP_2_SMALL,
     weapon::Weapon,
 };
+use alloc::vec::Vec;
 use n64::{current_time_us, Controllers};
 use n64_math::Vec2;
 

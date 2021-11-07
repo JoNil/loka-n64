@@ -1,3 +1,5 @@
+#![allow(dead_code)]
+
 use crate::pi;
 
 const REG_BASE: usize = 0xBF80_0000;
