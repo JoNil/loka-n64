@@ -25,31 +25,23 @@ pub struct Enemy {
 }
 
 pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
-    let entity = world.entities.create();
-    world.add(
-        entity,
-        Movable {
+    world
+        .spawn()
+        .add(Movable {
             pos,
             speed: Vec2::zero(),
-        },
-    );
-    world.add(
-        entity,
-        SpriteDrawable {
+        })
+        .add(SpriteDrawable {
             size: Vec2::new(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
             texture,
-        },
-    );
-    world.add(entity, Health { health: 100 });
-    world.add(
-        entity,
-        Enemy {
+        })
+        .add(Health { health: 100 })
+        .add(Enemy {
             shoot_speed: 500 + (n64_math::random_f32() * 200.0) as i32,
             last_shoot_time: 0,
             waypoint: 0,
             waypoint_step: 1.0,
-        },
-    );
+        });
 }
 
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {

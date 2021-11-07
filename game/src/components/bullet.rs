@@ -20,47 +20,34 @@ struct Bullet {
 pub fn shoot_bullet(world: &mut World, pos: Vec2, speed: Vec2) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-    let entity = world.entities.create();
-    world.add(
-        entity,
-        Movable {
+    world
+        .spawn()
+        .add(Movable {
             pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
-        },
-    );
-    world.add(
-        entity,
-        BoxDrawable {
+        })
+        .add(BoxDrawable {
             size: BULLET_SIZE,
             color: Color::from_rgb(0.2, 0.2, 0.9),
-        },
-    );
-    world.add(
-        entity,
-        Bullet {
+        })
+        .add(Bullet {
             can_hit_player: false,
             can_hit_enemy: true,
-        },
-    );
+        });
 }
 
 pub fn shoot_bullet_enemy(world: &mut World, pos: Vec2, speed: Vec2) {
-    let entity = world.entities.create();
-    world.add(entity, Movable { pos, speed });
-    world.add(
-        entity,
-        BoxDrawable {
+    world
+        .spawn()
+        .add(Movable { pos, speed })
+        .add(BoxDrawable {
             size: BULLET_SIZE,
             color: Color::from_rgb(0.9, 0.2, 0.2),
-        },
-    );
-    world.add(
-        entity,
-        Bullet {
+        })
+        .add(Bullet {
             can_hit_player: true,
             can_hit_enemy: false,
-        },
-    );
+        });
 }
 
 pub fn update(world: &mut World, camera: &Camera) {

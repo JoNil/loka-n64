@@ -8,7 +8,7 @@ use super::{
 };
 use crate::{
     camera::Camera,
-    ecs::{storage::Storage, entity::Entity, world::World},
+    ecs::{entity::Entity, storage::Storage, world::World},
     sound_mixer::SoundMixer,
     sounds::{SHOOT_1, SHOOT_2},
     textures::SHIP_2_SMALL,
@@ -32,31 +32,23 @@ pub struct Player {
 }
 
 pub fn spawn_player(world: &mut World, start_pos: Vec2) -> Entity {
-    let entity = world.entities.create();
-    world.add(
-        entity,
-        Movable {
+    world
+        .spawn()
+        .add(Movable {
             pos: start_pos + PLAYTER_START_POS,
             speed: Vec2::new(0.0, 0.0),
-        },
-    );
-    world.add(
-        entity,
-        SpriteDrawable {
+        })
+        .add(SpriteDrawable {
             size: SHIP_SIZE,
             texture: SHIP_2_SMALL.as_texture(),
-        },
-    );
-    world.add(entity, Health { health: 10000 });
-    world.add(
-        entity,
-        Player {
+        })
+        .add(Health { health: 10000 })
+        .add(Player {
             score: 0,
             last_shoot_time: 0,
             weapon: Weapon::Missile,
-        },
-    );
-    entity
+        })
+        .entity()
 }
 
 pub fn add_score(player: &mut Storage<Player>, score: i32) {

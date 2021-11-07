@@ -21,22 +21,17 @@ struct Missile {
 pub fn shoot_missile(world: &mut World, pos: Vec2, speed: Vec2, target: Option<Entity>) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-    let entity = world.entities.create();
-    world.add(
-        entity,
-        Movable {
+    world
+        .spawn()
+        .add(Movable {
             pos,
             speed: Vec2::new(speed.x() + spread, speed.y()),
-        },
-    );
-    world.add(
-        entity,
-        BoxDrawable {
+        })
+        .add(BoxDrawable {
             size: MISSILE_SIZE,
             color: Color::from_rgb(1.0, 0.4, 0.4),
-        },
-    );
-    world.add(entity, Missile { target });
+        })
+        .add(Missile { target });
 }
 
 pub fn update(world: &mut World, camera: &Camera) {

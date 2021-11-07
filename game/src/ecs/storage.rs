@@ -1,4 +1,6 @@
 #![allow(dead_code)]
+use std::any::type_name;
+
 use super::entity::Entity;
 use alloc::vec::Vec;
 use hashbrown::HashMap;
@@ -67,8 +69,13 @@ impl<T> Storage<T> {
             let last = self.components.len() - 1;
             let last_entity = self.entities[last];
 
-            self.components[index as usize] = self.components.remove(last);
-            self.entities[index as usize] = self.entities.remove(last);
+            if entity == last_entity {
+                self.components.remove(index);
+                self.entities.remove(index);
+            } else {
+                self.components[index as usize] = self.components.remove(last);
+                self.entities[index as usize] = self.entities.remove(last);
+            }
 
             self.map.insert(last_entity, index);
             self.map.remove(&entity);

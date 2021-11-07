@@ -100,7 +100,7 @@ fn main() {
             missile::update(&mut world, &camera);
             movable::simulate(&mut world, dt);
 
-            world.gc();
+            world.housekeep();
 
             if !health::is_alive(&world.get::<Health>().borrow(), player) {
                 break;
