@@ -13,8 +13,13 @@ pub struct SpriteDrawable {
 }
 
 pub fn draw(world: &World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-    for (component, entity) in world.components_and_entities::<SpriteDrawable>() {
-        if let Some(movable) = world.lookup::<Movable>(entity) {
+    let sprite_drawable = world.get::<SpriteDrawable>();
+    let sprite_drawable = sprite_drawable.borrow();
+    let movable = world.get::<Movable>();
+    let movable = movable.borrow();
+
+    for (component, entity) in sprite_drawable.components_and_entities() {
+        if let Some(movable) = movable.lookup(entity) {
             let half_size = component.size / 2.0;
 
             let upper_left = movable.pos - half_size;

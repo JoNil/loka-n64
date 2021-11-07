@@ -8,6 +8,7 @@ use super::{
 };
 use crate::{
     camera::Camera,
+    component_storage::Storage,
     entity::Entity,
     sound_mixer::SoundMixer,
     sounds::{SHOOT_1, SHOOT_2},
@@ -59,8 +60,8 @@ pub fn spawn_player(world: &mut World, start_pos: Vec2) -> Entity {
     entity
 }
 
-pub fn add_score(world: &mut World, score: i32) {
-    for mut player in world.components_mut::<Player>() {
+pub fn add_score(player: &mut Storage<Player>, score: i32) {
+    for mut player in player.components_mut() {
         player.score += score;
     }
 }
@@ -71,7 +72,14 @@ pub fn update(
     sound_mixer: &mut SoundMixer,
     camera: &Camera,
 ) {
-    for (player, entity) in world.components_and_entities_mut::<Player>() {
+    let player = world.get::<Player>();
+    let mut player = player.borrow_mut();
+    let movable = world.get::<Movable>();
+    let mut movable = movable.borrow_mut();
+    let enemy = world.get::<Enemy>();
+    let enemy = enemy.borrow();
+
+    for (player, entity) in player.components_and_entities_mut() {
         let controller_x = controllers.x();
         let controller_y = controllers.y();
 
@@ -85,11 +93,11 @@ pub fn update(
             controller_dir.set_y(if controller_y > 0 { -1.0 } else { 1.0 });
         }
 
-        if let Some(movable) = world.lookup_mut::<Movable>(entity) {
-            movable.speed = SHIP_SPEED * controller_dir - camera.speed;
+        if let Some(m) = movable.lookup_mut(entity) {
+            m.speed = SHIP_SPEED * controller_dir - camera.speed;
         }
 
-        if let Some(movable) = world.lookup::<Movable>(entity).copied() {
+        if let Some(m) = movable.lookup(entity).cloned() {
             let now = current_time_us();
 
             match player.weapon {
@@ -100,8 +108,8 @@ pub fn update(
                         sound_mixer.play_sound(SHOOT_1.as_sound_data());
                         shoot_bullet(
                             world,
-                            movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                            Vec2::new(0.0, movable.speed.y() - 1.25),
+                            m.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                            Vec2::new(0.0, m.speed.y() - 1.25),
                         );
                         player.last_shoot_time = now;
                     }
@@ -112,12 +120,12 @@ pub fn update(
                     {
                         sound_mixer.play_sound(SHOOT_2.as_sound_data());
 
-                        let player_pos = movable.pos;
+                        let player_pos = m.pos;
 
-                        let mut distances = world
-                            .entities::<Enemy>()
+                        let mut distances = enemy
+                            .entities()
                             .iter()
-                            .filter_map(|e| movable::pos(world, *e).map(|pos| (pos, e)))
+                            .filter_map(|e| movable::pos(&movable, *e).map(|pos| (pos, e)))
                             .map(|(pos, e)| ((player_pos - pos).length(), *e))
                             .collect::<Vec<_>>();
 
@@ -129,20 +137,20 @@ pub fn update(
 
                         shoot_missile(
                             world,
-                            movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                            Vec2::new(0.0, movable.speed.y() - 0.5),
+                            m.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                            Vec2::new(0.0, m.speed.y() - 0.5),
                             target_1,
                         );
                         shoot_missile(
                             world,
-                            movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                            Vec2::new(0.15, movable.speed.y() - 0.5),
+                            m.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                            Vec2::new(0.15, m.speed.y() - 0.5),
                             target_2,
                         );
                         shoot_missile(
                             world,
-                            movable.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
-                            Vec2::new(-0.15, movable.speed.y() - 0.5),
+                            m.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
+                            Vec2::new(-0.15, m.speed.y() - 0.5),
                             target_3,
                         );
                         player.last_shoot_time = now;

@@ -105,7 +105,7 @@ fn main() {
 
             world.gc();
 
-            if !health::is_alive(&world, player) {
+            if !health::is_alive(&world.get::<Health>().borrow(), player) {
                 break;
             }
         }
@@ -164,14 +164,21 @@ fn main() {
 
                 font::draw_number(
                     &mut cb,
-                    world.lookup::<Player>(player).map(|p| p.score).unwrap_or(0),
+                    world
+                        .get::<Player>()
+                        .borrow()
+                        .lookup(player)
+                        .map(|p| p.score)
+                        .unwrap_or(0),
                     Vec2::new(300.0, 10.0),
                     0x0000efff,
                 );
                 font::draw_number(
                     &mut cb,
                     world
-                        .lookup::<Health>(player)
+                        .get::<Health>()
+                        .borrow()
+                        .lookup(player)
                         .map(|hc| hc.health)
                         .unwrap_or(0),
                     Vec2::new(300.0, 215.0),

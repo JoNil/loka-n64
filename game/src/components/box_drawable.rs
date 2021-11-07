@@ -10,8 +10,13 @@ pub struct BoxDrawable {
 }
 
 pub fn draw(world: &World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-    for (component, entity) in world.components_and_entities::<BoxDrawable>() {
-        if let Some(movable) = world.lookup::<Movable>(entity) {
+    let box_drawable = world.get::<BoxDrawable>();
+    let box_drawable = box_drawable.borrow();
+    let movable = world.get::<Movable>();
+    let movable = movable.borrow();
+
+    for (component, entity) in box_drawable.components_and_entities() {
+        if let Some(movable) = movable.lookup(entity) {
             let half_size = component.size / 2.0;
 
             let upper_left = movable.pos - half_size;

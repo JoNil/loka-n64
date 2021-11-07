@@ -1,10 +1,10 @@
 use super::{
     box_drawable::BoxDrawable,
     enemy::Enemy,
-    health,
+    health::{self, Health},
     movable::{self, Movable},
     player::{Player, SHIP_SIZE},
-    sprite_drawable::SpriteDrawable,
+    sprite_drawable::{self, SpriteDrawable},
 };
 use crate::{camera::Camera, world::World};
 use n64_math::{Aabb2, Color, Vec2};
@@ -64,28 +64,41 @@ pub fn shoot_bullet_enemy(world: &mut World, pos: Vec2, speed: Vec2) {
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
+    let bullet = world.get::<Bullet>();
+    let bullet = bullet.borrow();
+    let movable = world.get::<Movable>();
+    let movable = movable.borrow();
+    let enemy = world.get::<Enemy>();
+    let enemy = enemy.borrow();
+    let player = world.get::<Player>();
+    let player = player.borrow();
+    let sprite_drawable = world.get::<SpriteDrawable>();
+    let sprite_drawable = sprite_drawable.borrow();
+    let health = world.get::<Health>();
+    let mut health = health.borrow_mut();
+
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
-    for (bullet, entity) in world.components_and_entities::<Bullet>() {
-        if let Some(movable) = world.lookup::<Movable>(entity) {
+    for (bullet, entity) in bullet.components_and_entities() {
+        if let Some(m) = movable.lookup(entity) {
             let mut delete = false;
-            let bullet_bb = Aabb2::from_center_size(movable.pos, BULLET_SIZE);
+            let bullet_bb = Aabb2::from_center_size(m.pos, BULLET_SIZE);
 
             if !bullet_bb.collides(&camera_bb) {
                 delete = true;
             }
 
             if bullet.can_hit_enemy {
-                for enemy_entity in world.entities::<Enemy>() {
-                    if let Some(sprite_drawable) = world.lookup::<SpriteDrawable>(*enemy_entity) {
+                for enemy_entity in enemy.entities() {
+                    if let Some(sprite_drawable) = sprite_drawable.lookup(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
-                            movable::pos(&world, *enemy_entity).unwrap_or_else(Vec2::zero),
+                            movable::pos(&movable, *enemy_entity).unwrap_or_else(Vec2::zero),
                             sprite_drawable.size,
                         );
 
                         if bullet_bb.collides(&enemy_bb) {
                             health::damage(
-                                world,
+                                &mut health,
                                 *enemy_entity,
                                 50 + (n64_math::random_f32() * 20.0) as i32,
                             );
@@ -96,15 +109,15 @@ pub fn update(world: &mut World, camera: &Camera) {
             }
 
             if bullet.can_hit_player {
-                for player_entity in world.entities::<Player>() {
+                for player_entity in player.entities() {
                     let player_bb = Aabb2::from_center_size(
-                        movable::pos(world, *player_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(&movable, *player_entity).unwrap_or_else(Vec2::zero),
                         SHIP_SIZE,
                     );
 
                     if bullet_bb.collides(&player_bb) {
                         health::damage(
-                            world,
+                            &mut health,
                             *player_entity,
                             50 + (n64_math::random_f32() * 20.0) as i32,
                         );
