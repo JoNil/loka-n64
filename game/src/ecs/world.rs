@@ -48,7 +48,7 @@ impl World {
     }
 
     pub fn housekeep(&mut self) {
-        let commands = mem::replace(&mut self.commands, Vec::new());
+        let commands = mem::take(&mut self.commands);
         for command in commands.into_iter() {
             command(self);
         }
