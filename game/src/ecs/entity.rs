@@ -1,7 +1,5 @@
 use alloc::{collections::VecDeque, vec::Vec};
 use core::{mem, num::Wrapping};
-use spin::{Mutex, MutexGuard, Once};
-use std::borrow::BorrowMut;
 
 use super::component_map::ComponentMap;
 

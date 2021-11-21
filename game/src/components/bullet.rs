@@ -73,7 +73,7 @@ pub fn update(world: &mut World, camera: &Camera) {
                 for enemy_entity in enemy.entities() {
                     if let Some(sprite_drawable) = sprite_drawable.lookup(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
-                            movable::pos(&movable, *enemy_entity).unwrap_or_else(Vec2::zero),
+                            movable::pos(movable, *enemy_entity).unwrap_or_else(Vec2::zero),
                             sprite_drawable.size,
                         );
 
@@ -92,7 +92,7 @@ pub fn update(world: &mut World, camera: &Camera) {
             if bullet.can_hit_player {
                 for player_entity in player.entities() {
                     let player_bb = Aabb2::from_center_size(
-                        movable::pos(&movable, *player_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(movable, *player_entity).unwrap_or_else(Vec2::zero),
                         SHIP_SIZE,
                     );
 

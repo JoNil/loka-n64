@@ -1,15 +1,14 @@
 #![allow(dead_code)]
+#![allow(clippy::type_complexity)]
 
 use super::{entity::Entity, storage::Storage};
 use alloc::rc::Rc;
 use core::{
     any::{type_name, Any, TypeId},
     cell::RefCell,
-    mem,
 };
 use hashbrown::HashMap;
 use n64_math::BuildFnvHasher;
-use std::borrow::BorrowMut;
 
 pub struct ComponentMap {
     map: HashMap<TypeId, Box<dyn Any + 'static>, BuildFnvHasher>,
@@ -50,7 +49,7 @@ impl ComponentMap {
     pub fn get<T: 'static>(&mut self) -> &mut Storage<T> {
         let t = self.get_unchecked::<T>();
 
-        unsafe { mem::transmute::<*mut Storage<T>, &mut Storage<T>>(t as *mut Storage<T>) }
+        unsafe { &mut *(t as *mut Storage<T>) }
     }
 
     pub fn get2<'a, T1: 'static, T2: 'static>(
@@ -63,8 +62,8 @@ impl ComponentMap {
 
         unsafe {
             (
-                mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
-                mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
+                &mut *(t1 as *mut Storage<T1>),
+                &mut *(t2 as *mut Storage<T2>),
             )
         }
     }
@@ -86,9 +85,9 @@ impl ComponentMap {
 
         unsafe {
             (
-                mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
-                mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
-                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t3 as *mut Storage<T3>),
+                &mut *(t1 as *mut Storage<T1>),
+                &mut *(t2 as *mut Storage<T2>),
+                &mut *(t3 as *mut Storage<T3>),
             )
         }
     }
@@ -115,10 +114,10 @@ impl ComponentMap {
 
         unsafe {
             (
-                mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
-                mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
-                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t3 as *mut Storage<T3>),
-                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t4 as *mut Storage<T4>),
+                &mut *(t1 as *mut Storage<T1>),
+                &mut *(t2 as *mut Storage<T2>),
+                &mut *(t3 as *mut Storage<T3>),
+                &mut *(t4 as *mut Storage<T4>),
             )
         }
     }
@@ -151,11 +150,11 @@ impl ComponentMap {
 
         unsafe {
             (
-                mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
-                mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
-                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t3 as *mut Storage<T3>),
-                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t4 as *mut Storage<T4>),
-                mem::transmute::<*mut Storage<T5>, &mut Storage<T5>>(t5 as *mut Storage<T5>),
+                &mut *(t1 as *mut Storage<T1>),
+                &mut *(t2 as *mut Storage<T2>),
+                &mut *(t3 as *mut Storage<T3>),
+                &mut *(t4 as *mut Storage<T4>),
+                &mut *(t5 as *mut Storage<T5>),
             )
         }
     }
@@ -203,12 +202,12 @@ impl ComponentMap {
 
         unsafe {
             (
-                mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
-                mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
-                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t3 as *mut Storage<T3>),
-                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t4 as *mut Storage<T4>),
-                mem::transmute::<*mut Storage<T5>, &mut Storage<T5>>(t5 as *mut Storage<T5>),
-                mem::transmute::<*mut Storage<T6>, &mut Storage<T6>>(t6 as *mut Storage<T6>),
+                &mut *(t1 as *mut Storage<T1>),
+                &mut *(t2 as *mut Storage<T2>),
+                &mut *(t3 as *mut Storage<T3>),
+                &mut *(t4 as *mut Storage<T4>),
+                &mut *(t5 as *mut Storage<T5>),
+                &mut *(t6 as *mut Storage<T6>),
             )
         }
     }

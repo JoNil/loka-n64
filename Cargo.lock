@@ -878,7 +878,6 @@ dependencies = [
  "n64-alloc",
  "n64-math",
  "n64-sys",
- "spin",
  "zerocopy",
 ]
 

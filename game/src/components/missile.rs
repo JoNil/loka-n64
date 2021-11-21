@@ -47,7 +47,7 @@ pub fn update(world: &mut World, camera: &Camera) {
     for (missile, entity) in missile.components_and_entities() {
         let target_pos = missile
             .target
-            .and_then(|target| movable::pos(&movable, target));
+            .and_then(|target| movable::pos(movable, target));
 
         if let Some(m) = movable.lookup_mut(entity) {
             if let Some(target_pos) = target_pos {
@@ -68,7 +68,7 @@ pub fn update(world: &mut World, camera: &Camera) {
             for enemy_entity in enemy.entities() {
                 if let Some(sprite_drawable) = sprite_drawable.lookup(*enemy_entity) {
                     let enemy_bb = Aabb2::from_center_size(
-                        movable::pos(&movable, *enemy_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(movable, *enemy_entity).unwrap_or_else(Vec2::zero),
                         sprite_drawable.size,
                     );
 

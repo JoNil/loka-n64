@@ -115,7 +115,7 @@ pub fn update(
                         let mut distances = enemy
                             .entities()
                             .iter()
-                            .filter_map(|e| movable::pos(&movable, *e).map(|pos| (pos, e)))
+                            .filter_map(|e| movable::pos(movable, *e).map(|pos| (pos, e)))
                             .map(|(pos, e)| ((player_pos - pos).length(), *e))
                             .collect::<Vec<_>>();
 

@@ -57,7 +57,7 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
         let now = current_time_us();
 
         for (enemy, entity) in enemy.components_and_entities_mut() {
-            if !health::is_alive(&health, entity) {
+            if !health::is_alive(health, entity) {
                 sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
                 player::add_score(player, 1000);
                 world.entities.despawn(entity);
