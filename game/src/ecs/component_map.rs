@@ -27,7 +27,7 @@ impl ComponentMap {
         self.removers.clone()
     }
 
-    fn get_unchecked<T: 'static>(&mut self) -> *const Storage<T> {
+    fn get_ptr<T: 'static>(&mut self) -> *const Storage<T> {
         let key = TypeId::of::<T>();
 
         if !self.map.contains_key(&key) {
@@ -47,7 +47,7 @@ impl ComponentMap {
     }
 
     pub fn get<T: 'static>(&mut self) -> &mut Storage<T> {
-        let t = self.get_unchecked::<T>();
+        let t = self.get_ptr::<T>();
 
         unsafe { &mut *(t as *mut Storage<T>) }
     }
@@ -55,8 +55,8 @@ impl ComponentMap {
     pub fn get2<'a, T1: 'static, T2: 'static>(
         &'a mut self,
     ) -> (&'a mut Storage<T1>, &'a mut Storage<T2>) {
-        let t1 = self.get_unchecked::<T1>();
-        let t2 = self.get_unchecked::<T2>();
+        let t1 = self.get_ptr::<T1>();
+        let t2 = self.get_ptr::<T2>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
 
@@ -75,9 +75,9 @@ impl ComponentMap {
         &'a mut Storage<T2>,
         &'a mut Storage<T3>,
     ) {
-        let t1 = self.get_unchecked::<T1>();
-        let t2 = self.get_unchecked::<T2>();
-        let t3 = self.get_unchecked::<T3>();
+        let t1 = self.get_ptr::<T1>();
+        let t2 = self.get_ptr::<T2>();
+        let t3 = self.get_ptr::<T3>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -100,10 +100,10 @@ impl ComponentMap {
         &'a mut Storage<T3>,
         &'a mut Storage<T4>,
     ) {
-        let t1 = self.get_unchecked::<T1>();
-        let t2 = self.get_unchecked::<T2>();
-        let t3 = self.get_unchecked::<T3>();
-        let t4 = self.get_unchecked::<T4>();
+        let t1 = self.get_ptr::<T1>();
+        let t2 = self.get_ptr::<T2>();
+        let t3 = self.get_ptr::<T3>();
+        let t4 = self.get_ptr::<T4>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -131,11 +131,11 @@ impl ComponentMap {
         &'a mut Storage<T4>,
         &'a mut Storage<T5>,
     ) {
-        let t1 = self.get_unchecked::<T1>();
-        let t2 = self.get_unchecked::<T2>();
-        let t3 = self.get_unchecked::<T3>();
-        let t4 = self.get_unchecked::<T4>();
-        let t5 = self.get_unchecked::<T5>();
+        let t1 = self.get_ptr::<T1>();
+        let t2 = self.get_ptr::<T2>();
+        let t3 = self.get_ptr::<T3>();
+        let t4 = self.get_ptr::<T4>();
+        let t5 = self.get_ptr::<T5>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -177,12 +177,12 @@ impl ComponentMap {
         &'a mut Storage<T5>,
         &'a mut Storage<T6>,
     ) {
-        let t1 = self.get_unchecked::<T1>();
-        let t2 = self.get_unchecked::<T2>();
-        let t3 = self.get_unchecked::<T3>();
-        let t4 = self.get_unchecked::<T4>();
-        let t5 = self.get_unchecked::<T5>();
-        let t6 = self.get_unchecked::<T6>();
+        let t1 = self.get_ptr::<T1>();
+        let t2 = self.get_ptr::<T2>();
+        let t3 = self.get_ptr::<T3>();
+        let t4 = self.get_ptr::<T4>();
+        let t5 = self.get_ptr::<T5>();
+        let t6 = self.get_ptr::<T6>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
