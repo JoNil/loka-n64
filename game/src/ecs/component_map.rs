@@ -85,7 +85,7 @@ impl ComponentMap {
             (
                 mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
                 mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
-                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t2 as *mut Storage<T3>),
+                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t3 as *mut Storage<T3>),
             )
         }
     }
@@ -114,8 +114,8 @@ impl ComponentMap {
             (
                 mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
                 mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
-                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t2 as *mut Storage<T3>),
-                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t2 as *mut Storage<T4>),
+                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t3 as *mut Storage<T3>),
+                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t4 as *mut Storage<T4>),
             )
         }
     }
@@ -150,9 +150,9 @@ impl ComponentMap {
             (
                 mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
                 mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
-                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t2 as *mut Storage<T3>),
-                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t2 as *mut Storage<T4>),
-                mem::transmute::<*mut Storage<T5>, &mut Storage<T5>>(t2 as *mut Storage<T5>),
+                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t3 as *mut Storage<T3>),
+                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t4 as *mut Storage<T4>),
+                mem::transmute::<*mut Storage<T5>, &mut Storage<T5>>(t5 as *mut Storage<T5>),
             )
         }
     }
@@ -202,10 +202,10 @@ impl ComponentMap {
             (
                 mem::transmute::<*mut Storage<T1>, &mut Storage<T1>>(t1 as *mut Storage<T1>),
                 mem::transmute::<*mut Storage<T2>, &mut Storage<T2>>(t2 as *mut Storage<T2>),
-                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t2 as *mut Storage<T3>),
-                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t2 as *mut Storage<T4>),
-                mem::transmute::<*mut Storage<T5>, &mut Storage<T5>>(t2 as *mut Storage<T5>),
-                mem::transmute::<*mut Storage<T6>, &mut Storage<T6>>(t2 as *mut Storage<T6>),
+                mem::transmute::<*mut Storage<T3>, &mut Storage<T3>>(t3 as *mut Storage<T3>),
+                mem::transmute::<*mut Storage<T4>, &mut Storage<T4>>(t4 as *mut Storage<T4>),
+                mem::transmute::<*mut Storage<T5>, &mut Storage<T5>>(t5 as *mut Storage<T5>),
+                mem::transmute::<*mut Storage<T6>, &mut Storage<T6>>(t6 as *mut Storage<T6>),
             )
         }
     }
