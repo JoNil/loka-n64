@@ -1,7 +1,7 @@
 use super::{
     bullet::shoot_bullet_enemy,
     health::{self, Health},
-    movable::{self, Movable},
+    movable::Movable,
     player::{self, Player},
     sprite_drawable::SpriteDrawable,
 };
@@ -59,7 +59,7 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
         for (enemy, entity) in enemy.components_and_entities_mut() {
             if !health::is_alive(&health, entity) {
                 sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
-                player::add_score(&mut player, 1000);
+                player::add_score(player, 1000);
                 entity.despawn();
             }
 

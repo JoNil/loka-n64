@@ -74,7 +74,7 @@ pub fn update(world: &mut World, camera: &Camera) {
 
                     if missile_bb.collides(&enemy_bb) {
                         health::damage(
-                            &mut health,
+                            health,
                             *enemy_entity,
                             100 + (n64_math::random_f32() * 50.0) as i32,
                         );

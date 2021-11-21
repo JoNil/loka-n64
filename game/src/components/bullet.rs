@@ -4,7 +4,7 @@ use super::{
     health::{self, Health},
     movable::{self, Movable},
     player::{Player, SHIP_SIZE},
-    sprite_drawable::{self, SpriteDrawable},
+    sprite_drawable::SpriteDrawable,
 };
 use crate::{
     camera::Camera,
@@ -79,7 +79,7 @@ pub fn update(world: &mut World, camera: &Camera) {
 
                         if bullet_bb.collides(&enemy_bb) {
                             health::damage(
-                                &mut health,
+                                health,
                                 *enemy_entity,
                                 50 + (n64_math::random_f32() * 20.0) as i32,
                             );
@@ -98,7 +98,7 @@ pub fn update(world: &mut World, camera: &Camera) {
 
                     if bullet_bb.collides(&player_bb) {
                         health::damage(
-                            &mut health,
+                            health,
                             *player_entity,
                             50 + (n64_math::random_f32() * 20.0) as i32,
                         );

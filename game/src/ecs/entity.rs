@@ -96,6 +96,7 @@ impl EntitySystem {
         }
 
         {
+            let removers = components.removers();
             let mut remove_list = entity_remove_list();
 
             for entity in remove_list.iter() {
@@ -104,7 +105,7 @@ impl EntitySystem {
                     self.generation[index as usize] += Wrapping(1);
                     self.free_indices.push_back(index);
 
-                    for remover in components.removers().iter() {
+                    for remover in removers.iter() {
                         remover(components, *entity);
                     }
                 }

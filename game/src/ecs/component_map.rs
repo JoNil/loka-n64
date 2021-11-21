@@ -1,10 +1,8 @@
 #![allow(dead_code)]
 
 use super::{entity::Entity, storage::Storage};
-use alloc::rc::Rc;
 use core::{
     any::{type_name, Any, TypeId},
-    cell::RefCell,
     mem,
 };
 use hashbrown::HashMap;
@@ -23,11 +21,11 @@ impl ComponentMap {
         }
     }
 
-    pub fn removers(&self) -> &[fn(&mut ComponentMap, Entity)] {
-        self.removers.as_slice()
+    pub fn removers(&self) -> Vec<fn(&mut ComponentMap, Entity)> {
+        self.removers.clone()
     }
 
-    fn fetch<T: 'static>(&self) -> *const Storage<T> {
+    fn get_unchecked<T: 'static>(&mut self) -> *const Storage<T> {
         let key = TypeId::of::<T>();
 
         if !self.map.contains_key(&key) {
@@ -47,7 +45,7 @@ impl ComponentMap {
     }
 
     pub fn get<T: 'static>(&mut self) -> &mut Storage<T> {
-        let t = self.fetch::<T>();
+        let t = self.get_unchecked::<T>();
 
         unsafe { mem::transmute::<*mut Storage<T>, &mut Storage<T>>(t as *mut Storage<T>) }
     }
@@ -55,8 +53,8 @@ impl ComponentMap {
     pub fn get2<'a, T1: 'static, T2: 'static>(
         &'a mut self,
     ) -> (&'a mut Storage<T1>, &'a mut Storage<T2>) {
-        let t1 = self.fetch::<T1>();
-        let t2 = self.fetch::<T2>();
+        let t1 = self.get_unchecked::<T1>();
+        let t2 = self.get_unchecked::<T2>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
 
@@ -75,9 +73,9 @@ impl ComponentMap {
         &'a mut Storage<T2>,
         &'a mut Storage<T3>,
     ) {
-        let t1 = self.fetch::<T1>();
-        let t2 = self.fetch::<T2>();
-        let t3 = self.fetch::<T3>();
+        let t1 = self.get_unchecked::<T1>();
+        let t2 = self.get_unchecked::<T2>();
+        let t3 = self.get_unchecked::<T3>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -100,10 +98,10 @@ impl ComponentMap {
         &'a mut Storage<T3>,
         &'a mut Storage<T4>,
     ) {
-        let t1 = self.fetch::<T1>();
-        let t2 = self.fetch::<T2>();
-        let t3 = self.fetch::<T3>();
-        let t4 = self.fetch::<T4>();
+        let t1 = self.get_unchecked::<T1>();
+        let t2 = self.get_unchecked::<T2>();
+        let t3 = self.get_unchecked::<T3>();
+        let t4 = self.get_unchecked::<T4>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -131,11 +129,11 @@ impl ComponentMap {
         &'a mut Storage<T4>,
         &'a mut Storage<T5>,
     ) {
-        let t1 = self.fetch::<T1>();
-        let t2 = self.fetch::<T2>();
-        let t3 = self.fetch::<T3>();
-        let t4 = self.fetch::<T4>();
-        let t5 = self.fetch::<T5>();
+        let t1 = self.get_unchecked::<T1>();
+        let t2 = self.get_unchecked::<T2>();
+        let t3 = self.get_unchecked::<T3>();
+        let t4 = self.get_unchecked::<T4>();
+        let t5 = self.get_unchecked::<T5>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -177,12 +175,12 @@ impl ComponentMap {
         &'a mut Storage<T5>,
         &'a mut Storage<T6>,
     ) {
-        let t1 = self.fetch::<T1>();
-        let t2 = self.fetch::<T2>();
-        let t3 = self.fetch::<T3>();
-        let t4 = self.fetch::<T4>();
-        let t5 = self.fetch::<T5>();
-        let t6 = self.fetch::<T6>();
+        let t1 = self.get_unchecked::<T1>();
+        let t2 = self.get_unchecked::<T2>();
+        let t3 = self.get_unchecked::<T3>();
+        let t4 = self.get_unchecked::<T4>();
+        let t5 = self.get_unchecked::<T5>();
+        let t6 = self.get_unchecked::<T6>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
