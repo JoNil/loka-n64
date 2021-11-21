@@ -23,6 +23,6 @@ impl World {
     }
 
     pub fn housekeep(&mut self) {
-        self.entities.housekeep(&mut self.components, self.);
+        self.entities.housekeep(&mut self.components, self.removers.as_slice());
     }
 }

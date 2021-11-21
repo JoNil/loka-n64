@@ -87,7 +87,7 @@ impl EntitySystem {
         self.generation[entity.index() as usize] == entity.generation()
     }
 
-    pub fn housekeep(&mut self, components: &mut ComponentMap,m) {
+    pub fn housekeep(&mut self, components: &mut ComponentMap) {
         {
             let commands = mem::take(&mut self.commands);
             for command in commands.into_iter() {
