@@ -1,6 +1,7 @@
 use alloc::{collections::VecDeque, vec::Vec};
 use core::{mem, num::Wrapping};
 use spin::{Mutex, MutexGuard, Once};
+use std::borrow::BorrowMut;
 
 use super::component_map::ComponentMap;
 
@@ -97,6 +98,7 @@ impl EntitySystem {
 
         {
             let removers = components.removers();
+            let removers = removers.as_ref().borrow_mut();
             let mut remove_list = entity_remove_list();
 
             for entity in remove_list.iter() {

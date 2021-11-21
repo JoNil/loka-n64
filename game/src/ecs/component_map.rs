@@ -1,27 +1,30 @@
 #![allow(dead_code)]
 
 use super::{entity::Entity, storage::Storage};
+use alloc::rc::Rc;
 use core::{
     any::{type_name, Any, TypeId},
+    cell::RefCell,
     mem,
 };
 use hashbrown::HashMap;
 use n64_math::BuildFnvHasher;
+use std::borrow::BorrowMut;
 
 pub struct ComponentMap {
     map: HashMap<TypeId, Box<dyn Any + 'static>, BuildFnvHasher>,
-    removers: Vec<fn(&mut ComponentMap, Entity)>,
+    removers: Rc<RefCell<Vec<fn(&mut ComponentMap, Entity)>>>,
 }
 
 impl ComponentMap {
     pub fn new() -> Self {
         Self {
             map: HashMap::default(),
-            removers: Vec::new(),
+            removers: Rc::new(RefCell::new(Vec::new())),
         }
     }
 
-    pub fn removers(&self) -> Vec<fn(&mut ComponentMap, Entity)> {
+    pub fn removers(&self) -> Rc<RefCell<Vec<fn(&mut ComponentMap, Entity)>>> {
         self.removers.clone()
     }
 
@@ -30,7 +33,7 @@ impl ComponentMap {
 
         if !self.map.contains_key(&key) {
             self.map.insert(key, Box::new(Storage::<T>::new()));
-            self.removers.push(|map, entity| {
+            self.removers.as_ref().borrow_mut().push(|map, entity| {
                 map.get::<T>().remove(entity);
             });
         }
