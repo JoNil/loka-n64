@@ -2,7 +2,7 @@
 #![allow(clippy::type_complexity)]
 
 use super::{entity::Entity, storage::Storage};
-use alloc::rc::Rc;
+use alloc::{boxed::Box, rc::Rc, vec::Vec};
 use core::{
     any::{type_name, Any, TypeId},
     cell::RefCell,
