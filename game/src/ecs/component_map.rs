@@ -35,13 +35,13 @@ impl ComponentMap {
             });
         }
 
-        let res: &Box<Storage<T>> = self
+        let res: &Storage<T> = self
             .map
             .get(&key)
-            .and_then(|b| b.downcast_ref())
+            .and_then(|b| b.downcast_ref::<Storage<T>>())
             .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
 
-        res.as_ref() as *const Storage<T>
+        res as *const Storage<T>
     }
 
     pub fn get<T: 'static>(&mut self) -> &mut Storage<T> {
