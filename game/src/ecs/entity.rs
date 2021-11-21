@@ -13,14 +13,6 @@ const GENERATION_MASK: u32 = (1 << GENERATION_BITS) - 1;
 
 const MINIMUM_FREE_INDICES: u32 = 1024;
 
-static ENTITY_REMOVE_LIST: Once<Mutex<Vec<Entity>>> = Once::new();
-
-fn entity_remove_list() -> MutexGuard<'static, Vec<Entity>> {
-    ENTITY_REMOVE_LIST
-        .call_once(|| Mutex::new(Vec::with_capacity(128)))
-        .lock()
-}
-
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Entity {
     id: u32,
@@ -43,15 +35,12 @@ impl Entity {
     pub fn generation(&self) -> Wrapping<u8> {
         Wrapping(((self.id >> INDEX_BITS) & GENERATION_MASK) as u8)
     }
-
-    pub fn despawn(&self) {
-        entity_remove_list().push(*self);
-    }
 }
 
 pub struct EntitySystem {
     generation: Vec<Wrapping<u8>>,
     free_indices: VecDeque<u32>,
+    remove_list: Vec<Entity>,
     commands: Vec<Box<dyn FnOnce(&mut ComponentMap)>>,
 }
 
@@ -60,6 +49,7 @@ impl EntitySystem {
         EntitySystem {
             generation: Vec::with_capacity(256),
             free_indices: VecDeque::with_capacity((2 * MINIMUM_FREE_INDICES) as usize),
+            remove_list: Vec::with_capacity(8),
             commands: Vec::new(),
         }
     }
@@ -69,6 +59,10 @@ impl EntitySystem {
             entity: self.create(),
             commands: &mut self.commands,
         }
+    }
+
+    pub fn despawn(&mut self, entity: Entity) {
+        self.remove_list.push(entity);
     }
 
     fn create(&mut self) -> Entity {
@@ -99,9 +93,8 @@ impl EntitySystem {
         {
             let removers = components.removers();
             let removers = removers.as_ref().borrow_mut();
-            let mut remove_list = entity_remove_list();
 
-            for entity in remove_list.iter() {
+            for entity in self.remove_list.iter() {
                 if self.alive(*entity) {
                     let index = entity.index();
                     self.generation[index as usize] += Wrapping(1);
@@ -113,7 +106,7 @@ impl EntitySystem {
                 }
             }
 
-            remove_list.clear();
+            self.remove_list.clear();
         }
     }
 }

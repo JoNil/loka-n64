@@ -84,7 +84,7 @@ pub fn update(world: &mut World, camera: &Camera) {
             }
 
             if delete {
-                entity.despawn();
+                world.entities.despawn(entity);
             }
         }
     }
