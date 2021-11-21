@@ -4,9 +4,12 @@ use super::{
     health::{self, Health},
     movable::{self, Movable},
     player::{Player, SHIP_SIZE},
-    sprite_drawable::SpriteDrawable,
+    sprite_drawable::{self, SpriteDrawable},
 };
-use crate::{camera::Camera, ecs::world::World};
+use crate::{
+    camera::Camera,
+    ecs::{entity::EntitySystem, world::World},
+};
 use n64_math::{Aabb2, Color, Vec2};
 
 const BULLET_SIZE: Vec2 = Vec2::new(0.00825, 0.00825);
@@ -17,10 +20,10 @@ struct Bullet {
     can_hit_enemy: bool,
 }
 
-pub fn shoot_bullet(world: &mut World, pos: Vec2, speed: Vec2) {
+pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-    world
+    entities
         .spawn()
         .add(Movable {
             pos,
@@ -36,8 +39,8 @@ pub fn shoot_bullet(world: &mut World, pos: Vec2, speed: Vec2) {
         });
 }
 
-pub fn shoot_bullet_enemy(world: &mut World, pos: Vec2, speed: Vec2) {
-    world
+pub fn shoot_bullet_enemy(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
+    entities
         .spawn()
         .add(Movable { pos, speed })
         .add(BoxDrawable {
@@ -51,18 +54,9 @@ pub fn shoot_bullet_enemy(world: &mut World, pos: Vec2, speed: Vec2) {
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
-    let bullet = world.get::<Bullet>();
-    let bullet = bullet.borrow();
-    let movable = world.get::<Movable>();
-    let movable = movable.borrow();
-    let enemy = world.get::<Enemy>();
-    let enemy = enemy.borrow();
-    let player = world.get::<Player>();
-    let player = player.borrow();
-    let sprite_drawable = world.get::<SpriteDrawable>();
-    let sprite_drawable = sprite_drawable.borrow();
-    let health = world.get::<Health>();
-    let mut health = health.borrow_mut();
+    let (bullet, movable, enemy, player, sprite_drawable, health) = world
+        .components
+        .get6::<Bullet, Movable, Enemy, Player, SpriteDrawable, Health>();
 
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 

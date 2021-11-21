@@ -7,7 +7,10 @@ use super::{
 };
 use crate::{
     camera::Camera,
-    ecs::{entity::Entity, world::World},
+    ecs::{
+        entity::{Entity, EntitySystem},
+        world::World,
+    },
 };
 use n64_math::{Aabb2, Color, Vec2};
 
@@ -18,10 +21,10 @@ struct Missile {
     target: Option<Entity>,
 }
 
-pub fn shoot_missile(world: &mut World, pos: Vec2, speed: Vec2, target: Option<Entity>) {
+pub fn shoot_missile(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target: Option<Entity>) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
-    world
+    entities
         .spawn()
         .add(Movable {
             pos,
@@ -35,16 +38,9 @@ pub fn shoot_missile(world: &mut World, pos: Vec2, speed: Vec2, target: Option<E
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
-    let missile = world.get::<Missile>();
-    let missile = missile.borrow();
-    let movable = world.get::<Movable>();
-    let mut movable = movable.borrow_mut();
-    let enemy = world.get::<Enemy>();
-    let enemy = enemy.borrow();
-    let sprite_drawable = world.get::<SpriteDrawable>();
-    let sprite_drawable = sprite_drawable.borrow();
-    let health = world.get::<Health>();
-    let mut health = health.borrow_mut();
+    let (missile, movable, enemy, sprite_drawable, health) = world
+        .components
+        .get5::<Missile, Movable, Enemy, SpriteDrawable, Health>();
 
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 

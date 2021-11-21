@@ -8,7 +8,11 @@ use super::{
 };
 use crate::{
     camera::Camera,
-    ecs::{entity::Entity, storage::Storage, world::World},
+    ecs::{
+        entity::{Entity, EntitySystem},
+        storage::Storage,
+        world::World,
+    },
     sound_mixer::SoundMixer,
     sounds::{SHOOT_1, SHOOT_2},
     textures::SHIP_2_SMALL,
@@ -31,8 +35,8 @@ pub struct Player {
     pub weapon: Weapon,
 }
 
-pub fn spawn_player(world: &mut World, start_pos: Vec2) -> Entity {
-    world
+pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
+    entities
         .spawn()
         .add(Movable {
             pos: start_pos + PLAYTER_START_POS,
@@ -63,12 +67,7 @@ pub fn update(
     sound_mixer: &mut SoundMixer,
     camera: &Camera,
 ) {
-    let player = world.get::<Player>();
-    let mut player = player.borrow_mut();
-    let movable = world.get::<Movable>();
-    let mut movable = movable.borrow_mut();
-    let enemy = world.get::<Enemy>();
-    let enemy = enemy.borrow();
+    let (player, movable, enemy) = world.components.get3::<Player, Movable, Enemy>();
 
     for (player, entity) in player.components_and_entities_mut() {
         let controller_x = controllers.x();
@@ -98,7 +97,7 @@ pub fn update(
                     {
                         sound_mixer.play_sound(SHOOT_1.as_sound_data());
                         shoot_bullet(
-                            world,
+                            &mut world.entities,
                             m.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(0.0, m.speed.y() - 1.25),
                         );
@@ -127,19 +126,19 @@ pub fn update(
                         let target_3 = distances.get(2).map(|(_, e)| *e);
 
                         shoot_missile(
-                            world,
+                            &mut world.entities,
                             m.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(0.0, m.speed.y() - 0.5),
                             target_1,
                         );
                         shoot_missile(
-                            world,
+                            &mut world.entities,
                             m.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(0.15, m.speed.y() - 0.5),
                             target_2,
                         );
                         shoot_missile(
-                            world,
+                            &mut world.entities,
                             m.pos + Vec2::new(0.0, -SHIP_SIZE.y() / 2.0),
                             Vec2::new(-0.15, m.speed.y() - 0.5),
                             target_3,

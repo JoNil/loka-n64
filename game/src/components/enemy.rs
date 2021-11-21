@@ -1,11 +1,15 @@
 use super::{
     bullet::shoot_bullet_enemy,
     health::{self, Health},
-    movable::Movable,
+    movable::{self, Movable},
     player::{self, Player},
     sprite_drawable::SpriteDrawable,
 };
-use crate::{ecs::world::World, sound_mixer::SoundMixer, sounds::EXPLOSION_0};
+use crate::{
+    ecs::{entity::EntitySystem, world::World},
+    sound_mixer::SoundMixer,
+    sounds::EXPLOSION_0,
+};
 use n64::{current_time_us, gfx::Texture};
 use n64_math::Vec2;
 
@@ -24,8 +28,8 @@ pub struct Enemy {
     waypoint_step: f32,
 }
 
-pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
-    world
+pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'static>) {
+    entities
         .spawn()
         .add(Movable {
             pos,
@@ -46,16 +50,9 @@ pub fn spawn_enemy(world: &mut World, pos: Vec2, texture: Texture<'static>) {
 
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
     {
-        let enemy = world.get::<Enemy>();
-        let mut enemy = enemy.borrow_mut();
-        let movable = world.get::<Movable>();
-        let movable = movable.borrow();
-        let health = world.get::<Health>();
-        let health = health.borrow();
-        let sprite_drawable = world.get::<SpriteDrawable>();
-        let sprite_drawable = sprite_drawable.borrow();
-        let player = world.get::<Player>();
-        let mut player = player.borrow_mut();
+        let (enemy, movable, health, sprite_drawable, player) = world
+            .components
+            .get5::<Enemy, Movable, Health, SpriteDrawable, Player>();
 
         let now = current_time_us();
 
@@ -73,7 +70,7 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
                 ) {
                     //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                     shoot_bullet_enemy(
-                        world,
+                        &mut world.entities,
                         movable.pos + Vec2::new(0.0, sprite_drawable.size.y() / 2.0),
                         Vec2::new(0.0, 1.25),
                     );
@@ -87,10 +84,7 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
 }
 
 fn ai(world: &mut World, dt: f32) {
-    let enemy = world.get::<Enemy>();
-    let mut enemy = enemy.borrow_mut();
-    let movable = world.get::<Movable>();
-    let mut movable = movable.borrow_mut();
+    let (enemy, movable) = world.components.get2::<Enemy, Movable>();
 
     for (enemy, entity) in enemy.components_and_entities_mut() {
         if let Some(movable) = movable.lookup_mut(entity) {

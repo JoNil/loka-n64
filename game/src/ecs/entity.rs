@@ -1,8 +1,8 @@
 use alloc::{collections::VecDeque, vec::Vec};
-use core::num::Wrapping;
+use core::{mem, num::Wrapping};
 use spin::{Mutex, MutexGuard, Once};
 
-use super::type_map::TypeMap;
+use super::component_map::ComponentMap;
 
 const INDEX_BITS: u32 = 24;
 const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
@@ -51,6 +51,7 @@ impl Entity {
 pub struct EntitySystem {
     generation: Vec<Wrapping<u8>>,
     free_indices: VecDeque<u32>,
+    commands: Vec<Box<dyn FnOnce(&mut ComponentMap)>>,
 }
 
 impl EntitySystem {
@@ -58,10 +59,18 @@ impl EntitySystem {
         EntitySystem {
             generation: Vec::with_capacity(256),
             free_indices: VecDeque::with_capacity((2 * MINIMUM_FREE_INDICES) as usize),
+            commands: Vec::new(),
         }
     }
 
-    pub fn create(&mut self) -> Entity {
+    pub fn spawn(&mut self) -> EntityBuilder {
+        EntityBuilder {
+            entity: self.create(),
+            commands: &mut self.commands,
+        }
+    }
+
+    fn create(&mut self) -> Entity {
         let index = if self.free_indices.len() as u32 > MINIMUM_FREE_INDICES {
             self.free_indices.pop_front().unwrap()
         } else {
@@ -78,21 +87,51 @@ impl EntitySystem {
         self.generation[entity.index() as usize] == entity.generation()
     }
 
-    pub fn gc(&mut self, components: &mut TypeMap, removers: &[fn(&mut TypeMap, Entity)]) {
-        let mut remove_list = entity_remove_list();
-
-        for entity in remove_list.iter() {
-            if self.alive(*entity) {
-                let index = entity.index();
-                self.generation[index as usize] += Wrapping(1);
-                self.free_indices.push_back(index);
-
-                for remover in removers.iter() {
-                    remover(components, *entity);
-                }
+    pub fn housekeep(&mut self, components: &mut ComponentMap,m) {
+        {
+            let commands = mem::take(&mut self.commands);
+            for command in commands.into_iter() {
+                command(components);
             }
         }
 
-        remove_list.clear();
+        {
+            let mut remove_list = entity_remove_list();
+
+            for entity in remove_list.iter() {
+                if self.alive(*entity) {
+                    let index = entity.index();
+                    self.generation[index as usize] += Wrapping(1);
+                    self.free_indices.push_back(index);
+
+                    for remover in components.removers().iter() {
+                        remover(components, *entity);
+                    }
+                }
+            }
+
+            remove_list.clear();
+        }
+    }
+}
+
+pub struct EntityBuilder<'a> {
+    entity: Entity,
+    commands: &'a mut Vec<Box<dyn FnOnce(&mut ComponentMap)>>,
+}
+
+impl<'a> EntityBuilder<'a> {
+    pub fn add<T: 'static>(&'a mut self, component: T) -> &'a mut Self {
+        let entity = self.entity;
+
+        self.commands.push(Box::new(move |components| {
+            components.get::<T>().add(entity, component);
+        }));
+
+        self
+    }
+
+    pub fn entity(&self) -> Entity {
+        self.entity
     }
 }

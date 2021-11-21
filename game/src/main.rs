@@ -65,7 +65,7 @@ fn main() {
     let mut camera = Camera::new(start_pos);
     let mut command_buffer_cache = CommandBufferCache::new();
 
-    let player = spawn_player(&mut world, start_pos);
+    let player = spawn_player(&mut world.entities, start_pos);
 
     map.spawn_enemies(&mut world, &VIDEO_MODE);
 
@@ -102,7 +102,7 @@ fn main() {
 
             world.housekeep();
 
-            if !health::is_alive(&world.get::<Health>().borrow(), player) {
+            if !health::is_alive(world.components.get::<Health>(), player) {
                 break;
             }
         }
@@ -162,8 +162,8 @@ fn main() {
                 font::draw_number(
                     &mut cb,
                     world
+                        .components
                         .get::<Player>()
-                        .borrow()
                         .lookup(player)
                         .map(|p| p.score)
                         .unwrap_or(0),
@@ -173,8 +173,8 @@ fn main() {
                 font::draw_number(
                     &mut cb,
                     world
+                        .components
                         .get::<Health>()
-                        .borrow()
                         .lookup(player)
                         .map(|hc| hc.health)
                         .unwrap_or(0),

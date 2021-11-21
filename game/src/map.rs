@@ -34,7 +34,7 @@ impl Map {
         for objects in self.data.objects {
             for object in *objects {
                 spawn_enemy(
-                    world,
+                    &mut world.entities,
                     Vec2::new(
                         object.x / video_mode.width() as f32,
                         object.y / video_mode.height() as f32,
