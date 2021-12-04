@@ -349,7 +349,7 @@ impl RdpCommandBuilder {
 
         buffer.push(RdpCommand(
             (command << 56)
-                | if right_major {1u64 << 55} else {0u64}
+                |  if right_major {0x1u64 << 55} else {0u64}
                 | (to_fixpoint_s_11_2(y_low_minor)) << 32
                 | (to_fixpoint_s_11_2(y_mid_minor)) << 16
                 | (to_fixpoint_s_11_2(y_high_major)) << 0,

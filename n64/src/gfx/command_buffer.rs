@@ -44,6 +44,21 @@ fn float_to_signed_int_frac(val: f32) -> (i16, u16) {
 // x = (y-m)/k
 // dx : 1/k
 fn edge_slope(p0: Vec3, p1: Vec3) -> (i16, u16) {
+    // TODO: ZERO DIVISION  (old epsilon 0.01)
+    if 1.0 > libm::fabsf(p1.1 - p0.1) {
+        //panic!("edge_slope");
+        return float_to_signed_int_frac(p1.0 - p0.0);
+        if p1.0 > p0.0 {
+            return (i16::MAX, u16::MAX);
+        }
+        else {
+            return (i16::MIN, u16::MAX);
+        }
+    }
+    float_to_signed_int_frac((p1.0 - p0.0) / (p1.1 - p0.1))
+}
+
+fn edge_slope_abs(p0: Vec3, p1: Vec3) -> (i16, u16) {
     // TODO: ZERO DIVISION 
     if 0.01 > libm::fabsf(p1.1 - p0.1) {
         //panic!("edge_slope");
@@ -55,7 +70,7 @@ fn edge_slope(p0: Vec3, p1: Vec3) -> (i16, u16) {
             return (i16::MIN, u16::MAX);
         }
     }
-    float_to_signed_int_frac((p1.0 - p0.0) / (p1.1 - p0.1))
+    float_to_signed_int_frac(libm::fabsf((p1.0 - p0.0) / (p1.1 - p0.1)))
 }
 
 // kx + m = y
@@ -146,6 +161,7 @@ fn is_triangle_right_major(p0 : Vec3, p1 : Vec3, p2 : Vec3) -> bool
 
 // Sort so that v0.1 <= v1.1 <= v2.1
 fn sorted_triangle(v0 : Vec3, v1 : Vec3, v2 : Vec3) -> (Vec3, Vec3, Vec3) {
+
     if v0.1 > v1.1 {
         sorted_triangle(v1, v0, v2)
     }
@@ -329,12 +345,18 @@ impl<'a> CommandBuffer<'a> {
 
         self.cache
             .rdp
+            .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
             .set_fill_color(Color::new(0b10000_00011_00011_1));
             
         // Set triangle mode fill
          self.cache
             .rdp
-            .set_other_modes(3u64 <<52);
+            //.set_other_modes(3u64 <<52);
+            .set_other_modes(
+                OTHER_MODE_CYCLE_TYPE_FILL
+                    | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
+                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
+            );
         for triangle in indices {
             // TODO: Transform before sort
             let mut v0 = verts[triangle[0] as usize];
@@ -388,40 +410,46 @@ impl<'a> CommandBuffer<'a> {
 
             //panic!("x{:x?}\n{}\nx{:x?}\n{}\nx{:x?}\n{}", l_slope_int, l_slope_frac, m_slope_int, m_slope_frac, h_slope_int, h_slope_frac);
 
-            let (l_slope_int, l_slope_frac) = edge_slope(vl, vm);
-            let (m_slope_int, m_slope_frac) = edge_slope(vm, vh);
-            let (h_slope_int, h_slope_frac) = edge_slope(vl, vh);
+            let (l_slope_int, l_slope_frac) = edge_slope(vl, vm); //edge_slope
+            let (m_slope_int, m_slope_frac) = edge_slope(vm, vh); //edge_slope
+            let (h_slope_int, h_slope_frac) = edge_slope(vl, vh); //
+
             //panic!("{}.{}>{}.{}\n{}", m_int, m_frac, h_int, h_frac, int_frac_greater(m_int, m_frac, h_int, h_frac));
 
-            let right_major = true; //is_triangle_right_major(vh, vm, vl);
+            let right_major = is_triangle_right_major(vh, vm, vl);
 
             //if !right_major {
              //   return self;
            // }
 
-            self.cache.rdp.edge_coefficients(
-                false,
-                false,
-                false,
-                right_major,//int_frac_greater(l_int, l_frac, m_int, m_frac),
-                0,
-                0,
-                vl.1,
-                vm.1,
-                vh.1,
-                l_int,
-                l_frac,
-                m_int,
-                m_frac,
-                h_int,
-                h_frac,
-                l_slope_int,
-                l_slope_frac,
-                m_slope_int,
-                m_slope_frac,
-                h_slope_int,
-                h_slope_frac,
-            );
+            //self.cache.rdp.sync_full();
+            //self.cache.rdp.sync_pipe(); // Should not be needed.
+
+            if true {
+                self.cache.rdp.edge_coefficients(
+                    false,
+                    false,
+                    false,
+                    right_major,//int_frac_greater(l_int, l_frac, m_int, m_frac),
+                    0,
+                    0,
+                    vl.1,
+                    vm.1,
+                    vh.1,
+                    l_int,
+                    l_frac,
+                    m_int,
+                    m_frac,
+                    h_int,
+                    h_frac,
+                    l_slope_int,
+                    l_slope_frac,
+                    m_slope_int,
+                    m_slope_frac,
+                    h_slope_int,
+                    h_slope_frac,
+                );
+            }
             
             /*panic!(
                 "Vl {} {}\nVm {} {}\nVh {} {}\nLY,X {} {} {}\nMY,X {} {} {}\nHY,X {} {} {}",
