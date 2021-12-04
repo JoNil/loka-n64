@@ -81,7 +81,7 @@ fn main() {
     let mut last_colored_rect_count = 0;
     let mut last_textured_rect_count = 0;
 
-    let mut odd_frame = false;
+    let mut frame_no = 0;
 
     loop {
         frame_begin_time = current_time_us();
@@ -90,7 +90,6 @@ fn main() {
             dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;
             last_frame_begin_time = frame_begin_time;
         }
-        odd_frame = !odd_frame;
 
         {
             // Update
@@ -183,25 +182,7 @@ fn main() {
                     cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 10.0, v1.1 + 10.0), GREEN);
                     cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 10.0, v2.1 + 10.0), BLUE);
 
-                    let text_off = if odd_frame { 0.0 } else { 17.0 * 3.0 };
-                    font::draw_text(
-                        &mut cb,
-                        &alloc::format!(" v0 {:.4?} {:.4?}", v0.0, v0.1),
-                        Vec2::new(1.0, 51.0 + text_off),
-                        0xcccccccc,
-                    );
-                    font::draw_text(
-                        &mut cb,
-                        &alloc::format!(" v1 {:.4?} {:.4?}", v1.0, v1.1),
-                        Vec2::new(1.0, 68.0 + text_off),
-                        0xcccccccc,
-                    );
-                    font::draw_text(
-                        &mut cb,
-                        &alloc::format!(" v2 {:.4?} {:.4?}", v2.0, v2.1),
-                        Vec2::new(1.0, 85.0 + text_off),
-                        0xcccccccc,
-                    );
+                    n64::debugln!("11");
 
                     if true {
                         cb.add_mesh_indexed(
@@ -226,10 +207,6 @@ fn main() {
                     cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 2.0, v0.1 + 2.0), WHITE);
                     cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 2.0, v1.1 + 2.0), WHITE);
                     cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 2.0, v2.1 + 2.0), WHITE);
-
-                    font::draw_text(&mut cb, "x", Vec2::new(1.0, 51.0 + text_off), 0xcccccccc);
-                    font::draw_text(&mut cb, "x", Vec2::new(1.0, 68.0 + text_off), 0xcccccccc);
-                    font::draw_text(&mut cb, "x", Vec2::new(1.0, 85.0 + text_off), 0xcccccccc);
                 }
 
                 if false {
@@ -324,6 +301,8 @@ fn main() {
 
             last_colored_rect_count = colored_rect_count;
             last_textured_rect_count = textured_rect_count;
+
+            frame_no += 1;
 
             let frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
             frame_used_time = frame_end_time - frame_begin_time;

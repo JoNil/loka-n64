@@ -9,6 +9,7 @@ pub use controllers::Controllers;
 pub use framebuffer::{slow_cpu_clear, Framebuffer};
 pub use graphics::Graphics;
 pub use n64_types::VideoMode;
+use spin::Mutex;
 
 pub mod gfx;
 pub mod ipl3font;
@@ -83,30 +84,57 @@ cfg_if::cfg_if! {
         }
     }
 }
+cfg_if::cfg_if! {
+    if #[cfg(target_vendor = "nintendo64")] {
+        pub struct DebugWrite {
+            buffer: [u8; 16],
+            cursor: u16,
+        }
 
-pub struct DebugWrite;
+        pub static GLOBAL_DEBUG_PRINT: Mutex<DebugWrite> = Mutex::new(DebugWrite { buffer: [0; 16], cursor: 0 });
 
-#[cfg(target_vendor = "nintendo64")]
-impl fmt::Write for DebugWrite {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        n64_sys::ed::usb_write(s.as_bytes());
-        Ok(())
+        impl fmt::Write for DebugWrite {
+            fn write_str(&mut self, s: &str) -> fmt::Result {
+
+                for byte in s.as_bytes() {
+
+                    self.buffer[self.cursor as usize] = *byte;
+                        self.cursor += 1;
+
+                    if self.cursor == 16 {
+                        assert!(n64_sys::ed::usb_write(&self.buffer));
+                        self.cursor = 0;
+                    }
+                }
+
+                Ok(())
+            }
+        }
+
+        #[macro_export]
+        macro_rules! debug {
+            ($($arg:tt)*) => {
+                <$crate::DebugWrite as core::fmt::Write>::write_fmt(&mut $crate::GLOBAL_DEBUG_PRINT.lock(), format_args!($($arg)*)).ok()
+            };
+        }
+
+    } else {
+        pub struct DebugWrite;
+
+        impl fmt::Write for DebugWrite {
+            fn write_str(&mut self, s: &str) -> fmt::Result {
+                print!("{}", s);
+                Ok(())
+            }
+        }
+
+        #[macro_export]
+        macro_rules! debug {
+            ($($arg:tt)*) => {
+                <$crate::DebugWrite as core::fmt::Write>::write_fmt(&mut $crate::DebugWrite, format_args!($($arg)*)).ok()
+            };
+        }
     }
-}
-
-#[cfg(not(target_vendor = "nintendo64"))]
-impl fmt::Write for DebugWrite {
-    fn write_str(&mut self, s: &str) -> fmt::Result {
-        print!("{}", s);
-        Ok(())
-    }
-}
-
-#[macro_export]
-macro_rules! debug {
-    ($($arg:tt)*) => {
-        <$crate::DebugWrite as core::fmt::Write>::write_fmt(&mut $crate::DebugWrite, format_args!($($arg)*)).ok()
-    };
 }
 
 #[macro_export]

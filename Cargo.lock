@@ -1380,6 +1380,7 @@ dependencies = [
  "n64-types",
  "naga",
  "rubato",
+ "spin",
  "wgpu",
  "winit",
  "zerocopy",

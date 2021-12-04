@@ -82,10 +82,7 @@ pub fn write(src: *const u8, len: u32, pi_address: usize) {
         write_volatile(PI_RAM_ADDR, uncached_addr(src as _) as _);
         memory_barrier();
 
-        write_volatile(
-            PI_CART_ADDR,
-            virtual_to_physical_mut((pi_address | 0x10000000) as *mut u8),
-        );
+        write_volatile(PI_CART_ADDR, virtual_to_physical_mut(pi_address as *mut u8));
         memory_barrier();
 
         write_volatile(PI_READ_LENGTH, (len - 1) as _);

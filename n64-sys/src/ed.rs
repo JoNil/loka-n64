@@ -35,7 +35,7 @@ fn register_write(reg: u16, val: u32) {
 fn register_read(reg: u16) -> u32 {
     let mut val = 0;
     pi::read(&mut val as *mut u32 as _, 4, REG_BASE + reg as usize);
-    return val;
+    val
 }
 
 pub fn init() {
