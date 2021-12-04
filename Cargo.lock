@@ -874,6 +874,7 @@ version = "0.1.0"
 dependencies = [
  "game-pipeline",
  "hashbrown 0.11.2",
+ "libm",
  "n64",
  "n64-alloc",
  "n64-math",
@@ -1373,6 +1374,7 @@ dependencies = [
  "cpal",
  "futures-executor",
  "lazy_static",
+ "libm",
  "n64-math",
  "n64-sys",
  "n64-types",

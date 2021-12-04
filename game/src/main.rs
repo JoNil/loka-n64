@@ -27,7 +27,7 @@ use n64::{
     gfx::{CommandBuffer, CommandBufferCache},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
-use n64_math::{Color, Vec2};
+use n64_math::{vec2, vec3, Color, Vec2};
 use sound_mixer::SoundMixer;
 
 mod camera;
@@ -92,8 +92,6 @@ fn main() {
         }
         odd_frame = !odd_frame;
 
-        n64::debugln!("test test test test test test test test test");
-
         {
             // Update
 
@@ -136,20 +134,22 @@ fn main() {
                 sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
                 {
-                    let ship_3 = SHIP_3_BODY.as_model_data();
-                    cb.add_mesh_indexed(
-                        ship_3.verts,
-                        ship_3.uvs,
-                        ship_3.colors,
-                        ship_3.indices,
-                        &[
-                            [0.1, 0.0, 0.0, 0.0],
-                            [0.0, 0.1, 0.0, 0.0],
-                            [0.0, 0.0, 0.1, 0.0],
-                            [0.0, 0.0, 0.5, 1.0],
-                        ],
-                        None,
-                    );
+                    if false {
+                        let ship_3 = SHIP_3_BODY.as_model_data();
+                        cb.add_mesh_indexed(
+                            ship_3.verts,
+                            ship_3.uvs,
+                            ship_3.colors,
+                            ship_3.indices,
+                            &[
+                                [0.1, 0.0, 0.0, 0.0],
+                                [0.0, 0.1, 0.0, 0.0],
+                                [0.0, 0.0, 0.1, 0.0],
+                                [0.0, 0.0, 0.5, 1.0],
+                            ],
+                            None,
+                        );
+                    }
 
                     let x_limit = 320.0;
                     let y_limit = 240.0;
