@@ -877,6 +877,7 @@ dependencies = [
  "libm",
  "n64",
  "n64-alloc",
+ "n64-macros",
  "n64-math",
  "n64-sys",
  "zerocopy",
@@ -1375,6 +1376,7 @@ dependencies = [
  "futures-executor",
  "lazy_static",
  "libm",
+ "n64-macros",
  "n64-math",
  "n64-sys",
  "n64-types",
@@ -1391,6 +1393,15 @@ name = "n64-alloc"
 version = "0.1.0"
 dependencies = [
  "memory_units",
+ "spin",
+]
+
+[[package]]
+name = "n64-macros"
+version = "0.1.0"
+dependencies = [
+ "cfg-if 1.0.0",
+ "n64-sys",
  "spin",
 ]
 

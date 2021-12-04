@@ -10,6 +10,7 @@ edition = "2018"
 hashbrown = { version = "0.11", default-features = false }
 libm = "0.2"
 n64 = { path = "../n64" }
+n64-macros = { path = "../n64-macros" }
 n64-math = { path = "../n64-math" }
 zerocopy = "0.6"
 

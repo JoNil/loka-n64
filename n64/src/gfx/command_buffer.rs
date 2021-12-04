@@ -1,5 +1,6 @@
 use super::{Texture, TextureMut};
 use crate::graphics::Graphics;
+use n64_macros::debugln;
 use n64_math::{Color, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
@@ -414,6 +415,8 @@ impl<'a> CommandBuffer<'a> {
             //self.cache.rdp.sync_pipe(); // Should not be needed.
 
             if true {
+                debugln!("{}", right_major);
+
                 self.cache.rdp.edge_coefficients(
                     false,
                     false,

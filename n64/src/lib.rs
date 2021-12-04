@@ -2,14 +2,11 @@
 
 extern crate alloc;
 
-use core::fmt;
-
 pub use audio::Audio;
 pub use controllers::Controllers;
 pub use framebuffer::{slow_cpu_clear, Framebuffer};
 pub use graphics::Graphics;
 pub use n64_types::VideoMode;
-use spin::Mutex;
 
 pub mod gfx;
 pub mod ipl3font;
@@ -83,78 +80,4 @@ cfg_if::cfg_if! {
             (BEGINNING.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i64
         }
     }
-}
-cfg_if::cfg_if! {
-    if #[cfg(target_vendor = "nintendo64")] {
-        pub struct DebugWrite {
-            buffer: [u8; 16],
-            cursor: u16,
-        }
-
-        pub static GLOBAL_DEBUG_PRINT: Mutex<DebugWrite> = Mutex::new(DebugWrite { buffer: [0; 16], cursor: 0 });
-
-        impl fmt::Write for DebugWrite {
-            fn write_str(&mut self, s: &str) -> fmt::Result {
-
-                for byte in s.as_bytes() {
-
-                    self.buffer[self.cursor as usize] = *byte;
-                        self.cursor += 1;
-
-                    if self.cursor == 16 {
-                        assert!(n64_sys::ed::usb_write(&self.buffer));
-                        self.cursor = 0;
-                    }
-                }
-
-                Ok(())
-            }
-        }
-
-        #[macro_export]
-        macro_rules! debug {
-            ($($arg:tt)*) => {
-                <$crate::DebugWrite as core::fmt::Write>::write_fmt(&mut $crate::GLOBAL_DEBUG_PRINT.lock(), format_args!($($arg)*)).ok()
-            };
-        }
-
-        pub fn debugflush() {
-            let mut lock = GLOBAL_DEBUG_PRINT.lock();
-            let cursor = lock.cursor;
-            if cursor > 0 {
-                lock.buffer[(cursor as usize)..].fill(b'\r');
-                assert!(n64_sys::ed::usb_write(&lock.buffer));
-                lock.cursor = 0;
-            }
-        }
-
-    } else {
-        pub struct DebugWrite;
-
-        impl fmt::Write for DebugWrite {
-            fn write_str(&mut self, s: &str) -> fmt::Result {
-                print!("{}", s);
-                Ok(())
-            }
-        }
-
-        #[macro_export]
-        macro_rules! debug {
-            ($($arg:tt)*) => {
-                <$crate::DebugWrite as core::fmt::Write>::write_fmt(&mut $crate::DebugWrite, format_args!($($arg)*)).ok()
-            };
-        }
-
-        pub fn debugflush() {}
-    }
-}
-
-#[macro_export]
-macro_rules! debugln {
-    ($fmt:expr) => {
-        $crate::debug!(concat!($fmt, "\r\n"))
-    };
-    ($fmt:expr, $($arg:tt)*) => {
-        $crate::debug!(concat!($fmt, "\r\n"), $($arg)*)
-    };
 }

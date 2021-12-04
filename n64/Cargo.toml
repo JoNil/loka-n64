@@ -10,6 +10,7 @@ edition = "2018"
 assert_into = "1"
 cfg-if = "1"
 libm = "0.2"
+n64-macros = { path = "../n64-macros" }
 n64-math = { path = "../n64-math" }
 n64-types = { path = "../n64-types" }
 spin = "0.9"

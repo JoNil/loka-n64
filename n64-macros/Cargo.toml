@@ -1,0 +1,14 @@
+[package]
+name = "n64-macros"
+version = "0.1.0"
+authors = ["Jonathan Nilsson <jonathan@voysys.se>"]
+edition = "2018"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cfg-if = "1"
+
+[target.'cfg(target_vendor = "nintendo64")'.dependencies]
+spin = "0.9"
+n64-sys = { path = "../n64-sys" }
