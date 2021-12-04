@@ -177,9 +177,6 @@ fn main() {
                         0.0,
                     );
 
-                    n64::debugln!("{} v0: {}, v1: {}, v2: {}", frame_no, v0, v1, v2);
-                    n64::debugflush();
-
                     // Scale?
                     cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
                     cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 10.0, v1.1 + 10.0), GREEN);
