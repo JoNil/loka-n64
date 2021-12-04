@@ -118,6 +118,16 @@ cfg_if::cfg_if! {
             };
         }
 
+        pub fn debugflush() {
+            let mut lock = GLOBAL_DEBUG_PRINT.lock();
+            let cursor = lock.cursor;
+            if cursor > 0 {
+                lock.buffer[(cursor as usize)..].fill(b'\r');
+                assert!(n64_sys::ed::usb_write(&lock.buffer));
+                lock.cursor = 0;
+            }
+        }
+
     } else {
         pub struct DebugWrite;
 
@@ -134,6 +144,8 @@ cfg_if::cfg_if! {
                 <$crate::DebugWrite as core::fmt::Write>::write_fmt(&mut $crate::DebugWrite, format_args!($($arg)*)).ok()
             };
         }
+
+        pub fn debugflush() {}
     }
 }
 
