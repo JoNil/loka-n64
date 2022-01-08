@@ -321,14 +321,25 @@ impl RdpCommandBuilder {
         //self.set_other_modes(3u64 <<52);
         //self.set_fill_color(Color::new(0b00000_11111_11111_1));
 
-        // panic!("LMH xi_xf_y\n{} {} {}\n{} {} {}\n{} {} {}\nslope i f\n{} {}\n{} {}\n{} {}\n dir {}",
-        //         x_low_int, x_low_frac, y_low_minor,
-        //         x_mid_int, x_mid_frac, y_mid_minor,
-        //         x_high_int, x_high_frac, y_high_major,
-        //         inv_slope_low_int, inv_slope_low_frac,
-        //         inv_slope_mid_int, inv_slope_mid_frac,
-        //         inv_slope_high_int, inv_slope_high_frac,
-        //         right_major);
+        n64_macros::debugln!(
+            "LMH xi_xf_y\n{} {} {}\n{} {} {}\n{} {} {}\nslope i f\n{} {}\n{} {}\n{} {}\n dir {}",
+            x_low_int,
+            x_low_frac,
+            y_low_minor,
+            x_mid_int,
+            x_mid_frac,
+            y_mid_minor,
+            x_high_int,
+            x_high_frac,
+            y_high_major,
+            inv_slope_low_int,
+            inv_slope_low_frac,
+            inv_slope_mid_int,
+            inv_slope_mid_frac,
+            inv_slope_high_int,
+            inv_slope_high_frac,
+            right_major
+        );
 
         //panic!("LMH slope i f\n{} {}\n{} {}\n{} {}",
         //    inv_slope_low_int, inv_slope_low_frac,
@@ -349,7 +360,7 @@ impl RdpCommandBuilder {
 
         buffer.push(RdpCommand(
             (command << 56)
-                |  if right_major {0x1u64 << 55} else {0u64}
+                | if right_major { 0x1u64 << 55 } else { 0u64 }
                 | (to_fixpoint_s_11_2(y_low_minor)) << 32
                 | (to_fixpoint_s_11_2(y_mid_minor)) << 16
                 | (to_fixpoint_s_11_2(y_high_major)) << 0,
@@ -404,7 +415,7 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_10_2_as_integer(l) << 12)
                 | (to_fixpoint_10_2_as_integer(t)),
         ));
-        
+
         self
     }
 
