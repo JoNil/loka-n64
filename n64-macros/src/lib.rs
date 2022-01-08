@@ -15,7 +15,7 @@ cfg_if::cfg_if! {
                 for byte in s.as_bytes() {
 
                     self.buffer[self.cursor as usize] = *byte;
-                        self.cursor += 1;
+                    self.cursor += 1;
 
                     if self.cursor == 16 {
                         core::assert!(n64_sys::ed::usb_write(&self.buffer));

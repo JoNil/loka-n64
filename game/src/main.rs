@@ -1,5 +1,4 @@
 #![cfg_attr(target_vendor = "nintendo64", feature(alloc_error_handler))]
-#![cfg_attr(target_vendor = "nintendo64", feature(global_asm))]
 #![cfg_attr(target_vendor = "nintendo64", feature(asm_experimental_arch))]
 #![cfg_attr(target_vendor = "nintendo64", feature(lang_items))]
 #![cfg_attr(target_vendor = "nintendo64", feature(panic_info_message))]
@@ -409,4 +408,4 @@ fn oom(_: core::alloc::Layout) -> ! {
 extern "C" fn rust_eh_personality() {}
 
 #[cfg(target_vendor = "nintendo64")]
-global_asm!(include_str!("entrypoint.s"));
+core::arch::global_asm!(include_str!("entrypoint.s"));

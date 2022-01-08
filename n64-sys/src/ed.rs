@@ -61,21 +61,8 @@ fn can_write() -> bool {
     register_read(REG_USB_CFG) & (USB_STA_PWR | USB_STA_TXE) == USB_STA_PWR
 }
 
-fn usb_busy() -> bool {
-    let mut timeout = 0;
-
-    while (register_read(REG_USB_CFG) & USB_STA_ACT) != 0 {
-        timeout += 1;
-
-        if timeout < 8192 {
-            continue;
-        }
-
-        register_write(REG_USB_CFG, USB_CMD_RD_NOP);
-        return true;
-    }
-
-    false
+fn usb_wait_unitil_done() {
+    while (register_read(REG_USB_CFG) & USB_STA_ACT) != 0 {}
 }
 
 pub fn usb_read(dst: &mut [u8]) -> bool {
@@ -87,9 +74,7 @@ pub fn usb_read(dst: &mut [u8]) -> bool {
         let buffer_addr = (512 - buffer_len) as u32;
 
         register_write(REG_USB_CFG, USB_CMD_RD | buffer_addr);
-        if usb_busy() {
-            return false;
-        }
+        usb_wait_unitil_done();
 
         pi::read(
             dst,
@@ -123,9 +108,7 @@ pub fn usb_write(src: &[u8]) -> bool {
 
         register_write(REG_USB_CFG, USB_CMD_WR | buffer_addr);
 
-        if usb_busy() {
-            return false;
-        }
+        usb_wait_unitil_done();
 
         remaining -= buffer_len;
     }
