@@ -177,8 +177,8 @@ fn main() {
                         0.0,
                     );
 
-                    n64::debugln!("{} v0: {}, v1: {}, v2: {}", frame_no, v0, v1, v2);
-                    n64::debugflush();
+                    n64_macros::debugln!("{} v0: {}, v1: {}, v2: {}", frame_no, v0, v1, v2);
+                    n64_macros::debugflush();
                     // Scale?
                     cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
                     cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 10.0, v1.1 + 10.0), GREEN);
@@ -299,8 +299,8 @@ fn main() {
                 cb.run(&mut n64.graphics)
             };
 
-            n64::debugln!("0x{:x}: 0b{:b}", status, status);
-            n64::debugflush();
+            n64_macros::debugln!("0x{:x}: 0b{:b}", status, status);
+            n64_macros::debugflush();
 
             if status == 0x760 {
                 loop {}
