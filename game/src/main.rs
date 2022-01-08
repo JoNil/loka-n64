@@ -121,7 +121,7 @@ fn main() {
         {
             // Graphics
 
-            let (colored_rect_count, textured_rect_count) = {
+            let (colored_rect_count, textured_rect_count, status) = {
                 let mut fb = n64.framebuffer.next_buffer();
                 let mut cb = CommandBuffer::new(&mut fb, &mut command_buffer_cache);
 
@@ -160,7 +160,7 @@ fn main() {
 
                     let speed = 0.05; // 0.05
                     let t = speed * (frame_begin_time as f32) / 1e6;
-                    let p = 2.0943951023931954923084289221863 as f32;
+                    let p = 2.0943951023931954923084289221863;
                     let v0 = vec3(
                         x_off + x_scale * libm::cosf(t),
                         y_off + y_scale * libm::sinf(t),
@@ -177,6 +177,8 @@ fn main() {
                         0.0,
                     );
 
+                    n64::debugln!("{} v0: {}, v1: {}, v2: {}", frame_no, v0, v1, v2);
+                    n64::debugflush();
                     // Scale?
                     cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
                     cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 10.0, v1.1 + 10.0), GREEN);
@@ -296,6 +298,13 @@ fn main() {
 
                 cb.run(&mut n64.graphics)
             };
+
+            n64::debugln!("0x{:x}: 0b{:b}", status, status);
+            n64::debugflush();
+
+            if status == 0x760 {
+                loop {}
+            }
 
             last_colored_rect_count = colored_rect_count;
             last_textured_rect_count = textured_rect_count;
