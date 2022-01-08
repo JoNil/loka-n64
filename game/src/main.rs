@@ -176,6 +176,14 @@ fn main() {
                         0.0,
                     );
 
+                    let v0 = vec3(128.0, 64.0, 0.0);
+                    let v1 = vec3(128.0, 128.0, 0.0);
+                    let v2 = vec3(64.0, 96.0, 0.0);
+
+                    //let v0 = vec3(64.0, 64.0, 0.0);
+                    //let v1 = vec3(96.0, 128.0, 0.0);
+                    //let v2 = vec3(128.0, 64.0, 0.0);
+
                     n64_macros::debugln!("{} v0: {}, v1: {}, v2: {}", frame_no, v0, v1, v2);
                     n64_macros::debugflush();
                     // Scale?

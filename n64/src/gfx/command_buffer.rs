@@ -40,12 +40,23 @@ fn f32_to_fixed_16_16(val: f32) -> i32 {
 // Dx/Dy (kx + m = y)
 // x = (y-m)/k
 // dx : 1/k
-fn edge_slope(p0: Vec3, p1: Vec3) -> i32 {
+fn edge_slope_OLD(p0: Vec3, p1: Vec3) -> i32 {
     // TODO: ZERO DIVISION  (old epsilon 0.01)
     if 1.0 > libm::fabsf(p1.1 - p0.1) {
         return f32_to_fixed_16_16(p1.0 - p0.0);
     }
     f32_to_fixed_16_16((p1.0 - p0.0) / (p1.1 - p0.1))
+}
+fn edge_slope(p0: Vec3, p1: Vec3) -> i32 {
+    // TODO: ZERO DIVISION  (old epsilon 0.01)
+    let a = libm::floorf((p1.0 - p0.0) * 4.0) / 4.0;
+    let b = (p1.1 - p0.1); //libm::floorf((p1.1 - p0.1) * 4.0) / 4.0;
+    n64_macros::debugln!("a, b {} {}", a, b);
+    if b == 0.0 {
+        return f32_to_fixed_16_16(a);
+    }
+
+    f32_to_fixed_16_16(a / b)
 }
 
 // kx + m = y
@@ -380,11 +391,6 @@ impl<'a> CommandBuffer<'a> {
             //panic!("{}.{}>{}.{}\n{}", m_int, m_frac, h_int, h_frac, int_frac_greater(m_int, m_frac, h_int, h_frac));
 
             let right_major = is_triangle_right_major(vh, vm, vl);
-            if !right_major {
-                l_slope = -l_slope;
-                m_slope = -m_slope;
-                h_slope = -h_slope;
-            }
 
             //if !right_major {
             //   return self;
