@@ -47,9 +47,11 @@ cargo run
 - https://github.com/n64decomp/libreultra
 - https://www.kth.se/social/files/563c63c9f276547044e8695f/mips-ref-sheet.pdf
 - https://github.com/PeterLemon/N64/blob/master/RDP/16BPP/Rectangle/FillRectangle/FillRectangle320x240/FillRectangle16BPP320X240.asm
-- http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
-- http://ultra64.ca/files/documentation/silicon-graphics/SGI_Nintendo_64_RSP_Programmers_Guide.pdf
 - http://krikzz.com/pub/support/everdrive-64/x-series/dev/
 - https://dragonminded.com/n64dev/Reality%20Coprocessor.pdf
 - https://github.com/Themaister/parallel-rdp
+- https://ultra64.ca/resources/documentation/
+- http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
+- http://ultra64.ca/files/documentation/silicon-graphics/SGI_Nintendo_64_RSP_Programmers_Guide.pdf
 - http://ultra64.ca/files/documentation/online-manuals/man/pro-man/pro12/index12.6.html
+- https://ultra64.ca/files/documentation/nintendo/Nintendo_64_Programming_Manual_NU6-06-0030-001G_HQ.pdf
