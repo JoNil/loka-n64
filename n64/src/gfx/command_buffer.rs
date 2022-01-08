@@ -383,7 +383,7 @@ impl<'a> CommandBuffer<'a> {
             if !right_major {
                 l_slope = -l_slope;
                 m_slope = -m_slope;
-                l_slope = -h_slope;
+                h_slope = -h_slope;
             }
 
             //if !right_major {
