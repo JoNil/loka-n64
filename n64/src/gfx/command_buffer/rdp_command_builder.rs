@@ -383,22 +383,27 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_s_11_2(y_mid_minor)) << 16
                 | (to_fixpoint_s_11_2(y_high_major)) << 0,
         ));
+
+        n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
         // SIC Should be L, H, M order
         buffer.push(RdpCommand(
             (x_low_int as u64) << 48
                 | (x_low_frac as u64) << 32
                 | (inv_slope_low as u32 as u64) << 0,
         ));
+        n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
         buffer.push(RdpCommand(
             (x_high_int as u64) << 48
                 | (x_high_frac as u64) << 32
                 | (inv_slope_high as u32 as u64) << 0,
         ));
+        n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
         buffer.push(RdpCommand(
             (x_mid_int as u64) << 48
                 | (x_mid_frac as u64) << 32
                 | (inv_slope_mid as u32 as u64) << 0,
         ));
+        n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
 
         self
     }

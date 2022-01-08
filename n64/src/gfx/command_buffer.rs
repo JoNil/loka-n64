@@ -40,14 +40,14 @@ fn f32_to_fixed_16_16(val: f32) -> i32 {
 // Dx/Dy (kx + m = y)
 // x = (y-m)/k
 // dx : 1/k
-fn edge_slope_OLD(p0: Vec3, p1: Vec3) -> i32 {
+fn edge_slope(p0: Vec3, p1: Vec3) -> i32 {
     // TODO: ZERO DIVISION  (old epsilon 0.01)
     if 1.0 > libm::fabsf(p1.1 - p0.1) {
         return f32_to_fixed_16_16(p1.0 - p0.0);
     }
     f32_to_fixed_16_16((p1.0 - p0.0) / (p1.1 - p0.1))
 }
-fn edge_slope(p0: Vec3, p1: Vec3) -> i32 {
+fn edge_slope_OLD(p0: Vec3, p1: Vec3) -> i32 {
     // TODO: ZERO DIVISION  (old epsilon 0.01)
     let a = libm::floorf((p1.0 - p0.0) * 4.0) / 4.0;
     let b = (p1.1 - p0.1); //libm::floorf((p1.1 - p0.1) * 4.0) / 4.0;
@@ -73,9 +73,9 @@ fn slope_x_from_y(p0: Vec3, p1: Vec3, y: f32) -> (u16, u16) {
     // x = (y-m)/k = (y- (y0 - x0*k))/k = y/k - y0/k + x0
     // x =  x0 + (y - y0)/k
     // x = p0x + (y - p0.y)*(p1x-p0x) / (p1y-p0y)
-    // TODO ZERO DIVISION
+
+    // ZERO DIVISION check
     if 1.0 > libm::fabsf(p1.1 - p0.1) {
-        //panic!("slope_x_from_y");
         return float_to_unsigned_int_frac(p0.0);
     }
 
@@ -369,9 +369,10 @@ impl<'a> CommandBuffer<'a> {
 
             // Vh is the highest point (smallest y value)
             // Vl is the lowest point (largest y value)
+            //let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
             let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
 
-            //debugln!("V012\n{}\n{}\n{}\nVLMH\n{}\n{}\n{}", v0, v1, v2, vl, vm, vh);
+            debugln!("V012\n{}\n{}\n{}\nVLMH\n{}\n{}\n{}", v0, v1, v2, vl, vm, vh);
             //n64_macros::debugflush();
 
             //TODO: Actual intersections (low with subpixel, mid & high with previous scanline)
@@ -409,7 +410,7 @@ impl<'a> CommandBuffer<'a> {
                     false,
                     false,
                     false,
-                    right_major, //int_frac_greater(l_int, l_frac, m_int, m_frac),
+                    right_major,
                     0,
                     0,
                     vl.1,
@@ -421,9 +422,9 @@ impl<'a> CommandBuffer<'a> {
                     m_frac,
                     h_int,
                     h_frac,
-                    l_slope,
-                    m_slope,
-                    h_slope,
+                    l_slope, // l_slope
+                    m_slope, //m_slope,
+                    h_slope, //h_slope,
                 );
             }
 
