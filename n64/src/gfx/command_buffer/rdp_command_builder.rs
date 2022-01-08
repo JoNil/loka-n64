@@ -112,6 +112,20 @@ pub const COMMAND_SYNC_FULL: u64 = 0xe9;
 pub const COMMAND_SYNC_PIPE: u64 = 0xe7;
 pub const COMMAND_SYNC_TILE: u64 = 0xe8;
 
+fn fixed_16_16_to_f32(fixed_point: i32) -> f32 {
+    let sign = fixed_point.signum();
+    let abs = fixed_point.abs();
+
+    let int = (abs as u32) >> 16;
+    let frac = (abs as u32) & 0xffff;
+
+    if sign >= 0 {
+        int as f32 + frac as f32 / (1 << 16) as f32
+    } else {
+        -(int as f32 + frac as f32 / (1 << 16) as f32)
+    }
+}
+
 pub struct RdpCommandBuilder {
     pub(crate) commands: Option<Vec<RdpCommand>>,
 }
@@ -311,12 +325,9 @@ impl RdpCommandBuilder {
         x_mid_frac: u16,
         x_high_int: u16,
         x_high_frac: u16,
-        inv_slope_low_int: i16,
-        inv_slope_low_frac: u16,
-        inv_slope_mid_int: i16,
-        inv_slope_mid_frac: u16,
-        inv_slope_high_int: i16,
-        inv_slope_high_frac: u16,
+        inv_slope_low: i32,
+        inv_slope_mid: i32,
+        inv_slope_high: i32,
     ) -> &mut RdpCommandBuilder {
         //self.set_other_modes(3u64 <<52);
         //self.set_fill_color(Color::new(0b00000_11111_11111_1));
@@ -327,53 +338,31 @@ impl RdpCommandBuilder {
             x_low_frac,
             y_low_minor
         );
-        n64_macros::debugln!(
-            "  Mid  {} {} {}",
-            x_mid_int,
-            x_mid_frac,
-            y_mid_minor
-        );
-        n64_macros::debugln!(
-            "  High {} {} {}",
-            x_high_int,
-            x_high_frac,
-            y_high_major
-        );
+        n64_macros::debugln!("  Mid  {} {} {}", x_mid_int, x_mid_frac, y_mid_minor);
+        n64_macros::debugln!("  High {} {} {}", x_high_int, x_high_frac, y_high_major);
         n64_macros::debugln!(
             "slope i f\n  Low {} {}",
-            inv_slope_low_int,
-            inv_slope_low_frac
+            fixed_16_16_to_f32(inv_slope_low),
+            inv_slope_low
         );
         n64_macros::debugln!(
             "  Mid  {} {}",
-            inv_slope_mid_int,
-            inv_slope_mid_frac
+            fixed_16_16_to_f32(inv_slope_mid),
+            inv_slope_mid
         );
         n64_macros::debugln!(
             "  High {} {}",
-            inv_slope_high_int,
-            inv_slope_high_frac
+            fixed_16_16_to_f32(inv_slope_high),
+            inv_slope_high
         );
         n64_macros::debugln!(
-            "dir (right_major) {}",
-            right_major
-        );
-        n64_macros::debugln!(
-            "YL {}\nYM {}\nYH {}\n",
+            "YL {}\nYM {}\nYH {}",
             to_fixpoint_s_11_2(y_low_minor),
             to_fixpoint_s_11_2(y_mid_minor),
             to_fixpoint_s_11_2(y_high_major)
         );
-        n64_macros::debugln!(
-            "dir (right_major) {}",
-            right_major
-        );
+        n64_macros::debugln!("dir (right_major) {}", right_major);
         n64_macros::debugflush();
-
-        //panic!("LMH slope i f\n{} {}\n{} {}\n{} {}",
-        //    inv_slope_low_int, inv_slope_low_frac,
-        //    inv_slope_mid_int, inv_slope_mid_frac,
-        //    inv_slope_high_int, inv_slope_high_frac);
 
         let mut buffer = self.commands.as_mut().unwrap();
         let mut command = COMMAND_EDGE_COEFFICIENTS;
@@ -394,24 +383,21 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_s_11_2(y_mid_minor)) << 16
                 | (to_fixpoint_s_11_2(y_high_major)) << 0,
         ));
-        // SIC Should be i L, H, M order
+        // SIC Should be L, H, M order
         buffer.push(RdpCommand(
             (x_low_int as u64) << 48
                 | (x_low_frac as u64) << 32
-                | (inv_slope_low_int as u16 as u64) << 16
-                | (inv_slope_low_frac as u64) << 0,
+                | (inv_slope_low as u32 as u64) << 0,
         ));
         buffer.push(RdpCommand(
             (x_high_int as u64) << 48
                 | (x_high_frac as u64) << 32
-                | (inv_slope_high_int as u16 as u64) << 16
-                | (inv_slope_high_frac as u64) << 0,
+                | (inv_slope_high as u32 as u64) << 0,
         ));
         buffer.push(RdpCommand(
             (x_mid_int as u64) << 48
                 | (x_mid_frac as u64) << 32
-                | (inv_slope_mid_int as u16 as u64) << 16
-                | (inv_slope_mid_frac as u64) << 0,
+                | (inv_slope_mid as u32 as u64) << 0,
         ));
 
         self

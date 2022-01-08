@@ -26,53 +26,26 @@ fn float_to_unsigned_int_frac(val: f32) -> (u16, u16) {
     )
 }
 
-fn float_to_signed_int_frac(val: f32) -> (i16, u16) {
-    let integer_part = libm::floorf(val);
-
-    if (i16::MAX as f32) < integer_part {
-        return (i16::MAX, u16::MAX);
-    } else if (i16::MIN as f32) > integer_part {
-        return (i16::MIN, u16::MAX);
+fn f32_to_fixed_16_16(val: f32) -> i32 {
+    if (i16::MAX as f32) < val {
+        return i32::MAX;
+    } else if (i16::MIN as f32) > val {
+        return i32::MIN;
     }
 
-    let fractal_part = val - integer_part;
-
-    (
-        integer_part as i16,
-        libm::floorf(fractal_part * ((1 << 16) as f32)) as u16,
-    )
+    (val * (1 << 16) as f32) as i32
 }
 
 // Dx/Dy of edge from p0 to p1.
 // Dx/Dy (kx + m = y)
 // x = (y-m)/k
 // dx : 1/k
-fn edge_slope(p0: Vec3, p1: Vec3) -> (i16, u16) {
+fn edge_slope(p0: Vec3, p1: Vec3) -> i32 {
     // TODO: ZERO DIVISION  (old epsilon 0.01)
     if 1.0 > libm::fabsf(p1.1 - p0.1) {
-        //panic!("edge_slope");
-        return float_to_signed_int_frac(p1.0 - p0.0);
-        if p1.0 > p0.0 {
-            return (i16::MAX, u16::MAX);
-        } else {
-            return (i16::MIN, u16::MAX);
-        }
+        return f32_to_fixed_16_16(p1.0 - p0.0);
     }
-    float_to_signed_int_frac((p1.0 - p0.0) / (p1.1 - p0.1))
-}
-
-fn edge_slope_abs(p0: Vec3, p1: Vec3) -> (i16, u16) {
-    // TODO: ZERO DIVISION
-    if 0.01 > libm::fabsf(p1.1 - p0.1) {
-        //panic!("edge_slope");
-        return (0, 0);
-        if p1.0 > p0.0 {
-            return (i16::MAX, u16::MAX);
-        } else {
-            return (i16::MIN, u16::MAX);
-        }
-    }
-    float_to_signed_int_frac(libm::fabsf((p1.0 - p0.0) / (p1.1 - p0.1)))
+    f32_to_fixed_16_16((p1.0 - p0.0) / (p1.1 - p0.1))
 }
 
 // kx + m = y
@@ -400,13 +373,18 @@ impl<'a> CommandBuffer<'a> {
 
             //panic!("x{:x?}\n{}\nx{:x?}\n{}\nx{:x?}\n{}", l_slope_int, l_slope_frac, m_slope_int, m_slope_frac, h_slope_int, h_slope_frac);
 
-            let (l_slope_int, l_slope_frac) = edge_slope(vl, vm); //edge_slope
-            let (m_slope_int, m_slope_frac) = edge_slope(vm, vh); //edge_slope
-            let (h_slope_int, h_slope_frac) = edge_slope(vl, vh); //
+            let mut l_slope = edge_slope(vl, vm);
+            let mut m_slope = edge_slope(vm, vh);
+            let mut h_slope = edge_slope(vl, vh);
 
             //panic!("{}.{}>{}.{}\n{}", m_int, m_frac, h_int, h_frac, int_frac_greater(m_int, m_frac, h_int, h_frac));
 
             let right_major = is_triangle_right_major(vh, vm, vl);
+            if !right_major {
+                l_slope = -l_slope;
+                m_slope = -m_slope;
+                l_slope = -h_slope;
+            }
 
             //if !right_major {
             //   return self;
@@ -415,8 +393,12 @@ impl<'a> CommandBuffer<'a> {
             //self.cache.rdp.sync_full();
             //self.cache.rdp.sync_pipe(); // Should not be needed.
 
-            if true {
+            //if m_frac == h_frac {
+            // TODO Handle!
+            //    continue;
+            //}
 
+            if true {
                 self.cache.rdp.edge_coefficients(
                     false,
                     false,
@@ -433,12 +415,9 @@ impl<'a> CommandBuffer<'a> {
                     m_frac,
                     h_int,
                     h_frac,
-                    l_slope_int,
-                    l_slope_frac,
-                    m_slope_int,
-                    m_slope_frac,
-                    h_slope_int,
-                    h_slope_frac,
+                    l_slope,
+                    m_slope,
+                    h_slope,
                 );
             }
 

@@ -301,7 +301,7 @@ fn main() {
             n64_macros::debugln!("0x{:x}: 0b{:32b}", status, status);
             n64_macros::debugflush();
 
-            if status == 0x760 {
+            if status > 0x200 {
                 loop {}
             }
 
