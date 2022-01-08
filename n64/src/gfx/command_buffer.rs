@@ -387,7 +387,8 @@ impl<'a> CommandBuffer<'a> {
             // Vl is the lowest point (largest y value)
             let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
 
-            // panic!("V012\n{}\n{}\n{}\nVLMH\n{}\n{}\n{}", v0, v1, v2, vl, vm, vh);
+            //debugln!("V012\n{}\n{}\n{}\nVLMH\n{}\n{}\n{}", v0, v1, v2, vl, vm, vh);
+            //n64_macros::debugflush();
 
             //TODO: Actual intersections (low with subpixel, mid & high with previous scanline)
             //
@@ -415,7 +416,6 @@ impl<'a> CommandBuffer<'a> {
             //self.cache.rdp.sync_pipe(); // Should not be needed.
 
             if true {
-                debugln!("{}", right_major);
 
                 self.cache.rdp.edge_coefficients(
                     false,

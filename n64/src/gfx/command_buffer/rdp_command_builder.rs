@@ -322,24 +322,53 @@ impl RdpCommandBuilder {
         //self.set_fill_color(Color::new(0b00000_11111_11111_1));
 
         n64_macros::debugln!(
-            "LMH xi_xf_y\n{} {} {}\n{} {} {}\n{} {} {}\nslope i f\n{} {}\n{} {}\n{} {}\n dir {}",
+            "xi_xf_y\n  Low  {} {} {}",
             x_low_int,
             x_low_frac,
-            y_low_minor,
+            y_low_minor
+        );
+        n64_macros::debugln!(
+            "  Mid  {} {} {}",
             x_mid_int,
             x_mid_frac,
-            y_mid_minor,
+            y_mid_minor
+        );
+        n64_macros::debugln!(
+            "  High {} {} {}",
             x_high_int,
             x_high_frac,
-            y_high_major,
+            y_high_major
+        );
+        n64_macros::debugln!(
+            "slope i f\n  Low {} {}",
             inv_slope_low_int,
-            inv_slope_low_frac,
+            inv_slope_low_frac
+        );
+        n64_macros::debugln!(
+            "  Mid  {} {}",
             inv_slope_mid_int,
-            inv_slope_mid_frac,
+            inv_slope_mid_frac
+        );
+        n64_macros::debugln!(
+            "  High {} {}",
             inv_slope_high_int,
-            inv_slope_high_frac,
+            inv_slope_high_frac
+        );
+        n64_macros::debugln!(
+            "dir (right_major) {}",
             right_major
         );
+        n64_macros::debugln!(
+            "YL {}\nYM {}\nYH {}\n",
+            to_fixpoint_s_11_2(y_low_minor),
+            to_fixpoint_s_11_2(y_mid_minor),
+            to_fixpoint_s_11_2(y_high_major)
+        );
+        n64_macros::debugln!(
+            "dir (right_major) {}",
+            right_major
+        );
+        n64_macros::debugflush();
 
         //panic!("LMH slope i f\n{} {}\n{} {}\n{} {}",
         //    inv_slope_low_int, inv_slope_low_frac,
