@@ -202,10 +202,9 @@ impl<'a> CommandBuffer<'a> {
     pub fn clear(&mut self) -> &mut Self {
         self.cache
             .rdp
+            .sync_pipe()
             .set_other_modes(
                 OTHER_MODE_CYCLE_TYPE_FILL
-                    | OTHER_MODE_CYCLE_TYPE_COPY
-                    | OTHER_MODE_CYCLE_TYPE_2_CYCLE
                     | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_FORCE_BLEND,
@@ -234,13 +233,10 @@ impl<'a> CommandBuffer<'a> {
             .sync_pipe()
             .set_other_modes(
                 OTHER_MODE_CYCLE_TYPE_FILL
-                    | OTHER_MODE_CYCLE_TYPE_COPY
-                    | OTHER_MODE_CYCLE_TYPE_1_CYCLE
                     | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_FORCE_BLEND,
             )
-            .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
             .set_fill_color(color)
             .fill_rectangle(upper_left, lower_right - Vec2::new(1.0, 1.0));
 
@@ -255,7 +251,7 @@ impl<'a> CommandBuffer<'a> {
         blend_color: Option<u32>,
     ) -> &mut Self {
         self.textured_rect_count += 1;
-        self.cache.rdp.sync_tile().set_other_modes(
+        self.cache.rdp.sync_pipe().sync_tile().set_other_modes(
             OTHER_MODE_SAMPLE_TYPE
                 | OTHER_MODE_BI_LERP_0
                 | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
@@ -322,18 +318,15 @@ impl<'a> CommandBuffer<'a> {
     ) -> &mut Self {
         self.cache
             .rdp
-            .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
-            .set_fill_color(Color::new(0b10000_00011_00011_1));
-
-        // Set triangle mode fill
-        self.cache
-            .rdp
+            .sync_pipe()
+            .set_fill_color(Color::new(0b10000_00011_00011_1))
             //.set_other_modes(3u64 <<52);
             .set_other_modes(
-                OTHER_MODE_CYCLE_TYPE_FILL
+                OTHER_MODE_CYCLE_TYPE_1_CYCLE
                     | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER,
             );
+
         for triangle in indices {
             // TODO: Transform before sort
             let mut v0 = verts[triangle[0] as usize];
