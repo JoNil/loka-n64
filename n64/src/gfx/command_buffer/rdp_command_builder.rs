@@ -361,8 +361,30 @@ impl RdpCommandBuilder {
             to_fixpoint_s_11_2(y_mid_minor),
             to_fixpoint_s_11_2(y_high_major)
         );
+        n64_macros::debugln!(
+            "YL {:b}\nYM {:b}\nYH {:b}",
+            to_fixpoint_s_11_2(y_low_minor),
+            to_fixpoint_s_11_2(y_mid_minor),
+            to_fixpoint_s_11_2(y_high_major)
+        );
         n64_macros::debugln!("dir (right_major) {}", right_major);
         n64_macros::debugflush();
+
+        n64_macros::debugln!(
+            "Low  {} {}",
+            ((x_low_int as u32) << 16) + x_low_frac as u32,
+            inv_slope_low
+        );
+        n64_macros::debugln!(
+            "High {} {}",
+            ((x_high_int as u32) << 16) + x_high_frac as u32,
+            inv_slope_high
+        );
+        n64_macros::debugln!(
+            "Mid  {} {}",
+            ((x_mid_int as u32) << 16) + x_mid_frac as u32,
+            inv_slope_mid
+        );
 
         let mut buffer = self.commands.as_mut().unwrap();
         let mut command = COMMAND_EDGE_COEFFICIENTS;
@@ -524,7 +546,15 @@ fn to_fixpoint_10_2_as_integer(val: f32) -> u64 {
 
 #[inline]
 fn to_fixpoint_s_11_2(val: f32) -> u64 {
-    ((val * (1 << 2) as f32) as i16 & 0x3fff) as u64
+    let val2 = val * (1 << 2) as f32;
+
+    if val2 < -0x8000 as f32 {
+        (-0x8000 as i16 & 0x3fff) as u64
+    } else if val2 > 0x7fff as f32 {
+        (0x7fff as i16 & 0x3fff) as u64
+    } else {
+        (val2 as i16 & 0x3fff) as u64
+    }
 }
 
 #[inline]

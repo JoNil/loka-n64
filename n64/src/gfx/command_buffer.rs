@@ -150,6 +150,7 @@ fn sorted_triangle(v0: Vec3, v1: Vec3, v2: Vec3) -> (Vec3, Vec3, Vec3) {
         sorted_triangle(v0, v2, v1)
     } else {
         (v0, v1, v2)
+        //(v2, v1, v0) // Reverse order
     }
 }
 
@@ -388,6 +389,10 @@ impl<'a> CommandBuffer<'a> {
             let mut l_slope = edge_slope(vl, vm);
             let mut m_slope = edge_slope(vm, vh);
             let mut h_slope = edge_slope(vl, vh);
+
+            //l_slope = (l_slope & ((1 << 30) - 1));
+            //m_slope = (m_slope & ((1 << 30) - 1));
+            //h_slope = (h_slope & ((1<<30)-1));
 
             //panic!("{}.{}>{}.{}\n{}", m_int, m_frac, h_int, h_frac, int_frac_greater(m_int, m_frac, h_int, h_frac));
 
