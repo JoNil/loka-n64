@@ -319,13 +319,15 @@ impl<'a> CommandBuffer<'a> {
         self.cache
             .rdp
             .sync_pipe()
-            .set_fill_color(Color::new(0b10000_00011_00011_1))
-            //.set_other_modes(3u64 <<52);
             .set_other_modes(
                 OTHER_MODE_CYCLE_TYPE_1_CYCLE
-                    | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
-                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER,
-            );
+                    | OTHER_MODE_SAMPLE_TYPE
+                    | OTHER_MODE_BI_LERP_0
+                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
+                    | OTHER_MODE_B_M1A_0_2,
+            )
+            .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
+            .set_blend_color(0xff000000);
 
         for triangle in indices {
             // TODO: Transform before sort
