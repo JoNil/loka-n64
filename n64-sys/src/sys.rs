@@ -1,4 +1,4 @@
-use core::mem::size_of;
+use core::{arch::asm, mem::size_of, sync::atomic::Ordering};
 
 #[inline]
 pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
@@ -6,12 +6,7 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
     let mut len = block.len() * size_of::<T>();
 
     while len > 0 {
-        llvm_asm!("cache $0, ($1)"
-        :
-        : "i" (0x15), "r" (addr)
-        :
-        : "volatile"
-        );
+        asm!("cache {}, ({})", const 0x15, in(reg) addr);
 
         len -= 4;
         addr += 4;
@@ -22,12 +17,7 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
 pub unsafe fn data_cache_hit_writeback_invalidate_single(addr: usize) {
     let addr = addr & 0xffff_fffc;
 
-    llvm_asm!("cache $0, ($1)"
-    :
-    : "i" (0x15), "r" (addr)
-    :
-    : "volatile"
-    );
+    asm!("cache {}, ({})", const 0x15, in(reg) addr);
 }
 
 #[inline]
@@ -36,12 +26,7 @@ pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
     let mut len = block.len() * size_of::<T>();
 
     while len > 0 {
-        llvm_asm!("cache $0, ($1)"
-        :
-        : "i" (0x19), "r" (addr)
-        :
-        : "volatile"
-        );
+        asm!("cache {}, ({})", const 0x19, in(reg) addr);
 
         len -= 4;
         addr += 4;
@@ -52,12 +37,7 @@ pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
 pub unsafe fn data_cache_hit_writeback_single(addr: usize) {
     let addr = addr & 0xffff_fffc;
 
-    llvm_asm!("cache $0, ($1)"
-    :
-    : "i" (0x19), "r" (addr)
-    :
-    : "volatile"
-    );
+    asm!("cache {}, ({})", const 0x19, in(reg) addr);
 }
 
 #[inline]
@@ -66,12 +46,7 @@ pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
     let mut len = block.len() * size_of::<T>();
 
     while len > 0 {
-        llvm_asm!("cache $0, ($1)"
-        :
-        : "i" (0x11), "r" (addr)
-        :
-        : "volatile"
-        );
+        asm!("cache {}, ({})", const 0x11, in(reg) addr);
 
         len -= 4;
         addr += 4;
@@ -100,7 +75,7 @@ pub fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
 
 #[inline]
 pub unsafe fn memory_barrier() {
-    llvm_asm!("" ::: "memory" : "volatile");
+    core::sync::atomic::fence(Ordering::SeqCst);
 }
 
 #[inline]
@@ -113,9 +88,11 @@ fn get_ticks() -> u32 {
     let res;
 
     unsafe {
-        llvm_asm!("mfc0 $0,$$9
-            nop"
-            : "=r" (res));
+        asm!(
+            "mfc0 {}, $9
+            nop",
+            lateout(reg) res,
+        );
     }
 
     res

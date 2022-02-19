@@ -1,5 +1,6 @@
 #![no_std]
-#![feature(llvm_asm)]
+#![feature(asm_const)]
+#![feature(asm_experimental_arch)]
 #![feature(core_intrinsics)]
 #![allow(clippy::missing_safety_doc)]
 
