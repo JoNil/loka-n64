@@ -42,12 +42,12 @@ const RDP_STATUS_CLR_CMC: usize = 0x100; // RDP_STATUS: Clear COMMAND COUNTER (B
 const RDP_STATUS_CLR_CLK: usize = 0x200; // RDP_STATUS: Clear CLOCK COUNTER (Bit 9)
 
 #[inline]
-fn wait_for_done() -> usize {
+fn wait_for_done() {
     loop {
         let status = unsafe { read_volatile(RDP_STATUS) };
 
         if status & RDP_STATUS_CMB != 0 {
-            return status;
+            return;
         }
     }
 }
@@ -69,10 +69,10 @@ pub unsafe fn swap_commands(commands: Vec<RdpCommand>) -> Vec<RdpCommand> {
 }
 
 #[inline]
-pub unsafe fn run_command_buffer() -> usize {
+pub unsafe fn run_command_buffer() {
     if let Some(commands) = &COMMANDS {
         if commands.is_empty() {
-            return 0;
+            return;
         }
 
         data_cache_hit_writeback(commands);
@@ -94,8 +94,6 @@ pub unsafe fn run_command_buffer() -> usize {
         );
         memory_barrier();
 
-        return wait_for_done();
+        wait_for_done();
     }
-
-    0
 }

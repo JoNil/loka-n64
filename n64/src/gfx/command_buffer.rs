@@ -362,19 +362,18 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn run(mut self, _graphics: &mut Graphics) -> (i32, i32, usize) {
+    pub fn run(mut self, _graphics: &mut Graphics) -> (i32, i32) {
         self.cache.rdp.sync_full();
 
-        let status = unsafe {
+        unsafe {
             self.cache.rdp.commands =
                 Some(rdp::swap_commands(self.cache.rdp.commands.take().unwrap()));
-            rdp::run_command_buffer()
+            rdp::run_command_buffer();
         };
 
         (
             self.colored_rect_count as i32,
             self.textured_rect_count as i32,
-            status,
         )
     }
 }

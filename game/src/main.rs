@@ -120,7 +120,7 @@ fn main() {
         {
             // Graphics
 
-            let (colored_rect_count, textured_rect_count, status) = {
+            let (colored_rect_count, textured_rect_count) = {
                 let mut fb = n64.framebuffer.next_buffer();
                 let mut cb = CommandBuffer::new(&mut fb, &mut command_buffer_cache);
 
@@ -294,13 +294,6 @@ fn main() {
 
                 cb.run(&mut n64.graphics)
             };
-
-            //n64_macros::debugln!("0x{:x}: 0b{:32b}", status, status);
-            //n64_macros::debugflush();
-
-            if status > 0x200 {
-                loop {}
-            }
 
             last_colored_rect_count = colored_rect_count;
             last_textured_rect_count = textured_rect_count;
