@@ -166,10 +166,10 @@ impl RdpCommandBuilder {
     pub fn set_scissor(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
             (COMMAND_SET_SCISSOR << 56)
-                | (to_fixpoint_10_2_as_integer(top_left.x()) << (32 + 12))
-                | (to_fixpoint_10_2_as_integer(top_left.y()) << 32)
-                | (to_fixpoint_10_2_as_integer(bottom_right.x()) << 12)
-                | (to_fixpoint_10_2_as_integer(bottom_right.y())),
+                | (to_fixpoint_10_2_as_integer(top_left.x) << (32 + 12))
+                | (to_fixpoint_10_2_as_integer(top_left.y) << 32)
+                | (to_fixpoint_10_2_as_integer(bottom_right.x) << 12)
+                | (to_fixpoint_10_2_as_integer(bottom_right.y)),
         ));
 
         self
@@ -298,11 +298,11 @@ impl RdpCommandBuilder {
     ) -> &mut RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
             (COMMAND_LOAD_TILE << 56)
-                | (to_fixpoint_10_2_as_integer(bottom_right.x()) << (32 + 12))
-                | (to_fixpoint_10_2_as_integer(bottom_right.y()) << 32)
+                | (to_fixpoint_10_2_as_integer(bottom_right.x) << (32 + 12))
+                | (to_fixpoint_10_2_as_integer(bottom_right.y) << 32)
                 | ((tile_index as u64) << 24)
-                | (to_fixpoint_10_2_as_integer(top_left.x()) << 12)
-                | (to_fixpoint_10_2_as_integer(top_left.y())),
+                | (to_fixpoint_10_2_as_integer(top_left.x) << 12)
+                | (to_fixpoint_10_2_as_integer(top_left.y)),
         ));
         self
     }
@@ -371,10 +371,10 @@ impl RdpCommandBuilder {
 
     #[inline]
     pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
-        let mut l = top_left.x();
-        let mut t = top_left.y();
-        let r = bottom_right.x();
-        let b = bottom_right.y();
+        let mut l = top_left.x;
+        let mut t = top_left.y;
+        let r = bottom_right.x;
+        let b = bottom_right.y;
 
         if r < 0.0 || b < 0.0 {
             // Outside drawing area.
@@ -409,18 +409,18 @@ impl RdpCommandBuilder {
         st_top_left: Vec2,
         d_xy_d_st: Vec2,
     ) -> &mut RdpCommandBuilder {
-        let mut l = top_left.x();
-        let mut t = top_left.y();
-        let r = bottom_right.x();
-        let b = bottom_right.y();
+        let mut l = top_left.x;
+        let mut t = top_left.y;
+        let r = bottom_right.x;
+        let b = bottom_right.y;
 
         if r < 0.0 || b < 0.0 {
             // Outside drawing area.
             return self;
         }
 
-        let mut st_l = st_top_left.x();
-        let mut st_t = st_top_left.y();
+        let mut st_l = st_top_left.x;
+        let mut st_t = st_top_left.y;
 
         if l < 0.0 {
             st_l -= l;
@@ -444,8 +444,8 @@ impl RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
             (to_fixpoint_s_10_5(st_l) << 48)
                 | (to_fixpoint_s_10_5(st_t) << 32)
-                | (to_fixpoint_s_10_5(d_xy_d_st.x()) << 16)
-                | (to_fixpoint_s_10_5(d_xy_d_st.y()) << 0),
+                | (to_fixpoint_s_10_5(d_xy_d_st.x) << 16)
+                | (to_fixpoint_s_10_5(d_xy_d_st.y) << 0),
         ));
         self
     }

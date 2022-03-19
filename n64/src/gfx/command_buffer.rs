@@ -1,7 +1,6 @@
 use super::{Texture, TextureMut};
 use crate::graphics::Graphics;
-use n64_macros::debugln;
-use n64_math::{Color, Vec2, Vec3};
+use n64_math::{vec2, Color, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
 
@@ -42,10 +41,10 @@ fn f32_to_fixed_16_16(val: f32) -> i32 {
 // dx : 1/k
 fn edge_slope(p0: Vec3, p1: Vec3) -> i32 {
     // TODO: ZERO DIVISION  (old epsilon 0.01)
-    if 1.0 > libm::fabsf(p1.1 - p0.1) {
-        return f32_to_fixed_16_16(p1.0 - p0.0);
+    if 1.0 > libm::fabsf(p1.y - p0.y) {
+        return f32_to_fixed_16_16(p1.x - p0.x);
     }
-    f32_to_fixed_16_16((p1.0 - p0.0) / (p1.1 - p0.1))
+    f32_to_fixed_16_16((p1.x - p0.x) / (p1.y - p0.y))
 }
 
 // kx + m = y
@@ -64,24 +63,24 @@ fn slope_x_from_y(p0: Vec3, p1: Vec3, y: f32) -> (u16, u16) {
     // x = p0x + (y - p0.y)*(p1x-p0x) / (p1y-p0y)
 
     // ZERO DIVISION check
-    if 1.0 > libm::fabsf(p1.1 - p0.1) {
-        return float_to_unsigned_int_frac(p0.0);
+    if 1.0 > libm::fabsf(p1.y - p0.y) {
+        return float_to_unsigned_int_frac(p0.x);
     }
 
-    let x = p0.0 + (y - p0.1) * (p1.0 - p0.0) / (p1.1 - p0.1);
+    let x = p0.x + (y - p0.y) * (p1.x - p0.x) / (p1.y - p0.y);
 
     float_to_unsigned_int_frac(x)
 }
 
 // X coordinate of the intersection of the edge from p0 to p1 and the sub-scanline at (or higher than) p0.y
 fn slope_y_next_subpixel_intersection(p0: Vec3, p1: Vec3) -> (u16, u16) {
-    let y = libm::ceilf(p0.1 * 4.0) / 4.0;
+    let y = libm::ceilf(p0.y * 4.0) / 4.0;
 
     slope_x_from_y(p0, p1, y)
 }
 
 fn slope_y_prev_scanline_intersection(p0: Vec3, p1: Vec3) -> (u16, u16) {
-    let y = libm::floorf(p0.1);
+    let y = libm::floorf(p0.y);
 
     slope_x_from_y(p0, p1, y)
 }
@@ -115,16 +114,16 @@ fn is_triangle_right_major(p0: Vec3, p1: Vec3, p2: Vec3) -> bool {
     // Z = (p0x - p1x)*(p2y - p1y) - (p2x - p1x)*(p0y - p1y);
     // Z > 0 => (p0x - p1x)*(p2y - p1y) > (p2x - p1x)*(p0y - p1y)
 
-    return (p0.0 - p1.0) * (p2.1 - p1.1) < (p2.0 - p1.0) * (p0.1 - p1.1);
+    return (p0.x - p1.x) * (p2.y - p1.y) < (p2.x - p1.x) * (p0.y - p1.y);
 }
 
-// Sort so that v0.1 <= v1.1 <= v2.1
+// Sort so that v0.y <= v1.y <= v2.y
 fn sorted_triangle(v0: Vec3, v1: Vec3, v2: Vec3) -> (Vec3, Vec3, Vec3) {
-    if v0.1 > v1.1 {
+    if v0.y > v1.y {
         sorted_triangle(v1, v0, v2)
-    } else if v0.1 > v2.1 {
+    } else if v0.y > v2.y {
         sorted_triangle(v2, v0, v1)
-    } else if v1.1 > v2.1 {
+    } else if v1.y > v2.y {
         sorted_triangle(v0, v2, v1)
     } else {
         (v0, v1, v2)
@@ -163,8 +162,8 @@ impl<'a> CommandBuffer<'a> {
                 out_tex.data.as_mut_ptr() as *mut u16,
             )
             .set_scissor(
-                Vec2::zero(),
-                Vec2::new((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
+                Vec2::ZERO,
+                vec2((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
             )
             .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7]);
 
@@ -188,8 +187,8 @@ impl<'a> CommandBuffer<'a> {
             )
             .set_fill_color(Color::new(0b00000_00000_00000_1))
             .fill_rectangle(
-                Vec2::new(0.0, 0.0),
-                Vec2::new(
+                vec2(0.0, 0.0),
+                vec2(
                     (self.out_tex.width - 1) as f32,
                     (self.out_tex.height - 1) as f32,
                 ),
@@ -215,7 +214,7 @@ impl<'a> CommandBuffer<'a> {
                     | OTHER_MODE_FORCE_BLEND,
             )
             .set_fill_color(color)
-            .fill_rectangle(upper_left, lower_right - Vec2::new(1.0, 1.0));
+            .fill_rectangle(upper_left, lower_right - vec2(1.0, 1.0));
 
         self
     }
@@ -270,24 +269,18 @@ impl<'a> CommandBuffer<'a> {
                 0,
             )
             .load_tile(
-                Vec2::new((texture.width) as f32, (texture.height) as f32),
-                Vec2::new(0.0, 0.0),
+                vec2((texture.width) as f32, (texture.height) as f32),
+                vec2(0.0, 0.0),
                 0,
             )
-            .texture_rectangle(
-                upper_left,
-                lower_right,
-                0,
-                Vec2::new(0.0, 0.0),
-                Vec2::new(32.0, 32.0),
-            );
+            .texture_rectangle(upper_left, lower_right, 0, vec2(0.0, 0.0), vec2(32.0, 32.0));
         self
     }
 
     pub fn add_mesh_indexed(
         &mut self,
-        verts: &[Vec3],
-        uvs: &[Vec2],
+        verts: &[[f32; 3]],
+        uvs: &[[f32; 2]],
         colors: &[u32],
         indices: &[[u8; 3]],
         transform: &[[f32; 4]; 4],
@@ -308,19 +301,19 @@ impl<'a> CommandBuffer<'a> {
 
         for triangle in indices {
             // TODO: Transform before sort
-            let mut v0 = verts[triangle[0] as usize];
-            let mut v1 = verts[triangle[1] as usize];
-            let mut v2 = verts[triangle[2] as usize];
+            let mut v0 = Vec3::from(verts[triangle[0] as usize]);
+            let mut v1 = Vec3::from(verts[triangle[1] as usize]);
+            let mut v2 = Vec3::from(verts[triangle[2] as usize]);
 
             let x_limit = 320.0;
             let y_limit = 240.0;
 
-            v0.0 = libm::fmaxf(libm::fminf(v0.0, x_limit), 0.0);
-            v1.0 = libm::fmaxf(libm::fminf(v1.0, x_limit), 0.0);
-            v2.0 = libm::fmaxf(libm::fminf(v2.0, x_limit), 0.0);
-            v0.1 = libm::fmaxf(libm::fminf(v0.1, y_limit), 0.0);
-            v1.1 = libm::fmaxf(libm::fminf(v1.1, y_limit), 0.0);
-            v2.1 = libm::fmaxf(libm::fminf(v2.1, y_limit), 0.0);
+            v0.x = libm::fmaxf(libm::fminf(v0.x, x_limit), 0.0);
+            v1.x = libm::fmaxf(libm::fminf(v1.x, x_limit), 0.0);
+            v2.x = libm::fmaxf(libm::fminf(v2.x, x_limit), 0.0);
+            v0.y = libm::fmaxf(libm::fminf(v0.y, y_limit), 0.0);
+            v1.y = libm::fmaxf(libm::fminf(v1.y, y_limit), 0.0);
+            v2.y = libm::fmaxf(libm::fminf(v2.y, y_limit), 0.0);
 
             // Vh is the highest point (smallest y value)
             // Vl is the lowest point (largest y value)
@@ -344,9 +337,9 @@ impl<'a> CommandBuffer<'a> {
                     right_major,
                     0,
                     0,
-                    vl.1,
-                    vm.1,
-                    vh.1,
+                    vl.y,
+                    vm.y,
+                    vh.y,
                     l_int,
                     l_frac,
                     m_int,
