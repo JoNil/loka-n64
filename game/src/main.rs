@@ -53,7 +53,7 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
     height: 240,
 };
 
-const DEBUG_TRIANGLES: bool = true;
+const DEBUG_TRIANGLES: bool = false;
 
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);
