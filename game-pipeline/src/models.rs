@@ -115,6 +115,19 @@ fn parse_model(mesh: Instance) -> Option<Model> {
     })
 }
 
+fn byteswap_u32_slice(data: &[u8]) -> Vec<u8> {
+    let mut res = Vec::with_capacity(data.len());
+
+    for part in data.chunks_exact(4) {
+        res.push(part[3]);
+        res.push(part[2]);
+        res.push(part[1]);
+        res.push(part[0]);
+    }
+
+    res
+}
+
 pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
     let mut models = String::new();
 
@@ -143,10 +156,22 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
                         let colors_path = out_base_path.with_extension("ncol");
                         let indices_path = out_base_path.with_extension("nind");
 
-                        write_binary_file_if_changed(&verts_path, model.verts.as_bytes())?;
-                        write_binary_file_if_changed(&uvs_path, model.uvs.as_bytes())?;
-                        write_binary_file_if_changed(&colors_path, model.colors.as_bytes())?;
-                        write_binary_file_if_changed(&indices_path, model.indices.as_bytes())?;
+                        write_binary_file_if_changed(
+                            &verts_path,
+                            byteswap_u32_slice(model.verts.as_bytes()),
+                        )?;
+                        write_binary_file_if_changed(
+                            &uvs_path,
+                            byteswap_u32_slice(model.uvs.as_bytes()),
+                        )?;
+                        write_binary_file_if_changed(
+                            &colors_path,
+                            byteswap_u32_slice(model.colors.as_bytes()),
+                        )?;
+                        write_binary_file_if_changed(
+                            &indices_path,
+                            byteswap_u32_slice(model.indices.as_bytes()),
+                        )?;
 
                         models.push_str(&format!(
                             MODEL_TEMPLATE!(),
