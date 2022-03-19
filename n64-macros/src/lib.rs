@@ -5,11 +5,11 @@ cfg_if::cfg_if! {
 
         #[repr(align(16))]
         pub struct DebugWrite {
-            buffer: [u8; 16],
+            buffer: [u8; 18],
             cursor: u16,
         }
 
-        pub static GLOBAL_DEBUG_PRINT: spin::Mutex<DebugWrite> = spin::Mutex::new(DebugWrite { buffer: [0; 16], cursor: 0 });
+        pub static GLOBAL_DEBUG_PRINT: spin::Mutex<DebugWrite> = spin::Mutex::new(DebugWrite { buffer: [b'z'; 18], cursor: 0 });
 
         impl core::fmt::Write for DebugWrite {
             fn write_str(&mut self, s: &str) -> core::fmt::Result {
@@ -19,7 +19,7 @@ cfg_if::cfg_if! {
                     self.buffer[self.cursor as usize] = *byte;
                     self.cursor += 1;
 
-                    if self.cursor == 16 {
+                    if self.cursor == 18 {
                         core::assert!(n64_sys::ed::usb_write(&self.buffer));
                         self.cursor = 0;
                     }
@@ -40,7 +40,7 @@ cfg_if::cfg_if! {
             let mut lock = GLOBAL_DEBUG_PRINT.lock();
             let cursor = lock.cursor;
             if cursor > 0 {
-                lock.buffer[(cursor as usize)..].fill(b'x');
+                lock.buffer[(cursor as usize)..].fill(b'\r');
                 core::assert!(n64_sys::ed::usb_write(&lock.buffer));
                 lock.cursor = 0;
             }
@@ -70,9 +70,9 @@ cfg_if::cfg_if! {
 #[macro_export]
 macro_rules! debugln {
     ($fmt:expr) => {
-        $crate::debug!(concat!($fmt, "00"))
+        $crate::debug!(concat!($fmt, "\r\n"))
     };
     ($fmt:expr, $($arg:tt)*) => {
-        $crate::debug!(concat!($fmt, "00"), $($arg)*)
+        $crate::debug!(concat!($fmt, "\r\n"), $($arg)*)
     };
 }

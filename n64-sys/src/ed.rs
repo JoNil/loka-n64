@@ -97,7 +97,7 @@ pub fn usb_write(src: &[u8]) -> bool {
 
     while remaining > 0 {
         let buffer_len = if remaining < 512 { remaining } else { 512 };
-        let buffer_addr = (514 - buffer_len) as u32;
+        let buffer_addr = (512 - buffer_len) as u32;
 
         pi::write(
             src,
