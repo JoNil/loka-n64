@@ -286,8 +286,6 @@ impl<'a> CommandBuffer<'a> {
         indices: &[[u8; 3]],
         transform: &[[f32; 4]; 4],
         texture: Option<Texture<'static>>,
-        index_to_draw: usize,
-        print_to_cmd: bool,
     ) -> &mut Self {
         self.cache
             .rdp
@@ -332,21 +330,6 @@ impl<'a> CommandBuffer<'a> {
             let mut h_slope = edge_slope(vl, vh);
 
             let right_major = is_triangle_right_major(vh, vm, vl);
-
-            if print_to_cmd {
-                debugln!("index_to_draw {}", index_to_draw);
-                debugln!(" v0 {}", v0);
-                debugln!(" v1 {}", v1);
-                debugln!(" v2 {}", v2);
-                debugln!(" vh {}", vh);
-                debugln!(" vm {}", vm);
-                debugln!(" vl {}", vl);
-                debugln!(" l_slope {}", l_slope);
-                debugln!(" m_slope {}", m_slope);
-                debugln!(" h_slope {}", h_slope);
-                debugln!(" right_major {}", right_major);
-                debugflush();
-            }
 
             self.cache.rdp.edge_coefficients(
                 false,
