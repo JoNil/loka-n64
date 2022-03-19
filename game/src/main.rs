@@ -84,6 +84,10 @@ fn main() {
 
     let mut frame_no = 0;
 
+    let mut l_down_last = false;
+    let mut r_down_last = false;
+    let mut index_to_render: usize = 0;
+
     loop {
         frame_begin_time = current_time_us();
 
@@ -91,6 +95,8 @@ fn main() {
             dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;
             last_frame_begin_time = frame_begin_time;
         }
+        
+        let mut print_tri_to_cmd = false;
 
         {
             // Update
@@ -104,6 +110,27 @@ fn main() {
             bullet::update(&mut world, &camera);
             missile::update(&mut world, &camera);
             movable::simulate(&mut world, dt);
+
+            if n64.controllers.l() {
+                if !l_down_last {
+                    index_to_render += 1;
+                }
+                l_down_last = true;
+            } else {
+                l_down_last = false;
+            }
+
+            if n64.controllers.r() {
+                if !r_down_last {
+                    print_tri_to_cmd = true;
+                }
+                r_down_last = true;
+            }
+            else {
+                r_down_last = false;
+            }
+
+            r_down_last = n64.controllers.r();
 
             world.housekeep();
 
@@ -136,6 +163,7 @@ fn main() {
                 {
                     if !DEBUG_TRIANGLES {
                         let ship_3 = SHIP_3_BODY.as_model_data();
+                        index_to_render = index_to_render % ship_3.indices.len();
                         cb.add_mesh_indexed(
                             &ship_3.verts,
                             &ship_3.uvs,
@@ -144,10 +172,18 @@ fn main() {
                             &[
                                 [1.0, 0.0, 0.0, 0.0],
                                 [0.0, 1.0, 0.0, 0.0],
-                                [0.0, 0.0, 1.0, 0.0],
+                                [0.0, 0.0, 0.0, 0.0],
                                 [160.0, 120.0, 0.0, 1.0],
                             ],
                             None,
+                            index_to_render,
+                            print_tri_to_cmd
+                        );
+                        font::draw_number(
+                            &mut cb,
+                            index_to_render as i32,
+                            Vec2::new(300.0, 30.0),
+                            0x0000efff,
                         );
                     }
 
@@ -199,6 +235,8 @@ fn main() {
                                 [0.0, 0.0, 0.0, 1.0],
                             ],
                             None,
+                            0,
+                            false
                         );
 
                         cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0), WHITE);
