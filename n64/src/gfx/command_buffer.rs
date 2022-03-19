@@ -1,6 +1,6 @@
 use super::{Texture, TextureMut};
 use crate::graphics::Graphics;
-use n64_math::{vec2, Color, Vec2, Vec3};
+use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
 
@@ -299,11 +299,12 @@ impl<'a> CommandBuffer<'a> {
             .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
             .set_blend_color(0xff000000);
 
+        let transform = Mat4::from(transform);
+
         for triangle in indices {
-            // TODO: Transform before sort
-            let mut v0 = Vec3::from(verts[triangle[0] as usize]);
-            let mut v1 = Vec3::from(verts[triangle[1] as usize]);
-            let mut v2 = Vec3::from(verts[triangle[2] as usize]);
+            let mut v0 = transform.transform_vector3(Vec3::from(verts[triangle[0] as usize]));
+            let mut v1 = transform.transform_vector3(Vec3::from(verts[triangle[1] as usize]));
+            let mut v2 = transform.transform_vector3(Vec3::from(verts[triangle[2] as usize]));
 
             let x_limit = 320.0;
             let y_limit = 240.0;
@@ -329,28 +330,26 @@ impl<'a> CommandBuffer<'a> {
 
             let right_major = is_triangle_right_major(vh, vm, vl);
 
-            if true {
-                self.cache.rdp.edge_coefficients(
-                    false,
-                    false,
-                    false,
-                    right_major,
-                    0,
-                    0,
-                    vl.y,
-                    vm.y,
-                    vh.y,
-                    l_int,
-                    l_frac,
-                    m_int,
-                    m_frac,
-                    h_int,
-                    h_frac,
-                    l_slope,
-                    m_slope,
-                    h_slope,
-                );
-            }
+            self.cache.rdp.edge_coefficients(
+                false,
+                false,
+                false,
+                right_major,
+                0,
+                0,
+                vl.y,
+                vm.y,
+                vh.y,
+                l_int,
+                l_frac,
+                m_int,
+                m_frac,
+                h_int,
+                h_frac,
+                l_slope,
+                m_slope,
+                h_slope,
+            );
         }
         self
     }
