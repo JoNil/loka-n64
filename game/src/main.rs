@@ -95,7 +95,7 @@ fn main() {
             dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;
             last_frame_begin_time = frame_begin_time;
         }
-        
+
         let mut print_tri_to_cmd = false;
 
         {
@@ -125,8 +125,7 @@ fn main() {
                     print_tri_to_cmd = true;
                 }
                 r_down_last = true;
-            }
-            else {
+            } else {
                 r_down_last = false;
             }
 
@@ -177,12 +176,12 @@ fn main() {
                             ],
                             None,
                             index_to_render,
-                            print_tri_to_cmd
+                            print_tri_to_cmd,
                         );
                         font::draw_number(
                             &mut cb,
                             index_to_render as i32,
-                            Vec2::new(300.0, 30.0),
+                            vec2(300.0, 30.0),
                             0x0000efff,
                         );
                     }
@@ -236,7 +235,7 @@ fn main() {
                             ],
                             None,
                             0,
-                            false
+                            false,
                         );
 
                         cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0), WHITE);

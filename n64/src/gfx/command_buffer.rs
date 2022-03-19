@@ -302,12 +302,12 @@ impl<'a> CommandBuffer<'a> {
             .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
             .set_blend_color(0xff000000);
 
-        let transform = Mat4::from(transform);
+        let transform = Mat4::from_cols_array_2d(transform);
 
         for triangle in indices {
-            let mut v0 = transform.transform_vector3(Vec3::from(verts[triangle[0] as usize]));
-            let mut v1 = transform.transform_vector3(Vec3::from(verts[triangle[1] as usize]));
-            let mut v2 = transform.transform_vector3(Vec3::from(verts[triangle[2] as usize]));
+            let mut v0 = transform.transform_point3(Vec3::from(verts[triangle[0] as usize]));
+            let mut v1 = transform.transform_point3(Vec3::from(verts[triangle[1] as usize]));
+            let mut v2 = transform.transform_point3(Vec3::from(verts[triangle[2] as usize]));
 
             let x_limit = 320.0;
             let y_limit = 240.0;
