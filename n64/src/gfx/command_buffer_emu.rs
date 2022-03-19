@@ -287,6 +287,10 @@ impl<'a> CommandBuffer<'a> {
 
                             mesh_uniforms.push(MeshUniforms {
                                 transform: *transform,
+                                screen_size: [
+                                    graphics.video_mode.width() as f32,
+                                    graphics.video_mode.height() as f32,
+                                ],
                             });
                         }
                     }

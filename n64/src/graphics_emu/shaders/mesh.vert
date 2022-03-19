@@ -8,6 +8,7 @@ layout(location = 1) out vec4 v_color;
 
 struct Uniforms {
     mat4 u_transform;
+    vec2 u_screen_size;
 };
 
 layout(std430, set = 0, binding = 0) readonly buffer Locals {
@@ -17,5 +18,11 @@ layout(std430, set = 0, binding = 0) readonly buffer Locals {
 void main() {
     v_tex_coord = a_tex_coord;
     v_color = a_color;
-    gl_Position = uniforms[gl_InstanceIndex].u_transform * vec4(a_pos, 1.0);
+    gl_Position = uniforms[gl_InstanceIndex].u_transform *
+        vec4(
+            vec3(
+                -1.0 + 2.0 * a_pos.x / uniforms[gl_InstanceIndex].u_screen_size.x,
+                1.0 - 2.0 * a_pos.y / uniforms[gl_InstanceIndex].u_screen_size.y,
+                a_pos.z),
+            1.0);
 }
