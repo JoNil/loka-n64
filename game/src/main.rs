@@ -53,6 +53,8 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
     height: 240,
 };
 
+const DEBUG_TRIANGLES: bool = true;
+
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);
 
@@ -132,7 +134,7 @@ fn main() {
                 sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
                 {
-                    if false {
+                    if !DEBUG_TRIANGLES {
                         let ship_3 = SHIP_3_BODY.as_model_data();
                         cb.add_mesh_indexed(
                             ship_3.verts,
@@ -149,38 +151,42 @@ fn main() {
                         );
                     }
 
-                    let x_limit = 320.0;
-                    let y_limit = 240.0;
+                    if DEBUG_TRIANGLES {
+                        let x_limit = 320.0;
+                        let y_limit = 240.0;
 
-                    let x_off = x_limit * 0.5;
-                    let y_off = y_limit * 0.5;
-                    let x_scale = x_limit * 0.125;
-                    let y_scale = y_limit * 0.125;
+                        let x_off = x_limit * 0.5;
+                        let y_off = y_limit * 0.5;
+                        let x_scale = x_limit * 0.125;
+                        let y_scale = y_limit * 0.125;
 
-                    let speed = 0.05; // 0.05
-                    let t = speed * (frame_begin_time as f32) / 1e6;
-                    let p = 2.0943951023931954923084289221863;
-                    let v0 = vec3(
-                        x_off + x_scale * libm::cosf(t),
-                        y_off + y_scale * libm::sinf(t),
-                        0.0,
-                    );
-                    let v1 = vec3(
-                        x_off + x_scale * libm::cosf(t + p),
-                        y_off + y_scale * libm::sinf(t + p),
-                        0.0,
-                    );
-                    let v2 = vec3(
-                        x_off + x_scale * libm::cosf(t - p),
-                        y_off + y_scale * libm::sinf(t - p),
-                        0.0,
-                    );
+                        let speed = 0.05; // 0.05
+                        let t = speed * (frame_begin_time as f32) / 1e6;
+                        let p = 2.0943951023931954923084289221863;
+                        let v0 = vec3(
+                            x_off + x_scale * libm::cosf(t),
+                            y_off + y_scale * libm::sinf(t),
+                            0.0,
+                        );
+                        let v1 = vec3(
+                            x_off + x_scale * libm::cosf(t + p),
+                            y_off + y_scale * libm::sinf(t + p),
+                            0.0,
+                        );
+                        let v2 = vec3(
+                            x_off + x_scale * libm::cosf(t - p),
+                            y_off + y_scale * libm::sinf(t - p),
+                            0.0,
+                        );
 
-                    cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
-                    cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 10.0, v1.1 + 10.0), GREEN);
-                    cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 10.0, v2.1 + 10.0), BLUE);
+                        cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
+                        cb.add_colored_rect(
+                            Vec2(v1.0, v1.1),
+                            Vec2(v1.0 + 10.0, v1.1 + 10.0),
+                            GREEN,
+                        );
+                        cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 10.0, v2.1 + 10.0), BLUE);
 
-                    if true {
                         cb.add_mesh_indexed(
                             &[
                                 v0, //vec3(0.0, 0.5, 0.0),
@@ -198,11 +204,11 @@ fn main() {
                             ],
                             None,
                         );
-                    }
 
-                    cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 2.0, v0.1 + 2.0), WHITE);
-                    cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 2.0, v1.1 + 2.0), WHITE);
-                    cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 2.0, v2.1 + 2.0), WHITE);
+                        cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 2.0, v0.1 + 2.0), WHITE);
+                        cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 2.0, v1.1 + 2.0), WHITE);
+                        cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 2.0, v2.1 + 2.0), WHITE);
+                    }
                 }
 
                 if false {
