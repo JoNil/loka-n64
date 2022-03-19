@@ -10,7 +10,7 @@ use crate::{
     },
 };
 use assert_into::AssertInto;
-use n64_math::{Color, Vec2, Vec3};
+use n64_math::{Color, Vec2};
 use std::mem;
 use std::num::NonZeroU32;
 use wgpu::util::DeviceExt;
@@ -29,8 +29,8 @@ enum Command {
         blend_color: u32,
     },
     Mesh {
-        verts: Vec<Vec3>,
-        uvs: Vec<Vec2>,
+        verts: Vec<[f32; 3]>,
+        uvs: Vec<[f32; 2]>,
         colors: Vec<u32>,
         indices: Vec<u8>,
         transform: [[f32; 4]; 4],
@@ -119,8 +119,8 @@ impl<'a> CommandBuffer<'a> {
 
     pub fn add_mesh_indexed(
         &mut self,
-        verts: &[Vec3],
-        uvs: &[Vec2],
+        verts: &[[f32; 3]],
+        uvs: &[[f32; 2]],
         colors: &[u32],
         indices: &[[u8; 3]],
         transform: &[[f32; 4]; 4],
@@ -173,14 +173,13 @@ impl<'a> CommandBuffer<'a> {
                         } => {
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
-                            let offset_x = 2.0 * upper_left.x() / window_size.x() - 1.0 + scale.x();
-                            let offset_y =
-                                -2.0 * upper_left.y() / window_size.y() + 1.0 - scale.y();
+                            let offset_x = 2.0 * upper_left.x / window_size.x - 1.0 + scale.x;
+                            let offset_y = -2.0 * upper_left.y / window_size.y + 1.0 - scale.y;
 
                             colored_rect_uniforms.push(ColoredRectUniforms {
                                 color: color.to_rgba(),
                                 offset: [offset_x, offset_y],
-                                scale: [scale.x(), scale.y()],
+                                scale: [scale.x, scale.y],
                             });
                         }
                         Command::TexturedRect {
@@ -197,13 +196,12 @@ impl<'a> CommandBuffer<'a> {
 
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
-                            let offset_x = 2.0 * upper_left.x() / window_size.x() - 1.0 + scale.x();
-                            let offset_y =
-                                -2.0 * upper_left.y() / window_size.y() + 1.0 - scale.y();
+                            let offset_x = 2.0 * upper_left.x / window_size.x - 1.0 + scale.x;
+                            let offset_y = -2.0 * upper_left.y / window_size.y + 1.0 - scale.y;
 
                             textured_rect_uniforms.push(TexturedRectUniforms {
                                 offset: [offset_x, offset_y],
-                                scale: [scale.x(), scale.y()],
+                                scale: [scale.x, scale.y],
                                 blend_color: [
                                     ((*blend_color >> 24) & 0xff) as f32 / 255.0,
                                     ((*blend_color >> 16) & 0xff) as f32 / 255.0,
@@ -237,8 +235,8 @@ impl<'a> CommandBuffer<'a> {
 
                             for (v, (t, c)) in verts.iter().zip(uvs.iter().zip(colors.iter())) {
                                 vertices.push(MeshVertex {
-                                    pos: (*v).into(),
-                                    tex_coord: (*t).into(),
+                                    pos: *v,
+                                    tex_coord: *t,
                                     color: [
                                         ((*c >> 24) & 0xff) as f32 / 255.0,
                                         ((*c >> 16) & 0xff) as f32 / 255.0,

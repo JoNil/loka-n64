@@ -1,6 +1,6 @@
 use crate::textures::*;
 use n64::gfx::{CommandBuffer, StaticTexture};
-use n64_math::Vec2;
+use n64_math::{const_vec2, Vec2};
 
 static ATLAS: &[&StaticTexture] = &[
     &FONT_1_SPACE,
@@ -100,7 +100,7 @@ static ATLAS: &[&StaticTexture] = &[
     &FONT_1_TILDE,
 ];
 
-const GLYPH_SIZE: Vec2 = Vec2::new(11.0, 0.0);
+const GLYPH_SIZE: Vec2 = const_vec2!([11.0, 0.0]);
 
 #[inline]
 fn digit_to_char(digit: u8) -> char {

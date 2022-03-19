@@ -51,20 +51,20 @@ impl Map {
         let tile_scale: Vec2 = Vec2::new(32.0, 32.0);
 
         let camera_pixel_pos = Vec2::new(
-            camera.pos.0 * video_mode.width() as f32,
-            camera.pos.1 * video_mode.height() as f32,
+            camera.pos.x * video_mode.width() as f32,
+            camera.pos.y * video_mode.height() as f32,
         );
 
         let camera_tile = Vec2::new(
-            camera_pixel_pos.0 / self.data.tile_width as f32,
-            camera_pixel_pos.1 / self.data.tile_height as f32,
+            camera_pixel_pos.x / self.data.tile_width as f32,
+            camera_pixel_pos.y / self.data.tile_height as f32,
         );
 
         let tiles_on_screen_x = (video_mode.width() / self.data.tile_width) + 1;
         let tiles_on_screen_y = (video_mode.height() / self.data.tile_height) + 2;
 
-        let first_tile_x = camera_tile.x() as i32;
-        let first_tile_y = camera_tile.y() as i32;
+        let first_tile_x = camera_tile.x as i32;
+        let first_tile_y = camera_tile.y as i32;
 
         for layer in self.data.layers.chunks_exact(tiles_in_layer) {
             for y in first_tile_y..(first_tile_y + tiles_on_screen_y) {

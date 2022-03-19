@@ -26,7 +26,7 @@ use n64::{
     gfx::{CommandBuffer, CommandBufferCache},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
-use n64_math::{vec2, vec3, Color, Vec2};
+use n64_math::{vec2, vec3, Color};
 use sound_mixer::SoundMixer;
 
 mod camera;
@@ -61,9 +61,9 @@ fn main() {
     let mut world = World::new();
     let map = Map::load(MAP_1);
 
-    let start_pos = Vec2::new(
-        map.get_start_pos().0 / VIDEO_MODE.width() as f32,
-        map.get_start_pos().1 / VIDEO_MODE.height() as f32 - 1.0,
+    let start_pos = vec2(
+        map.get_start_pos().x / VIDEO_MODE.width() as f32,
+        map.get_start_pos().y / VIDEO_MODE.height() as f32 - 1.0,
     );
 
     let mut sound_mixer = SoundMixer::new();
@@ -179,21 +179,17 @@ fn main() {
                             0.0,
                         );
 
-                        cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
+                        cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 10.0, v0.y + 10.0), RED);
                         cb.add_colored_rect(
-                            Vec2(v1.0, v1.1),
-                            Vec2(v1.0 + 10.0, v1.1 + 10.0),
+                            vec2(v1.x, v1.y),
+                            vec2(v1.x + 10.0, v1.y + 10.0),
                             GREEN,
                         );
-                        cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 10.0, v2.1 + 10.0), BLUE);
+                        cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 10.0, v2.y + 10.0), BLUE);
 
                         cb.add_mesh_indexed(
-                            &[
-                                v0, //vec3(0.0, 0.5, 0.0),
-                                v1, //vec3(-0.5, -0.20, 0.0),
-                                v2, //vec3(0.5, -0.30, 0.0),
-                            ],
-                            &[vec2(0.5, 1.0), vec2(0.0, 0.0), vec2(1.0, 0.0)],
+                            &[v0.into(), v1.into(), v2.into()],
+                            &[[0.5, 1.0], [0.0, 0.0], [1.0, 0.0]],
                             &[0xff_00_00_ff, 0x00_ff_00_ff, 0x00_00_ff_ff],
                             &[[0, 1, 2]],
                             &[
@@ -205,25 +201,25 @@ fn main() {
                             None,
                         );
 
-                        cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 2.0, v0.1 + 2.0), WHITE);
-                        cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 2.0, v1.1 + 2.0), WHITE);
-                        cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 2.0, v2.1 + 2.0), WHITE);
+                        cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0), WHITE);
+                        cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 2.0, v1.y + 2.0), WHITE);
+                        cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 2.0, v2.y + 2.0), WHITE);
                     }
                 }
 
                 if false {
-                    font::draw_text(&mut cb, " !\"#$%&", Vec2::new(1.0, 0.0), 0xffffffff);
-                    font::draw_text(&mut cb, "'()+,-./", Vec2::new(1.0, 17.0), 0xffffffff);
-                    font::draw_text(&mut cb, "0123456789", Vec2::new(1.0, 34.0), 0xffffffff);
-                    font::draw_text(&mut cb, ":;<=>?@", Vec2::new(1.0, 51.0), 0xffffffff);
-                    font::draw_text(&mut cb, "ABCDEFGHIJ", Vec2::new(1.0, 68.0), 0xffffffff);
-                    font::draw_text(&mut cb, "KLMNOPQRST", Vec2::new(1.0, 85.0), 0xffffffff);
-                    font::draw_text(&mut cb, "UVWXYZ", Vec2::new(1.0, 102.0), 0xffffffff);
-                    font::draw_text(&mut cb, "[\\]^_`", Vec2::new(1.0, 119.0), 0xffffffff);
-                    font::draw_text(&mut cb, "abcdefghij", Vec2::new(1.0, 136.0), 0xffffffff);
-                    font::draw_text(&mut cb, "klmnopqrst", Vec2::new(1.0, 153.0), 0xffffffff);
-                    font::draw_text(&mut cb, "uvwxyz", Vec2::new(1.0, 170.0), 0xffffffff);
-                    font::draw_text(&mut cb, "{|}~", Vec2::new(1.0, 187.0), 0xffffffff);
+                    font::draw_text(&mut cb, " !\"#$%&", vec2(1.0, 0.0), 0xffffffff);
+                    font::draw_text(&mut cb, "'()+,-./", vec2(1.0, 17.0), 0xffffffff);
+                    font::draw_text(&mut cb, "0123456789", vec2(1.0, 34.0), 0xffffffff);
+                    font::draw_text(&mut cb, ":;<=>?@", vec2(1.0, 51.0), 0xffffffff);
+                    font::draw_text(&mut cb, "ABCDEFGHIJ", vec2(1.0, 68.0), 0xffffffff);
+                    font::draw_text(&mut cb, "KLMNOPQRST", vec2(1.0, 85.0), 0xffffffff);
+                    font::draw_text(&mut cb, "UVWXYZ", vec2(1.0, 102.0), 0xffffffff);
+                    font::draw_text(&mut cb, "[\\]^_`", vec2(1.0, 119.0), 0xffffffff);
+                    font::draw_text(&mut cb, "abcdefghij", vec2(1.0, 136.0), 0xffffffff);
+                    font::draw_text(&mut cb, "klmnopqrst", vec2(1.0, 153.0), 0xffffffff);
+                    font::draw_text(&mut cb, "uvwxyz", vec2(1.0, 170.0), 0xffffffff);
+                    font::draw_text(&mut cb, "{|}~", vec2(1.0, 187.0), 0xffffffff);
                 }
 
                 font::draw_number(
@@ -234,7 +230,7 @@ fn main() {
                         .lookup(player)
                         .map(|p| p.score)
                         .unwrap_or(0),
-                    Vec2::new(300.0, 10.0),
+                    vec2(300.0, 10.0),
                     0x0000efff,
                 );
                 font::draw_number(
@@ -245,7 +241,7 @@ fn main() {
                         .lookup(player)
                         .map(|hc| hc.health)
                         .unwrap_or(0),
-                    Vec2::new(300.0, 215.0),
+                    vec2(300.0, 215.0),
                     0xaf0000ff,
                 );
 
@@ -254,19 +250,19 @@ fn main() {
                     font::draw_number(
                         &mut cb,
                         n64_alloc::BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
-                        Vec2::new(100.0, 160.0),
+                        vec2(100.0, 160.0),
                         0xff0000ff,
                     );
                     font::draw_number(
                         &mut cb,
                         n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
-                        Vec2::new(100.0, 180.0),
+                        vec2(100.0, 180.0),
                         0xff0000ff,
                     );
                     font::draw_number(
                         &mut cb,
                         *n64_alloc::PAGE_OFFSET.lock() as i32,
-                        Vec2::new(100.0, 200.0),
+                        vec2(100.0, 200.0),
                         0xff0000ff,
                     );
                 }
@@ -275,25 +271,25 @@ fn main() {
                     font::draw_number(
                         &mut cb,
                         (dt * 1000.0 * 1000.0) as i32,
-                        Vec2::new(100.0, 10.0),
+                        vec2(100.0, 10.0),
                         0x00af00ff,
                     );
                     font::draw_number(
                         &mut cb,
                         frame_used_time as i32,
-                        Vec2::new(200.0, 10.0),
+                        vec2(200.0, 10.0),
                         0x00af00ff,
                     );
                     font::draw_number(
                         &mut cb,
                         last_colored_rect_count,
-                        Vec2::new(100.0, 30.0),
+                        vec2(100.0, 30.0),
                         0x00af00ff,
                     );
                     font::draw_number(
                         &mut cb,
                         last_textured_rect_count,
-                        Vec2::new(200.0, 30.0),
+                        vec2(200.0, 30.0),
                         0x00af00ff,
                     );
                 }

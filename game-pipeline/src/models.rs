@@ -2,7 +2,6 @@ use crate::utils::{write_binary_file_if_changed, write_file_if_changed};
 use assert_into::AssertInto;
 use blend::{Blend, Instance};
 use meshopt::{generate_vertex_remap, remap_index_buffer, remap_vertex_buffer};
-use n64_math::{Vec2, Vec3};
 use std::{env, error::Error, ffi::OsStr, fs};
 use zerocopy::AsBytes;
 
@@ -32,8 +31,8 @@ use n64_math::{{Vec2, Vec3}};
 
 #[derive(Debug)]
 struct Model {
-    verts: Vec<Vec3>,
-    uvs: Vec<Vec2>,
+    verts: Vec<[f32; 3]>,
+    uvs: Vec<[f32; 2]>,
     colors: Vec<u32>,
     indices: Vec<u8>,
 }
@@ -63,8 +62,8 @@ fn parse_model(mesh: Instance) -> Option<Model> {
         }
     }
 
-    let mut verts = vec![Vec3::zero(); face_indice_count];
-    let mut uvs = vec![Vec2::zero(); face_indice_count];
+    let mut verts = vec![[0.0; 3]; face_indice_count];
+    let mut uvs = vec![[0.0; 2]; face_indice_count];
 
     let mut index_count = 0;
 
@@ -85,10 +84,10 @@ fn parse_model(mesh: Instance) -> Option<Model> {
                 let vert = &mverts[v as usize];
 
                 let co = vert.get_f32_vec("co");
-                verts[index_count as usize] = Vec3::new(co[0], co[1], co[2]);
+                verts[index_count as usize] = [co[0], co[1], co[2]];
 
                 let uv = muvs[index as usize].get_f32_vec("uv");
-                uvs[index_count as usize] = Vec2::new(uv[0], uv[1]);
+                uvs[index_count as usize] = [uv[0], uv[1]];
 
                 index_count += 1;
             }
@@ -168,10 +167,7 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
                             &colors_path,
                             byteswap_u32_slice(model.colors.as_bytes()),
                         )?;
-                        write_binary_file_if_changed(
-                            &indices_path,
-                            byteswap_u32_slice(model.indices.as_bytes()),
-                        )?;
+                        write_binary_file_if_changed(&indices_path, model.indices.as_bytes())?;
 
                         models.push_str(&format!(
                             MODEL_TEMPLATE!(),

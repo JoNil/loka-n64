@@ -10,9 +10,9 @@ use crate::{
     camera::Camera,
     ecs::{entity::EntitySystem, world::World},
 };
-use n64_math::{Aabb2, Color, Vec2};
+use n64_math::{const_vec2, vec2, Aabb2, Color, Vec2};
 
-const BULLET_SIZE: Vec2 = Vec2::new(0.00825, 0.00825);
+const BULLET_SIZE: Vec2 = const_vec2!([0.00825, 0.00825]);
 
 #[derive(Copy, Clone)]
 struct Bullet {
@@ -27,7 +27,7 @@ pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
         .spawn()
         .add(Movable {
             pos,
-            speed: Vec2::new(speed.x() + spread, speed.y()),
+            speed: vec2(speed.x + spread, speed.y),
         })
         .add(BoxDrawable {
             size: BULLET_SIZE,
@@ -58,7 +58,7 @@ pub fn update(world: &mut World, camera: &Camera) {
         .components
         .get6::<Bullet, Movable, Enemy, Player, SpriteDrawable, Health>();
 
-    let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
+    let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));
 
     for (bullet, entity) in bullet.components_and_entities() {
         if let Some(m) = movable.lookup(entity) {
@@ -73,7 +73,7 @@ pub fn update(world: &mut World, camera: &Camera) {
                 for enemy_entity in enemy.entities() {
                     if let Some(sprite_drawable) = sprite_drawable.lookup(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
-                            movable::pos(movable, *enemy_entity).unwrap_or_else(Vec2::zero),
+                            movable::pos(movable, *enemy_entity).unwrap_or(Vec2::ZERO),
                             sprite_drawable.size,
                         );
 
@@ -92,7 +92,7 @@ pub fn update(world: &mut World, camera: &Camera) {
             if bullet.can_hit_player {
                 for player_entity in player.entities() {
                     let player_bb = Aabb2::from_center_size(
-                        movable::pos(movable, *player_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(movable, *player_entity).unwrap_or(Vec2::ZERO),
                         SHIP_SIZE,
                     );
 

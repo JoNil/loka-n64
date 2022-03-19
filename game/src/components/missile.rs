@@ -12,9 +12,9 @@ use crate::{
         world::World,
     },
 };
-use n64_math::{Aabb2, Color, Vec2};
+use n64_math::{const_vec2, Aabb2, Color, Vec2};
 
-const MISSILE_SIZE: Vec2 = Vec2::new(4.0 * 0.00825, 4.0 * 0.00825);
+const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
 
 #[derive(Copy, Clone)]
 struct Missile {
@@ -28,7 +28,7 @@ pub fn shoot_missile(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target
         .spawn()
         .add(Movable {
             pos,
-            speed: Vec2::new(speed.x() + spread, speed.y()),
+            speed: Vec2::new(speed.x + spread, speed.y),
         })
         .add(BoxDrawable {
             size: MISSILE_SIZE,
@@ -68,7 +68,7 @@ pub fn update(world: &mut World, camera: &Camera) {
             for enemy_entity in enemy.entities() {
                 if let Some(sprite_drawable) = sprite_drawable.lookup(*enemy_entity) {
                     let enemy_bb = Aabb2::from_center_size(
-                        movable::pos(movable, *enemy_entity).unwrap_or_else(Vec2::zero),
+                        movable::pos(movable, *enemy_entity).unwrap_or(Vec2::ZERO),
                         sprite_drawable.size,
                     );
 

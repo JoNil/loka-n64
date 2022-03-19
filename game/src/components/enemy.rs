@@ -11,13 +11,13 @@ use crate::{
     sounds::EXPLOSION_0,
 };
 use n64::{current_time_us, gfx::Texture};
-use n64_math::Vec2;
+use n64_math::{const_vec2, vec2, Vec2};
 
 static ENEMY_WAYPOINT: [Vec2; 4] = [
-    Vec2::new(0.4, 0.4),
-    Vec2::new(0.6, 0.4),
-    Vec2::new(0.6, 0.6),
-    Vec2::new(0.4, 0.6),
+    const_vec2!([0.4, 0.4]),
+    const_vec2!([0.6, 0.4]),
+    const_vec2!([0.6, 0.6]),
+    const_vec2!([0.4, 0.6]),
 ];
 
 #[derive(Copy, Clone)]
@@ -33,10 +33,10 @@ pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'sta
         .spawn()
         .add(Movable {
             pos,
-            speed: Vec2::zero(),
+            speed: Vec2::ZERO,
         })
         .add(SpriteDrawable {
-            size: Vec2::new(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
+            size: vec2(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
             texture,
         })
         .add(Health { health: 100 })
@@ -71,8 +71,8 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
                     //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                     shoot_bullet_enemy(
                         &mut world.entities,
-                        movable.pos + Vec2::new(0.0, sprite_drawable.size.y() / 2.0),
-                        Vec2::new(0.0, 1.25),
+                        movable.pos + vec2(0.0, sprite_drawable.size.y / 2.0),
+                        vec2(0.0, 1.25),
                     );
                     enemy.last_shoot_time = now;
                 }

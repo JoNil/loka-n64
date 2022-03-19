@@ -1,5 +1,4 @@
 use alloc::borrow::Cow;
-use n64_math::{Vec2, Vec3};
 use zerocopy::LayoutVerified;
 
 pub struct StaticModelData {
@@ -14,11 +13,11 @@ impl StaticModelData {
         cfg_if::cfg_if! {
             if #[cfg(target_vendor = "nintendo64")] {
 
-                let verts = LayoutVerified::<_, [Vec3]>::new_slice(self.verts)
+                let verts = LayoutVerified::<_, [[f32; 3]]>::new_slice(self.verts)
                     .unwrap()
                     .into_slice();
 
-                let uvs = LayoutVerified::<_, [Vec2]>::new_slice(self.uvs)
+                let uvs = LayoutVerified::<_, [[f32; 2]]>::new_slice(self.uvs)
                     .unwrap()
                     .into_slice();
 
@@ -54,14 +53,14 @@ impl StaticModelData {
                 let verts_in = byteswap_u32_slice(self.verts);
                 let uvs_in = byteswap_u32_slice(self.uvs);
                 let colors_in = byteswap_u32_slice(self.colors);
-                let indices_in = byteswap_u32_slice(self.indices);
+                let indices_in = self.indices;
 
-                let verts = LayoutVerified::<_, [Vec3]>::new_slice(verts_in.as_slice())
+                let verts = LayoutVerified::<_, [[f32; 3]]>::new_slice(verts_in.as_slice())
                     .unwrap()
                     .into_slice()
                     .to_owned();
 
-                let uvs = LayoutVerified::<_, [Vec2]>::new_slice(uvs_in.as_slice())
+                let uvs = LayoutVerified::<_, [[f32; 2]]>::new_slice(uvs_in.as_slice())
                     .unwrap()
                     .into_slice()
                     .to_owned();
@@ -71,16 +70,15 @@ impl StaticModelData {
                     .into_slice()
                     .to_owned();
 
-                let indices = LayoutVerified::<_, [[u8; 3]]>::new_slice(indices_in.as_slice())
+                let indices = LayoutVerified::<_, [[u8; 3]]>::new_slice(indices_in)
                     .unwrap()
-                    .into_slice()
-                    .to_owned();
+                    .into_slice();
 
                 ModelData {
                     verts: Cow::Owned(verts),
                     uvs: Cow::Owned(uvs),
                     colors: Cow::Owned(colors),
-                    indices: Cow::Owned(indices),
+                    indices: Cow::Borrowed(indices),
                 }
             }
         }
@@ -89,8 +87,8 @@ impl StaticModelData {
 
 #[derive(Clone)]
 pub struct ModelData<'a> {
-    pub verts: Cow<'a, [Vec3]>,
-    pub uvs: Cow<'a, [Vec2]>,
+    pub verts: Cow<'a, [[f32; 3]]>,
+    pub uvs: Cow<'a, [[f32; 2]]>,
     pub colors: Cow<'a, [u32]>,
     pub indices: Cow<'a, [[u8; 3]]>,
 }

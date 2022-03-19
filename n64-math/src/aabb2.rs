@@ -28,29 +28,29 @@ impl Aabb2 {
 
     #[inline]
     pub fn top(&self) -> f32 {
-        self.upper_left.y()
+        self.upper_left.y
     }
 
     #[inline]
     pub fn bottom(&self) -> f32 {
-        self.lower_right.y()
+        self.lower_right.y
     }
 
     #[inline]
     pub fn left(&self) -> f32 {
-        self.upper_left.x()
+        self.upper_left.x
     }
 
     #[inline]
     pub fn right(&self) -> f32 {
-        self.lower_right.x()
+        self.lower_right.x
     }
 
     #[inline]
     pub fn center(&self) -> Vec2 {
         Vec2::new(
-            (self.upper_left.x() + self.lower_right.x()) / 2.0,
-            (self.upper_left.y() + self.lower_right.y()) / 2.0,
+            (self.upper_left.x + self.lower_right.x) / 2.0,
+            (self.upper_left.y + self.lower_right.y) / 2.0,
         )
     }
 
