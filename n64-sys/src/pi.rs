@@ -1,8 +1,12 @@
 use crate::sys::{
+    data_cache_hit_invalidate, data_cache_hit_invalidate_single, data_cache_hit_writeback,
     data_cache_hit_writeback_invalidate_single, data_cache_hit_writeback_single, memory_barrier,
     uncached_addr, uncached_addr_mut, virtual_to_physical, virtual_to_physical_mut,
 };
-use core::ptr::{read_volatile, write_volatile};
+use core::{
+    ptr::{read_volatile, write_volatile},
+    slice,
+};
 
 const PI_BASE: usize = 0xA460_0000;
 
@@ -27,7 +31,11 @@ const PI_STATUS_IO_BUSY: usize = 0x0002;
 
 #[inline]
 fn dma_wait() {
-    while unsafe { read_volatile(PI_STATUS) } & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY) > 0 {}
+    unsafe {
+        while read_volatile(PI_STATUS) & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY) > 0 {
+            memory_barrier();
+        }
+    }
 }
 
 pub fn init() {
@@ -72,7 +80,7 @@ pub fn read(dst: *mut u8, len: u32, pi_address: usize) {
 
 pub fn write(src: *const u8, len: u32, pi_address: usize) {
     unsafe {
-        data_cache_hit_writeback_single(src as usize);
+        data_cache_hit_writeback(slice::from_raw_parts(src, len as _));
 
         dma_wait();
 
