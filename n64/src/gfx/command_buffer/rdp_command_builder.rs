@@ -332,59 +332,59 @@ impl RdpCommandBuilder {
         //self.set_other_modes(3u64 <<52);
         //self.set_fill_color(Color::new(0b00000_11111_11111_1));
 
-        n64_macros::debugln!(
-            "xi_xf_y\n  Low  {} {} {}",
-            x_low_int,
-            x_low_frac,
-            y_low_minor
-        );
-        n64_macros::debugln!("  Mid  {} {} {}", x_mid_int, x_mid_frac, y_mid_minor);
-        n64_macros::debugln!("  High {} {} {}", x_high_int, x_high_frac, y_high_major);
-        n64_macros::debugln!(
-            "slope i f\n  Low {} {}",
-            fixed_16_16_to_f32(inv_slope_low),
-            inv_slope_low
-        );
-        n64_macros::debugln!(
-            "  Mid  {} {}",
-            fixed_16_16_to_f32(inv_slope_mid),
-            inv_slope_mid
-        );
-        n64_macros::debugln!(
-            "  High {} {}",
-            fixed_16_16_to_f32(inv_slope_high),
-            inv_slope_high
-        );
-        n64_macros::debugln!(
-            "YL {}\nYM {}\nYH {}",
-            to_fixpoint_s_11_2(y_low_minor),
-            to_fixpoint_s_11_2(y_mid_minor),
-            to_fixpoint_s_11_2(y_high_major)
-        );
-        n64_macros::debugln!(
-            "YL {:b}\nYM {:b}\nYH {:b}",
-            to_fixpoint_s_11_2(y_low_minor),
-            to_fixpoint_s_11_2(y_mid_minor),
-            to_fixpoint_s_11_2(y_high_major)
-        );
-        n64_macros::debugln!("dir (right_major) {}", right_major);
-        n64_macros::debugflush();
+        // n64_macros::debugln!(
+        //     "xi_xf_y\n  Low  {} {} {}",
+        //     x_low_int,
+        //     x_low_frac,
+        //     y_low_minor
+        // );
+        // n64_macros::debugln!("  Mid  {} {} {}", x_mid_int, x_mid_frac, y_mid_minor);
+        // n64_macros::debugln!("  High {} {} {}", x_high_int, x_high_frac, y_high_major);
+        // n64_macros::debugln!(
+        //     "slope i f\n  Low {} {}",
+        //     fixed_16_16_to_f32(inv_slope_low),
+        //     inv_slope_low
+        // );
+        // n64_macros::debugln!(
+        //     "  Mid  {} {}",
+        //     fixed_16_16_to_f32(inv_slope_mid),
+        //     inv_slope_mid
+        // );
+        // n64_macros::debugln!(
+        //     "  High {} {}",
+        //     fixed_16_16_to_f32(inv_slope_high),
+        //     inv_slope_high
+        // );
+        // n64_macros::debugln!(
+        //     "YL {}\nYM {}\nYH {}",
+        //     to_fixpoint_s_11_2(y_low_minor),
+        //     to_fixpoint_s_11_2(y_mid_minor),
+        //     to_fixpoint_s_11_2(y_high_major)
+        // );
+        // n64_macros::debugln!(
+        //     "YL {:b}\nYM {:b}\nYH {:b}",
+        //     to_fixpoint_s_11_2(y_low_minor),
+        //     to_fixpoint_s_11_2(y_mid_minor),
+        //     to_fixpoint_s_11_2(y_high_major)
+        // );
+        // n64_macros::debugln!("dir (right_major) {}", right_major);
+        // n64_macros::debugflush();
 
-        n64_macros::debugln!(
-            "Low  {} {}",
-            ((x_low_int as u32) << 16) + x_low_frac as u32,
-            inv_slope_low
-        );
-        n64_macros::debugln!(
-            "High {} {}",
-            ((x_high_int as u32) << 16) + x_high_frac as u32,
-            inv_slope_high
-        );
-        n64_macros::debugln!(
-            "Mid  {} {}",
-            ((x_mid_int as u32) << 16) + x_mid_frac as u32,
-            inv_slope_mid
-        );
+        // n64_macros::debugln!(
+        //     "Low  {} {}",
+        //     ((x_low_int as u32) << 16) + x_low_frac as u32,
+        //     inv_slope_low
+        // );
+        // n64_macros::debugln!(
+        //     "High {} {}",
+        //     ((x_high_int as u32) << 16) + x_high_frac as u32,
+        //     inv_slope_high
+        // );
+        // n64_macros::debugln!(
+        //     "Mid  {} {}",
+        //     ((x_mid_int as u32) << 16) + x_mid_frac as u32,
+        //     inv_slope_mid
+        // );
 
         let mut buffer = self.commands.as_mut().unwrap();
         let mut command = COMMAND_EDGE_COEFFICIENTS;
@@ -406,26 +406,26 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_s_11_2(y_high_major)) << 0,
         ));
 
-        n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
+        //n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
         // SIC Should be L, H, M order
         buffer.push(RdpCommand(
             (x_low_int as u64) << 48
                 | (x_low_frac as u64) << 32
                 | (inv_slope_low as u32 as u64) << 0,
         ));
-        n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
+        //n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
         buffer.push(RdpCommand(
             (x_high_int as u64) << 48
                 | (x_high_frac as u64) << 32
                 | (inv_slope_high as u32 as u64) << 0,
         ));
-        n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
+        //n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
         buffer.push(RdpCommand(
             (x_mid_int as u64) << 48
                 | (x_mid_frac as u64) << 32
                 | (inv_slope_mid as u32 as u64) << 0,
         ));
-        n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
+        //n64_macros::debugln!("{:b}", buffer.last().unwrap().0);
 
         self
     }

@@ -1,7 +1,8 @@
 use crate::sys::{
     data_cache_hit_invalidate, data_cache_hit_invalidate_single, data_cache_hit_writeback,
-    data_cache_hit_writeback_invalidate_single, data_cache_hit_writeback_single, memory_barrier,
-    uncached_addr, uncached_addr_mut, virtual_to_physical, virtual_to_physical_mut,
+    data_cache_hit_writeback_invalidate, data_cache_hit_writeback_invalidate_single,
+    data_cache_hit_writeback_single, memory_barrier, uncached_addr, uncached_addr_mut,
+    virtual_to_physical, virtual_to_physical_mut,
 };
 use core::{
     ptr::{read_volatile, write_volatile},
@@ -80,7 +81,7 @@ pub fn read(dst: *mut u8, len: u32, pi_address: usize) {
 
 pub fn write(src: *const u8, len: u32, pi_address: usize) {
     unsafe {
-        data_cache_hit_writeback(slice::from_raw_parts(src, len as _));
+        data_cache_hit_writeback_invalidate(slice::from_raw_parts(src, len as _));
 
         dma_wait();
 

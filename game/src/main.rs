@@ -184,7 +184,9 @@ fn main() {
                     //let v1 = vec3(96.0, 128.0, 0.0);
                     //let v2 = vec3(128.0, 64.0, 0.0);
 
-                    n64_macros::debugln!("{} v0: {}, v1: {}, v2: {}", frame_no, v0, v1, v2);
+                    //n64_macros::debugln!("{} v0: {}, v1: {}, v2: {}", frame_no, v0, v1, v2);
+                    //n64_macros::debugln!("123456789abcdefghijklmnop");
+                    n64_macros::debugln!("1234");
                     n64_macros::debugflush();
                     // Scale?
                     cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
@@ -306,8 +308,8 @@ fn main() {
                 cb.run(&mut n64.graphics)
             };
 
-            n64_macros::debugln!("0x{:x}: 0b{:32b}", status, status);
-            n64_macros::debugflush();
+            //n64_macros::debugln!("0x{:x}: 0b{:32b}", status, status);
+            //n64_macros::debugflush();
 
             if status > 0x200 {
                 loop {}

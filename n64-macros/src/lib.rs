@@ -2,6 +2,8 @@
 
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {
+
+        #[repr(align(16))]
         pub struct DebugWrite {
             buffer: [u8; 16],
             cursor: u16,
@@ -38,7 +40,7 @@ cfg_if::cfg_if! {
             let mut lock = GLOBAL_DEBUG_PRINT.lock();
             let cursor = lock.cursor;
             if cursor > 0 {
-                lock.buffer[(cursor as usize)..].fill(b'\r');
+                lock.buffer[(cursor as usize)..].fill(b'x');
                 core::assert!(n64_sys::ed::usb_write(&lock.buffer));
                 lock.cursor = 0;
             }
@@ -68,9 +70,9 @@ cfg_if::cfg_if! {
 #[macro_export]
 macro_rules! debugln {
     ($fmt:expr) => {
-        $crate::debug!(concat!($fmt, "\r\n"))
+        $crate::debug!(concat!($fmt, "00"))
     };
     ($fmt:expr, $($arg:tt)*) => {
-        $crate::debug!(concat!($fmt, "\r\n"), $($arg)*)
+        $crate::debug!(concat!($fmt, "00"), $($arg)*)
     };
 }

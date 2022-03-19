@@ -51,7 +51,7 @@ fn edge_slope_OLD(p0: Vec3, p1: Vec3) -> i32 {
     // TODO: ZERO DIVISION  (old epsilon 0.01)
     let a = libm::floorf((p1.0 - p0.0) * 4.0) / 4.0;
     let b = (p1.1 - p0.1); //libm::floorf((p1.1 - p0.1) * 4.0) / 4.0;
-    n64_macros::debugln!("a, b {} {}", a, b);
+                           //n64_macros::debugln!("a, b {} {}", a, b);
     if b == 0.0 {
         return f32_to_fixed_16_16(a);
     }
@@ -368,7 +368,7 @@ impl<'a> CommandBuffer<'a> {
             //let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
             let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
 
-            debugln!("V012\n{}\n{}\n{}\nVLMH\n{}\n{}\n{}", v0, v1, v2, vl, vm, vh);
+            //debugln!("V012\n{}\n{}\n{}\nVLMH\n{}\n{}\n{}", v0, v1, v2, vl, vm, vh);
             //n64_macros::debugflush();
 
             //TODO: Actual intersections (low with subpixel, mid & high with previous scanline)
