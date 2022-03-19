@@ -176,19 +176,6 @@ fn main() {
                         0.0,
                     );
 
-                    let v0 = vec3(128.0, 64.5, 0.0);
-                    let v1 = vec3(96.0, 128.0, 0.0);
-                    let v2 = vec3(64.0, 96.0, 0.0);
-
-                    //let v0 = vec3(64.0, 64.0, 0.0);
-                    //let v1 = vec3(96.0, 128.0, 0.0);
-                    //let v2 = vec3(128.0, 64.0, 0.0);
-
-                    n64_macros::debugln!("{} v0: {}, v1: {}, v2: {}", frame_no, v0, v1, v2);
-                    //n64_macros::debugln!("123456789abcdefg");
-                    //n64_macros::debugln!("1234");
-                    n64_macros::debugflush();
-                    // Scale?
                     cb.add_colored_rect(Vec2(v0.0, v0.1), Vec2(v0.0 + 10.0, v0.1 + 10.0), RED);
                     cb.add_colored_rect(Vec2(v1.0, v1.1), Vec2(v1.0 + 10.0, v1.1 + 10.0), GREEN);
                     cb.add_colored_rect(Vec2(v2.0, v2.1), Vec2(v2.0 + 10.0, v2.1 + 10.0), BLUE);

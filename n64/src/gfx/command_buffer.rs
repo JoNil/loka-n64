@@ -47,17 +47,6 @@ fn edge_slope(p0: Vec3, p1: Vec3) -> i32 {
     }
     f32_to_fixed_16_16((p1.0 - p0.0) / (p1.1 - p0.1))
 }
-fn edge_slope_OLD(p0: Vec3, p1: Vec3) -> i32 {
-    // TODO: ZERO DIVISION  (old epsilon 0.01)
-    let a = libm::floorf((p1.0 - p0.0) * 4.0) / 4.0;
-    let b = (p1.1 - p0.1); //libm::floorf((p1.1 - p0.1) * 4.0) / 4.0;
-                           //n64_macros::debugln!("a, b {} {}", a, b);
-    if b == 0.0 {
-        return f32_to_fixed_16_16(a);
-    }
-
-    f32_to_fixed_16_16(a / b)
-}
 
 // kx + m = y
 // kx0 + m = y0
@@ -80,11 +69,6 @@ fn slope_x_from_y(p0: Vec3, p1: Vec3, y: f32) -> (u16, u16) {
     }
 
     let x = p0.0 + (y - p0.1) * (p1.0 - p0.0) / (p1.1 - p0.1);
-
-    //panic!("slope_x_from_y\n{}\n{}\ny{}\nx{}\n{:?}",
-    //p0, p1,
-    //y, x,
-    //float_to_int_frac(x));
 
     float_to_unsigned_int_frac(x)
 }
@@ -122,11 +106,6 @@ fn int_frac_greater(a_integer: u16, a_fraction: u16, b_integer: u16, b_fraction:
 // if and only if (since denominators are positive)
 //   (p2x-p0x)*(p1_y-p0_y) > (p1x-p0x)*(p2_y-p0_y)
 fn is_triangle_right_major(p0: Vec3, p1: Vec3, p2: Vec3) -> bool {
-    //if p1.1 == p2.1 {
-    //    // Flat bottom
-    //    return false;
-    //}
-
     // Counter clockwise order?
     // (p0 - p1)x(p2 - p1) > 0 (area)
     // (p0x - p1x)   (p2x - p1x)    0
@@ -137,7 +116,6 @@ fn is_triangle_right_major(p0: Vec3, p1: Vec3, p2: Vec3) -> bool {
     // Z > 0 => (p0x - p1x)*(p2y - p1y) > (p2x - p1x)*(p0y - p1y)
 
     return (p0.0 - p1.0) * (p2.1 - p1.1) < (p2.0 - p1.0) * (p0.1 - p1.1);
-    //return (p2.0-p0.0)*(p1.1-p0.1) < (p1.0-p0.0)*(p2.1-p0.1);
 }
 
 // Sort so that v0.1 <= v1.1 <= v2.1
@@ -150,7 +128,6 @@ fn sorted_triangle(v0: Vec3, v1: Vec3, v2: Vec3) -> (Vec3, Vec3, Vec3) {
         sorted_triangle(v0, v2, v1)
     } else {
         (v0, v1, v2)
-        //(v2, v1, v0) // Reverse order
     }
 }
 
@@ -338,72 +315,26 @@ impl<'a> CommandBuffer<'a> {
             let x_limit = 320.0;
             let y_limit = 240.0;
 
-            if false {
-                //let scale = 64.0;
-                //
-                //v0.0 = libm::fmaxf(libm::fminf( 0.5 * x_limit * (1.0 + v0.0), x_limit), 0.0);
-                //v1.0 = libm::fmaxf(libm::fminf( 0.5 * x_limit * (1.0 + v1.0), x_limit), 0.0);
-                //v2.0 = libm::fmaxf(libm::fminf( 0.5 * x_limit * (1.0 + v2.0), x_limit), 0.0);
-                //v0.1 = libm::fmaxf(libm::fminf( 0.5 * y_limit * (1.0 + v0.1), y_limit), 0.0);
-                //v1.1 = libm::fmaxf(libm::fminf( 0.5 * y_limit * (1.0 + v1.1), y_limit), 0.0);
-                //v2.1 = libm::fmaxf(libm::fminf( 0.5 * y_limit * (1.0 + v2.1), y_limit), 0.0);
-
-                v0.0 = libm::fmaxf(libm::fminf(0.5 * 32.0 * (1.0 + v0.0), x_limit), 0.0);
-                v1.0 = libm::fmaxf(libm::fminf(0.5 * 32.0 * (1.0 + v1.0), x_limit), 0.0);
-                v2.0 = libm::fmaxf(libm::fminf(0.5 * 32.0 * (1.0 + v2.0), x_limit), 0.0);
-                v0.1 = libm::fmaxf(libm::fminf(0.5 * 32.0 * (1.0 + v0.1), y_limit), 0.0);
-                v1.1 = libm::fmaxf(libm::fminf(0.5 * 32.0 * (1.0 + v1.1), y_limit), 0.0);
-                v2.1 = libm::fmaxf(libm::fminf(0.5 * 32.0 * (1.0 + v2.1), y_limit), 0.0);
-            } else {
-                v0.0 = libm::fmaxf(libm::fminf(v0.0, x_limit), 0.0);
-                v1.0 = libm::fmaxf(libm::fminf(v1.0, x_limit), 0.0);
-                v2.0 = libm::fmaxf(libm::fminf(v2.0, x_limit), 0.0);
-                v0.1 = libm::fmaxf(libm::fminf(v0.1, y_limit), 0.0);
-                v1.1 = libm::fmaxf(libm::fminf(v1.1, y_limit), 0.0);
-                v2.1 = libm::fmaxf(libm::fminf(v2.1, y_limit), 0.0);
-            }
+            v0.0 = libm::fmaxf(libm::fminf(v0.0, x_limit), 0.0);
+            v1.0 = libm::fmaxf(libm::fminf(v1.0, x_limit), 0.0);
+            v2.0 = libm::fmaxf(libm::fminf(v2.0, x_limit), 0.0);
+            v0.1 = libm::fmaxf(libm::fminf(v0.1, y_limit), 0.0);
+            v1.1 = libm::fmaxf(libm::fminf(v1.1, y_limit), 0.0);
+            v2.1 = libm::fmaxf(libm::fminf(v2.1, y_limit), 0.0);
 
             // Vh is the highest point (smallest y value)
             // Vl is the lowest point (largest y value)
-            //let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
             let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
 
-            //debugln!("V012\n{}\n{}\n{}\nVLMH\n{}\n{}\n{}", v0, v1, v2, vl, vm, vh);
-            //n64_macros::debugflush();
-
-            //TODO: Actual intersections (low with subpixel, mid & high with previous scanline)
-            //
             let (l_int, l_frac) = slope_y_next_subpixel_intersection(vm, vl);
             let (m_int, m_frac) = slope_y_prev_scanline_intersection(vh, vm);
             let (h_int, h_frac) = slope_y_prev_scanline_intersection(vh, vl);
-
-            // panic!("{}\n{}\n{}\n{}\n{}\n{}", l_int, l_frac, m_int, m_frac, h_int, h_frac);
-
-            //panic!("x{:x?}\n{}\nx{:x?}\n{}\nx{:x?}\n{}", l_slope_int, l_slope_frac, m_slope_int, m_slope_frac, h_slope_int, h_slope_frac);
 
             let mut l_slope = edge_slope(vl, vm);
             let mut m_slope = edge_slope(vm, vh);
             let mut h_slope = edge_slope(vl, vh);
 
-            //l_slope = (l_slope & ((1 << 30) - 1));
-            //m_slope = (m_slope & ((1 << 30) - 1));
-            //h_slope = (h_slope & ((1<<30)-1));
-
-            //panic!("{}.{}>{}.{}\n{}", m_int, m_frac, h_int, h_frac, int_frac_greater(m_int, m_frac, h_int, h_frac));
-
             let right_major = is_triangle_right_major(vh, vm, vl);
-
-            //if !right_major {
-            //   return self;
-            // }
-
-            //self.cache.rdp.sync_full();
-            //self.cache.rdp.sync_pipe(); // Should not be needed.
-
-            //if m_frac == h_frac {
-            // TODO Handle!
-            //    continue;
-            //}
 
             if true {
                 self.cache.rdp.edge_coefficients(
@@ -422,21 +353,11 @@ impl<'a> CommandBuffer<'a> {
                     m_frac,
                     h_int,
                     h_frac,
-                    l_slope, // l_slope
-                    m_slope, //m_slope,
-                    h_slope, //h_slope,
+                    l_slope,
+                    m_slope,
+                    h_slope,
                 );
             }
-
-            /*panic!(
-                "Vl {} {}\nVm {} {}\nVh {} {}\nLY,X {} {} {}\nMY,X {} {} {}\nHY,X {} {} {}",
-            vl.1, vl.0,
-            vm.1, vm.0,
-            vh.1, vh.0,
-            vl.1, l_int, l_frac,
-            vm.1, m_int, m_frac,
-            vh.1, h_int, h_frac
-            );*/
         }
         self
     }
