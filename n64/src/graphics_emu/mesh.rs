@@ -3,6 +3,7 @@
 use crate::{gfx::Texture, graphics_emu::shader};
 use n64_math::Color;
 use std::{collections::HashMap, mem, num::NonZeroU32};
+use wgpu::SamplerBindingType;
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_MESHES: u64 = 4096;
@@ -57,10 +58,7 @@ impl Mesh {
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
                     visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler {
-                        comparison: false,
-                        filtering: true,
-                    },
+                    ty: wgpu::BindingType::Sampler(SamplerBindingType::Filtering),
                     count: None,
                 },
             ],
@@ -112,7 +110,7 @@ impl Mesh {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: None,
-                clamp_depth: false,
+                unclipped_depth: true,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
@@ -142,6 +140,7 @@ impl Mesh {
                     write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
+            multiview: None,
         });
 
         let shader_storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {

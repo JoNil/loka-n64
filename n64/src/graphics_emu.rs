@@ -11,6 +11,7 @@ use std::thread;
 use std::thread_local;
 use textured_rect::TexturedRect;
 use wgpu::util::DeviceExt;
+use wgpu::Features;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -124,7 +125,7 @@ impl Graphics {
                 .request_device(
                     &wgpu::DeviceDescriptor {
                         label: None,
-                        features: wgpu::Features::empty(),
+                        features: Features::DEPTH_CLIP_CONTROL,
                         limits: wgpu::Limits::default(),
                     },
                     None,

@@ -67,7 +67,7 @@ impl ColoredRect {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: None,
-                clamp_depth: false,
+                unclipped_depth: false,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
@@ -86,6 +86,7 @@ impl ColoredRect {
                     write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
+            multiview: None,
         });
 
         let shader_storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {

@@ -20,10 +20,10 @@ zerocopy = "0.6"
 cpal = "0.13"
 futures-executor = "0.3"
 lazy_static = "1"
-naga = { version = "0.7", features = ["glsl-in", "spv-out"] }
+naga = { version = "0.8", features = ["glsl-in", "spv-out"] }
 rubato = { git = "https://github.com/JoNil/rubato.git" }
-wgpu = { version = "0.11", features = ["spirv"] }
-winit = "0.25"
+wgpu = { version = "0.12", features = ["spirv"] }
+winit = "0.26"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-sys = { path = "../n64-sys" }

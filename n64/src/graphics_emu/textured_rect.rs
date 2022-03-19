@@ -3,6 +3,7 @@ use crate::{
     graphics_emu::{shader, Vertex},
 };
 use std::{collections::HashMap, mem, num::NonZeroU32};
+use wgpu::SamplerBindingType;
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
@@ -54,10 +55,7 @@ impl TexturedRect {
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
                     visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler {
-                        comparison: false,
-                        filtering: true,
-                    },
+                    ty: wgpu::BindingType::Sampler(SamplerBindingType::Filtering),
                     count: None,
                 },
             ],
@@ -104,7 +102,7 @@ impl TexturedRect {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: None,
-                clamp_depth: false,
+                unclipped_depth: false,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
@@ -134,6 +132,7 @@ impl TexturedRect {
                     write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
+            multiview: None,
         });
 
         let shader_storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {

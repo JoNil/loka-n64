@@ -1,3 +1,5 @@
+use wgpu::SamplerBindingType;
+
 use crate::{
     graphics_emu::{shader, Vertex},
     VideoMode,
@@ -74,10 +76,7 @@ impl CopyTex {
                 wgpu::BindGroupLayoutEntry {
                     binding: 1,
                     visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler {
-                        filtering: true,
-                        comparison: false,
-                    },
+                    ty: wgpu::BindingType::Sampler(SamplerBindingType::Filtering),
                     count: None,
                 },
             ],
@@ -138,7 +137,7 @@ impl CopyTex {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: None,
-                clamp_depth: false,
+                unclipped_depth: false,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
@@ -157,6 +156,7 @@ impl CopyTex {
                     write_mask: wgpu::ColorWrites::ALL,
                 }],
             }),
+            multiview: None,
         });
 
         Self {
