@@ -4,7 +4,6 @@ use super::{
     health::{self, Health},
     movable::{self, Movable},
     size::Size,
-    sprite_drawable::SpriteDrawable,
 };
 use crate::{
     camera::Camera,

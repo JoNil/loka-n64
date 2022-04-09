@@ -6,7 +6,6 @@ use super::{
     missile::shoot_missile,
     movable::{self, Movable},
     size::Size,
-    sprite_drawable::SpriteDrawable,
 };
 use crate::{
     camera::Camera,
@@ -18,7 +17,6 @@ use crate::{
     models::SHIP_3_BODY,
     sound_mixer::SoundMixer,
     sounds::{SHOOT_1, SHOOT_2},
-    textures::SHIP_2_SMALL,
     weapon::Weapon,
 };
 use alloc::vec::Vec;
