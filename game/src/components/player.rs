@@ -4,7 +4,7 @@ use super::{
     bullet::shoot_bullet,
     enemy::Enemy,
     health::Health,
-    mesh_drawable::MeshDrawable,
+    mesh_drawable::{self, MeshDrawable},
     missile::shoot_missile,
     movable::{self, Movable},
     size::Size,
@@ -59,7 +59,7 @@ pub fn spawn_player(
         })
         .add(MeshDrawable {
             model: SHIP_3_BODY.as_model_data(),
-            rot: Quat::from_axis_angle(Vec3::Y, PI / 4.0),
+            rot: Quat::IDENTITY,
             scale: 1.0 / 55.0,
         })
         .add(SpriteDrawable {
@@ -86,7 +86,9 @@ pub fn update(
     sound_mixer: &mut SoundMixer,
     camera: &Camera,
 ) {
-    let (player, movable, enemy, size) = world.components.get4::<Player, Movable, Enemy, Size>();
+    let (player, movable, enemy, size, mesh_drawable) = world
+        .components
+        .get5::<Player, Movable, Enemy, Size, MeshDrawable>();
 
     for (player, entity) in player.components_and_entities_mut() {
         let controller_x = controllers.x();
@@ -94,8 +96,18 @@ pub fn update(
 
         let mut controller_dir = Vec2::new(0.0, 0.0);
 
-        if controller_x.abs() > 32 {
-            controller_dir.x = if controller_x > 0 { 1.0 } else { -1.0 };
+        if let Some(mesh) = mesh_drawable.lookup_mut(entity) {
+            if controller_x.abs() > 32 {
+                controller_dir.x = if controller_x > 0 {
+                    mesh.rot = Quat::from_axis_angle(Vec3::Y, PI / 4.0);
+                    1.0
+                } else {
+                    mesh.rot = Quat::from_axis_angle(Vec3::Y, -PI / 4.0);
+                    -1.0
+                };
+            } else {
+                mesh.rot = Quat::IDENTITY;
+            }
         }
 
         if controller_y.abs() > 32 {
