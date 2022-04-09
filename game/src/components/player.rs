@@ -23,13 +23,13 @@ use crate::{
 };
 use alloc::vec::Vec;
 use n64::{current_time_us, Controllers, VideoMode};
-use n64_math::{const_vec2, vec2, vec3, Mat4, Vec2};
+use n64_math::{const_vec2, vec2, Mat4, Vec2};
 
 const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
 const SHIP_SHOOT_DELAY_MS: i32 = 150;
 const SHIP_SHOOT_MISSILE_DELAY_MS: i32 = 1000;
-pub const SHIP_SIZE: Vec2 = const_vec2!([32.0, 32.0]);
+pub const SHIP_SIZE_PX: Vec2 = const_vec2!([32.0, 32.0]);
 
 #[derive(Copy, Clone)]
 pub struct Player {
@@ -51,13 +51,13 @@ pub fn spawn_player(
         })
         .add(Size {
             size: vec2(
-                SHIP_SIZE.x / video_mode.width() as f32,
-                SHIP_SIZE.y / video_mode.height() as f32,
+                SHIP_SIZE_PX.x / video_mode.width() as f32,
+                SHIP_SIZE_PX.y / video_mode.height() as f32,
             ),
         })
         .add(MeshDrawable {
             model: SHIP_3_BODY.as_model_data(),
-            model_matrix: Mat4::from_scale(vec3(1.0 / 48.0, 1.0 / 48.0, 1.0)),
+            scale: 1.0 / 55.0,
         })
         .add(SpriteDrawable {
             texture: SHIP_2_SMALL.as_texture(),
@@ -83,7 +83,7 @@ pub fn update(
     sound_mixer: &mut SoundMixer,
     camera: &Camera,
 ) {
-    let (player, movable, enemy) = world.components.get3::<Player, Movable, Enemy>();
+    let (player, movable, enemy, size) = world.components.get4::<Player, Movable, Enemy, Size>();
 
     for (player, entity) in player.components_and_entities_mut() {
         let controller_x = controllers.x();
@@ -103,7 +103,7 @@ pub fn update(
             m.speed = SHIP_SPEED * controller_dir - camera.speed;
         }
 
-        if let Some(m) = movable.lookup(entity).cloned() {
+        if let (Some(m), Some(s)) = (movable.lookup(entity).cloned(), size.lookup(entity)) {
             let now = current_time_us();
 
             match player.weapon {
@@ -114,7 +114,7 @@ pub fn update(
                         sound_mixer.play_sound(SHOOT_1.as_sound_data());
                         shoot_bullet(
                             &mut world.entities,
-                            m.pos + Vec2::new(0.0, -SHIP_SIZE.y / 2.0),
+                            m.pos + Vec2::new(0.0, -s.size.y / 2.0),
                             Vec2::new(0.0, m.speed.y - 1.25),
                         );
                         player.last_shoot_time = now;
@@ -143,19 +143,19 @@ pub fn update(
 
                         shoot_missile(
                             &mut world.entities,
-                            m.pos + Vec2::new(0.0, -SHIP_SIZE.y / 2.0),
+                            m.pos + Vec2::new(0.0, -s.size.y / 2.0),
                             Vec2::new(0.0, m.speed.y - 0.5),
                             target_1,
                         );
                         shoot_missile(
                             &mut world.entities,
-                            m.pos + Vec2::new(0.0, -SHIP_SIZE.y / 2.0),
+                            m.pos + Vec2::new(0.0, -s.size.y / 2.0),
                             Vec2::new(0.15, m.speed.y - 0.5),
                             target_2,
                         );
                         shoot_missile(
                             &mut world.entities,
-                            m.pos + Vec2::new(0.0, -SHIP_SIZE.y / 2.0),
+                            m.pos + Vec2::new(0.0, -s.size.y / 2.0),
                             Vec2::new(-0.15, m.speed.y - 0.5),
                             target_3,
                         );

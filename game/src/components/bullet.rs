@@ -3,7 +3,7 @@ use super::{
     enemy::Enemy,
     health::{self, Health},
     movable::{self, Movable},
-    player::{Player, SHIP_SIZE},
+    player::Player,
     size::Size,
 };
 use crate::{
@@ -91,18 +91,20 @@ pub fn update(world: &mut World, camera: &Camera) {
 
             if bullet.can_hit_player {
                 for player_entity in player.entities() {
-                    let player_bb = Aabb2::from_center_size(
-                        movable::pos(movable, *player_entity).unwrap_or(Vec2::ZERO),
-                        SHIP_SIZE,
-                    );
-
-                    if bullet_bb.collides(&player_bb) {
-                        health::damage(
-                            health,
-                            *player_entity,
-                            50 + (n64_math::random_f32() * 20.0) as i32,
+                    if let Some(s) = size.lookup(*player_entity) {
+                        let player_bb = Aabb2::from_center_size(
+                            movable::pos(movable, *player_entity).unwrap_or(Vec2::ZERO),
+                            s.size,
                         );
-                        delete = true;
+
+                        if bullet_bb.collides(&player_bb) {
+                            health::damage(
+                                health,
+                                *player_entity,
+                                50 + (n64_math::random_f32() * 20.0) as i32,
+                            );
+                            delete = true;
+                        }
                     }
                 }
             }
