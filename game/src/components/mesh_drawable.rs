@@ -13,7 +13,7 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
 
     for (component, entity) in mesh_drawable.components_and_entities() {
         if let (Some(movable), Some(size)) = (movable.lookup(entity), size.lookup(entity)) {
-            let transform = [
+            let transform = Mat4::from_cols_array_2d(&[
                 [
                     component.scale * size.size.x * video_mode.width() as f32,
                     0.0,
@@ -33,14 +33,14 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
                     0.0,
                     1.0,
                 ],
-            ];
+            ]);
 
             cb.add_mesh_indexed(
                 &component.model.verts,
                 &component.model.uvs,
                 &component.model.colors,
                 &component.model.indices,
-                &transform,
+                &transform.to_cols_array_2d(),
                 None,
             );
         }
