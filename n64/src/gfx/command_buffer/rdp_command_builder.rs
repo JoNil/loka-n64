@@ -370,6 +370,93 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
+    pub fn shade_coefficients(
+        &mut self,
+        red   : i32,
+        green : i32,
+        blue  : i32,
+        alpha : i32,
+        DrDx: i32,
+        DgDx: i32,
+        DbDx: i32,
+        DaDx: i32,
+        DrDe: i32,
+        DgDe: i32,
+        DbDe: i32,
+        DaDe: i32,
+        DrDy: i32,
+        DgDy: i32,
+        DbDy: i32,
+        DaDy: i32
+    ) -> &mut RdpCommandBuilder {
+        let mut buffer = self.commands.as_mut().unwrap();
+        // Color
+        // Delta Color X
+        // Color fraction
+        // Delta Color X fraction
+        buffer.push(RdpCommand(
+            ((red >> 16) as u16 as u64) << 48
+                | ((green >> 16) as u16 as u64) << 32
+                | ((blue  >> 16) as u16 as u64) << 16
+                | ((alpha >> 16) as u16 as u64) << 0
+        ));
+        buffer.push(RdpCommand(
+            ((DrDx >> 16) as u16 as u64) << 48
+                | ((DgDx >> 16) as u16 as u64) << 32
+                | ((DbDx >> 16) as u16 as u64) << 16
+                | ((DaDx >> 16) as u16 as u64) << 0
+        ));
+        buffer.push(RdpCommand(
+            ((red & 0x0000ffff) as u16 as u64) << 48
+                | ((green & 0x0000ffff) as u16 as u64) << 32
+                | ((blue  & 0x0000ffff) as u16 as u64) << 16
+                | ((alpha & 0x0000ffff) as u16 as u64) << 0
+        ));
+        buffer.push(RdpCommand(
+            ((DrDx & 0x0000ffff) as u16 as u64) << 48
+                | ((DgDx & 0x0000ffff) as u16 as u64) << 32
+                | ((DbDx & 0x0000ffff) as u16 as u64) << 16
+                | ((DaDx & 0x0000ffff) as u16 as u64) << 0
+        ));
+
+        //n64_macros::debugln!("{} {} {} {}", red, green, blue, alpha);
+        //n64_macros::debugln!("((red >> 16) as u16 as u64){} ",((red >> 16) as u16 as u64));
+        //n64_macros::debugln!("((green >> 16) as u16 as u64){} ",((green >> 16) as u16 as u64));
+        //n64_macros::debugln!("((blue >> 16) as u16 as u64){} ",((blue >> 16) as u16 as u64));
+
+        // Delta Color Edge
+        // Delta Color Y
+        // Delta Color Edge fraction
+        // Delta Color Y fraction
+        buffer.push(RdpCommand(
+            ((DrDe >> 16) as u16 as u64) << 48
+                | ((DgDe >> 16) as u16 as u64) << 32
+                | ((DbDe >> 16) as u16 as u64) << 16
+                | ((DaDe >> 16) as u16 as u64) << 0
+        ));
+        buffer.push(RdpCommand(
+            ((DrDy >> 16) as u16 as u64) << 48
+                | ((DgDy >> 16) as u16 as u64) << 32
+                | ((DbDy >> 16) as u16 as u64) << 16
+                | ((DaDy >> 16) as u16 as u64) << 0
+        ));
+        buffer.push(RdpCommand(
+            ((DrDe & 0x0000ffff) as u16 as u64) << 48
+                | ((DgDe & 0x0000ffff) as u16 as u64) << 32
+                | ((DbDe & 0x0000ffff) as u16 as u64) << 16
+                | ((DaDe & 0x0000ffff) as u16 as u64) << 0
+        ));
+        buffer.push(RdpCommand(
+            ((DrDy & 0x0000ffff) as u16 as u64) << 48
+                | ((DgDy & 0x0000ffff) as u16 as u64) << 32
+                | ((DbDy & 0x0000ffff) as u16 as u64) << 16
+                | ((DaDy & 0x0000ffff) as u16 as u64) << 0
+        ));
+        
+        self
+    }
+
+    #[inline]
     pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
         let mut l = top_left.x;
         let mut t = top_left.y;

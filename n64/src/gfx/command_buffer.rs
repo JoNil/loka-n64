@@ -131,6 +131,35 @@ fn sorted_triangle(v0: Vec3, v1: Vec3, v2: Vec3) -> (Vec3, Vec3, Vec3) {
     }
 }
 
+// Sort so that v0.y <= v1.y <= v2.y
+fn sorted_triangle_indices(v0: Vec3, v1: Vec3, v2: Vec3) -> (u8, u8, u8) {
+    if v0.y > v1.y {
+        if v1.y > v2.y { // V0 > v1, V1 > V2
+            (2, 1, 0)
+        } else if v0.y > v2.y { // V0 > V1, V2 > V1, V0 > V2
+            (1, 2, 0)
+        } else { // V0 > V1, V2 > V1, V2 > V0
+            (1, 0, 2)
+        }
+    } else if v0.y > v2.y { // V1 > V0, V0 > V2
+        (2, 0, 1)
+    } else if v1.y > v2.y { // V1 > v0, V2 > v0, V1 > V2
+        (0, 2, 1)
+    } else { // 
+        (0, 1, 2)
+    }
+}
+
+fn find_color_d(ch : i32, ci : i32, dh : f32, di : f32) -> i32 {
+    let ad = di - dh;
+    if libm::fabsf(ad) < 1.0 {
+        return 0;
+    }
+
+    // ch + res*(di - dh) = ci
+    (((ci - ch) as f32) / ad) as i32
+}
+
 pub struct CommandBufferCache {
     rdp: RdpCommandBuilder,
 }
@@ -287,6 +316,14 @@ impl<'a> CommandBuffer<'a> {
         transform: &[[f32; 4]; 4],
         texture: Option<Texture<'static>>,
     ) -> &mut Self {
+
+        static mut STATIC_COMBINE_CYCLE:u32 = 0;
+        let mut lastVal:u8 = 4;
+        //unsafe {
+        //    STATIC_COMBINE_CYCLE = (STATIC_COMBINE_CYCLE + 1)%800;
+        //    lastVal = (STATIC_COMBINE_CYCLE/100) as u8;
+        //}
+        
         self.cache
             .rdp
             .sync_pipe()
@@ -295,10 +332,15 @@ impl<'a> CommandBuffer<'a> {
                     | OTHER_MODE_SAMPLE_TYPE
                     | OTHER_MODE_BI_LERP_0
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
-                    | OTHER_MODE_B_M1A_0_2,
+                    | OTHER_MODE_B_M1A_0_0,//| OTHER_MODE_B_M1A_0_2,
             )
-            .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
+            //.set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
+            //.set_combine_mode(&[8, 16, 7, 7, 8, 16, 8, 8, 7, 7, 4, 7, 4, 7, 7, 7])
+            .set_combine_mode(&[8, 16, 7, 7, 8, 16, 8, 8, 7, 7, lastVal, 7, lastVal, lastVal, 7, lastVal])
+            //.set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, lastVal, 7, lastVal, lastVal, 7, lastVal])
             .set_blend_color(0xff000000);
+
+        //n64_macros::debugln!("lastVal {}", lastVal);
 
         let transform = Mat4::from_cols_array_2d(transform);
 
@@ -331,8 +373,10 @@ impl<'a> CommandBuffer<'a> {
 
             let right_major = is_triangle_right_major(vh, vm, vl);
 
+            let is_shaded = true;
+
             self.cache.rdp.edge_coefficients(
-                false,
+                is_shaded,
                 false,
                 false,
                 right_major,
@@ -351,6 +395,48 @@ impl<'a> CommandBuffer<'a> {
                 m_slope,
                 h_slope,
             );
+
+            if is_shaded {
+                let (vhi, vmi, vli) = sorted_triangle_indices(v0, v1, v2);
+                let color_tri : [[i32; 3]; 3] = [[255<<16, 0, 0], [0, 255<<16, 0], [0, 0, 255<<16]];
+
+                //n64_macros::debugln!("Sorted indices {} {} {}: {} {} {}", vhi, vmi, vli, 
+                //    verts[triangle[vhi as usize] as usize][1],
+                //    verts[triangle[vmi as usize] as usize][1],
+                //    verts[triangle[vli as usize] as usize][1]);
+
+                let color_h = color_tri[vhi as usize];
+                let color_m = color_tri[vmi as usize];
+                let color_l = color_tri[vli as usize];
+
+                let xMax = libm::fmaxf(libm::fmaxf(v0.x, v1.x), v2.x);
+                let xMin = libm::fminf(libm::fminf(v0.x, v1.x), v2.x);
+                let yMax = libm::fmaxf(libm::fmaxf(v0.y, v1.y), v2.y);
+                let yMin = libm::fminf(libm::fminf(v0.y, v1.y), v2.y);
+                let red   = color_h[0];
+                let green = color_h[1];
+                let blue  = color_h[2];
+                let rDe   = find_color_d(color_l[0], color_h[0], vl.y, vh.y);
+                let gDe   = find_color_d(color_l[1], color_h[1], vl.y, vh.y);
+                let bDe   = find_color_d(color_l[2], color_h[2], vl.y, vh.y);
+
+                let edge_color_m_r = ((rDe as f32)*(vm.y - vh.y)) as i32 + red;
+                let edge_color_m_g = ((gDe as f32)*(vm.y - vh.y)) as i32 + green;
+                let edge_color_m_b = ((bDe as f32)*(vm.y - vh.y)) as i32 + blue;
+
+                let rDx   = find_color_d(color_h[0], color_m[0] - edge_color_m_r, vh.x, vm.x);
+                let gDx   = find_color_d(color_h[1], color_m[1] - edge_color_m_g, vh.x, vm.x);
+                let bDx   = find_color_d(color_h[2], color_m[2] - edge_color_m_b, vh.x, vm.x);
+                let rDy   = 0;//find_color_d(color_h[0], color_m[0] - edge_color_m_r, vh.y, vm.y)/2;
+                let gDy   = 0;//find_color_d(color_h[1], color_m[1] - edge_color_m_g, vh.y, vm.y)/2;
+                let bDy   = 0;//find_color_d(color_h[2], color_m[2] - edge_color_m_b, vh.y, vm.y)/2;
+                self.cache.rdp.shade_coefficients(
+                    red, green, blue,    0, // Color
+                    rDx,   gDx,  bDx,    0, // Delta color X
+                    rDe,   gDe,  bDe,    0, // Delta color Edge
+                    rDy,   gDy,  bDy,    0, // Delta color y
+                );
+            }  
         }
         self
     }
