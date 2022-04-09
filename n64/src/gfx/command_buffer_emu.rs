@@ -378,7 +378,7 @@ impl<'a> CommandBuffer<'a> {
                         view: &dst.depth_view,
                         depth_ops: Some(wgpu::Operations {
                             load: if self.clear {
-                                wgpu::LoadOp::Clear(0.0)
+                                wgpu::LoadOp::Clear(1.0)
                             } else {
                                 wgpu::LoadOp::Load
                             },
