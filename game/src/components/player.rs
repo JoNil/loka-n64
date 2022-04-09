@@ -1,3 +1,5 @@
+use std::f32::consts::PI;
+
 use super::{
     bullet::shoot_bullet,
     enemy::Enemy,
@@ -23,7 +25,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use n64::{current_time_us, Controllers, VideoMode};
-use n64_math::{const_vec2, vec2, Mat4, Vec2};
+use n64_math::{const_vec2, vec2, Mat4, Quat, Vec2, Vec3};
 
 const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
@@ -57,6 +59,7 @@ pub fn spawn_player(
         })
         .add(MeshDrawable {
             model: SHIP_3_BODY.as_model_data(),
+            rot: Quat::from_axis_angle(Vec3::Y, PI / 4.0),
             scale: 1.0 / 55.0,
         })
         .add(SpriteDrawable {

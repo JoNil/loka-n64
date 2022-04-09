@@ -1,10 +1,11 @@
 use super::{movable::Movable, size::Size};
 use crate::{camera::Camera, ecs::world::World, model::ModelData};
 use n64::{gfx::CommandBuffer, VideoMode};
-use n64_math::{vec3, Mat4};
+use n64_math::{vec3, Mat4, Quat};
 
 pub struct MeshDrawable {
     pub model: ModelData<'static>,
+    pub rot: Quat,
     pub scale: f32,
 }
 
@@ -40,7 +41,7 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
                 &component.model.uvs,
                 &component.model.colors,
                 &component.model.indices,
-                &transform.to_cols_array_2d(),
+                &(transform * Mat4::from_quat(component.rot)).to_cols_array_2d(),
                 None,
             );
         }
