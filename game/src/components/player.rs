@@ -6,6 +6,7 @@ use super::{
     missile::shoot_missile,
     movable::{self, Movable},
     size::Size,
+    sprite_drawable::SpriteDrawable,
 };
 use crate::{
     camera::Camera,
@@ -17,17 +18,18 @@ use crate::{
     models::SHIP_3_BODY,
     sound_mixer::SoundMixer,
     sounds::{SHOOT_1, SHOOT_2},
+    textures::SHIP_2_SMALL,
     weapon::Weapon,
 };
 use alloc::vec::Vec;
-use n64::{current_time_us, Controllers};
-use n64_math::{const_vec2, Vec2};
+use n64::{current_time_us, Controllers, VideoMode};
+use n64_math::{const_vec2, vec2, vec3, Mat4, Vec2};
 
 const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
 const SHIP_SHOOT_DELAY_MS: i32 = 150;
 const SHIP_SHOOT_MISSILE_DELAY_MS: i32 = 1000;
-pub const SHIP_SIZE: Vec2 = const_vec2!([32.0 / 320.0, 32.0 / 240.0]);
+pub const SHIP_SIZE: Vec2 = const_vec2!([32.0, 32.0]);
 
 #[derive(Copy, Clone)]
 pub struct Player {
@@ -36,16 +38,29 @@ pub struct Player {
     pub weapon: Weapon,
 }
 
-pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
+pub fn spawn_player(
+    entities: &mut EntitySystem,
+    start_pos: Vec2,
+    video_mode: &VideoMode,
+) -> Entity {
     entities
         .spawn()
         .add(Movable {
             pos: start_pos + PLAYTER_START_POS,
             speed: Vec2::new(0.0, 0.0),
         })
-        .add(Size { size: SHIP_SIZE })
+        .add(Size {
+            size: vec2(
+                SHIP_SIZE.x / video_mode.width() as f32,
+                SHIP_SIZE.y / video_mode.height() as f32,
+            ),
+        })
         .add(MeshDrawable {
             model: SHIP_3_BODY.as_model_data(),
+            model_matrix: Mat4::from_scale(vec3(1.0 / 48.0, 1.0 / 48.0, 1.0)),
+        })
+        .add(SpriteDrawable {
+            texture: SHIP_2_SMALL.as_texture(),
         })
         .add(Health { health: 10000 })
         .add(Player {
