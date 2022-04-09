@@ -3,7 +3,6 @@
 use crate::{gfx::Texture, graphics_emu::shader};
 use n64_math::Color;
 use std::{collections::HashMap, mem, num::NonZeroU32};
-use wgpu::SamplerBindingType;
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_MESHES: u64 = 4096;
@@ -32,6 +31,7 @@ impl Mesh {
         device: &wgpu::Device,
         queue: &wgpu::Queue,
         dst_tex_format: wgpu::TextureFormat,
+        depth_format: wgpu::TextureFormat,
     ) -> Self {
         let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[
@@ -58,7 +58,7 @@ impl Mesh {
                 wgpu::BindGroupLayoutEntry {
                     binding: 2,
                     visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(SamplerBindingType::Filtering),
+                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
                     count: None,
                 },
             ],
@@ -114,7 +114,13 @@ impl Mesh {
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
-            depth_stencil: None,
+            depth_stencil: Some(wgpu::DepthStencilState {
+                format: depth_format,
+                depth_write_enabled: true,
+                depth_compare: wgpu::CompareFunction::LessEqual,
+                stencil: wgpu::StencilState::default(),
+                bias: wgpu::DepthBiasState::default(),
+            }),
             multisample: wgpu::MultisampleState {
                 count: 1,
                 mask: !0,

@@ -11,7 +11,6 @@ use std::thread;
 use std::thread_local;
 use textured_rect::TexturedRect;
 use wgpu::util::DeviceExt;
-use wgpu::Features;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -125,7 +124,7 @@ impl Graphics {
                 .request_device(
                     &wgpu::DeviceDescriptor {
                         label: None,
-                        features: Features::DEPTH_CLIP_CONTROL,
+                        features: wgpu::Features::DEPTH_CLIP_CONTROL,
                         limits: wgpu::Limits::default(),
                     },
                     None,
@@ -161,9 +160,22 @@ impl Graphics {
         });
 
         let copy_tex = CopyTex::new(&device, surface_format, video_mode);
-        let colored_rect = ColoredRect::new(&device, dst_texture::TEXUTRE_FORMAT);
-        let textured_rect = TexturedRect::new(&device, dst_texture::TEXUTRE_FORMAT);
-        let mesh = Mesh::new(&device, &queue, dst_texture::TEXUTRE_FORMAT);
+        let colored_rect = ColoredRect::new(
+            &device,
+            dst_texture::TEXUTRE_FORMAT,
+            dst_texture::DEPTH_FORMAT,
+        );
+        let textured_rect = TexturedRect::new(
+            &device,
+            dst_texture::TEXUTRE_FORMAT,
+            dst_texture::DEPTH_FORMAT,
+        );
+        let mesh = Mesh::new(
+            &device,
+            &queue,
+            dst_texture::TEXUTRE_FORMAT,
+            dst_texture::DEPTH_FORMAT,
+        );
 
         window.set_visible(true);
 

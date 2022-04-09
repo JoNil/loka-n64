@@ -374,7 +374,18 @@ impl<'a> CommandBuffer<'a> {
                             store: true,
                         },
                     }],
-                    depth_stencil_attachment: None,
+                    depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
+                        view: &dst.depth_view,
+                        depth_ops: Some(wgpu::Operations {
+                            load: if self.clear {
+                                wgpu::LoadOp::Clear(0.0)
+                            } else {
+                                wgpu::LoadOp::Load
+                            },
+                            store: true,
+                        }),
+                        stencil_ops: None,
+                    }),
                 });
 
                 {
