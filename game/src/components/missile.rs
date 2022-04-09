@@ -3,6 +3,7 @@ use super::{
     enemy::Enemy,
     health::{self, Health},
     movable::{self, Movable},
+    size::Size,
     sprite_drawable::SpriteDrawable,
 };
 use crate::{
@@ -18,7 +19,7 @@ const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
 
 #[derive(Copy, Clone)]
 struct Missile {
-    target: Option<Entity>,
+    pub target: Option<Entity>,
 }
 
 pub fn shoot_missile(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target: Option<Entity>) {
@@ -30,17 +31,17 @@ pub fn shoot_missile(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target
             pos,
             speed: Vec2::new(speed.x + spread, speed.y),
         })
+        .add(Size { size: MISSILE_SIZE })
         .add(BoxDrawable {
-            size: MISSILE_SIZE,
             color: Color::from_rgb(1.0, 0.4, 0.4),
         })
         .add(Missile { target });
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
-    let (missile, movable, enemy, sprite_drawable, health) = world
+    let (missile, movable, enemy, size, health) = world
         .components
-        .get5::<Missile, Movable, Enemy, SpriteDrawable, Health>();
+        .get5::<Missile, Movable, Enemy, Size, Health>();
 
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
@@ -66,10 +67,10 @@ pub fn update(world: &mut World, camera: &Camera) {
             }
 
             for enemy_entity in enemy.entities() {
-                if let Some(sprite_drawable) = sprite_drawable.lookup(*enemy_entity) {
+                if let Some(size) = size.lookup(*enemy_entity) {
                     let enemy_bb = Aabb2::from_center_size(
                         movable::pos(movable, *enemy_entity).unwrap_or(Vec2::ZERO),
-                        sprite_drawable.size,
+                        size.size,
                     );
 
                     if missile_bb.collides(&enemy_bb) {

@@ -1,6 +1,14 @@
 use alloc::borrow::Cow;
 use zerocopy::LayoutVerified;
 
+#[derive(Clone)]
+pub struct ModelData<'a> {
+    pub verts: Cow<'a, [[f32; 3]]>,
+    pub uvs: Cow<'a, [[f32; 2]]>,
+    pub colors: Cow<'a, [u32]>,
+    pub indices: Cow<'a, [[u8; 3]]>,
+}
+
 pub struct StaticModelData {
     pub verts: &'static [u8],
     pub uvs: &'static [u8],
@@ -83,12 +91,4 @@ impl StaticModelData {
             }
         }
     }
-}
-
-#[derive(Clone)]
-pub struct ModelData<'a> {
-    pub verts: Cow<'a, [[f32; 3]]>,
-    pub uvs: Cow<'a, [[f32; 2]]>,
-    pub colors: Cow<'a, [u32]>,
-    pub indices: Cow<'a, [[u8; 3]]>,
 }

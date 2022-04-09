@@ -4,7 +4,7 @@ use super::{
     health::{self, Health},
     movable::{self, Movable},
     player::{Player, SHIP_SIZE},
-    sprite_drawable::SpriteDrawable,
+    size::Size,
 };
 use crate::{
     camera::Camera,
@@ -16,8 +16,8 @@ const BULLET_SIZE: Vec2 = const_vec2!([0.00825, 0.00825]);
 
 #[derive(Copy, Clone)]
 struct Bullet {
-    can_hit_player: bool,
-    can_hit_enemy: bool,
+    pub can_hit_player: bool,
+    pub can_hit_enemy: bool,
 }
 
 pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
@@ -29,8 +29,8 @@ pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
             pos,
             speed: vec2(speed.x + spread, speed.y),
         })
+        .add(Size { size: BULLET_SIZE })
         .add(BoxDrawable {
-            size: BULLET_SIZE,
             color: Color::from_rgb(0.2, 0.2, 0.9),
         })
         .add(Bullet {
@@ -43,8 +43,8 @@ pub fn shoot_bullet_enemy(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
     entities
         .spawn()
         .add(Movable { pos, speed })
+        .add(Size { size: BULLET_SIZE })
         .add(BoxDrawable {
-            size: BULLET_SIZE,
             color: Color::from_rgb(0.9, 0.2, 0.2),
         })
         .add(Bullet {
@@ -54,9 +54,9 @@ pub fn shoot_bullet_enemy(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
-    let (bullet, movable, enemy, player, sprite_drawable, health) = world
+    let (bullet, movable, enemy, player, size, health) = world
         .components
-        .get6::<Bullet, Movable, Enemy, Player, SpriteDrawable, Health>();
+        .get6::<Bullet, Movable, Enemy, Player, Size, Health>();
 
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));
 
@@ -71,10 +71,10 @@ pub fn update(world: &mut World, camera: &Camera) {
 
             if bullet.can_hit_enemy {
                 for enemy_entity in enemy.entities() {
-                    if let Some(sprite_drawable) = sprite_drawable.lookup(*enemy_entity) {
+                    if let Some(size) = size.lookup(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
                             movable::pos(movable, *enemy_entity).unwrap_or(Vec2::ZERO),
-                            sprite_drawable.size,
+                            size.size,
                         );
 
                         if bullet_bb.collides(&enemy_bb) {

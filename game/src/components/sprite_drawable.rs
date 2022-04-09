@@ -1,4 +1,4 @@
-use super::movable::Movable;
+use super::{movable::Movable, size::Size};
 use crate::{camera::Camera, ecs::world::World};
 use n64::{
     gfx::{CommandBuffer, Texture},
@@ -8,16 +8,15 @@ use n64_math::Vec2;
 
 #[derive(Copy, Clone)]
 pub struct SpriteDrawable {
-    pub size: Vec2,
     pub texture: Texture<'static>,
 }
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-    let (sprite_drawable, movable) = world.components.get2::<SpriteDrawable, Movable>();
+    let (sprite_drawable, movable, size) = world.components.get3::<SpriteDrawable, Movable, Size>();
 
     for (component, entity) in sprite_drawable.components_and_entities() {
-        if let Some(movable) = movable.lookup(entity) {
-            let half_size = component.size / 2.0;
+        if let (Some(movable), Some(size)) = (movable.lookup(entity), size.lookup(entity)) {
+            let half_size = size.size / 2.0;
 
             let upper_left = movable.pos - half_size;
             let lower_right = movable.pos + half_size;

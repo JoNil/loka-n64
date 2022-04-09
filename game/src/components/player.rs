@@ -2,8 +2,10 @@ use super::{
     bullet::shoot_bullet,
     enemy::Enemy,
     health::Health,
+    mesh_drawable::MeshDrawable,
     missile::shoot_missile,
     movable::{self, Movable},
+    size::Size,
     sprite_drawable::SpriteDrawable,
 };
 use crate::{
@@ -13,6 +15,7 @@ use crate::{
         storage::Storage,
         world::World,
     },
+    models::SHIP_3_BODY,
     sound_mixer::SoundMixer,
     sounds::{SHOOT_1, SHOOT_2},
     textures::SHIP_2_SMALL,
@@ -42,9 +45,9 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             pos: start_pos + PLAYTER_START_POS,
             speed: Vec2::new(0.0, 0.0),
         })
-        .add(SpriteDrawable {
-            size: SHIP_SIZE,
-            texture: SHIP_2_SMALL.as_texture(),
+        .add(Size { size: SHIP_SIZE })
+        .add(MeshDrawable {
+            model: SHIP_3_BODY.as_model_data(),
         })
         .add(Health { health: 10000 })
         .add(Player {

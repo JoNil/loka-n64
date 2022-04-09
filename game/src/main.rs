@@ -16,7 +16,7 @@ use crate::components::{
     sprite_drawable,
 };
 use camera::Camera;
-use components::player::spawn_player;
+use components::{mesh_drawable, player::spawn_player};
 use ecs::world::World;
 use map::Map;
 use maps::MAP_1;
@@ -134,25 +134,9 @@ fn main() {
 
                 box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
                 sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+                mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
                 {
-                    if !DEBUG_TRIANGLES {
-                        let ship_3 = SHIP_3_BODY.as_model_data();
-                        cb.add_mesh_indexed(
-                            &ship_3.verts,
-                            &ship_3.uvs,
-                            &ship_3.colors,
-                            &ship_3.indices,
-                            &[
-                                [1.0, 0.0, 0.0, 0.0],
-                                [0.0, 1.0, 0.0, 0.0],
-                                [0.0, 0.0, 0.0, 0.0],
-                                [160.0, 120.0, 0.0, 1.0],
-                            ],
-                            None,
-                        );
-                    }
-
                     if DEBUG_TRIANGLES {
                         let x_limit = 320.0;
                         let y_limit = 240.0;

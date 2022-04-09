@@ -8,8 +8,8 @@ pub struct Movable {
     pub speed: Vec2,
 }
 
-pub fn pos(movalbe: &Storage<Movable>, entity: Entity) -> Option<Vec2> {
-    movalbe.lookup(entity).map(|c| c.pos)
+pub fn pos(storage: &Storage<Movable>, entity: Entity) -> Option<Vec2> {
+    storage.lookup(entity).map(|c| c.pos)
 }
 
 pub fn simulate(world: &mut World, dt: f32) {

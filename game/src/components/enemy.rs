@@ -3,6 +3,7 @@ use super::{
     health::{self, Health},
     movable::Movable,
     player::{self, Player},
+    size::Size,
     sprite_drawable::SpriteDrawable,
 };
 use crate::{
@@ -22,10 +23,10 @@ static ENEMY_WAYPOINT: [Vec2; 4] = [
 
 #[derive(Copy, Clone)]
 pub struct Enemy {
-    shoot_speed: i32,
-    last_shoot_time: i64,
-    waypoint: usize,
-    waypoint_step: f32,
+    pub shoot_speed: i32,
+    pub last_shoot_time: i64,
+    pub waypoint: usize,
+    pub waypoint_step: f32,
 }
 
 pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'static>) {
@@ -35,10 +36,10 @@ pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'sta
             pos,
             speed: Vec2::ZERO,
         })
-        .add(SpriteDrawable {
+        .add(Size {
             size: vec2(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
-            texture,
         })
+        .add(SpriteDrawable { texture })
         .add(Health { health: 100 })
         .add(Enemy {
             shoot_speed: 500 + (n64_math::random_f32() * 200.0) as i32,
@@ -50,9 +51,9 @@ pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'sta
 
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
     {
-        let (enemy, movable, health, sprite_drawable, player) = world
+        let (enemy, movable, health, size, player) = world
             .components
-            .get5::<Enemy, Movable, Health, SpriteDrawable, Player>();
+            .get5::<Enemy, Movable, Health, Size, Player>();
 
         let now = current_time_us();
 
@@ -64,14 +65,14 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
             }
 
             if now - enemy.last_shoot_time > enemy.shoot_speed as i64 * 1000 {
-                if let (Some(movable), Some(sprite_drawable)) = (
+                if let (Some(movable), Some(size)) = (
                     movable.lookup(entity).copied(),
-                    sprite_drawable.lookup(entity).copied(),
+                    size.lookup(entity).copied(),
                 ) {
                     //sound_mixer.play_sound(SHOOT_0.as_sound_data());
                     shoot_bullet_enemy(
                         &mut world.entities,
-                        movable.pos + vec2(0.0, sprite_drawable.size.y / 2.0),
+                        movable.pos + vec2(0.0, size.size.y / 2.0),
                         vec2(0.0, 1.25),
                     );
                     enemy.last_shoot_time = now;
