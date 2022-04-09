@@ -40,16 +40,18 @@ struct Model {
 fn parse_model(mesh: Instance) -> Option<Model> {
     if !mesh.is_valid("mpoly")
         || !mesh.is_valid("mloop")
-        || !mesh.is_valid("mloopuv")
         || !mesh.is_valid("mvert")
+        || !mesh.is_valid("mloopuv")
+        || !mesh.is_valid("mloopcol")
     {
         return None;
     }
 
     let faces = mesh.get_iter("mpoly").collect::<Vec<_>>();
     let loops = mesh.get_iter("mloop").collect::<Vec<_>>();
-    let muvs = mesh.get_iter("mloopuv").collect::<Vec<_>>();
     let mverts = mesh.get_iter("mvert").collect::<Vec<_>>();
+    let muvs = mesh.get_iter("mloopuv").collect::<Vec<_>>();
+    let mcols = mesh.get_iter("mloopcol").collect::<Vec<_>>();
 
     let mut face_indice_count = 0;
     for face in &faces {
@@ -64,6 +66,7 @@ fn parse_model(mesh: Instance) -> Option<Model> {
 
     let mut verts = vec![[0.0; 3]; face_indice_count];
     let mut uvs = vec![[0.0; 2]; face_indice_count];
+    let mut colors = vec![0; face_indice_count];
 
     let mut index_count = 0;
 
@@ -81,13 +84,17 @@ fn parse_model(mesh: Instance) -> Option<Model> {
                 };
 
                 let v = loops[index as usize].get_i32("v");
-                let vert = &mverts[v as usize];
 
-                let co = vert.get_f32_vec("co");
+                let co = mverts[v as usize].get_f32_vec("co");
                 verts[index_count as usize] = [co[0], co[1], co[2]];
 
                 let uv = muvs[index as usize].get_f32_vec("uv");
                 uvs[index_count as usize] = [uv[0], uv[1]];
+
+                colors[index_count as usize] = ((mcols[index as usize].get_u8("r")) as u32) << 24
+                    | ((mcols[index as usize].get_u8("g")) as u32) << 16
+                    | ((mcols[index as usize].get_u8("b")) as u32) << 8
+                    | ((mcols[index as usize].get_u8("a")) as u32) << 0;
 
                 index_count += 1;
             }
@@ -99,6 +106,7 @@ fn parse_model(mesh: Instance) -> Option<Model> {
     let vertex_remap = generate_vertex_remap(&verts, None);
     let verts = remap_vertex_buffer(&verts, vertex_remap.0, &vertex_remap.1);
     let uvs = remap_vertex_buffer(&uvs, vertex_remap.0, &vertex_remap.1);
+    let colors = remap_vertex_buffer(&colors, vertex_remap.0, &vertex_remap.1);
 
     let indices = remap_index_buffer(None, face_indice_count, &vertex_remap.1)
         .iter()
@@ -109,7 +117,7 @@ fn parse_model(mesh: Instance) -> Option<Model> {
     Some(Model {
         verts,
         uvs,
-        colors: vec![0x801010ff; vertex_remap.0],
+        colors,
         indices,
     })
 }
