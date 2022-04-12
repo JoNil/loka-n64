@@ -288,6 +288,8 @@ impl<'a> CommandBuffer<'a> {
                                 screen_size: [
                                     graphics.video_mode.width() as f32,
                                     graphics.video_mode.height() as f32,
+                                    0.0,
+                                    0.0,
                                 ],
                             });
                         }

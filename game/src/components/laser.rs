@@ -32,7 +32,6 @@ pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
         .add(MeshDrawable {
             model: LASER_BODY.as_model_data(),
             rot: Quat::IDENTITY,
-            scale: 1.0,
         })
         .add(BoxDrawable {
             color: Color::from_rgb(0.8, 0.1, 0.1),

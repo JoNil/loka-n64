@@ -1,6 +1,7 @@
 use std::f32::consts::PI;
 
 use super::{
+    box_drawable::BoxDrawable,
     bullet::shoot_bullet,
     enemy::Enemy,
     health::Health,
@@ -24,7 +25,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use n64::{current_time_us, Controllers, VideoMode};
-use n64_math::{const_vec2, vec2, Quat, Vec2, Vec3};
+use n64_math::{const_vec2, vec2, Color, Quat, Vec2, Vec3};
 
 const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
@@ -58,7 +59,9 @@ pub fn spawn_player(
         .add(MeshDrawable {
             model: SHIP_3_BODY.as_model_data(),
             rot: Quat::IDENTITY,
-            scale: 1.0 / 55.0,
+        })
+        .add(BoxDrawable {
+            color: Color::from_rgb(0.1, 0.1, 0.8),
         })
         .add(Health { health: 10000 })
         .add(Player {

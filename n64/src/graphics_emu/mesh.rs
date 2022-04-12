@@ -11,7 +11,7 @@ pub const MAX_MESHES: u64 = 4096;
 #[derive(Clone, Copy, Debug, AsBytes, FromBytes)]
 pub(crate) struct MeshUniforms {
     pub transform: [[f32; 4]; 4],
-    pub screen_size: [f32; 2],
+    pub screen_size: [f32; 4],
 }
 
 pub(crate) struct UploadedTexture {
