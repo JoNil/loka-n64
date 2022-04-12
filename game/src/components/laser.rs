@@ -1,4 +1,5 @@
 use super::{
+    box_drawable::BoxDrawable,
     enemy::Enemy,
     health::{self, Health},
     mesh_drawable::MeshDrawable,
@@ -11,27 +12,30 @@ use crate::{
     ecs::{entity::EntitySystem, world::World},
     models::LASER_BODY,
 };
-use n64_math::{const_vec2, vec2, Aabb2, Quat, Vec2};
+use n64_math::{const_vec2, vec2, Aabb2, Color, Quat, Vec2};
 
-const LASER_SIZE: Vec2 = const_vec2!([0.00825, 10.0 * 0.00825]);
+const LASER_SIZE: Vec2 = const_vec2!([0.1, 10.0 * 0.1]);
 
 struct Laser {
     pub can_hit_player: bool,
     pub can_hit_enemy: bool,
 }
 
-pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2) {
+pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
     entities
         .spawn()
         .add(Movable {
-            pos,
+            pos: pos + vec2(0.0, -LASER_SIZE.y / 2.0),
             speed: vec2(0.0, 0.0),
         })
         .add(Size { size: LASER_SIZE })
         .add(MeshDrawable {
             model: LASER_BODY.as_model_data(),
             rot: Quat::IDENTITY,
-            scale: 1.0 / 55.0,
+            scale: 1.0,
+        })
+        .add(BoxDrawable {
+            color: Color::from_rgb(0.8, 0.1, 0.1),
         })
         .add(Laser {
             can_hit_player: false,

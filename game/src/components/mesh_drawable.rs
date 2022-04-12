@@ -13,6 +13,8 @@ pub struct MeshDrawable {
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     let (mesh_drawable, movable, size) = world.components.get3::<MeshDrawable, Movable, Size>();
 
+    let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
+
     for (component, entity) in mesh_drawable.components_and_entities() {
         if let (Some(movable), Some(size)) = (movable.lookup(entity), size.lookup(entity)) {
             let post_transform = Mat4::from_cols_array_2d(&[
@@ -33,8 +35,6 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
                     1.0,
                 ],
             ]);
-
-            let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
 
             cb.add_mesh_indexed(
                 &component.model.verts,

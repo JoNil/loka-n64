@@ -172,7 +172,11 @@ pub fn update(
                     }
                     Weapon::Laser => {
                         sound_mixer.play_sound(LASER_1.as_sound_data());
-                        shoot_laser(&mut world.entities, m.pos + Vec2::new(0.0, -s.size.y / 2.0));
+                        shoot_laser(
+                            &mut world.entities,
+                            m.pos + Vec2::new(0.0, -s.size.y / 2.0),
+                            m.speed,
+                        );
                     }
                 }
             }
