@@ -12,14 +12,12 @@ pub struct MeshDrawable {
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     let (mesh_drawable, movable) = world.components.get2::<MeshDrawable, Movable>();
 
-    let aspect = video_mode.width() as f32 / video_mode.height() as f32;
-
-    let proj = Mat4::perspective_rh_gl(PI / 2.0, aspect, 0.01, 1000.0);
+    let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
 
     for (component, entity) in mesh_drawable.components_and_entities() {
         if let Some(movable) = movable.lookup(entity) {
             let post_transform = Mat4::from_cols_array_2d(&[
-                [video_mode.width() as f32 * aspect, 0.0, 0.0, 0.0],
+                [video_mode.width() as f32, 0.0, 0.0, 0.0],
                 [0.0, video_mode.height() as f32, 0.0, 0.0],
                 [0.0, 0.0, 1.0, 0.0],
                 [0.0, 0.0, 0.0, 1.0],
