@@ -14,7 +14,6 @@ use n64_math::{const_vec2, vec2, Aabb2, Color, Vec2};
 
 const BULLET_SIZE: Vec2 = const_vec2!([0.00825, 0.00825]);
 
-#[derive(Copy, Clone)]
 struct Bullet {
     pub can_hit_player: bool,
     pub can_hit_enemy: bool,

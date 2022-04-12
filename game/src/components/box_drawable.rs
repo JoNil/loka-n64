@@ -3,7 +3,6 @@ use crate::{camera::Camera, ecs::world::World};
 use n64::{gfx::CommandBuffer, VideoMode};
 use n64_math::{Color, Vec2};
 
-#[derive(Copy, Clone)]
 pub struct BoxDrawable {
     pub color: Color,
 }

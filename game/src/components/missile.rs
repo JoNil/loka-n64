@@ -16,7 +16,6 @@ use n64_math::{const_vec2, Aabb2, Color, Vec2};
 
 const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
 
-#[derive(Copy, Clone)]
 struct Missile {
     pub target: Option<Entity>,
 }

@@ -21,7 +21,6 @@ static ENEMY_WAYPOINT: [Vec2; 4] = [
     const_vec2!([0.4, 0.6]),
 ];
 
-#[derive(Copy, Clone)]
 pub struct Enemy {
     pub shoot_speed: i32,
     pub last_shoot_time: i64,

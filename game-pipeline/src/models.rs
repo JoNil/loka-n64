@@ -94,7 +94,7 @@ fn parse_model(mesh: Instance) -> Option<Model> {
                 colors[index_count as usize] = ((mcols[index as usize].get_u8("r")) as u32) << 24
                     | ((mcols[index as usize].get_u8("g")) as u32) << 16
                     | ((mcols[index as usize].get_u8("b")) as u32) << 8
-                    | ((mcols[index as usize].get_u8("a")) as u32) << 0;
+                    | (mcols[index as usize].get_u8("a")) as u32;
 
                 index_count += 1;
             }

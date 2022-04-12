@@ -16,11 +16,10 @@ use crate::components::{
     sprite_drawable,
 };
 use camera::Camera;
-use components::{mesh_drawable, player::spawn_player};
+use components::{laser, mesh_drawable, player::spawn_player};
 use ecs::world::World;
 use map::Map;
 use maps::MAP_1;
-use models::SHIP_3_BODY;
 use n64::{
     self, current_time_us,
     gfx::{CommandBuffer, CommandBufferCache},
@@ -82,8 +81,6 @@ fn main() {
     let mut last_colored_rect_count = 0;
     let mut last_textured_rect_count = 0;
 
-    let mut frame_no = 0;
-
     loop {
         frame_begin_time = current_time_us();
 
@@ -91,8 +88,6 @@ fn main() {
             dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;
             last_frame_begin_time = frame_begin_time;
         }
-
-        let mut print_tri_to_cmd = false;
 
         {
             // Update
@@ -105,13 +100,8 @@ fn main() {
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
             bullet::update(&mut world, &camera);
             missile::update(&mut world, &camera);
+            laser::update(&mut world, &camera);
             movable::simulate(&mut world, dt);
-
-            world.housekeep();
-
-            if !health::is_alive(world.components.get::<Health>(), player) {
-                break;
-            }
         }
 
         {
@@ -286,10 +276,14 @@ fn main() {
             last_colored_rect_count = colored_rect_count;
             last_textured_rect_count = textured_rect_count;
 
-            frame_no += 1;
-
             let frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
             frame_used_time = frame_end_time - frame_begin_time;
+        }
+
+        world.housekeep();
+
+        if !health::is_alive(world.components.get::<Health>(), player) {
+            break;
         }
     }
 

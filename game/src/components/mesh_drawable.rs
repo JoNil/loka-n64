@@ -1,9 +1,8 @@
-use std::f32::consts::PI;
-
 use super::{movable::Movable, size::Size};
 use crate::{camera::Camera, ecs::world::World, model::ModelData};
 use n64::{gfx::CommandBuffer, VideoMode};
-use n64_math::{vec3, Mat4, Quat};
+use n64_math::{Mat4, Quat};
+use std::f32::consts::PI;
 
 pub struct MeshDrawable {
     pub model: ModelData<'static>,

@@ -1,6 +1,5 @@
 use crate::ecs::{entity::Entity, storage::Storage};
 
-#[derive(Copy, Clone)]
 pub struct Health {
     pub health: i32,
 }

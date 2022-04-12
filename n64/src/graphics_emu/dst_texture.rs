@@ -6,7 +6,7 @@ pub(crate) struct DstTexture {
     pub tex_extent: wgpu::Extent3d,
     pub tex: wgpu::Texture,
     pub tex_view: wgpu::TextureView,
-    pub depth: wgpu::Texture,
+    pub _depth: wgpu::Texture,
     pub depth_view: wgpu::TextureView,
 }
 
@@ -54,7 +54,7 @@ impl DstTexture {
             tex_extent,
             tex,
             tex_view,
-            depth,
+            _depth: depth,
             depth_view,
         }
     }
