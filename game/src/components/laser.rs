@@ -1,5 +1,4 @@
 use super::{
-    box_drawable::BoxDrawable,
     enemy::Enemy,
     health::{self, Health},
     mesh_drawable::MeshDrawable,
@@ -8,11 +7,10 @@ use super::{
     size::Size,
 };
 use crate::{
-    camera::Camera,
     ecs::{entity::EntitySystem, world::World},
     models::LASER_BODY,
 };
-use n64_math::{const_vec2, vec2, Aabb2, Color, Quat, Vec2};
+use n64_math::{const_vec2, vec2, Aabb2, Quat, Vec2};
 
 const LASER_SIZE: Vec2 = const_vec2!([0.2 * 0.1, 10.0 * 0.1]);
 
@@ -26,7 +24,7 @@ pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
         .spawn()
         .add(Movable {
             pos: pos + vec2(0.0, -LASER_SIZE.y / 2.0),
-            speed: vec2(0.0, 0.0),
+            speed,
         })
         .add(Size { size: LASER_SIZE })
         .add(MeshDrawable {
@@ -39,7 +37,7 @@ pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
         });
 }
 
-pub fn update(world: &mut World, camera: &Camera) {
+pub fn update(world: &mut World) {
     let (laser, movable, enemy, player, size, health) = world
         .components
         .get6::<Laser, Movable, Enemy, Player, Size, Health>();

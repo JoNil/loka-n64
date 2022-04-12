@@ -1,5 +1,6 @@
 pub mod box_drawable;
 pub mod bullet;
+pub mod collider;
 pub mod enemy;
 pub mod health;
 pub mod laser;
@@ -9,3 +10,4 @@ pub mod movable;
 pub mod player;
 pub mod size;
 pub mod sprite_drawable;
+pub mod weapon;

@@ -1,0 +1,12 @@
+{
+    "rust-analyzer.checkOnSave.overrideCommand": [
+        "cargo",
+        "clippy",
+        "--message-format=json",
+        "-p",
+        "game",
+        "--",
+        "--allow",
+        "clippy::unusual_byte_groupings"
+    ]
+}

@@ -38,20 +38,6 @@ pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
         });
 }
 
-pub fn shoot_bullet_enemy(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
-    entities
-        .spawn()
-        .add(Movable { pos, speed })
-        .add(Size { size: BULLET_SIZE })
-        .add(BoxDrawable {
-            color: Color::from_rgb(0.9, 0.2, 0.2),
-        })
-        .add(Bullet {
-            can_hit_player: true,
-            can_hit_enemy: false,
-        });
-}
-
 pub fn update(world: &mut World, camera: &Camera) {
     let (bullet, movable, enemy, player, size, health) = world
         .components

@@ -40,7 +40,6 @@ mod sound;
 mod sound_mixer;
 mod sounds;
 mod textures;
-mod weapon;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);
 const GREEN: Color = Color::new(0b00011_10000_00011_1);
@@ -100,7 +99,7 @@ fn main() {
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
             bullet::update(&mut world, &camera);
             missile::update(&mut world, &camera);
-            laser::update(&mut world, &camera);
+            laser::update(&mut world);
             movable::simulate(&mut world, dt);
         }
 
@@ -138,7 +137,7 @@ fn main() {
 
                         let speed = 0.05; // 0.05
                         let t = speed * (frame_begin_time as f32) / 1e6;
-                        let p = 2.0943951023931954923084289221863;
+                        let p = 2.0943951;
                         let v0 = vec3(
                             x_off + x_scale * libm::cosf(t),
                             y_off + y_scale * libm::sinf(t),

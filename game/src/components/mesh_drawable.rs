@@ -1,7 +1,7 @@
 use super::movable::Movable;
 use crate::{camera::Camera, ecs::world::World, model::ModelData};
 use n64::{gfx::CommandBuffer, VideoMode};
-use n64_math::{vec3, Mat4, Quat, Vec3};
+use n64_math::{vec3, Mat4, Quat};
 use std::f32::consts::PI;
 
 pub struct MeshDrawable {
