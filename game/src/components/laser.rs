@@ -14,7 +14,7 @@ use crate::{
 };
 use n64_math::{const_vec2, vec2, Aabb2, Color, Quat, Vec2};
 
-const LASER_SIZE: Vec2 = const_vec2!([0.1, 10.0 * 0.1]);
+const LASER_SIZE: Vec2 = const_vec2!([0.2 * 0.1, 10.0 * 0.1]);
 
 struct Laser {
     pub can_hit_player: bool,
@@ -32,9 +32,6 @@ pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
         .add(MeshDrawable {
             model: LASER_BODY.as_model_data(),
             rot: Quat::IDENTITY,
-        })
-        .add(BoxDrawable {
-            color: Color::from_rgb(0.8, 0.1, 0.1),
         })
         .add(Laser {
             can_hit_player: false,

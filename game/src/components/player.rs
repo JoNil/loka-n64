@@ -177,7 +177,7 @@ pub fn update(
                         sound_mixer.play_sound(LASER_1.as_sound_data());
                         shoot_laser(
                             &mut world.entities,
-                            m.pos + Vec2::new(0.0, -s.size.y / 2.0),
+                            m.pos + Vec2::new(0.0, -s.size.y / 2.0 * 0.5),
                             m.speed,
                         );
                     }
