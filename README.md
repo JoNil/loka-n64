@@ -55,3 +55,6 @@ cargo run
 - http://ultra64.ca/files/documentation/silicon-graphics/SGI_Nintendo_64_RSP_Programmers_Guide.pdf
 - http://ultra64.ca/files/documentation/online-manuals/man/pro-man/pro12/index12.6.html
 - https://ultra64.ca/files/documentation/nintendo/Nintendo_64_Programming_Manual_NU6-06-0030-001G_HQ.pdf
+
+How to kick off sp tasks
+- https://github.com/n64decomp/sm64/blob/master/lib/src/osSpTaskLoadGo.c
