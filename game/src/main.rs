@@ -182,21 +182,6 @@ fn main() {
                     }
                 }
 
-                if false {
-                    font::draw_text(&mut cb, " !\"#$%&", vec2(1.0, 0.0), 0xffffffff);
-                    font::draw_text(&mut cb, "'()+,-./", vec2(1.0, 17.0), 0xffffffff);
-                    font::draw_text(&mut cb, "0123456789", vec2(1.0, 34.0), 0xffffffff);
-                    font::draw_text(&mut cb, ":;<=>?@", vec2(1.0, 51.0), 0xffffffff);
-                    font::draw_text(&mut cb, "ABCDEFGHIJ", vec2(1.0, 68.0), 0xffffffff);
-                    font::draw_text(&mut cb, "KLMNOPQRST", vec2(1.0, 85.0), 0xffffffff);
-                    font::draw_text(&mut cb, "UVWXYZ", vec2(1.0, 102.0), 0xffffffff);
-                    font::draw_text(&mut cb, "[\\]^_`", vec2(1.0, 119.0), 0xffffffff);
-                    font::draw_text(&mut cb, "abcdefghij", vec2(1.0, 136.0), 0xffffffff);
-                    font::draw_text(&mut cb, "klmnopqrst", vec2(1.0, 153.0), 0xffffffff);
-                    font::draw_text(&mut cb, "uvwxyz", vec2(1.0, 170.0), 0xffffffff);
-                    font::draw_text(&mut cb, "{|}~", vec2(1.0, 187.0), 0xffffffff);
-                }
-
                 font::draw_number(
                     &mut cb,
                     world
