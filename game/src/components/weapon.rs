@@ -68,7 +68,6 @@ pub fn shoot_bullet(
         .add(Projectile {
             target_type,
             damage: 50 + (n64_math::random_f32() * 20.0) as i32,
-            delete_after_first_frame: false,
         });
 }
 
@@ -104,7 +103,6 @@ pub fn shoot_missile(
         .add(Projectile {
             target_type,
             damage: 100 + (n64_math::random_f32() * 50.0) as i32,
-            delete_after_first_frame: false,
         })
         .add(Missile { target });
 }
@@ -134,7 +132,6 @@ pub fn shoot_laser(
         .add(Projectile {
             target_type,
             damage: 1,
-            delete_after_first_frame: true,
         });
 }
 

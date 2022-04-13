@@ -1,18 +1,17 @@
 use super::{
     enemy::Enemy,
     health::{self, Health},
-    movable::{self, Movable},
+    movable::Movable,
     player::Player,
     size::Size,
     weapon::WeaponTarget,
 };
 use crate::{camera::Camera, ecs::world::World};
-use n64_math::{vec2, Aabb2, Vec2};
+use n64_math::{vec2, Aabb2};
 
 pub struct Projectile {
     pub target_type: WeaponTarget,
     pub damage: i32,
-    pub delete_after_first_frame: bool,
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
@@ -78,7 +77,7 @@ pub fn update(world: &mut World, camera: &Camera) {
                 delete = true;
             }
 
-            if delete || p.delete_after_first_frame {
+            if delete {
                 world.entities.despawn(entity);
             }
         }
