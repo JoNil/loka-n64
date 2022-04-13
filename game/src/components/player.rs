@@ -48,6 +48,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
         .add(Weapon {
             weapon_type: WeaponType::Laser,
             last_shoot_time: 0,
+            direction: 0.0,
         })
         .add(Player { score: 0 })
         .entity()

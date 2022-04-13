@@ -11,28 +11,41 @@ use crate::{
     camera::Camera,
     ecs::{entity::EntitySystem, world::World},
 };
-use n64_math::{const_vec2, vec2, Aabb2, Color, Vec2};
+use n64_math::{const_vec2, vec2, Aabb2, Color, Mat2, Vec2};
 
-const BULLET_SIZE: Vec2 = const_vec2!([0.00825, 0.00825]);
+const BULLET_SIZE: Vec2 = const_vec2!([0.02, 0.02]);
 
 struct Bullet {
-    pub target: WeaponTarget,
+    pub target_type: WeaponTarget,
 }
 
-pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target: WeaponTarget) {
+pub fn shoot_bullet(
+    entities: &mut EntitySystem,
+    pos: Vec2,
+    offset: Vec2,
+    speed: Vec2,
+    speed_offset: Vec2,
+    direction: f32,
+    target_type: WeaponTarget,
+) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
+
+    let rot = Mat2::from_angle(direction);
+
+    let offset = rot.mul_vec2(offset);
+    let speed_offset = rot.mul_vec2(vec2(speed_offset.x + spread, speed_offset.y));
 
     entities
         .spawn()
         .add(Movable {
-            pos,
-            speed: vec2(speed.x + spread, speed.y),
+            pos: pos + offset,
+            speed: speed + speed_offset,
         })
         .add(Size { size: BULLET_SIZE })
         .add(BoxDrawable {
-            color: Color::from_rgb(0.2, 0.2, 0.9),
+            color: Color::from_rgb(0.9, 0.2, 0.7),
         })
-        .add(Bullet { target });
+        .add(Bullet { target_type });
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
@@ -51,7 +64,7 @@ pub fn update(world: &mut World, camera: &Camera) {
                 delete = true;
             }
 
-            if bullet.target == WeaponTarget::Enemy {
+            if bullet.target_type == WeaponTarget::Enemy {
                 for enemy_entity in enemy.entities() {
                     if let Some(size) = size.lookup(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
@@ -71,7 +84,7 @@ pub fn update(world: &mut World, camera: &Camera) {
                 }
             }
 
-            if bullet.target == WeaponTarget::Player {
+            if bullet.target_type == WeaponTarget::Player {
                 for player_entity in player.entities() {
                     if let Some(s) = size.lookup(*player_entity) {
                         let player_bb = Aabb2::from_center_size(

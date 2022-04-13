@@ -5,6 +5,7 @@
 #![cfg_attr(target_vendor = "nintendo64", feature(start))]
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 #![allow(clippy::inconsistent_digit_grouping)]
+#![allow(clippy::too_many_arguments)]
 
 extern crate alloc;
 

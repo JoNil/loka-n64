@@ -14,7 +14,7 @@ use crate::{
         world::World,
     },
 };
-use n64_math::{const_vec2, Aabb2, Color, Vec2};
+use n64_math::{const_vec2, vec2, Aabb2, Color, Mat2, Vec2};
 
 const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
 
@@ -26,17 +26,26 @@ struct Missile {
 pub fn shoot_missile(
     entities: &mut EntitySystem,
     pos: Vec2,
+    offset: Vec2,
     speed: Vec2,
+    speed_offset: Vec2,
+    direction: f32,
     target: Option<Entity>,
     target_type: WeaponTarget,
 ) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
+    let rot = Mat2::from_angle(direction);
+
+    let offset = rot.mul_vec2(offset);
+    let speed_offset =
+        Mat2::from_angle(direction).mul_vec2(vec2(speed_offset.x + spread, speed_offset.y));
+
     entities
         .spawn()
         .add(Movable {
-            pos,
-            speed: Vec2::new(speed.x + spread, speed.y),
+            pos: pos + offset,
+            speed: speed + speed_offset,
         })
         .add(Size { size: MISSILE_SIZE })
         .add(BoxDrawable {

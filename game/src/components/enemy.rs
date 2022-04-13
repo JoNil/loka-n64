@@ -11,6 +11,7 @@ use crate::{
     sound_mixer::SoundMixer,
     sounds::EXPLOSION_0,
 };
+use core::f32::consts::PI;
 use n64::gfx::Texture;
 use n64_math::{const_vec2, vec2, Vec2};
 
@@ -41,6 +42,7 @@ pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'sta
         .add(Weapon {
             weapon_type: WeaponType::Bullet,
             last_shoot_time: 0,
+            direction: PI,
         })
         .add(Enemy {
             waypoint: 0,
