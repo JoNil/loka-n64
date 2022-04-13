@@ -1,14 +1,16 @@
 use n64::current_time_us;
-use n64_math::{vec2, Vec2};
+use n64_math::{const_vec2, vec2, Color, Mat2, Quat, Vec2};
 
 use super::{
-    bullet::shoot_bullet, laser::shoot_laser, missile::shoot_missile, movable::Movable, size::Size,
+    box_drawable::BoxDrawable, mesh_drawable::MeshDrawable, missile::Missile, movable::Movable,
+    projectile::Projectile, size::Size,
 };
 use crate::{
     ecs::{
         entity::{Entity, EntitySystem},
         storage::Storage,
     },
+    models::LASER_BODY,
     sound_mixer::SoundMixer,
     sounds::{LASER_1, SHOOT_1, SHOOT_2},
 };
@@ -31,8 +33,108 @@ pub struct Weapon {
     pub direction: f32,
 }
 
-const BULLET_DELAY_MS: i32 = 150;
-const MISSILE_DELAY_MS: i32 = 1000;
+const BULLET_DELAY_MS: i32 = 300;
+const MISSILE_DELAY_MS: i32 = 2000;
+const BULLET_SIZE: Vec2 = const_vec2!([0.02, 0.02]);
+const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
+
+pub fn shoot_bullet(
+    entities: &mut EntitySystem,
+    pos: Vec2,
+    offset: Vec2,
+    speed: Vec2,
+    speed_offset: Vec2,
+    direction: f32,
+    target_type: WeaponTarget,
+) {
+    let spread = (n64_math::random_f32() - 0.5) * 0.05;
+
+    let rot = Mat2::from_angle(direction);
+
+    let offset = rot.mul_vec2(offset);
+    let speed_offset = rot.mul_vec2(vec2(speed_offset.x + spread, speed_offset.y));
+
+    entities
+        .spawn()
+        .add(Movable {
+            pos: pos + offset,
+            speed: speed + speed_offset,
+        })
+        .add(Size { size: BULLET_SIZE })
+        .add(BoxDrawable {
+            color: Color::from_rgb(0.9, 0.2, 0.7),
+        })
+        .add(Projectile {
+            target_type,
+            damage: 50 + (n64_math::random_f32() * 20.0) as i32,
+            delete_after_first_frame: false,
+        });
+}
+
+pub fn shoot_missile(
+    entities: &mut EntitySystem,
+    pos: Vec2,
+    offset: Vec2,
+    speed: Vec2,
+    speed_offset: Vec2,
+    direction: f32,
+    target: Option<Entity>,
+    target_type: WeaponTarget,
+) {
+    let spread = (n64_math::random_f32() - 0.5) * 0.05;
+
+    let rot = Mat2::from_angle(direction);
+
+    let offset = rot.mul_vec2(offset);
+    let speed_offset =
+        Mat2::from_angle(direction).mul_vec2(vec2(speed_offset.x + spread, speed_offset.y));
+
+    entities
+        .spawn()
+        .add(Movable {
+            pos: pos + offset,
+            speed: speed + speed_offset,
+        })
+        .add(Size { size: MISSILE_SIZE })
+        .add(BoxDrawable {
+            color: Color::from_rgb(1.0, 0.4, 0.4),
+        })
+        .add(Projectile {
+            target_type,
+            damage: 100 + (n64_math::random_f32() * 50.0) as i32,
+            delete_after_first_frame: false,
+        })
+        .add(Missile { target });
+}
+
+pub fn shoot_laser(
+    entities: &mut EntitySystem,
+    pos: Vec2,
+    speed: Vec2,
+    direction: f32,
+    target_type: WeaponTarget,
+) {
+    let extent = Mat2::from_angle(direction).mul_vec2(vec2(0.0, -LASER_BODY.size.y / 2.0));
+
+    entities
+        .spawn()
+        .add(Movable {
+            pos: pos + extent,
+            speed,
+        })
+        .add(Size {
+            size: LASER_BODY.size,
+        })
+        .add(MeshDrawable {
+            model: LASER_BODY.as_model_data(),
+            rot: Quat::IDENTITY,
+        })
+        .add(Projectile {
+            target_type,
+            damage: 1,
+            delete_after_first_frame: true,
+        });
+}
 
 pub fn fire(
     entities: &mut EntitySystem,

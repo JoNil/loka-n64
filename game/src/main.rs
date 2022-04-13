@@ -10,14 +10,13 @@
 extern crate alloc;
 
 use crate::components::{
-    box_drawable, bullet, enemy,
+    box_drawable, enemy,
     health::{self, Health},
-    missile, movable,
-    player::{self, Player},
-    sprite_drawable,
+    mesh_drawable, missile, movable,
+    player::{self, spawn_player, Player},
+    projectile, sprite_drawable,
 };
 use camera::Camera;
-use components::{laser, mesh_drawable, player::spawn_player};
 use ecs::world::World;
 use map::Map;
 use maps::MAP_1;
@@ -98,9 +97,8 @@ fn main() {
 
             enemy::update(&mut world, &mut sound_mixer, dt);
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
-            bullet::update(&mut world, &camera);
-            missile::update(&mut world, &camera);
-            laser::update(&mut world);
+            projectile::update(&mut world, &camera);
+            missile::update(&mut world);
             movable::simulate(&mut world, dt);
         }
 
