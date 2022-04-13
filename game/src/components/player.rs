@@ -1,11 +1,10 @@
 use super::{
     box_drawable::BoxDrawable,
-    collider::CollisionMask,
     health::Health,
     mesh_drawable::MeshDrawable,
     movable::Movable,
     size::Size,
-    weapon::{self, Weapon, WeaponType},
+    weapon::{self, Weapon, WeaponTarget, WeaponType},
 };
 use crate::{
     camera::Camera,
@@ -106,7 +105,7 @@ pub fn update(
                 movable,
                 size,
                 weapon,
-                CollisionMask::enemy(),
+                WeaponTarget::Enemy,
             );
         }
     }

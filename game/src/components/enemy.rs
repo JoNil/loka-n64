@@ -1,11 +1,10 @@
 use super::{
-    collider::CollisionMask,
     health::{self, Health},
     movable::Movable,
     player::{self, Player},
     size::Size,
     sprite_drawable::SpriteDrawable,
-    weapon::{self, Weapon, WeaponType},
+    weapon::{self, Weapon, WeaponTarget, WeaponType},
 };
 use crate::{
     ecs::{entity::EntitySystem, world::World},
@@ -68,7 +67,7 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
             movable,
             size,
             weapon,
-            CollisionMask::player(),
+            WeaponTarget::Player,
         );
 
         if let Some(movable) = movable.lookup_mut(entity) {

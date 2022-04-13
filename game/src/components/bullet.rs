@@ -5,6 +5,7 @@ use super::{
     movable::{self, Movable},
     player::Player,
     size::Size,
+    weapon::WeaponTarget,
 };
 use crate::{
     camera::Camera,
@@ -15,11 +16,10 @@ use n64_math::{const_vec2, vec2, Aabb2, Color, Vec2};
 const BULLET_SIZE: Vec2 = const_vec2!([0.00825, 0.00825]);
 
 struct Bullet {
-    pub can_hit_player: bool,
-    pub can_hit_enemy: bool,
+    pub target: WeaponTarget,
 }
 
-pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
+pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target: WeaponTarget) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
     entities
@@ -32,10 +32,7 @@ pub fn shoot_bullet(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
         .add(BoxDrawable {
             color: Color::from_rgb(0.2, 0.2, 0.9),
         })
-        .add(Bullet {
-            can_hit_player: false,
-            can_hit_enemy: true,
-        });
+        .add(Bullet { target });
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
@@ -54,7 +51,7 @@ pub fn update(world: &mut World, camera: &Camera) {
                 delete = true;
             }
 
-            if bullet.can_hit_enemy {
+            if bullet.target == WeaponTarget::Enemy {
                 for enemy_entity in enemy.entities() {
                     if let Some(size) = size.lookup(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
@@ -74,7 +71,7 @@ pub fn update(world: &mut World, camera: &Camera) {
                 }
             }
 
-            if bullet.can_hit_player {
+            if bullet.target == WeaponTarget::Player {
                 for player_entity in player.entities() {
                     if let Some(s) = size.lookup(*player_entity) {
                         let player_bb = Aabb2::from_center_size(

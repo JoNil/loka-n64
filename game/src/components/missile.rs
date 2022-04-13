@@ -3,7 +3,9 @@ use super::{
     enemy::Enemy,
     health::{self, Health},
     movable::{self, Movable},
+    player::Player,
     size::Size,
+    weapon::WeaponTarget,
 };
 use crate::{
     camera::Camera,
@@ -18,9 +20,16 @@ const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
 
 struct Missile {
     pub target: Option<Entity>,
+    pub target_type: WeaponTarget,
 }
 
-pub fn shoot_missile(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target: Option<Entity>) {
+pub fn shoot_missile(
+    entities: &mut EntitySystem,
+    pos: Vec2,
+    speed: Vec2,
+    target: Option<Entity>,
+    target_type: WeaponTarget,
+) {
     let spread = (n64_math::random_f32() - 0.5) * 0.05;
 
     entities
@@ -33,13 +42,16 @@ pub fn shoot_missile(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target
         .add(BoxDrawable {
             color: Color::from_rgb(1.0, 0.4, 0.4),
         })
-        .add(Missile { target });
+        .add(Missile {
+            target,
+            target_type,
+        });
 }
 
 pub fn update(world: &mut World, camera: &Camera) {
-    let (missile, movable, enemy, size, health) = world
+    let (missile, movable, enemy, player, size, health) = world
         .components
-        .get5::<Missile, Movable, Enemy, Size, Health>();
+        .get6::<Missile, Movable, Enemy, Player, Size, Health>();
 
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + Vec2::new(1.0, 1.0));
 
@@ -64,20 +76,42 @@ pub fn update(world: &mut World, camera: &Camera) {
                 delete = true;
             }
 
-            for enemy_entity in enemy.entities() {
-                if let Some(size) = size.lookup(*enemy_entity) {
-                    let enemy_bb = Aabb2::from_center_size(
-                        movable::pos(movable, *enemy_entity).unwrap_or(Vec2::ZERO),
-                        size.size,
-                    );
-
-                    if missile_bb.collides(&enemy_bb) {
-                        health::damage(
-                            health,
-                            *enemy_entity,
-                            100 + (n64_math::random_f32() * 50.0) as i32,
+            if missile.target_type == WeaponTarget::Enemy {
+                for enemy_entity in enemy.entities() {
+                    if let Some(size) = size.lookup(*enemy_entity) {
+                        let enemy_bb = Aabb2::from_center_size(
+                            movable::pos(movable, *enemy_entity).unwrap_or(Vec2::ZERO),
+                            size.size,
                         );
-                        delete = true;
+
+                        if missile_bb.collides(&enemy_bb) {
+                            health::damage(
+                                health,
+                                *enemy_entity,
+                                100 + (n64_math::random_f32() * 50.0) as i32,
+                            );
+                            delete = true;
+                        }
+                    }
+                }
+            }
+
+            if missile.target_type == WeaponTarget::Player {
+                for player_entity in player.entities() {
+                    if let Some(size) = size.lookup(*player_entity) {
+                        let player_bb = Aabb2::from_center_size(
+                            movable::pos(movable, *player_entity).unwrap_or(Vec2::ZERO),
+                            size.size,
+                        );
+
+                        if missile_bb.collides(&player_bb) {
+                            health::damage(
+                                health,
+                                *player_entity,
+                                100 + (n64_math::random_f32() * 50.0) as i32,
+                            );
+                            delete = true;
+                        }
                     }
                 }
             }

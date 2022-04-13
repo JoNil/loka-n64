@@ -2,8 +2,7 @@ use n64::current_time_us;
 use n64_math::Vec2;
 
 use super::{
-    bullet::shoot_bullet, collider::CollisionMask, laser::shoot_laser, missile::shoot_missile,
-    movable::Movable, size::Size,
+    bullet::shoot_bullet, laser::shoot_laser, missile::shoot_missile, movable::Movable, size::Size,
 };
 use crate::{
     ecs::{
@@ -18,6 +17,12 @@ pub enum WeaponType {
     Bullet,
     Missile,
     Laser,
+}
+
+#[derive(Copy, Clone, PartialEq, Eq)]
+pub enum WeaponTarget {
+    Player,
+    Enemy,
 }
 
 pub struct Weapon {
@@ -35,7 +40,7 @@ pub fn fire(
     movable: &mut Storage<Movable>,
     size: &mut Storage<Size>,
     weapon: &mut Storage<Weapon>,
-    collision_mask: CollisionMask,
+    target: WeaponTarget,
 ) {
     let now = current_time_us();
 
@@ -47,11 +52,12 @@ pub fn fire(
         match w.weapon_type {
             WeaponType::Bullet => {
                 if now - w.last_shoot_time > BULLET_DELAY_MS as i64 * 1000 {
-                    sound_mixer.play_sound(SHOOT_1.as_sound_data());
+                    //sound_mixer.play_sound(SHOOT_1.as_sound_data());
                     shoot_bullet(
                         entities,
                         m.pos + Vec2::new(0.0, -s.size.y / 2.0),
                         Vec2::new(0.0, m.speed.y - 1.25),
+                        target,
                     );
                     w.last_shoot_time = now;
                 }
@@ -84,25 +90,28 @@ pub fn fire(
                         m.pos + Vec2::new(0.0, -s.size.y / 2.0),
                         Vec2::new(0.0, m.speed.y - 0.5),
                         target_1,
+                        target,
                     );
                     shoot_missile(
                         entities,
                         m.pos + Vec2::new(0.0, -s.size.y / 2.0),
                         Vec2::new(0.15, m.speed.y - 0.5),
                         target_2,
+                        target,
                     );
                     shoot_missile(
                         entities,
                         m.pos + Vec2::new(0.0, -s.size.y / 2.0),
                         Vec2::new(-0.15, m.speed.y - 0.5),
                         target_3,
+                        target,
                     );
                     w.last_shoot_time = now;
                 }
             }
             WeaponType::Laser => {
                 sound_mixer.play_sound(LASER_1.as_sound_data());
-                shoot_laser(entities, m.pos + Vec2::new(0.0, 0.0), m.speed);
+                shoot_laser(entities, m.pos + Vec2::new(0.0, 0.0), m.speed, target);
             }
         }
     }

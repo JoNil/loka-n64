@@ -5,6 +5,7 @@ use super::{
     movable::{self, Movable},
     player::Player,
     size::Size,
+    weapon::WeaponTarget,
 };
 use crate::{
     ecs::{entity::EntitySystem, world::World},
@@ -13,11 +14,10 @@ use crate::{
 use n64_math::{vec2, Aabb2, Quat, Vec2};
 
 struct Laser {
-    pub can_hit_player: bool,
-    pub can_hit_enemy: bool,
+    target: WeaponTarget,
 }
 
-pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
+pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2, speed: Vec2, target: WeaponTarget) {
     entities
         .spawn()
         .add(Movable {
@@ -31,10 +31,7 @@ pub fn shoot_laser(entities: &mut EntitySystem, pos: Vec2, speed: Vec2) {
             model: LASER_BODY.as_model_data(),
             rot: Quat::IDENTITY,
         })
-        .add(Laser {
-            can_hit_player: false,
-            can_hit_enemy: true,
-        });
+        .add(Laser { target });
 }
 
 pub fn update(world: &mut World) {
@@ -46,7 +43,7 @@ pub fn update(world: &mut World) {
         if let Some(m) = movable.lookup(entity) {
             let laser_bb = Aabb2::from_center_size(m.pos, LASER_BODY.size);
 
-            if laser.can_hit_enemy {
+            if laser.target == WeaponTarget::Enemy {
                 for enemy_entity in enemy.entities() {
                     if let Some(size) = size.lookup(*enemy_entity) {
                         let enemy_bb = Aabb2::from_center_size(
@@ -61,7 +58,7 @@ pub fn update(world: &mut World) {
                 }
             }
 
-            if laser.can_hit_player {
+            if laser.target == WeaponTarget::Player {
                 for player_entity in player.entities() {
                     if let Some(s) = size.lookup(*player_entity) {
                         let player_bb = Aabb2::from_center_size(
