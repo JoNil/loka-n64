@@ -2,8 +2,8 @@ use n64::current_time_us;
 use n64_math::{const_vec2, vec2, Color, Mat2, Quat, Vec2};
 
 use super::{
-    box_drawable::BoxDrawable, mesh_drawable::MeshDrawable, missile::Missile, movable::Movable,
-    projectile::Projectile, size::Size,
+    box_drawable::BoxDrawable, health::Health, mesh_drawable::MeshDrawable, missile::Missile,
+    movable::Movable, projectile::Projectile, size::Size,
 };
 use crate::{
     ecs::{
@@ -61,6 +61,7 @@ pub fn shoot_bullet(
             speed: speed + speed_offset,
         })
         .add(Size { size: BULLET_SIZE })
+        .add(Health { health: 5 })
         .add(BoxDrawable {
             color: Color::from_rgb(0.9, 0.2, 0.7),
         })
@@ -96,6 +97,7 @@ pub fn shoot_missile(
             speed: speed + speed_offset,
         })
         .add(Size { size: MISSILE_SIZE })
+        .add(Health { health: 15 })
         .add(BoxDrawable {
             color: Color::from_rgb(1.0, 0.4, 0.4),
         })

@@ -22,7 +22,7 @@ pub fn update(world: &mut World, camera: &Camera) {
 
     let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));
 
-    for (projectile, entity) in projectile.components_and_entities() {
+    for (p, entity) in projectile.components_and_entities() {
         if let (Some(m), Some(s)) = (movable.lookup(entity), size.lookup(entity)) {
             let mut delete = false;
             let projectile_bb = Aabb2::from_center_size(m.pos, s.size);
@@ -31,39 +31,54 @@ pub fn update(world: &mut World, camera: &Camera) {
                 delete = true;
             }
 
-            if projectile.target_type == WeaponTarget::Enemy {
+            if p.target_type == WeaponTarget::Enemy {
                 for enemy_entity in enemy.entities() {
-                    if let Some(size) = size.lookup(*enemy_entity) {
-                        let enemy_bb = Aabb2::from_center_size(
-                            movable::pos(movable, *enemy_entity).unwrap_or(Vec2::ZERO),
-                            size.size,
-                        );
+                    if let (Some(m2), Some(s2)) =
+                        (movable.lookup(*enemy_entity), size.lookup(*enemy_entity))
+                    {
+                        let enemy_bb = Aabb2::from_center_size(m2.pos, s2.size);
 
                         if projectile_bb.collides(&enemy_bb) {
-                            health::damage(health, *enemy_entity, projectile.damage);
+                            health::damage(health, *enemy_entity, p.damage);
                             delete = true;
                         }
                     }
                 }
             }
 
-            if projectile.target_type == WeaponTarget::Player {
+            if p.target_type == WeaponTarget::Player {
                 for player_entity in player.entities() {
-                    if let Some(s) = size.lookup(*player_entity) {
-                        let player_bb = Aabb2::from_center_size(
-                            movable::pos(movable, *player_entity).unwrap_or(Vec2::ZERO),
-                            s.size,
-                        );
+                    if let (Some(m2), Some(s2)) =
+                        (movable.lookup(*player_entity), size.lookup(*player_entity))
+                    {
+                        let player_bb = Aabb2::from_center_size(m2.pos, s2.size);
 
                         if projectile_bb.collides(&player_bb) {
-                            health::damage(health, *player_entity, projectile.damage);
+                            health::damage(health, *player_entity, p.damage);
                             delete = true;
                         }
                     }
                 }
             }
 
-            if delete || projectile.delete_after_first_frame {
+            for (p2, entity2) in projectile.components_and_entities() {
+                if entity != entity2 {
+                    if let (Some(m2), Some(s2)) = (movable.lookup(entity2), size.lookup(entity2)) {
+                        let projectile_bb_2 = Aabb2::from_center_size(m2.pos, s2.size);
+
+                        if projectile_bb.collides(&projectile_bb_2) {
+                            health::damage(health, entity2, p.damage);
+                            health::damage(health, entity, p2.damage);
+                        }
+                    }
+                }
+            }
+
+            if !health::is_alive(health, entity) {
+                delete = true;
+            }
+
+            if delete || p.delete_after_first_frame {
                 world.entities.despawn(entity);
             }
         }
