@@ -17,23 +17,18 @@ use crate::{
     models::SHIP_3_BODY,
     sound_mixer::SoundMixer,
 };
-use n64::{Controllers, VideoMode};
-use n64_math::{const_vec2, vec2, Color, Quat, Vec2, Vec3};
+use n64::Controllers;
+use n64_math::{const_vec2, Color, Quat, Vec2, Vec3};
 use std::f32::consts::PI;
 
 const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
-pub const SHIP_SIZE_PX: Vec2 = const_vec2!([32.0, 32.0]);
 
 pub struct Player {
     pub score: i32,
 }
 
-pub fn spawn_player(
-    entities: &mut EntitySystem,
-    start_pos: Vec2,
-    video_mode: &VideoMode,
-) -> Entity {
+pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
     entities
         .spawn()
         .add(Movable {
@@ -41,10 +36,7 @@ pub fn spawn_player(
             speed: Vec2::new(0.0, 0.0),
         })
         .add(Size {
-            size: vec2(
-                SHIP_SIZE_PX.x / video_mode.width() as f32,
-                SHIP_SIZE_PX.y / video_mode.height() as f32,
-            ),
+            size: SHIP_3_BODY.size,
         })
         .add(MeshDrawable {
             model: SHIP_3_BODY.as_model_data(),

@@ -2,6 +2,7 @@ use crate::utils::{write_binary_file_if_changed, write_file_if_changed};
 use assert_into::AssertInto;
 use blend::{Blend, Instance};
 use meshopt::{generate_vertex_remap, remap_index_buffer, remap_vertex_buffer};
+use n64_math::{vec2, Vec2};
 use std::{env, error::Error, ffi::OsStr, fs};
 use zerocopy::AsBytes;
 
@@ -12,6 +13,7 @@ r##"pub static {name}: StaticModelData = StaticModelData {{
     uvs: include_bytes_align_as!(Vec2, {uvs_path:?}),
     colors: include_bytes_align_as!(u32, {colors_path:?}),
     indices: include_bytes_align_as!(u8, {indices_path:?}),
+    size: const_vec2!([{model_width}_f32, {model_height}_f32]),
 }};
 "##
 }; }
@@ -24,7 +26,7 @@ r##"// This file is generated
 
 use crate::model::StaticModelData;
 use n64::include_bytes_align_as;
-use n64_math::{{Vec2, Vec3}};
+use n64_math::{{Vec2, Vec3, const_vec2}};
 
 {models}"##
 }; }
@@ -35,6 +37,7 @@ struct Model {
     uvs: Vec<[f32; 2]>,
     colors: Vec<u32>,
     indices: Vec<u8>,
+    size: Vec2,
 }
 
 fn parse_model(mesh: Instance) -> Option<Model> {
@@ -70,6 +73,11 @@ fn parse_model(mesh: Instance) -> Option<Model> {
 
     let mut index_count = 0;
 
+    let mut max_x = f32::MIN;
+    let mut min_x = f32::MAX;
+    let mut max_y = f32::MIN;
+    let mut min_y = f32::MAX;
+
     for face in &faces {
         let len = face.get_i32("totloop");
         let start = face.get_i32("loopstart");
@@ -87,6 +95,11 @@ fn parse_model(mesh: Instance) -> Option<Model> {
 
                 let co = mverts[v as usize].get_f32_vec("co");
                 verts[index_count as usize] = [co[0], co[1], co[2]];
+
+                max_x = max_x.max(co[0]);
+                min_x = min_x.min(co[0]);
+                max_y = max_y.max(co[1]);
+                min_y = min_y.min(co[1]);
 
                 let uv = muvs[index as usize].get_f32_vec("uv");
                 uvs[index_count as usize] = [uv[0], uv[1]];
@@ -119,6 +132,7 @@ fn parse_model(mesh: Instance) -> Option<Model> {
         uvs,
         colors,
         indices,
+        size: vec2(max_x - min_x, max_y - min_y),
     })
 }
 
@@ -184,6 +198,8 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
                             uvs_path = uvs_path,
                             colors_path = colors_path,
                             indices_path = indices_path,
+                            model_width = model.size.x,
+                            model_height = model.size.y,
                         ));
                     }
                 }

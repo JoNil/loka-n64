@@ -1,4 +1,5 @@
 use alloc::borrow::Cow;
+use n64_math::Vec2;
 use zerocopy::LayoutVerified;
 
 #[derive(Clone)]
@@ -7,6 +8,7 @@ pub struct ModelData<'a> {
     pub uvs: Cow<'a, [[f32; 2]]>,
     pub colors: Cow<'a, [u32]>,
     pub indices: Cow<'a, [[u8; 3]]>,
+    pub size: Vec2,
 }
 
 pub struct StaticModelData {
@@ -14,6 +16,7 @@ pub struct StaticModelData {
     pub uvs: &'static [u8],
     pub colors: &'static [u8],
     pub indices: &'static [u8],
+    pub size: Vec2,
 }
 
 impl StaticModelData {
@@ -42,6 +45,7 @@ impl StaticModelData {
                     uvs: Cow::Borrowed(uvs),
                     colors: Cow::Borrowed(colors),
                     indices: Cow::Borrowed(indices),
+                    size: self.size,
                 }
             } else {
 
@@ -87,6 +91,7 @@ impl StaticModelData {
                     uvs: Cow::Owned(uvs),
                     colors: Cow::Owned(colors),
                     indices: Cow::Borrowed(indices),
+                    size: self.size,
                 }
             }
         }

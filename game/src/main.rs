@@ -68,7 +68,7 @@ fn main() {
     let mut camera = Camera::new(start_pos);
     let mut command_buffer_cache = CommandBufferCache::new();
 
-    let player = spawn_player(&mut world.entities, start_pos, &VIDEO_MODE);
+    let player = spawn_player(&mut world.entities, start_pos);
 
     map.spawn_enemies(&mut world, &VIDEO_MODE);
 
