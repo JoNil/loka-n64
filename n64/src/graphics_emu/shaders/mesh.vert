@@ -22,6 +22,6 @@ void main() {
     gl_Position =
         vec4(
             -1.0 + 2.0 * position.x / uniforms[gl_InstanceIndex].u_screen_size.x,
-            1.0 - 2.0 * position.y / uniforms[gl_InstanceIndex].u_screen_size.y,
+            -1.0 + 2.0 * position.y / uniforms[gl_InstanceIndex].u_screen_size.y,
             position.zw);
 }
