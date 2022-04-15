@@ -8,6 +8,7 @@ pub(crate) struct DstTexture {
     pub tex_view: wgpu::TextureView,
     pub _depth: wgpu::Texture,
     pub depth_view: wgpu::TextureView,
+    pub download_tex: wgpu::Texture,
 }
 
 impl DstTexture {
@@ -29,7 +30,7 @@ impl DstTexture {
             label: None,
             size: tex_extent,
             mip_level_count: 1,
-            sample_count: 1,
+            sample_count: 4,
             dimension: wgpu::TextureDimension::D2,
             format: TEXUTRE_FORMAT,
             usage: wgpu::TextureUsages::COPY_DST
@@ -42,18 +43,29 @@ impl DstTexture {
             label: None,
             size: tex_extent,
             mip_level_count: 1,
-            sample_count: 1,
+            sample_count: 4,
             dimension: wgpu::TextureDimension::D2,
             format: DEPTH_FORMAT,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
         });
         let depth_view = depth.create_view(&Default::default());
 
+        let download_tex = device.create_texture(&wgpu::TextureDescriptor {
+            label: None,
+            size: tex_extent,
+            mip_level_count: 1,
+            sample_count: 1,
+            dimension: wgpu::TextureDimension::D2,
+            format: TEXUTRE_FORMAT,
+            usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::COPY_SRC,
+        });
+
         Self {
             buffer,
             tex_extent,
             tex,
             tex_view,
+            download_tex,
             _depth: depth,
             depth_view,
         }
