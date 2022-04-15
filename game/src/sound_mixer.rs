@@ -28,7 +28,7 @@ impl SoundMixer {
     }
 
     pub fn mix(&mut self, buffer: &mut [i16]) {
-        for out_sample in buffer {
+        for out_sample in buffer.chunks_exact_mut(2) {
             let mut accumulator: i32 = 0;
 
             for playing_sound in self.playing_sounds.iter_mut() {
@@ -54,7 +54,10 @@ impl SoundMixer {
                 }
             }
 
-            *out_sample = accumulator.min(i16::MAX as i32).max(i16::MIN as i32) as i16;
+            let accumulator = accumulator.min(i16::MAX as i32).max(i16::MIN as i32) as i16;
+
+            out_sample[0] = accumulator;
+            out_sample[1] = accumulator;
         }
 
         self.playing_sounds = self

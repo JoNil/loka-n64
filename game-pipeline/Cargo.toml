@@ -11,6 +11,7 @@ assert_into = "1"
 blend = "0.6"
 hound = "3"
 image = { version = "0.24", default-features = false }
+itertools = "0.10"
 meshopt = "0.1"
 n64-math = { path = "../n64-math" }
 png = { version = "0.17", default-features = false }

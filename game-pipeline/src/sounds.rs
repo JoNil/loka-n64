@@ -1,4 +1,5 @@
 use crate::utils::{write_binary_file_if_changed, write_file_if_changed};
+use itertools::Itertools;
 use std::{env, error::Error, ffi::OsStr, fs, path::Path};
 use zerocopy::AsBytes;
 
@@ -15,13 +16,19 @@ fn load_wav(path: impl AsRef<Path>) -> Result<Vec<i16>, Box<dyn Error>> {
     assert!(spec.bits_per_sample == 16);
     assert!(spec.sample_format == hound::SampleFormat::Int);
 
-    let mut data = Vec::with_capacity(2 * reader.duration() as usize);
+    let mut data = Vec::with_capacity(reader.duration() as usize);
 
-    for sample in reader.into_samples::<i16>().filter_map(|e| e.ok()) {
-        data.push(sample.swap_bytes());
-
-        if spec.channels == 1 {
+    if spec.channels == 1 {
+        for sample in reader.into_samples::<i16>().filter_map(|e| e.ok()) {
             data.push(sample.swap_bytes());
+        }
+    } else if spec.channels == 2 {
+        for (l, r) in reader
+            .into_samples::<i16>()
+            .filter_map(|e| e.ok())
+            .tuple_windows::<(_, _)>()
+        {
+            data.push((((l as i32 + r as i32) / 2) as i16).swap_bytes());
         }
     }
 
