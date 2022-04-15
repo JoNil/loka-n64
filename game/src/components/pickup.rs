@@ -65,7 +65,7 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, camera: &Camera) 
                     if pickup_bb.collides(&player_bb) {
                         sound_mixer.play_sound(PICKUP_1.as_sound_data());
                         let weapon_index = random_u32() % WeaponType::COUNT as u32;
-                        player_weapon.last_shoot_time = 0;
+                        player_weapon.last_shoot_time = i64::MIN / 2;
                         player_weapon.weapon_type =
                             WeaponType::iter().nth(weapon_index as usize).unwrap();
                         delete = true;

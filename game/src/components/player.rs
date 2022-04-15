@@ -43,7 +43,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
         .add(Health { health: 10000 })
         .add(Weapon {
             weapon_type: WeaponType::Missile,
-            last_shoot_time: 0,
+            last_shoot_time: i64::MIN / 2,
             direction: 0.0,
         })
         .add(Player { score: 0 })

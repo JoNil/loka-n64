@@ -14,7 +14,7 @@ use crate::{
     },
     models::{BULLET, LASER, MISSILE},
     sound_mixer::SoundMixer,
-    sounds::{LASER_1, MISSILE_1, SHOOT_1, SHOOT_2},
+    sounds::{LASER_1, MISSILE_1, SHOOT_3},
 };
 
 #[derive(EnumCount, EnumIter, IntoStaticStr)]
@@ -162,7 +162,7 @@ pub fn fire(
         match w.weapon_type {
             WeaponType::Bullet => {
                 if now - w.last_shoot_time > BULLET_DELAY_MS as i64 * 1000 {
-                    //sound_mixer.play_sound(SHOOT_1.as_sound_data());
+                    sound_mixer.play_sound(SHOOT_3.as_sound_data());
                     shoot_bullet(
                         entities,
                         m.pos,
