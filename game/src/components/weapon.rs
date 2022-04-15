@@ -191,7 +191,7 @@ pub fn fire(
                         .chain(player.entities())
                         .filter_map(|e| movable.lookup(*e).map(|m| (m, *e)))
                         .filter_map(|(m, e)| {
-                            if e != entity {
+                            if e != entity && shooter_pos.y - m.pos.y > 0.0 {
                                 Some(((shooter_pos - m.pos).length(), m.pos, e))
                             } else {
                                 None
@@ -229,7 +229,7 @@ pub fn fire(
                         .chain(player.entities())
                         .filter_map(|e| movable.lookup(*e).map(|m| (m, *e)))
                         .filter_map(|(m, e)| {
-                            if e != entity {
+                            if e != entity && shooter_pos.y - m.pos.y > 0.0 {
                                 Some(((shooter_pos - m.pos).length(), m.pos, e))
                             } else {
                                 None
