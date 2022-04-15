@@ -187,7 +187,7 @@ pub fn fire(
                         .filter_map(|e| movable.lookup(*e).map(|m| (m, *e)))
                         .filter_map(|(m, e)| {
                             if e != entity {
-                                Some(((shooter_pos - m.pos).length(), e))
+                                Some(((shooter_pos - m.pos).length(), m.pos, e))
                             } else {
                                 None
                             }
@@ -196,9 +196,13 @@ pub fn fire(
 
                     distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
 
-                    let target_1 = distances.get(0).map(|(_, e)| *e);
-                    let target_2 = distances.get(1).map(|(_, e)| *e);
-                    let target_3 = distances.get(2).map(|(_, e)| *e);
+                    distances.truncate(3);
+
+                    distances.sort_by(|a, b| a.1.x.partial_cmp(&b.1.x).unwrap());
+
+                    let target_1 = distances.get(0).map(|e| e.2);
+                    let target_2 = distances.get(1).map(|e| e.2);
+                    let target_3 = distances.get(2).map(|e| e.2);
 
                     let offset = vec2(0.0, -s.size.y / 2.0);
 
@@ -207,7 +211,7 @@ pub fn fire(
                         m.pos,
                         offset,
                         m.speed,
-                        vec2(0.0, -0.5),
+                        vec2(-0.15, -0.5),
                         w.direction,
                         target_1,
                         target_type,
@@ -217,7 +221,7 @@ pub fn fire(
                         m.pos,
                         offset,
                         m.speed,
-                        vec2(0.15, -0.5),
+                        vec2(0.0, -0.5),
                         w.direction,
                         target_2,
                         target_type,
@@ -227,11 +231,12 @@ pub fn fire(
                         m.pos,
                         offset,
                         m.speed,
-                        vec2(-0.15, -0.5),
+                        vec2(0.15, -0.5),
                         w.direction,
                         target_3,
                         target_type,
                     );
+
                     w.last_shoot_time = now;
                 }
             }
