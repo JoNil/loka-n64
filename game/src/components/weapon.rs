@@ -1,5 +1,6 @@
 use n64::current_time_us;
 use n64_math::{const_vec2, vec2, Color, Mat2, Quat, Vec2};
+use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
 use super::{
     box_drawable::BoxDrawable, health::Health, mesh_drawable::MeshDrawable, missile::Missile,
@@ -15,6 +16,7 @@ use crate::{
     sounds::{LASER_1, SHOOT_1, SHOOT_2},
 };
 
+#[derive(EnumCount, EnumIter, IntoStaticStr)]
 pub enum WeaponType {
     Bullet,
     Missile,

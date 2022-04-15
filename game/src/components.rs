@@ -4,6 +4,7 @@ pub mod health;
 pub mod mesh_drawable;
 pub mod missile;
 pub mod movable;
+pub mod pickup;
 pub mod player;
 pub mod projectile;
 pub mod size;

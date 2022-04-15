@@ -13,11 +13,12 @@ use crate::{
         storage::Storage,
         world::World,
     },
+    font::{draw_text, text_width},
     models::SHIP_3_BODY,
     sound_mixer::SoundMixer,
 };
-use n64::Controllers;
-use n64_math::{const_vec2, Color, Quat, Vec2, Vec3};
+use n64::{gfx::CommandBuffer, Controllers, VideoMode};
+use n64_math::{const_vec2, vec2, Color, Quat, Vec2, Vec3};
 use std::f32::consts::PI;
 
 const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
@@ -57,6 +58,22 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
 pub fn add_score(player: &mut Storage<Player>, score: i32) {
     for mut player in player.components_mut() {
         player.score += score;
+    }
+}
+
+pub fn draw_player_weapon(world: &mut World, cb: &mut CommandBuffer, video_mode: &VideoMode) {
+    let (player, weapon) = world.components.get2::<Player, Weapon>();
+
+    for entity in player.entities() {
+        if let Some(weapon) = weapon.lookup(*entity) {
+            let text = (&weapon.weapon_type).into();
+            let pos = vec2(
+                video_mode.width() as f32 * 0.5 - text_width(text) as f32 * 0.5,
+                video_mode.height() as f32 * 0.9,
+            );
+
+            draw_text(cb, text, pos, 0x80808080);
+        }
     }
 }
 

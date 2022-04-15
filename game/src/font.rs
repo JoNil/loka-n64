@@ -157,3 +157,7 @@ pub fn draw_char(cb: &mut CommandBuffer, ch: char, pos: Vec2, color: u32) {
         Some(color),
     );
 }
+
+pub fn text_width(text: &str) -> i32 {
+    text.len() as i32 * GLYPH_SIZE.x as i32
+}

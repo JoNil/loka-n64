@@ -17,6 +17,10 @@ use crate::components::{
     projectile, sprite_drawable,
 };
 use camera::Camera;
+use components::{
+    pickup::{self, spawn_pickup},
+    player::draw_player_weapon,
+};
 use ecs::world::World;
 use map::Map;
 use maps::MAP_1;
@@ -68,6 +72,8 @@ fn main() {
     let mut camera = Camera::new(start_pos);
     let mut command_buffer_cache = CommandBufferCache::new();
 
+    let _test_pickup = spawn_pickup(&mut world.entities, start_pos + vec2(0.5, 0.2));
+
     let player = spawn_player(&mut world.entities, start_pos);
 
     map.spawn_enemies(&mut world, &VIDEO_MODE);
@@ -99,6 +105,7 @@ fn main() {
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
             projectile::update(&mut world, &camera);
             missile::update(&mut world);
+            pickup::update(&mut world, &camera);
             movable::simulate(&mut world, dt);
         }
 
@@ -252,6 +259,8 @@ fn main() {
                         0x00af00ff,
                     );
                 }
+
+                draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
 
                 cb.run(&mut n64.graphics)
             };
