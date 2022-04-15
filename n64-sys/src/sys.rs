@@ -2,8 +2,8 @@ use core::{arch::asm, mem::size_of, sync::atomic::Ordering};
 
 #[inline]
 pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
-    let mut addr = (block.as_ptr() as usize) & 0xffff_fff0;
-    let mut len = block.len() * size_of::<T>() + (block.as_ptr() as usize - addr as usize);
+    let addr = (block.as_ptr() as usize) & 0xffff_fff0;
+    let len = block.len() * size_of::<T>() + (block.as_ptr() as usize - addr as usize);
     let mut i = 0;
 
     while i < len {
@@ -27,8 +27,8 @@ pub unsafe fn data_cache_hit_writeback_invalidate_single(addr: usize) {
 
 #[inline]
 pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
-    let mut addr = (block.as_ptr() as usize) & 0xffff_fff0;
-    let mut len = block.len() * size_of::<T>() + (block.as_ptr() as usize - addr as usize);
+    let addr = (block.as_ptr() as usize) & 0xffff_fff0;
+    let len = block.len() * size_of::<T>() + (block.as_ptr() as usize - addr as usize);
     let mut i = 0;
 
     while i < len {
@@ -52,8 +52,8 @@ pub unsafe fn data_cache_hit_writeback_single(addr: usize) {
 
 #[inline]
 pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
-    let mut addr = (block.as_ptr() as usize) & 0xffff_fff0;
-    let mut len = block.len() * size_of::<T>() + (block.as_ptr() as usize - addr as usize);
+    let addr = (block.as_ptr() as usize) & 0xffff_fff0;
+    let len = block.len() * size_of::<T>() + (block.as_ptr() as usize - addr as usize);
     let mut i = 0;
 
     while i < len {

@@ -1,6 +1,5 @@
 use super::{Texture, TextureMut};
 use crate::graphics::Graphics;
-use n64_macros::{debugflush, debugln};
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;

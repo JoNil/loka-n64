@@ -1,8 +1,6 @@
 use crate::sys::{
-    data_cache_hit_invalidate, data_cache_hit_invalidate_single, data_cache_hit_writeback,
     data_cache_hit_writeback_invalidate, data_cache_hit_writeback_invalidate_single,
-    data_cache_hit_writeback_single, memory_barrier, uncached_addr, uncached_addr_mut,
-    virtual_to_physical, virtual_to_physical_mut,
+    memory_barrier, uncached_addr, uncached_addr_mut, virtual_to_physical, virtual_to_physical_mut,
 };
 use core::{
     ptr::{read_volatile, write_volatile},

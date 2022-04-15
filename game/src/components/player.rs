@@ -1,5 +1,4 @@
 use super::{
-    box_drawable::BoxDrawable,
     enemy::Enemy,
     health::Health,
     mesh_drawable::MeshDrawable,
@@ -18,9 +17,9 @@ use crate::{
     models::SHIP_3_BODY,
     sound_mixer::SoundMixer,
 };
+use core::f32::consts::PI;
 use n64::{gfx::CommandBuffer, Controllers, VideoMode};
 use n64_math::{const_vec2, vec2, Quat, Vec2, Vec3};
-use std::f32::consts::PI;
 
 const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
