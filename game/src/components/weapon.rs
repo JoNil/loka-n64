@@ -12,7 +12,7 @@ use crate::{
         entity::{Entity, EntitySystem},
         storage::Storage,
     },
-    models::LASER_BODY,
+    models::{BULLET_BODY, LASER_BODY},
     sound_mixer::SoundMixer,
     sounds::{LASER_1, SHOOT_1, SHOOT_2},
 };
@@ -38,7 +38,6 @@ pub struct Weapon {
 
 const BULLET_DELAY_MS: i32 = 300;
 const MISSILE_DELAY_MS: i32 = 2000;
-const BULLET_SIZE: Vec2 = const_vec2!([0.02, 0.02]);
 const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
 
 pub fn shoot_bullet(
@@ -63,10 +62,13 @@ pub fn shoot_bullet(
             pos: pos + offset,
             speed: speed + speed_offset,
         })
-        .add(Size { size: BULLET_SIZE })
+        .add(Size {
+            size: BULLET_BODY.size,
+        })
         .add(Health { health: 5 })
-        .add(BoxDrawable {
-            color: Color::from_rgb(0.9, 0.2, 0.7),
+        .add(MeshDrawable {
+            model: BULLET_BODY.as_model_data(),
+            rot: Quat::IDENTITY,
         })
         .add(Projectile {
             target_type,
