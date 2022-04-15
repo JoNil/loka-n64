@@ -55,39 +55,43 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
         .components
         .get6::<Enemy, Movable, Health, Size, Player, Weapon>();
 
-    for (enemy, entity) in enemy.components_and_entities_mut() {
-        if !health::is_alive(health, entity) {
+    for entity in enemy.entities() {
+        if !health::is_alive(health, *entity) {
             sound_mixer.play_sound(EXPLOSION_0.as_sound_data());
             player::add_score(player, 1000);
-            world.entities.despawn(entity);
+            world.entities.despawn(*entity);
         }
 
         weapon::fire(
             &mut world.entities,
-            entity,
+            *entity,
             sound_mixer,
+            weapon,
             movable,
             size,
-            weapon,
+            enemy,
+            player,
             WeaponTarget::Player,
         );
+    }
 
+    for (e, entity) in enemy.components_and_entities_mut() {
         if let Some(movable) = movable.lookup_mut(entity) {
-            if enemy.waypoint_step >= 1.0 {
-                enemy.waypoint_step -= 1.0;
-                enemy.waypoint += 1;
-                if enemy.waypoint >= ENEMY_WAYPOINT.len() {
-                    enemy.waypoint = 0;
+            if e.waypoint_step >= 1.0 {
+                e.waypoint_step -= 1.0;
+                e.waypoint += 1;
+                if e.waypoint >= ENEMY_WAYPOINT.len() {
+                    e.waypoint = 0;
                 }
             }
 
-            let a_waypoint = (enemy.waypoint + 1) % ENEMY_WAYPOINT.len();
-            let speed_a = ENEMY_WAYPOINT[a_waypoint] - ENEMY_WAYPOINT[enemy.waypoint];
+            let a_waypoint = (e.waypoint + 1) % ENEMY_WAYPOINT.len();
+            let speed_a = ENEMY_WAYPOINT[a_waypoint] - ENEMY_WAYPOINT[e.waypoint];
             let b_waypoint = (a_waypoint + 1) % ENEMY_WAYPOINT.len();
             let speed_b = ENEMY_WAYPOINT[b_waypoint] - ENEMY_WAYPOINT[a_waypoint];
 
-            movable.speed = (1.0 - enemy.waypoint_step) * speed_a + enemy.waypoint_step * speed_b;
-            enemy.waypoint_step += dt;
+            movable.speed = (1.0 - e.waypoint_step) * speed_a + e.waypoint_step * speed_b;
+            e.waypoint_step += dt;
         }
     }
 }

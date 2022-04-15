@@ -1,5 +1,6 @@
 use super::{
     box_drawable::BoxDrawable,
+    enemy::Enemy,
     health::Health,
     mesh_drawable::MeshDrawable,
     movable::Movable,
@@ -18,7 +19,7 @@ use crate::{
     sound_mixer::SoundMixer,
 };
 use n64::{gfx::CommandBuffer, Controllers, VideoMode};
-use n64_math::{const_vec2, vec2, Color, Quat, Vec2, Vec3};
+use n64_math::{const_vec2, vec2, Quat, Vec2, Vec3};
 use std::f32::consts::PI;
 
 const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
@@ -42,12 +43,9 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             model: SHIP_3_BODY.as_model_data(),
             rot: Quat::IDENTITY,
         })
-        .add(BoxDrawable {
-            color: Color::from_rgb(0.1, 0.1, 0.8),
-        })
         .add(Health { health: 10000 })
         .add(Weapon {
-            weapon_type: WeaponType::Laser,
+            weapon_type: WeaponType::Missile,
             last_shoot_time: 0,
             direction: 0.0,
         })
@@ -83,9 +81,9 @@ pub fn update(
     sound_mixer: &mut SoundMixer,
     camera: &Camera,
 ) {
-    let (player, movable, size, mesh_drawable, weapon) = world
+    let (player, movable, size, mesh_drawable, weapon, enemy) = world
         .components
-        .get5::<Player, Movable, Size, MeshDrawable, Weapon>();
+        .get6::<Player, Movable, Size, MeshDrawable, Weapon, Enemy>();
 
     for entity in player.entities() {
         let controller_x = controllers.x();
@@ -120,9 +118,11 @@ pub fn update(
                 &mut world.entities,
                 *entity,
                 sound_mixer,
+                weapon,
                 movable,
                 size,
-                weapon,
+                enemy,
+                player,
                 WeaponTarget::Enemy,
             );
         }

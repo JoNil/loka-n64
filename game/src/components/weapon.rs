@@ -3,8 +3,8 @@ use n64_math::{const_vec2, vec2, Color, Mat2, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
 use super::{
-    box_drawable::BoxDrawable, health::Health, mesh_drawable::MeshDrawable, missile::Missile,
-    movable::Movable, projectile::Projectile, size::Size,
+    box_drawable::BoxDrawable, enemy::Enemy, health::Health, mesh_drawable::MeshDrawable,
+    missile::Missile, movable::Movable, player::Player, projectile::Projectile, size::Size,
 };
 use crate::{
     ecs::{
@@ -70,6 +70,7 @@ pub fn shoot_bullet(
         .add(Projectile {
             target_type,
             damage: 50 + (n64_math::random_f32() * 20.0) as i32,
+            projectile_collision_grace_period_ms: 0,
         });
 }
 
@@ -105,6 +106,7 @@ pub fn shoot_missile(
         .add(Projectile {
             target_type,
             damage: 100 + (n64_math::random_f32() * 50.0) as i32,
+            projectile_collision_grace_period_ms: 1000,
         })
         .add(Missile { target });
 }
@@ -134,6 +136,7 @@ pub fn shoot_laser(
         .add(Projectile {
             target_type,
             damage: 1,
+            projectile_collision_grace_period_ms: 0,
         });
 }
 
@@ -141,9 +144,11 @@ pub fn fire(
     entities: &mut EntitySystem,
     entity: Entity,
     sound_mixer: &mut SoundMixer,
-    movable: &mut Storage<Movable>,
-    size: &mut Storage<Size>,
     weapon: &mut Storage<Weapon>,
+    movable: &Storage<Movable>,
+    size: &Storage<Size>,
+    enemy: &Storage<Enemy>,
+    player: &Storage<Player>,
     target_type: WeaponTarget,
 ) {
     let now = current_time_us();
@@ -175,8 +180,11 @@ pub fn fire(
 
                     let shooter_pos = m.pos;
 
-                    let mut distances = movable
-                        .components_and_entities()
+                    let mut distances = enemy
+                        .entities()
+                        .iter()
+                        .chain(player.entities())
+                        .filter_map(|e| movable.lookup(*e).map(|m| (m, *e)))
                         .filter_map(|(m, e)| {
                             if e != entity {
                                 Some(((shooter_pos - m.pos).length(), e))

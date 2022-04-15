@@ -12,9 +12,10 @@ use n64_math::{vec2, Aabb2};
 pub struct Projectile {
     pub target_type: WeaponTarget,
     pub damage: i32,
+    pub projectile_collision_grace_period_ms: i32,
 }
 
-pub fn update(world: &mut World, camera: &Camera) {
+pub fn update(world: &mut World, camera: &Camera, dt: f32) {
     let (projectile, movable, enemy, player, size, health) = world
         .components
         .get6::<Projectile, Movable, Enemy, Player, Size, Health>();
@@ -66,16 +67,20 @@ pub fn update(world: &mut World, camera: &Camera) {
                 }
             }
 
-            for j in (i + 1)..projectiles.len() {
-                let p2 = &projectiles[j];
-                let e2 = entities[j];
+            if p1.projectile_collision_grace_period_ms <= 0 {
+                for j in (i + 1)..projectiles.len() {
+                    let p2 = &projectiles[j];
+                    let e2 = entities[j];
 
-                if let (Some(m2), Some(s2)) = (movable.lookup(e2), size.lookup(e2)) {
-                    let projectile_bb_2 = Aabb2::from_center_size(m2.pos, s2.size);
+                    if p2.projectile_collision_grace_period_ms <= 0 {
+                        if let (Some(m2), Some(s2)) = (movable.lookup(e2), size.lookup(e2)) {
+                            let projectile_bb_2 = Aabb2::from_center_size(m2.pos, s2.size);
 
-                    if projectile_bb.collides(&projectile_bb_2) {
-                        health::damage(health, e2, p1.damage);
-                        health::damage(health, e1, p2.damage);
+                            if projectile_bb.collides(&projectile_bb_2) {
+                                health::damage(health, e2, p1.damage);
+                                health::damage(health, e1, p2.damage);
+                            }
+                        }
                     }
                 }
             }
@@ -88,5 +93,10 @@ pub fn update(world: &mut World, camera: &Camera) {
                 world.entities.despawn(e1);
             }
         }
+    }
+
+    for p in projectile.components_mut() {
+        p.projectile_collision_grace_period_ms =
+            (p.projectile_collision_grace_period_ms - (dt * 1000.0) as i32).max(0);
     }
 }
