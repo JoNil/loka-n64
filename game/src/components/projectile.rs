@@ -6,7 +6,7 @@ use super::{
     size::Size,
     weapon::WeaponTarget,
 };
-use crate::{camera::Camera, ecs::world::World};
+use crate::{camera::Camera, ecs::world::World, sound_mixer::SoundMixer, sounds::HIT_1};
 use n64_math::{vec2, Aabb2};
 
 pub struct Projectile {
@@ -15,7 +15,7 @@ pub struct Projectile {
     pub projectile_collision_grace_period_ms: i32,
 }
 
-pub fn update(world: &mut World, camera: &Camera, dt: f32) {
+pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, camera: &Camera, dt: f32) {
     let (projectile, movable, enemy, player, size, health) = world
         .components
         .get6::<Projectile, Movable, Enemy, Player, Size, Health>();
@@ -45,6 +45,7 @@ pub fn update(world: &mut World, camera: &Camera, dt: f32) {
                         let enemy_bb = Aabb2::from_center_size(m2.pos, s2.size);
 
                         if projectile_bb.collides(&enemy_bb) {
+                            sound_mixer.play_sound(HIT_1.as_sound_data());
                             health::damage(health, *enemy_entity, p1.damage);
                             delete = true;
                         }
@@ -60,6 +61,7 @@ pub fn update(world: &mut World, camera: &Camera, dt: f32) {
                         let player_bb = Aabb2::from_center_size(m2.pos, s2.size);
 
                         if projectile_bb.collides(&player_bb) {
+                            sound_mixer.play_sound(HIT_1.as_sound_data());
                             health::damage(health, *player_entity, p1.damage);
                             delete = true;
                         }
@@ -77,6 +79,7 @@ pub fn update(world: &mut World, camera: &Camera, dt: f32) {
                             let projectile_bb_2 = Aabb2::from_center_size(m2.pos, s2.size);
 
                             if projectile_bb.collides(&projectile_bb_2) {
+                                sound_mixer.play_sound(HIT_1.as_sound_data());
                                 health::damage(health, e2, p1.damage);
                                 health::damage(health, e1, p2.damage);
                             }

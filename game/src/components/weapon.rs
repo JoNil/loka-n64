@@ -14,14 +14,15 @@ use crate::{
     },
     models::{BULLET, LASER, MISSILE},
     sound_mixer::SoundMixer,
-    sounds::{LASER_1, SHOOT_1, SHOOT_2},
+    sounds::{LASER_1, MISSILE_1, SHOOT_1, SHOOT_2},
 };
 
 #[derive(EnumCount, EnumIter, IntoStaticStr)]
 pub enum WeaponType {
     Bullet,
-    Missile,
     Laser,
+    Missile,
+    TrippleMissile,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -174,9 +175,51 @@ pub fn fire(
                     w.last_shoot_time = now;
                 }
             }
+            WeaponType::Laser => {
+                sound_mixer.play_sound(LASER_1.as_sound_data());
+                shoot_laser(entities, m.pos, m.speed, w.direction, target_type);
+            }
             WeaponType::Missile => {
                 if now - w.last_shoot_time > MISSILE_DELAY_MS as i64 * 1000 {
-                    sound_mixer.play_sound(SHOOT_2.as_sound_data());
+                    sound_mixer.play_sound(MISSILE_1.as_sound_data());
+
+                    let shooter_pos = m.pos;
+
+                    let mut distances = enemy
+                        .entities()
+                        .iter()
+                        .chain(player.entities())
+                        .filter_map(|e| movable.lookup(*e).map(|m| (m, *e)))
+                        .filter_map(|(m, e)| {
+                            if e != entity {
+                                Some(((shooter_pos - m.pos).length(), m.pos, e))
+                            } else {
+                                None
+                            }
+                        })
+                        .collect::<Vec<_>>();
+
+                    distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+                    let target_1 = distances.get(0).map(|e| e.2);
+
+                    shoot_missile(
+                        entities,
+                        m.pos,
+                        vec2(0.0, -s.size.y / 2.0),
+                        m.speed,
+                        vec2(0.0, -0.5),
+                        w.direction,
+                        target_1,
+                        target_type,
+                    );
+
+                    w.last_shoot_time = now;
+                }
+            }
+            WeaponType::TrippleMissile => {
+                if now - w.last_shoot_time > MISSILE_DELAY_MS as i64 * 1000 {
+                    sound_mixer.play_sound(MISSILE_1.as_sound_data());
 
                     let shooter_pos = m.pos;
 
@@ -239,10 +282,6 @@ pub fn fire(
 
                     w.last_shoot_time = now;
                 }
-            }
-            WeaponType::Laser => {
-                sound_mixer.play_sound(LASER_1.as_sound_data());
-                shoot_laser(entities, m.pos, m.speed, w.direction, target_type);
             }
         }
     }

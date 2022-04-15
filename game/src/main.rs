@@ -103,9 +103,9 @@ fn main() {
 
             enemy::update(&mut world, &mut sound_mixer, dt);
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
-            projectile::update(&mut world, &camera, dt);
+            projectile::update(&mut world, &mut sound_mixer, &camera, dt);
             missile::update(&mut world);
-            pickup::update(&mut world, &camera);
+            pickup::update(&mut world, &mut sound_mixer, &camera);
             movable::simulate(&mut world, dt);
         }
 

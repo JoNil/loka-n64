@@ -1,7 +1,7 @@
 use n64_math::{Quat, Vec2};
 
 use super::{
-    mesh_drawable::{self, MeshDrawable},
+    mesh_drawable::MeshDrawable,
     movable::{self, Movable},
 };
 use crate::ecs::{entity::Entity, world::World};

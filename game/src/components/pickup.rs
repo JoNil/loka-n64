@@ -12,6 +12,8 @@ use crate::{
         world::World,
     },
     models::WEAPON_PICKUP,
+    sound_mixer::SoundMixer,
+    sounds::PICKUP_1,
 };
 use n64_math::{random_u32, vec2, Aabb2, Quat, Vec2};
 use strum::{EnumCount, IntoEnumIterator};
@@ -36,7 +38,7 @@ pub fn spawn_pickup(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
         .entity()
 }
 
-pub fn update(world: &mut World, camera: &Camera) {
+pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, camera: &Camera) {
     let (pickup, movable, player, size, weapon) = world
         .components
         .get5::<Pickup, Movable, Player, Size, Weapon>();
@@ -61,6 +63,7 @@ pub fn update(world: &mut World, camera: &Camera) {
                     let player_bb = Aabb2::from_center_size(player_movable.pos, player_size.size);
 
                     if pickup_bb.collides(&player_bb) {
+                        sound_mixer.play_sound(PICKUP_1.as_sound_data());
                         let weapon_index = random_u32() % WeaponType::COUNT as u32;
                         player_weapon.weapon_type =
                             WeaponType::iter().nth(weapon_index as usize).unwrap();
