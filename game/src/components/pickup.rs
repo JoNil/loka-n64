@@ -11,7 +11,7 @@ use crate::{
         entity::{Entity, EntitySystem},
         world::World,
     },
-    models::WEAPON_PICKUP_BODY,
+    models::WEAPON_PICKUP,
 };
 use n64_math::{random_u32, vec2, Aabb2, Quat, Vec2};
 use strum::{EnumCount, IntoEnumIterator};
@@ -26,10 +26,10 @@ pub fn spawn_pickup(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             speed: Vec2::new(0.0, 0.0),
         })
         .add(Size {
-            size: WEAPON_PICKUP_BODY.size,
+            size: WEAPON_PICKUP.size,
         })
         .add(MeshDrawable {
-            model: WEAPON_PICKUP_BODY.as_model_data(),
+            model: WEAPON_PICKUP.as_model_data(),
             rot: Quat::IDENTITY,
         })
         .add(Pickup {})

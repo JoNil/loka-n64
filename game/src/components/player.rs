@@ -14,7 +14,7 @@ use crate::{
         world::World,
     },
     font::{draw_text, text_width},
-    models::SHIP_3_BODY,
+    models::SHIP_3,
     sound_mixer::SoundMixer,
 };
 use core::f32::consts::PI;
@@ -35,11 +35,9 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             pos: start_pos + PLAYTER_START_POS,
             speed: Vec2::new(0.0, 0.0),
         })
-        .add(Size {
-            size: SHIP_3_BODY.size,
-        })
+        .add(Size { size: SHIP_3.size })
         .add(MeshDrawable {
-            model: SHIP_3_BODY.as_model_data(),
+            model: SHIP_3.as_model_data(),
             rot: Quat::IDENTITY,
         })
         .add(Health { health: 10000 })

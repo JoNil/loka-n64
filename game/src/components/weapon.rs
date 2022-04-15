@@ -1,18 +1,18 @@
 use alloc::vec::Vec;
 use n64::current_time_us;
-use n64_math::{const_vec2, vec2, Color, Mat2, Quat, Vec2};
+use n64_math::{const_vec2, vec2, Mat2, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
 use super::{
-    box_drawable::BoxDrawable, enemy::Enemy, health::Health, mesh_drawable::MeshDrawable,
-    missile::Missile, movable::Movable, player::Player, projectile::Projectile, size::Size,
+    enemy::Enemy, health::Health, mesh_drawable::MeshDrawable, missile::Missile, movable::Movable,
+    player::Player, projectile::Projectile, size::Size,
 };
 use crate::{
     ecs::{
         entity::{Entity, EntitySystem},
         storage::Storage,
     },
-    models::{BULLET_BODY, LASER_BODY},
+    models::{BULLET, LASER, MISSILE},
     sound_mixer::SoundMixer,
     sounds::{LASER_1, SHOOT_1, SHOOT_2},
 };
@@ -62,12 +62,10 @@ pub fn shoot_bullet(
             pos: pos + offset,
             speed: speed + speed_offset,
         })
-        .add(Size {
-            size: BULLET_BODY.size,
-        })
+        .add(Size { size: BULLET.size })
         .add(Health { health: 5 })
         .add(MeshDrawable {
-            model: BULLET_BODY.as_model_data(),
+            model: BULLET.as_model_data(),
             rot: Quat::IDENTITY,
         })
         .add(Projectile {
@@ -103,8 +101,9 @@ pub fn shoot_missile(
         })
         .add(Size { size: MISSILE_SIZE })
         .add(Health { health: 15 })
-        .add(BoxDrawable {
-            color: Color::from_rgb(1.0, 0.4, 0.4),
+        .add(MeshDrawable {
+            model: MISSILE.as_model_data(),
+            rot: Quat::IDENTITY,
         })
         .add(Projectile {
             target_type,
@@ -121,7 +120,7 @@ pub fn shoot_laser(
     direction: f32,
     target_type: WeaponTarget,
 ) {
-    let extent = Mat2::from_angle(direction).mul_vec2(vec2(0.0, -LASER_BODY.size.y / 2.0));
+    let extent = Mat2::from_angle(direction).mul_vec2(vec2(0.0, -LASER.size.y / 2.0));
 
     entities
         .spawn()
@@ -129,11 +128,9 @@ pub fn shoot_laser(
             pos: pos + extent,
             speed,
         })
-        .add(Size {
-            size: LASER_BODY.size,
-        })
+        .add(Size { size: LASER.size })
         .add(MeshDrawable {
-            model: LASER_BODY.as_model_data(),
+            model: LASER.as_model_data(),
             rot: Quat::IDENTITY,
         })
         .add(Projectile {

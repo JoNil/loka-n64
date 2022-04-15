@@ -164,11 +164,9 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
 
             for obj in blend.get_by_code(*b"OB") {
                 if obj.is_valid("data") && obj.get("data").code()[0..=1] == *b"ME" {
-                    let model_name = obj.get("id").get_string("name");
-                    let model_name = model_name.trim_start_matches("OB");
                     let data = obj.get("data");
 
-                    let name = format!("{}_{}", file_name, model_name);
+                    let name = format!("{}", file_name);
                     let out_base_path = path.canonicalize()?.with_file_name(&name);
 
                     if let Some(model) = parse_model(data) {
