@@ -23,6 +23,7 @@ lazy_static = "1"
 naga = { version = "0.8", features = ["glsl-in", "spv-out"] }
 rubato = { git = "https://github.com/JoNil/rubato.git" }
 wgpu = { version = "0.12", features = ["spirv"] }
+wgpu-mipmap = { git = "https://github.com/JoNil/wgpu-mipmap.git" }
 winit = "0.26"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]

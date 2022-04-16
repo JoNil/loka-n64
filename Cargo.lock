@@ -1311,6 +1311,7 @@ dependencies = [
  "rubato",
  "spin",
  "wgpu",
+ "wgpu-mipmap",
  "winit",
  "zerocopy",
 ]
@@ -2463,6 +2464,16 @@ dependencies = [
  "web-sys",
  "wgpu-types",
  "winapi",
+]
+
+[[package]]
+name = "wgpu-mipmap"
+version = "0.1.0"
+source = "git+https://github.com/JoNil/wgpu-mipmap.git#8506951b1093a88a5bc6678c4cc8d2252261c3a0"
+dependencies = [
+ "log",
+ "thiserror",
+ "wgpu",
 ]
 
 [[package]]

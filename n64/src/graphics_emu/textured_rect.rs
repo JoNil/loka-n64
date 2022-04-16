@@ -2,8 +2,10 @@ use crate::{
     gfx::Texture,
     graphics_emu::{shader, Vertex},
 };
+use libm::log2f;
 use std::{collections::HashMap, mem, num::NonZeroU32};
 use wgpu::SamplerBindingType;
+use wgpu_mipmap::{MipmapGenerator, RenderMipmapGenerator};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
@@ -159,7 +161,7 @@ impl TexturedRect {
             address_mode_w: wgpu::AddressMode::ClampToEdge,
             mag_filter: wgpu::FilterMode::Linear,
             min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::FilterMode::Linear,
             lod_min_clamp: 0.0,
             lod_max_clamp: 100.0,
             compare: None,
@@ -193,20 +195,25 @@ impl TexturedRect {
 
         let tex_format = wgpu::TextureFormat::Rgba8Unorm;
 
+        let generator = RenderMipmapGenerator::new_with_format_hints(device, &[tex_format]);
+
         let tex_extent = wgpu::Extent3d {
             width: texture.width as u32,
             height: texture.height as u32,
             depth_or_array_layers: 1,
         };
-        let tex = device.create_texture(&wgpu::TextureDescriptor {
+        let tex_descriptor = wgpu::TextureDescriptor {
             label: None,
             size: tex_extent,
-            mip_level_count: 1,
+            mip_level_count: 1 + log2f(texture.width.max(texture.height) as f32) as u32,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: tex_format,
-            usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
-        });
+            usage: wgpu::TextureUsages::COPY_DST
+                | wgpu::TextureUsages::TEXTURE_BINDING
+                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+        };
+        let tex = device.create_texture(&tex_descriptor);
         let tex_view = tex.create_view(&Default::default());
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
@@ -257,6 +264,12 @@ impl TexturedRect {
             },
             tex_extent,
         );
+
+        let mut encoder = device.create_command_encoder(&Default::default());
+        generator
+            .generate(device, &mut encoder, &tex, &tex_descriptor)
+            .unwrap();
+        queue.submit(std::iter::once(encoder.finish()));
 
         self.texture_cache
             .insert(texture.data.as_ptr() as _, UploadedTexture { bind_group });
