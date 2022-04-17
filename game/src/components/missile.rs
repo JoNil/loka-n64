@@ -6,11 +6,14 @@ use super::{
 };
 use crate::ecs::{entity::Entity, world::World};
 
+const MISSILE_ACCELERATION: f32 = 0.6;
+const MISSILE_MAX_SPEED: f32 = 1.0;
+
 pub struct Missile {
     pub target: Option<Entity>,
 }
 
-pub fn update(world: &mut World) {
+pub fn update(world: &mut World, dt: f32) {
     let (missile, movable, mesh_drawable) =
         world.components.get3::<Missile, Movable, MeshDrawable>();
 
@@ -23,8 +26,9 @@ pub fn update(world: &mut World) {
             if let Some(target_pos) = target_pos {
                 let towords_target = (target_pos - m.pos).normalize();
                 let speed_dir = m.speed.normalize();
-                let new_speed_dir = (0.05 * towords_target + 0.95 * speed_dir).normalize();
-                let new_speed = new_speed_dir * m.speed.length();
+                let new_speed_dir = (0.02 * towords_target + 0.98 * speed_dir).normalize();
+                let new_speed = new_speed_dir
+                    * MISSILE_MAX_SPEED.min(m.speed.length() + MISSILE_ACCELERATION * dt);
                 m.speed = new_speed;
 
                 d.rot = Quat::from_rotation_z((-Vec2::Y).angle_between(new_speed_dir))
