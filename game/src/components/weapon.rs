@@ -1,6 +1,13 @@
 use alloc::vec::Vec;
 use core::f32::consts::PI;
-use n64::{current_time_us, gfx::CommandBuffer, VideoMode};
+use n64::{
+    current_time_us,
+    gfx::{
+        color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
+        CommandBuffer,
+    },
+    VideoMode,
+};
 use n64_math::{const_vec2, vec2, vec3, Mat2, Mat4, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
@@ -301,11 +308,26 @@ pub fn draw_missile_target(
 
     let target_indicator = TARGET_INDICATOR.as_model_data();
 
+    // (a - b)*c + d
+    cb.set_color_combiner_mode(ColorCombiner {
+        a: ASrc::Zero,
+        b: BSrc::Zero,
+        c: CSrc::Zero,
+        d: DSrc::Environment,
+        ..Default::default()
+    });
+
     for player_entity in player.entities() {
         if let (Some(m), Some(w)) = (
             movable.lookup(*player_entity),
             weapon.lookup_mut(*player_entity),
         ) {
+            if current_time_us() - w.last_shoot_time > MISSILE_DELAY_MS as i64 * 1000 {
+                cb.set_env_color(0x008000ff);
+            } else {
+                cb.set_env_color(0x800000ff);
+            }
+
             if w.weapon_type == WeaponType::Missile {
                 let shooter_pos = m.pos;
 

@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 
 #[derive(Clone, Copy)]
-enum ASrc {
+pub enum ASrc {
     Combined = 0,
     Texel = 1,
     Primitive = 3,
@@ -13,7 +13,7 @@ enum ASrc {
 }
 
 #[derive(Clone, Copy)]
-enum BSrc {
+pub enum BSrc {
     Combined = 0,
     Texel = 1,
     Primitive = 3,
@@ -23,7 +23,7 @@ enum BSrc {
 }
 
 #[derive(Clone, Copy)]
-enum CSrc {
+pub enum CSrc {
     Combined = 0,
     Texel = 1,
     Primitive = 3,
@@ -38,7 +38,7 @@ enum CSrc {
 }
 
 #[derive(Clone, Copy)]
-enum DSrc {
+pub enum DSrc {
     Combined = 0,
     Texel = 1,
     Primitive = 3,
@@ -49,7 +49,7 @@ enum DSrc {
 }
 
 #[derive(Clone, Copy)]
-enum AAlphaSrc {
+pub enum AAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
     PrimitiveAlpha = 3,
@@ -60,7 +60,7 @@ enum AAlphaSrc {
 }
 
 #[derive(Clone, Copy)]
-enum BAlphaSrc {
+pub enum BAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
     PrimitiveAlpha = 3,
@@ -71,7 +71,7 @@ enum BAlphaSrc {
 }
 
 #[derive(Clone, Copy)]
-enum CAlphaSrc {
+pub enum CAlphaSrc {
     TexelAlpha = 1,
     PrimitiveAlpha = 3,
     ShadeAlpha = 4,
@@ -80,7 +80,7 @@ enum CAlphaSrc {
 }
 
 #[derive(Clone, Copy)]
-enum DAlphaSrc {
+pub enum DAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
     PrimitiveAlpha = 3,
@@ -92,14 +92,14 @@ enum DAlphaSrc {
 
 #[derive(Clone, Copy)]
 pub struct ColorCombiner {
-    a: ASrc,
-    b: BSrc,
-    c: CSrc,
-    d: DSrc,
-    aa: AAlphaSrc,
-    ba: BAlphaSrc,
-    ca: CAlphaSrc,
-    da: DAlphaSrc,
+    pub a: ASrc,
+    pub b: BSrc,
+    pub c: CSrc,
+    pub d: DSrc,
+    pub aa: AAlphaSrc,
+    pub ba: BAlphaSrc,
+    pub ca: CAlphaSrc,
+    pub da: DAlphaSrc,
 }
 
 impl Default for ColorCombiner {

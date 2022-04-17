@@ -33,9 +33,9 @@ pub fn update(world: &mut World, dt: f32) {
                         m.speed.length() + MISSILE_ACCELERATION * dt,
                     );
                 m.speed = new_speed;
-
-                d.rot = Quat::from_rotation_z((-Vec2::Y).angle_between(new_speed_dir))
             }
+
+            d.rot = Quat::from_rotation_z((-Vec2::Y).angle_between(m.speed))
         }
     }
 }
