@@ -309,17 +309,20 @@ impl<'a> CommandBuffer<'a> {
     }
 
     pub fn set_prim_color(&mut self, prim_color: u32) -> &mut Self {
-        self.cache.rdp.set_prim_color(prim_color);
+        self.cache.rdp.sync_pipe().set_prim_color(prim_color);
         self
     }
 
     pub fn set_env_color(&mut self, env_color: u32) -> &mut Self {
-        self.cache.rdp.set_env_color(env_color);
+        self.cache.rdp.sync_pipe().set_env_color(env_color);
         self
     }
 
     pub fn set_color_combiner_mode(&mut self, color_combiner: ColorCombiner) -> &mut Self {
-        self.cache.rdp.set_combine_mode(color_combiner.to_command());
+        self.cache
+            .rdp
+            .sync_pipe()
+            .set_combine_mode(color_combiner.to_command());
         self
     }
 
