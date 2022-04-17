@@ -172,7 +172,9 @@ pub fn fire(
         match w.weapon_type {
             WeaponType::Bullet => {
                 if now - w.last_shoot_time > BULLET_DELAY_MS as i64 * 1000 {
-                    sound_mixer.play_sound(SHOOT_3.as_sound_data());
+                    if target_type == WeaponTarget::Enemy {
+                        sound_mixer.play_sound(SHOOT_3.as_sound_data());
+                    }
                     shoot_bullet(
                         entities,
                         m.pos,
@@ -186,12 +188,16 @@ pub fn fire(
                 }
             }
             WeaponType::Laser => {
-                sound_mixer.play_sound(LASER_1.as_sound_data());
+                if target_type == WeaponTarget::Enemy {
+                    sound_mixer.play_sound(LASER_1.as_sound_data());
+                }
                 shoot_laser(entities, m.pos, m.speed, w.direction, target_type);
             }
             WeaponType::Missile => {
                 if now - w.last_shoot_time > MISSILE_DELAY_MS as i64 * 1000 {
-                    sound_mixer.play_sound(MISSILE_1.as_sound_data());
+                    if target_type == WeaponTarget::Enemy {
+                        sound_mixer.play_sound(MISSILE_1.as_sound_data());
+                    }
 
                     let shooter_pos = m.pos;
 
@@ -229,7 +235,9 @@ pub fn fire(
             }
             WeaponType::TrippleMissile => {
                 if now - w.last_shoot_time > MISSILE_DELAY_MS as i64 * 1000 {
-                    sound_mixer.play_sound(MISSILE_1.as_sound_data());
+                    if target_type == WeaponTarget::Enemy {
+                        sound_mixer.play_sound(MISSILE_1.as_sound_data());
+                    }
 
                     let shooter_pos = m.pos;
 
