@@ -20,6 +20,7 @@ use camera::Camera;
 use components::{
     pickup::{self, spawn_pickup},
     player::draw_player_weapon,
+    weapon::draw_missile_target,
 };
 use ecs::world::World;
 use map::Map;
@@ -130,6 +131,8 @@ fn main() {
                 box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
                 sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
                 mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+
+                draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
 
                 {
                     if DEBUG_TRIANGLES {

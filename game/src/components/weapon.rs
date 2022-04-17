@@ -1,6 +1,8 @@
+use std::f32::consts::PI;
+
 use alloc::vec::Vec;
 use n64::{current_time_us, gfx::CommandBuffer, VideoMode};
-use n64_math::{const_vec2, vec2, Mat2, Quat, Vec2};
+use n64_math::{const_vec2, vec2, vec3, Mat2, Mat4, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
 use super::{
@@ -8,12 +10,13 @@ use super::{
     player::Player, projectile::Projectile, size::Size,
 };
 use crate::{
+    camera::Camera,
     ecs::{
         entity::{Entity, EntitySystem},
         storage::Storage,
         world::World,
     },
-    models::{BULLET, LASER, MISSILE},
+    models::{BULLET, LASER, MISSILE, TARGET_INDICATOR},
     sound_mixer::SoundMixer,
     sounds::{LASER_1, MISSILE_1, SHOOT_3},
 };
@@ -288,9 +291,16 @@ pub fn fire(
     }
 }
 
-pub fn draw_missile_target(world: &mut World, cb: &mut CommandBuffer, video_mode: &VideoMode) {
+pub fn draw_missile_target(
+    world: &mut World,
+    cb: &mut CommandBuffer,
+    video_mode: VideoMode,
+    camera: &Camera,
+) {
     let (player, enemy, weapon, movable) =
         world.components.get4::<Player, Enemy, Weapon, Movable>();
+
+    let target_indicator = TARGET_INDICATOR.as_model_data();
 
     for player_entity in player.entities() {
         if let (Some(m), Some(w)) = (
@@ -315,8 +325,35 @@ pub fn draw_missile_target(world: &mut World, cb: &mut CommandBuffer, video_mode
                     .collect::<Vec<_>>();
 
                 distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+                distances.truncate(1);
 
-                let target_1 = distances.get(0).map(|e| e.2);
+                let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
+
+                for (_, pos, _) in distances {
+                    let post_transform = Mat4::from_cols_array_2d(&[
+                        [video_mode.width() as f32, 0.0, 0.0, 0.0],
+                        [0.0, video_mode.height() as f32, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ]);
+
+                    let transform = post_transform
+                        * proj
+                        * Mat4::from_translation(vec3(
+                            pos.x - camera.pos.x,
+                            pos.y - camera.pos.y,
+                            -1.0,
+                        ));
+
+                    cb.add_mesh_indexed(
+                        &target_indicator.verts,
+                        &target_indicator.uvs,
+                        &target_indicator.colors,
+                        &target_indicator.indices,
+                        &transform.to_cols_array_2d(),
+                        None,
+                    );
+                }
             } else if w.weapon_type == WeaponType::TrippleMissile {
                 let shooter_pos = m.pos;
 
@@ -335,14 +372,36 @@ pub fn draw_missile_target(world: &mut World, cb: &mut CommandBuffer, video_mode
                     .collect::<Vec<_>>();
 
                 distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
-
                 distances.truncate(3);
-
                 distances.sort_by(|a, b| a.1.x.partial_cmp(&b.1.x).unwrap());
 
-                let target_1 = distances.get(0).map(|e| e.2);
-                let target_2 = distances.get(1).map(|e| e.2);
-                let target_3 = distances.get(2).map(|e| e.2);
+                let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
+
+                for (_, pos, _) in distances {
+                    let post_transform = Mat4::from_cols_array_2d(&[
+                        [video_mode.width() as f32, 0.0, 0.0, 0.0],
+                        [0.0, video_mode.height() as f32, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ]);
+
+                    let transform = post_transform
+                        * proj
+                        * Mat4::from_translation(vec3(
+                            pos.x - camera.pos.x,
+                            pos.y - camera.pos.y,
+                            -1.0,
+                        ));
+
+                    cb.add_mesh_indexed(
+                        &target_indicator.verts,
+                        &target_indicator.uvs,
+                        &target_indicator.colors,
+                        &target_indicator.indices,
+                        &transform.to_cols_array_2d(),
+                        None,
+                    );
+                }
             }
         }
     }
