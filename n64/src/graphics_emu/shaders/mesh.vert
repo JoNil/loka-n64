@@ -9,7 +9,7 @@ layout(location = 1) out vec4 v_color;
 struct Uniforms {
     mat4 u_transform;
     vec2 u_screen_size;
-    ivec2 u_combine_mode,
+    uvec2 u_color_combiner_mode,
     vec4 u_prim_color;
     vec4 u_env_color;
 };

@@ -1310,6 +1310,7 @@ dependencies = [
  "naga",
  "rubato",
  "spin",
+ "strum",
  "wgpu",
  "wgpu-mipmap",
  "winit",

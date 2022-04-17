@@ -1,4 +1,6 @@
+use super::color_combiner::ColorCombiner;
 use super::TextureMut;
+use crate::gfx::color_combiner;
 use crate::{gfx::Texture, graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
 use crate::{
     graphics::QUAD_INDEX_DATA,
@@ -37,6 +39,7 @@ enum Command {
         texture: Option<Texture<'static>>,
         prim_color: u32,
         env_color: u32,
+        color_combiner_mode: ColorCombiner,
         buffer_index: usize,
     },
 }
@@ -63,6 +66,7 @@ pub struct CommandBuffer<'a> {
     cache: &'a mut CommandBufferCache,
     prim_color: u32,
     env_color: u32,
+    color_combiner_mode: ColorCombiner,
 }
 
 impl<'a> CommandBuffer<'a> {
@@ -76,6 +80,7 @@ impl<'a> CommandBuffer<'a> {
             cache,
             prim_color: 0,
             env_color: 0,
+            color_combiner_mode: ColorCombiner::default(),
         }
     }
 
@@ -92,6 +97,11 @@ impl<'a> CommandBuffer<'a> {
 
     pub fn set_env_color(&mut self, env_color: u32) -> &mut Self {
         self.env_color = env_color;
+        self
+    }
+
+    pub fn set_color_combiner_mode(&mut self, color_combiner_mode: ColorCombiner) -> &mut Self {
+        self.color_combiner_mode = color_combiner_mode;
         self
     }
 
@@ -153,6 +163,7 @@ impl<'a> CommandBuffer<'a> {
             texture,
             prim_color: self.prim_color,
             env_color: self.env_color,
+            color_combiner_mode: self.color_combiner_mode,
             buffer_index: 0,
         });
 
@@ -237,6 +248,7 @@ impl<'a> CommandBuffer<'a> {
                             texture,
                             prim_color,
                             env_color,
+                            color_combiner_mode,
                             buffer_index,
                             ..
                         } => {
@@ -303,13 +315,18 @@ impl<'a> CommandBuffer<'a> {
                                 );
                             }
 
+                            let color_combiner_mode = color_combiner_mode.get_command();
+
                             mesh_uniforms.push(MeshUniforms {
                                 transform: *transform,
                                 screen_size: [
                                     graphics.video_mode.width() as f32,
                                     graphics.video_mode.height() as f32,
                                 ],
-                                combine_mode: [0, 0],
+                                combine_mode: [
+                                    ((color_combiner_mode >> 32) & u32::MAX as u64) as u32,
+                                    (color_combiner_mode & u32::MAX as u64) as u32,
+                                ],
                                 prim_color: [
                                     ((*prim_color >> 24) & 0xff) as f32 / 255.0,
                                     ((*prim_color >> 16) & 0xff) as f32 / 255.0,

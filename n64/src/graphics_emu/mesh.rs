@@ -12,7 +12,7 @@ pub const MAX_MESHES: u64 = 4096;
 pub(crate) struct MeshUniforms {
     pub transform: [[f32; 4]; 4],
     pub screen_size: [f32; 2],
-    pub combine_mode: [i32; 2],
+    pub combine_mode: [u32; 2],
     pub prim_color: [f32; 4],
     pub env_color: [f32; 4],
 }
