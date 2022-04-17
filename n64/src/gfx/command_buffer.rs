@@ -160,6 +160,52 @@ fn find_color_d(ch : i32, ci : i32, dh : f32, di : f32) -> i32 {
     (((ci - ch) as f32) / ad) as i32
 }
 
+fn triangle_has_zero_area(v0: Vec3, v1: Vec3, v2: Vec3) -> bool {    
+    let crossA = f32_to_fixed_16_16((v0.x - v1.x)*(v2.y - v1.y));
+    let crossB = f32_to_fixed_16_16((v0.y - v1.y)*(v2.x - v1.x));
+
+    //n64_macros::debugln!("v0 {:?}", v0);
+    //n64_macros::debugln!("v1 {:?}", v1);
+    //n64_macros::debugln!("v2 {:?}", v2);
+    //n64_macros::debugln!("crossA {:?}", crossA);
+    //n64_macros::debugln!("crossB {:?}", crossB);
+
+    return  crossA == crossB;
+}
+
+// TODO: Take nz and va-vb & vc-vb instead
+fn shaded_triangle_coeff(vb: Vec3, va: Vec3, vc: Vec3, bi: f32, ai: f32, ci: f32) -> (i32, i32, i32) {
+    // Already checked for nz = 0
+    //let nx = ai * (vb.y - vc.y) + bi * (vc.y - va.y) + ci * (va.y - vb.y);
+    //let ny = ai * (vc.x - vb.x) + bi * (va.x - vc.x) + ci * (vb.x - va.x);
+
+    let nx = (va.y - vb.y) * (  ci -   bi) - (  ai -   bi) * (vc.y - vb.y);
+    let ny = (  ai -   bi) * (vc.x - vb.x) - (va.x - vb.x) * (  ci -   bi);
+    let nz = (va.x - vb.x) * (vc.y - vb.y) - (va.y - vb.y) * (vc.x - vb.x);
+
+    //n64_macros::debugln!("vb.y - vc.y {}", vb.y - vc.y);
+    //n64_macros::debugln!("vc.y - va.y {}", vc.y - va.y);
+    //n64_macros::debugln!("va.y - vb.y {}", va.y - vb.y);
+    //n64_macros::debugln!("n xyz {:?}, i abc {:?}", (nx, ny, nz), (ai, bi, ci));
+    //n64_macros::debugln!("n xyz {:?}, i abc {:?}", (nx, ny, nz), (ai, bi, ci));
+    //return (f32_to_fixed_16_16(nx/nz), f32_to_fixed_16_16(ny/nz));
+    // Color already in f16.16
+    let pOff = -(vb.x*nx + vb.y*ny + bi*nz);
+
+    n64_macros::debugln!("n dot a {:?}", (va.x)*nx + (va.y)*ny + (ai)*nz);
+    n64_macros::debugln!("n dot b {:?}", (vb.x)*nx + (vb.y)*ny + (bi)*nz);
+    n64_macros::debugln!("n dot c {:?}", (vc.x)*nx + (vc.y)*ny + (ci)*nz);
+
+    //return (((-nx/nz) as i32)<<16, ((-ny/nz) as i32)<<16, (pOff as i32)<<16);
+    //return ((-nx as i32)<<16, (-ny as i32)<<16, (pOff as i32)<<16);
+    //return (((-nx/nz) as i32)<<16, ((-ny/nz) as i32)<<16, ((-pOff/nz) as i32)<<16);
+    
+    //return (((-nx/nz) as i32)<<16, ((-ny/nz) as i32)<<16, (bi as i32)<<16);
+    //return (((-nx/nz) as i32)<<16, 0, (bi as i32)<<16);
+    //return (0, 0, (bi as i32)<<16);
+    return (0, ((-ny/nz) as i32)<<16, (bi as i32)<<16);
+}
+
 pub struct CommandBufferCache {
     rdp: RdpCommandBuilder,
 }
@@ -359,6 +405,9 @@ impl<'a> CommandBuffer<'a> {
             v1.y = libm::fmaxf(libm::fminf(v1.y, y_limit), 0.0);
             v2.y = libm::fmaxf(libm::fminf(v2.y, y_limit), 0.0);
 
+            if triangle_has_zero_area(v0, v1, v2) {
+                continue;
+            }
             // Vh is the highest point (smallest y value)
             // Vl is the lowest point (largest y value)
             let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
@@ -398,44 +447,81 @@ impl<'a> CommandBuffer<'a> {
 
             if is_shaded {
                 let (vhi, vmi, vli) = sorted_triangle_indices(v0, v1, v2);
-                let color_tri : [[i32; 3]; 3] = [[255<<16, 0, 0], [0, 255<<16, 0], [0, 0, 255<<16]];
+                //let color_tri : [[i32; 3]; 3] = [[255<<16, 0, 0], [0, 255<<16, 0], [0, 0, 255<<16]];
+
+
 
                 //n64_macros::debugln!("Sorted indices {} {} {}: {} {} {}", vhi, vmi, vli, 
                 //    verts[triangle[vhi as usize] as usize][1],
                 //    verts[triangle[vmi as usize] as usize][1],
                 //    verts[triangle[vli as usize] as usize][1]);
 
-                let color_h = color_tri[vhi as usize];
-                let color_m = color_tri[vmi as usize];
-                let color_l = color_tri[vli as usize];
+                if true {
+                    // TODO: Calc nz once
+                    let color_tri : [[i32; 3]; 3] = [[255, 0, 0], [0, 255, 0], [0, 0, 255]];
+                    let color_h = color_tri[vhi as usize];
+                    let color_m = color_tri[vmi as usize];
+                    let color_l = color_tri[vli as usize];
+                    
+                    let (r_dx, r_dy, r_off) = shaded_triangle_coeff(vh, vm, vl, color_h[0] as f32, color_m[0] as f32, color_l[0] as f32);
+                    let (g_dx, g_dy, g_off) = shaded_triangle_coeff(vh, vm, vl, color_h[1] as f32, color_m[1] as f32, color_l[1] as f32);
+                    let (b_dx, b_dy, b_off) = shaded_triangle_coeff(vh, vm, vl, color_h[2] as f32, color_m[2] as f32, color_l[2] as f32);
+                    let red   = r_off;//color_h[0]<<16;
+                    let green = g_off;//color_h[1]<<16;
+                    let blue  = b_off;//color_h[2]<<16;
+                    //self.cache.rdp.shade_coefficients(
+                    //     red, green, blue,    0, // Color
+                    //    r_dx, g_dx,  b_dx,    0, // Delta color X
+                    //       0,    0,     0,    0, // Delta color Edge
+                    //    r_dy, g_dy,  b_dy,    0, // Delta color y
+                    //);
+                    let a = 16<<16;
+                    self.cache.rdp.shade_coefficients(
+                              0,   0,  0,    0, // Color
+                              a,   0,  0,    0, // Delta color X
+                              0,   a,  0,    0, // Delta color Edge
+                              0,   0,  a,    0, // Delta color y
+                   );
+                    //n64_macros::debugln!("vec h, m, l {:?} {:?} {:?}", vh, vm, vl);
+                    //n64_macros::debugln!("rgb h, m, l {:?} {:?} {:?}", color_h, color_m, color_l);
+                    //n64_macros::debugln!("off {:?} {:?}",  (red, green, blue), (red>>16, green>>16, blue>>16));
+                    //n64_macros::debugln!("dx {:?} {:?}", (r_dx, g_dx, b_dx), (r_dx>>16, g_dx>>16, b_dx>>16));
+                    //n64_macros::debugln!("dy {:?} {:?}", (r_dy, g_dy, b_dy), (r_dy>>16, g_dy>>16, b_dy>>16));
+                }
+                else {
+                    let color_tri : [[i32; 3]; 3] = [[255<<16, 0, 0], [0, 255<<16, 0], [0, 0, 255<<16]];
+                    let color_h = color_tri[vhi as usize];
+                    let color_m = color_tri[vmi as usize];
+                    let color_l = color_tri[vli as usize];
 
-                let xMax = libm::fmaxf(libm::fmaxf(v0.x, v1.x), v2.x);
-                let xMin = libm::fminf(libm::fminf(v0.x, v1.x), v2.x);
-                let yMax = libm::fmaxf(libm::fmaxf(v0.y, v1.y), v2.y);
-                let yMin = libm::fminf(libm::fminf(v0.y, v1.y), v2.y);
-                let red   = color_h[0];
-                let green = color_h[1];
-                let blue  = color_h[2];
-                let rDe   = find_color_d(color_l[0], color_h[0], vl.y, vh.y);
-                let gDe   = find_color_d(color_l[1], color_h[1], vl.y, vh.y);
-                let bDe   = find_color_d(color_l[2], color_h[2], vl.y, vh.y);
+                    let xMax = libm::fmaxf(libm::fmaxf(v0.x, v1.x), v2.x);
+                    let xMin = libm::fminf(libm::fminf(v0.x, v1.x), v2.x);
+                    let yMax = libm::fmaxf(libm::fmaxf(v0.y, v1.y), v2.y);
+                    let yMin = libm::fminf(libm::fminf(v0.y, v1.y), v2.y);
+                    let red   = color_h[0];
+                    let green = color_h[1];
+                    let blue  = color_h[2];
+                    let rDe   = find_color_d(color_l[0], color_h[0], vl.y, vh.y);
+                    let gDe   = find_color_d(color_l[1], color_h[1], vl.y, vh.y);
+                    let bDe   = find_color_d(color_l[2], color_h[2], vl.y, vh.y);
 
-                let edge_color_m_r = ((rDe as f32)*(vm.y - vh.y)) as i32 + red;
-                let edge_color_m_g = ((gDe as f32)*(vm.y - vh.y)) as i32 + green;
-                let edge_color_m_b = ((bDe as f32)*(vm.y - vh.y)) as i32 + blue;
+                    let edge_color_m_r = ((rDe as f32)*(vm.y - vh.y)) as i32 + red;
+                    let edge_color_m_g = ((gDe as f32)*(vm.y - vh.y)) as i32 + green;
+                    let edge_color_m_b = ((bDe as f32)*(vm.y - vh.y)) as i32 + blue;
 
-                let rDx   = find_color_d(color_h[0], color_m[0] - edge_color_m_r, vh.x, vm.x);
-                let gDx   = find_color_d(color_h[1], color_m[1] - edge_color_m_g, vh.x, vm.x);
-                let bDx   = find_color_d(color_h[2], color_m[2] - edge_color_m_b, vh.x, vm.x);
-                let rDy   = 0;//find_color_d(color_h[0], color_m[0] - edge_color_m_r, vh.y, vm.y)/2;
-                let gDy   = 0;//find_color_d(color_h[1], color_m[1] - edge_color_m_g, vh.y, vm.y)/2;
-                let bDy   = 0;//find_color_d(color_h[2], color_m[2] - edge_color_m_b, vh.y, vm.y)/2;
-                self.cache.rdp.shade_coefficients(
-                    red, green, blue,    0, // Color
-                    rDx,   gDx,  bDx,    0, // Delta color X
-                    rDe,   gDe,  bDe,    0, // Delta color Edge
-                    rDy,   gDy,  bDy,    0, // Delta color y
-                );
+                    let rDx   = find_color_d(color_h[0], color_m[0] - edge_color_m_r, vh.x, vm.x);
+                    let gDx   = find_color_d(color_h[1], color_m[1] - edge_color_m_g, vh.x, vm.x);
+                    let bDx   = find_color_d(color_h[2], color_m[2] - edge_color_m_b, vh.x, vm.x);
+                    let rDy   = 0;//find_color_d(color_h[0], color_m[0] - edge_color_m_r, vh.y, vm.y)/2;
+                    let gDy   = 0;//find_color_d(color_h[1], color_m[1] - edge_color_m_g, vh.y, vm.y)/2;
+                    let bDy   = 0;//find_color_d(color_h[2], color_m[2] - edge_color_m_b, vh.y, vm.y)/2;
+                    self.cache.rdp.shade_coefficients(
+                        red, green, blue,    0, // Color
+                        rDx,   gDx,  bDx,    0, // Delta color X
+                        rDe,   gDe,  bDe,    0, // Delta color Edge
+                        rDy,   gDy,  bDy,    0, // Delta color y
+                    );
+                }
             }  
         }
         self
