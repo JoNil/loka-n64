@@ -348,6 +348,7 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_s_11_2(y_mid_minor)) << 16
                 | (to_fixpoint_s_11_2(y_high_major)) << 0,
         ));
+        n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
         // SIC Should be L, H, M order
         buffer.push(RdpCommand(
@@ -355,16 +356,19 @@ impl RdpCommandBuilder {
                 | (x_low_frac as u64) << 32
                 | (inv_slope_low as u32 as u64) << 0,
         ));
+        n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             (x_high_int as u64) << 48
                 | (x_high_frac as u64) << 32
                 | (inv_slope_high as u32 as u64) << 0,
         ));
+        n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             (x_mid_int as u64) << 48
                 | (x_mid_frac as u64) << 32
                 | (inv_slope_mid as u32 as u64) << 0,
         ));
+        n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
         self
     }
@@ -400,24 +404,28 @@ impl RdpCommandBuilder {
                 | ((blue  >> 16) as u16 as u64) << 16
                 | ((alpha >> 16) as u16 as u64) << 0
         ));
+       // n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDx >> 16) as u16 as u64) << 48
                 | ((DgDx >> 16) as u16 as u64) << 32
                 | ((DbDx >> 16) as u16 as u64) << 16
                 | ((DaDx >> 16) as u16 as u64) << 0
         ));
+        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((red & 0x0000ffff) as u16 as u64) << 48
                 | ((green & 0x0000ffff) as u16 as u64) << 32
                 | ((blue  & 0x0000ffff) as u16 as u64) << 16
                 | ((alpha & 0x0000ffff) as u16 as u64) << 0
         ));
+        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDx & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDx & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDx & 0x0000ffff) as u16 as u64) << 16
                 | ((DaDx & 0x0000ffff) as u16 as u64) << 0
         ));
+        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
         //n64_macros::debugln!("{} {} {} {}", red, green, blue, alpha);
         //n64_macros::debugln!("((red >> 16) as u16 as u64){} ",((red >> 16) as u16 as u64));
@@ -434,24 +442,29 @@ impl RdpCommandBuilder {
                 | ((DbDe >> 16) as u16 as u64) << 16
                 | ((DaDe >> 16) as u16 as u64) << 0
         ));
+        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDy >> 16) as u16 as u64) << 48
                 | ((DgDy >> 16) as u16 as u64) << 32
                 | ((DbDy >> 16) as u16 as u64) << 16
                 | ((DaDy >> 16) as u16 as u64) << 0
         ));
+        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDe & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDe & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDe & 0x0000ffff) as u16 as u64) << 16
                 | ((DaDe & 0x0000ffff) as u16 as u64) << 0
         ));
+        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDy & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDy & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDy & 0x0000ffff) as u16 as u64) << 16
                 | ((DaDy & 0x0000ffff) as u16 as u64) << 0
         ));
+        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
+        //n64_macros::debugln!("--");
         
         self
     }
