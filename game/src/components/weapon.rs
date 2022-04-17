@@ -1,5 +1,5 @@
 use alloc::vec::Vec;
-use n64::current_time_us;
+use n64::{current_time_us, gfx::CommandBuffer, VideoMode};
 use n64_math::{const_vec2, vec2, Mat2, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
@@ -11,13 +11,14 @@ use crate::{
     ecs::{
         entity::{Entity, EntitySystem},
         storage::Storage,
+        world::World,
     },
     models::{BULLET, LASER, MISSILE},
     sound_mixer::SoundMixer,
     sounds::{LASER_1, MISSILE_1, SHOOT_3},
 };
 
-#[derive(EnumCount, EnumIter, IntoStaticStr)]
+#[derive(EnumCount, EnumIter, IntoStaticStr, PartialEq, Eq, PartialOrd, Ord)]
 pub enum WeaponType {
     Bullet,
     Laser,
@@ -282,6 +283,66 @@ pub fn fire(
 
                     w.last_shoot_time = now;
                 }
+            }
+        }
+    }
+}
+
+pub fn draw_missile_target(world: &mut World, cb: &mut CommandBuffer, video_mode: &VideoMode) {
+    let (player, enemy, weapon, movable) =
+        world.components.get4::<Player, Enemy, Weapon, Movable>();
+
+    for player_entity in player.entities() {
+        if let (Some(m), Some(w)) = (
+            movable.lookup(*player_entity),
+            weapon.lookup_mut(*player_entity),
+        ) {
+            if w.weapon_type == WeaponType::Missile {
+                let shooter_pos = m.pos;
+
+                let mut distances = enemy
+                    .entities()
+                    .iter()
+                    .chain(player.entities())
+                    .filter_map(|e| movable.lookup(*e).map(|m| (m, *e)))
+                    .filter_map(|(m, e)| {
+                        if e != *player_entity && shooter_pos.y - m.pos.y > 0.0 {
+                            Some(((shooter_pos - m.pos).length(), m.pos, e))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+                let target_1 = distances.get(0).map(|e| e.2);
+            } else if w.weapon_type == WeaponType::TrippleMissile {
+                let shooter_pos = m.pos;
+
+                let mut distances = enemy
+                    .entities()
+                    .iter()
+                    .chain(player.entities())
+                    .filter_map(|e| movable.lookup(*e).map(|m| (m, *e)))
+                    .filter_map(|(m, e)| {
+                        if e != *player_entity && shooter_pos.y - m.pos.y > 0.0 {
+                            Some(((shooter_pos - m.pos).length(), m.pos, e))
+                        } else {
+                            None
+                        }
+                    })
+                    .collect::<Vec<_>>();
+
+                distances.sort_by(|a, b| a.0.partial_cmp(&b.0).unwrap());
+
+                distances.truncate(3);
+
+                distances.sort_by(|a, b| a.1.x.partial_cmp(&b.1.x).unwrap());
+
+                let target_1 = distances.get(0).map(|e| e.2);
+                let target_2 = distances.get(1).map(|e| e.2);
+                let target_3 = distances.get(2).map(|e| e.2);
             }
         }
     }
