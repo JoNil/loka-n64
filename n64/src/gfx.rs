@@ -1,4 +1,5 @@
 pub use command_buffer::{CommandBuffer, CommandBufferCache};
+pub use pipeline::Pipeline;
 pub use texture::{StaticTexture, Texture, TextureMut};
 
 cfg_if::cfg_if! {
@@ -12,4 +13,5 @@ cfg_if::cfg_if! {
 }
 
 pub mod color_combiner;
+mod pipeline;
 mod texture;
