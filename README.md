@@ -45,7 +45,6 @@ cargo run
 - http://n64dev.org/
 - https://github.com/n64decomp/sm64/
 - https://github.com/n64decomp/libreultra
-- https://www.kth.se/social/files/563c63c9f276547044e8695f/mips-ref-sheet.pdf
 - https://github.com/PeterLemon/N64/blob/master/RDP/16BPP/Rectangle/FillRectangle/FillRectangle320x240/FillRectangle16BPP320X240.asm
 - http://krikzz.com/pub/support/everdrive-64/x-series/dev/
 - https://dragonminded.com/n64dev/Reality%20Coprocessor.pdf
@@ -58,3 +57,7 @@ cargo run
 
 How to kick off sp tasks
 - https://github.com/n64decomp/sm64/blob/master/lib/src/osSpTaskLoadGo.c
+
+Mips
+- https://hack64.net/wiki/doku.php?id=r4300
+- https://www.kth.se/social/files/563c63c9f276547044e8695f/mips-ref-sheet.pdf
