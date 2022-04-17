@@ -1,6 +1,5 @@
 use super::color_combiner::ColorCombiner;
 use super::TextureMut;
-use crate::gfx::color_combiner;
 use crate::{gfx::Texture, graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
 use crate::{
     graphics::QUAD_INDEX_DATA,

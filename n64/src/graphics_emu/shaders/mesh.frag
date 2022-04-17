@@ -2,19 +2,12 @@
 
 layout(location = 0) in vec2 v_tex_coord;
 layout(location = 1) in vec4 v_color;
+
+layout(location = 2) in flat uvec2 v_color_combiner_mode;
+layout(location = 3) in flat vec4 v_prim_color;
+layout(location = 4) in flat vec4 v_env_color;
+
 layout(location = 0) out vec4 o_color;
-
-struct Uniforms {
-    mat4 u_transform;
-    vec2 u_screen_size;
-    uvec2 u_color_combiner_mode,
-    vec4 u_prim_color;
-    vec4 u_env_color;
-};
-
-layout(std430, set = 0, binding = 0) readonly buffer Locals {
-    Uniforms uniforms[];
-};
 
 layout(set = 0, binding = 1) uniform texture2D t_tex;
 layout(set = 0, binding = 2) uniform sampler s_tex;
@@ -23,10 +16,10 @@ void main() {
 
     vec4 shade_color = v_color;
     vec4 texel_color = texture(sampler2D(t_tex, s_tex), v_tex_coord);
-    vec4 prim_color = uniforms[gl_InstanceIndex].u_prim_color;
-    vec4 env_color = uniforms[gl_InstanceIndex].u_env_color;
+    vec4 prim_color = v_prim_color;
+    vec4 env_color = v_env_color;
 
-    uvec2 color_combiner_mode = uniforms[gl_InstanceIndex].u_color_combiner_mode;
+    uvec2 color_combiner_mode = v_color_combiner_mode;
 
     vec4 a = vec4(0.0);
     vec4 b = vec4(0.0);
@@ -56,6 +49,8 @@ void main() {
         case 8:
             a.rgb = vec3(0.0);
             break;
+        default:
+            break;
     }
 
     switch ((color_combiner_mode.y >> 28) & 0xf) {
@@ -73,6 +68,8 @@ void main() {
             break;
         case 8:
             b.rgb = vec3(0.0);
+            break;
+        default:
             break;
     }
 
@@ -104,6 +101,8 @@ void main() {
         case 16:
             c.rgb = vec3(0.0);
             break;
+        default:
+            break;
     }
 
     switch ((color_combiner_mode.y >> 15) & 0x7) {
@@ -125,6 +124,8 @@ void main() {
         case 7:
             d.rgb = vec3(0.0);
             break;
+        default:
+            break;
     }
 
     switch ((color_combiner_mode.x >> (44 - 32)) & 0x7) {
@@ -141,10 +142,12 @@ void main() {
             a.a = env_color.a;
             break;
         case 6:
-            a.a = vec3(1.0);
+            a.a = 1.0;
             break;
         case 7:
-            a.a = vec3(0.0);
+            a.a = 0.0;
+            break;
+        default:
             break;
     }
 
@@ -162,10 +165,12 @@ void main() {
             b.a = env_color.a;
             break;
         case 6:
-            b.a = vec3(1.0);
+            b.a = 1.0;
             break;
         case 7:
-            b.a = vec3(0.0);
+            b.a = 0.0;
+            break;
+        default:
             break;
     }
 
@@ -183,7 +188,9 @@ void main() {
             c.a = env_color.a;
             break;
         case 7:
-            c.a = vec3(0.0);
+            c.a = 0.0;
+            break;
+        default:
             break;
     }
 
@@ -201,13 +208,15 @@ void main() {
             d.a = env_color.a;
             break;
         case 6:
-            d.a = vec3(1.0);
+            d.a = 1.0;
             break;
         case 7:
-            d.a = vec3(0.0);
+            d.a = 0.0;
+            break;
+        default:
             break;
     }
 
     o_color.rgb = (a.rgb - b.rgb) * c.rgb + d.rgb;
-    o_color.a = (a.a - b.a) * c.a + d.a
+    o_color.a = (a.a - b.a) * c.a + d.a;
 }
