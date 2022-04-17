@@ -4,6 +4,7 @@ use super::{
     player::{self, Player},
     remove_when_below::RemoveWhenBelow,
     size::Size,
+    spawner::Spawner,
     sprite_drawable::SpriteDrawable,
     weapon::{self, Weapon, WeaponTarget, WeaponType},
 };
@@ -28,7 +29,7 @@ pub struct Enemy {
     pub waypoint_step: f32,
 }
 
-pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'static>) {
+pub fn add_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'static>) {
     entities
         .spawn()
         .add(Movable {
@@ -38,6 +39,19 @@ pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'sta
         .add(Size {
             size: vec2(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
         })
+        .add(Spawner { texture });
+}
+
+pub fn spawn_enemy(
+    entities: &mut EntitySystem,
+    movable: Movable,
+    size: Size,
+    texture: Texture<'static>,
+) {
+    entities
+        .spawn()
+        .add(movable)
+        .add(size)
         .add(SpriteDrawable { texture })
         .add(Health { health: 100 })
         .add(Weapon {

@@ -21,7 +21,7 @@ use components::{
     keep_on_screen,
     pickup::{self, spawn_pickup},
     player::draw_player_weapon,
-    remove_when_below,
+    remove_when_below, spawner,
     weapon::draw_missile_target,
 };
 use ecs::world::World;
@@ -106,10 +106,13 @@ fn main() {
 
             enemy::update(&mut world, &mut sound_mixer, dt);
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
-            projectile::update(&mut world, &mut sound_mixer, &camera, dt);
             missile::update(&mut world, dt);
-            pickup::update(&mut world, &mut sound_mixer, &camera);
+
             movable::simulate(&mut world, dt);
+
+            projectile::update(&mut world, &mut sound_mixer, &camera, dt);
+            pickup::update(&mut world, &mut sound_mixer, &camera);
+            spawner::update(&mut world, &camera);
             keep_on_screen::update(&mut world, &camera);
             remove_when_below::update(&mut world, &camera);
         }
