@@ -20,7 +20,7 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, camera: &Camera, 
         .components
         .get6::<Projectile, Movable, Enemy, Player, Size, Health>();
 
-    let camera_bb: Aabb2 = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));
+    let camera_bb = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));
 
     let projectiles = projectile.components();
     let entities = projectile.entities();

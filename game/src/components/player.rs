@@ -1,6 +1,7 @@
 use super::{
     enemy::Enemy,
     health::Health,
+    keep_on_screen::KeepOnScreen,
     mesh_drawable::MeshDrawable,
     movable::Movable,
     size::Size,
@@ -47,6 +48,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             direction: 0.0,
         })
         .add(Player { score: 0 })
+        .add(KeepOnScreen)
         .entity()
 }
 

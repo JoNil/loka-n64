@@ -61,4 +61,23 @@ impl Aabb2 {
             && self.top() <= other.bottom()
             && self.bottom() >= other.top()
     }
+
+    #[inline]
+    pub fn outsize_distance(&self, other: &Aabb2) -> Vec2 {
+        let mut res = Vec2::ZERO;
+
+        if other.left() < self.left() {
+            res.x = other.left() - self.left();
+        } else if self.right() < other.right() {
+            res.x = other.right() - self.right();
+        }
+
+        if other.top() < self.top() {
+            res.y = other.top() - self.top();
+        } else if self.bottom() < other.bottom() {
+            res.y = other.bottom() - self.bottom();
+        }
+
+        res
+    }
 }

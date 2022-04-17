@@ -18,8 +18,10 @@ use crate::components::{
 };
 use camera::Camera;
 use components::{
+    keep_on_screen,
     pickup::{self, spawn_pickup},
     player::draw_player_weapon,
+    remove_when_below,
     weapon::draw_missile_target,
 };
 use ecs::world::World;
@@ -108,6 +110,8 @@ fn main() {
             missile::update(&mut world, dt);
             pickup::update(&mut world, &mut sound_mixer, &camera);
             movable::simulate(&mut world, dt);
+            keep_on_screen::update(&mut world, &camera);
+            remove_when_below::update(&mut world, &camera);
         }
 
         {

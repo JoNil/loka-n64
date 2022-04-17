@@ -2,6 +2,7 @@ use super::{
     health::{self, Health},
     movable::Movable,
     player::{self, Player},
+    remove_when_below::RemoveWhenBelow,
     size::Size,
     sprite_drawable::SpriteDrawable,
     weapon::{self, Weapon, WeaponTarget, WeaponType},
@@ -47,7 +48,8 @@ pub fn spawn_enemy(entities: &mut EntitySystem, pos: Vec2, texture: Texture<'sta
         .add(Enemy {
             waypoint: 0,
             waypoint_step: 1.0,
-        });
+        })
+        .add(RemoveWhenBelow);
 }
 
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, dt: f32) {
