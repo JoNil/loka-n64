@@ -1,6 +1,5 @@
-use std::f32::consts::PI;
-
 use alloc::vec::Vec;
+use core::f32::consts::PI;
 use n64::{current_time_us, gfx::CommandBuffer, VideoMode};
 use n64_math::{const_vec2, vec2, vec3, Mat2, Mat4, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};

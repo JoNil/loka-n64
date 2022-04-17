@@ -28,7 +28,10 @@ pub fn update(world: &mut World, dt: f32) {
                 let speed_dir = m.speed.normalize();
                 let new_speed_dir = (0.02 * towords_target + 0.98 * speed_dir).normalize();
                 let new_speed = new_speed_dir
-                    * MISSILE_MAX_SPEED.min(m.speed.length() + MISSILE_ACCELERATION * dt);
+                    * libm::fminf(
+                        MISSILE_MAX_SPEED,
+                        m.speed.length() + MISSILE_ACCELERATION * dt,
+                    );
                 m.speed = new_speed;
 
                 d.rot = Quat::from_rotation_z((-Vec2::Y).angle_between(new_speed_dir))

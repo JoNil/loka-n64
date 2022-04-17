@@ -98,6 +98,8 @@ pub const FORMAT_I: u8 = 4; // Set_Tile/Set_Texture_Image/Set_Color_Image: Image
 pub const COMMAND_SET_COLOR_IMAGE: u64 = 0xff;
 pub const COMMAND_SET_SCISSOR: u64 = 0xed;
 pub const COMMAND_SET_OTHER_MODE: u64 = 0xef;
+pub const COMMAND_SET_ENV_COLOR: u64 = 0xfb;
+pub const COMMAND_SET_PRIM_COLOR: u64 = 0xfa;
 pub const COMMAND_SET_BLEND_COLOR: u64 = 0xf9;
 pub const COMMAND_SET_FOG_COLOR: u64 = 0xf8;
 pub const COMMAND_SET_FILL_COLOR: u64 = 0xf7;
@@ -180,6 +182,24 @@ impl RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
             (COMMAND_SET_OTHER_MODE << 56) | (flags & ((1 << 56) - 1)) | 0x0000_000F_0000_0000,
         ));
+        self
+    }
+
+    #[inline]
+    pub fn set_env_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand((COMMAND_SET_ENV_COLOR << 56) | (color as u64)));
+        self
+    }
+
+    #[inline]
+    pub fn set_prim_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand((COMMAND_SET_PRIM_COLOR << 56) | (color as u64)));
         self
     }
 
@@ -376,10 +396,10 @@ impl RdpCommandBuilder {
     #[inline]
     pub fn shade_coefficients(
         &mut self,
-        red   : i32,
-        green : i32,
-        blue  : i32,
-        alpha : i32,
+        red: i32,
+        green: i32,
+        blue: i32,
+        alpha: i32,
         DrDx: i32,
         DgDx: i32,
         DbDx: i32,
@@ -391,7 +411,7 @@ impl RdpCommandBuilder {
         DrDy: i32,
         DgDy: i32,
         DbDy: i32,
-        DaDy: i32
+        DaDy: i32,
     ) -> &mut RdpCommandBuilder {
         let mut buffer = self.commands.as_mut().unwrap();
         // Color
@@ -401,29 +421,29 @@ impl RdpCommandBuilder {
         buffer.push(RdpCommand(
             ((red >> 16) as u16 as u64) << 48
                 | ((green >> 16) as u16 as u64) << 32
-                | ((blue  >> 16) as u16 as u64) << 16
-                | ((alpha >> 16) as u16 as u64) << 0
+                | ((blue >> 16) as u16 as u64) << 16
+                | ((alpha >> 16) as u16 as u64) << 0,
         ));
-       // n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
+        // n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDx >> 16) as u16 as u64) << 48
                 | ((DgDx >> 16) as u16 as u64) << 32
                 | ((DbDx >> 16) as u16 as u64) << 16
-                | ((DaDx >> 16) as u16 as u64) << 0
+                | ((DaDx >> 16) as u16 as u64) << 0,
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((red & 0x0000ffff) as u16 as u64) << 48
                 | ((green & 0x0000ffff) as u16 as u64) << 32
-                | ((blue  & 0x0000ffff) as u16 as u64) << 16
-                | ((alpha & 0x0000ffff) as u16 as u64) << 0
+                | ((blue & 0x0000ffff) as u16 as u64) << 16
+                | ((alpha & 0x0000ffff) as u16 as u64) << 0,
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDx & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDx & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDx & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDx & 0x0000ffff) as u16 as u64) << 0
+                | ((DaDx & 0x0000ffff) as u16 as u64) << 0,
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
@@ -440,32 +460,32 @@ impl RdpCommandBuilder {
             ((DrDe >> 16) as u16 as u64) << 48
                 | ((DgDe >> 16) as u16 as u64) << 32
                 | ((DbDe >> 16) as u16 as u64) << 16
-                | ((DaDe >> 16) as u16 as u64) << 0
+                | ((DaDe >> 16) as u16 as u64) << 0,
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDy >> 16) as u16 as u64) << 48
                 | ((DgDy >> 16) as u16 as u64) << 32
                 | ((DbDy >> 16) as u16 as u64) << 16
-                | ((DaDy >> 16) as u16 as u64) << 0
+                | ((DaDy >> 16) as u16 as u64) << 0,
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDe & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDe & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDe & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDe & 0x0000ffff) as u16 as u64) << 0
+                | ((DaDe & 0x0000ffff) as u16 as u64) << 0,
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDy & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDy & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDy & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDy & 0x0000ffff) as u16 as u64) << 0
+                | ((DaDy & 0x0000ffff) as u16 as u64) << 0,
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         //n64_macros::debugln!("--");
-        
+
         self
     }
 
