@@ -1,7 +1,10 @@
 use super::movable::Movable;
 use crate::{camera::Camera, ecs::world::World, model::ModelData};
 use core::f32::consts::PI;
-use n64::{gfx::CommandBuffer, VideoMode};
+use n64::{
+    gfx::{color_combiner::ColorCombiner, CommandBuffer},
+    VideoMode,
+};
 use n64_math::{vec3, Mat4, Quat};
 
 pub struct MeshDrawable {
@@ -11,6 +14,8 @@ pub struct MeshDrawable {
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     let (mesh_drawable, movable) = world.components.get2::<MeshDrawable, Movable>();
+
+    cb.set_color_combiner_mode(ColorCombiner::default());
 
     let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
 

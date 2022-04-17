@@ -250,26 +250,11 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_combine_mode(&mut self, values: &[u8; 16]) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
-            (COMMAND_SET_COMBINE_MODE << 56)
-                | ((values[0] as u64) << 52)
-                | ((values[1] as u64) << 47)
-                | ((values[2] as u64) << 44)
-                | ((values[3] as u64) << 41)
-                | ((values[4] as u64) << 37)
-                | ((values[5] as u64) << 32)
-                | ((values[6] as u64) << 28)
-                | ((values[7] as u64) << 24)
-                | ((values[8] as u64) << 21)
-                | ((values[9] as u64) << 18)
-                | ((values[10] as u64) << 15)
-                | ((values[11] as u64) << 12)
-                | ((values[12] as u64) << 9)
-                | ((values[13] as u64) << 6)
-                | ((values[14] as u64) << 3)
-                | ((values[15] as u64) << 0),
-        ));
+    pub fn set_combine_mode(&mut self, value: u64) -> &mut RdpCommandBuilder {
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand((COMMAND_SET_COMBINE_MODE << 56) | value));
         self
     }
 

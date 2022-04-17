@@ -118,7 +118,7 @@ impl Default for ColorCombiner {
 }
 
 impl ColorCombiner {
-    pub fn get_command(&self) -> u64 {
+    pub fn to_command(&self) -> u64 {
         let sub_a_0 = (self.a as u64) << 52;
         let sub_b_0 = (self.b as u64) << 28;
         let mul_c_0 = (self.c as u64) << 47;

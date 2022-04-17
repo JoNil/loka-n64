@@ -11,5 +11,5 @@ cfg_if::cfg_if! {
     }
 }
 
-mod color_combiner;
+pub mod color_combiner;
 mod texture;

@@ -314,7 +314,7 @@ impl<'a> CommandBuffer<'a> {
                                 );
                             }
 
-                            let color_combiner_mode = color_combiner_mode.get_command();
+                            let color_combiner_mode = color_combiner_mode.to_command();
 
                             mesh_uniforms.push(MeshUniforms {
                                 transform: *transform,

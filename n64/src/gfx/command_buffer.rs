@@ -1,3 +1,4 @@
+use super::color_combiner::ColorCombiner;
 use super::{Texture, TextureMut};
 use crate::graphics::Graphics;
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
@@ -275,7 +276,7 @@ impl<'a> CommandBuffer<'a> {
                 Vec2::ZERO,
                 vec2((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
             )
-            .set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7]);
+            .set_combine_mode(ColorCombiner::default().to_command());
 
         CommandBuffer {
             out_tex,
@@ -304,6 +305,21 @@ impl<'a> CommandBuffer<'a> {
                 ),
             );
 
+        self
+    }
+
+    pub fn set_prim_color(&mut self, prim_color: u32) -> &mut Self {
+        self.cache.rdp.set_prim_color(prim_color);
+        self
+    }
+
+    pub fn set_env_color(&mut self, env_color: u32) -> &mut Self {
+        self.cache.rdp.set_env_color(env_color);
+        self
+    }
+
+    pub fn set_color_combiner_mode(&mut self, color_combiner: ColorCombiner) -> &mut Self {
+        self.cache.rdp.set_combine_mode(color_combiner.to_command());
         self
     }
 
@@ -413,12 +429,6 @@ impl<'a> CommandBuffer<'a> {
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_B_M1A_0_0, //| OTHER_MODE_B_M1A_0_2,
             )
-            //.set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
-            //.set_combine_mode(&[8, 16, 7, 7, 8, 16, 8, 8, 7, 7, 4, 7, 4, 7, 7, 7])
-            .set_combine_mode(&[
-                8, 16, 7, 7, 8, 16, 8, 8, 7, 7, lastVal, 7, lastVal, lastVal, 7, lastVal,
-            ])
-            //.set_combine_mode(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, lastVal, 7, lastVal, lastVal, 7, lastVal])
             .set_blend_color(0xff000000);
 
         //n64_macros::debugln!("lastVal {}", lastVal);
