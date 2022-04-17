@@ -35,6 +35,8 @@ enum Command {
         indices: Vec<u8>,
         transform: [[f32; 4]; 4],
         texture: Option<Texture<'static>>,
+        prim_color: u32,
+        env_color: u32,
         buffer_index: usize,
     },
 }
@@ -59,6 +61,8 @@ pub struct CommandBuffer<'a> {
     textured_rect_count: u32,
     mesh_count: u32,
     cache: &'a mut CommandBufferCache,
+    prim_color: u32,
+    env_color: u32,
 }
 
 impl<'a> CommandBuffer<'a> {
@@ -70,12 +74,24 @@ impl<'a> CommandBuffer<'a> {
             textured_rect_count: 0,
             mesh_count: 0,
             cache,
+            prim_color: 0,
+            env_color: 0,
         }
     }
 
     pub fn clear(&mut self) -> &mut Self {
         self.clear = true;
         self.cache.commands.clear();
+        self
+    }
+
+    pub fn set_prim_color(&mut self, prim_color: u32) -> &mut Self {
+        self.prim_color = prim_color;
+        self
+    }
+
+    pub fn set_env_color(&mut self, env_color: u32) -> &mut Self {
+        self.env_color = env_color;
         self
     }
 
@@ -135,6 +151,8 @@ impl<'a> CommandBuffer<'a> {
             indices: indices.iter().flatten().copied().collect(),
             transform: *transform,
             texture,
+            prim_color: self.prim_color,
+            env_color: self.env_color,
             buffer_index: 0,
         });
 
@@ -217,6 +235,8 @@ impl<'a> CommandBuffer<'a> {
                             indices,
                             transform,
                             texture,
+                            prim_color,
+                            env_color,
                             buffer_index,
                             ..
                         } => {
@@ -288,8 +308,19 @@ impl<'a> CommandBuffer<'a> {
                                 screen_size: [
                                     graphics.video_mode.width() as f32,
                                     graphics.video_mode.height() as f32,
-                                    0.0,
-                                    0.0,
+                                ],
+                                combine_mode: [0, 0],
+                                prim_color: [
+                                    ((*prim_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((*prim_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((*prim_color >> 8) & 0xff) as f32 / 255.0,
+                                    (*prim_color & 0xff) as f32 / 255.0,
+                                ],
+                                env_color: [
+                                    ((*env_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((*env_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((*env_color >> 8) & 0xff) as f32 / 255.0,
+                                    (*env_color & 0xff) as f32 / 255.0,
                                 ],
                             });
                         }

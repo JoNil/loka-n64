@@ -11,4 +11,5 @@ cfg_if::cfg_if! {
     }
 }
 
+mod combine_mode;
 mod texture;
