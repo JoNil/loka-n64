@@ -1,5 +1,10 @@
 use crate::textures::*;
-use n64::gfx::{CommandBuffer, StaticTexture};
+use n64::gfx::{
+    color_combiner::{
+        AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombiner, DAlphaSrc, DSrc,
+    },
+    CommandBuffer, StaticTexture,
+};
 use n64_math::{const_vec2, Vec2};
 
 static ATLAS: &[&StaticTexture] = &[
@@ -114,6 +119,26 @@ pub fn draw_number(cb: &mut CommandBuffer, mut number: i32, upper_right: Vec2, c
     let mut negative = false;
     let mut next_pos = upper_right - GLYPH_SIZE;
 
+    cb.set_color_combiner_mode(ColorCombiner {
+        a_0: ASrc::Zero,
+        b_0: BSrc::Zero,
+        c_0: CSrc::Zero,
+        d_0: DSrc::Texel,
+        a_alpha_0: AAlphaSrc::Zero,
+        b_alpha_0: BAlphaSrc::Zero,
+        c_alpha_0: CAlphaSrc::Zero,
+        d_alpha_0: DAlphaSrc::TexelAlpha,
+
+        a_1: ASrc::Zero,
+        b_1: BSrc::Zero,
+        c_1: CSrc::Zero,
+        d_1: DSrc::Texel,
+        a_alpha_1: AAlphaSrc::Zero,
+        b_alpha_1: BAlphaSrc::Zero,
+        c_alpha_1: CAlphaSrc::Zero,
+        d_alpha_1: DAlphaSrc::TexelAlpha,
+    });
+
     if number == 0 {
         draw_char(cb, '0', next_pos, color);
         next_pos -= GLYPH_SIZE;
@@ -137,6 +162,26 @@ pub fn draw_number(cb: &mut CommandBuffer, mut number: i32, upper_right: Vec2, c
 }
 
 pub fn draw_text(cb: &mut CommandBuffer, text: &str, upper_left: Vec2, color: u32) {
+    cb.set_color_combiner_mode(ColorCombiner {
+        a_0: ASrc::Zero,
+        b_0: BSrc::Zero,
+        c_0: CSrc::Zero,
+        d_0: DSrc::Texel,
+        a_alpha_0: AAlphaSrc::Zero,
+        b_alpha_0: BAlphaSrc::Zero,
+        c_alpha_0: CAlphaSrc::Zero,
+        d_alpha_0: DAlphaSrc::TexelAlpha,
+
+        a_1: ASrc::Zero,
+        b_1: BSrc::Zero,
+        c_1: CSrc::Zero,
+        d_1: DSrc::Texel,
+        a_alpha_1: AAlphaSrc::Zero,
+        b_alpha_1: BAlphaSrc::Zero,
+        c_alpha_1: CAlphaSrc::Zero,
+        d_alpha_1: DAlphaSrc::TexelAlpha,
+    });
+
     let mut next_pos = upper_left;
 
     for ch in text.chars() {
