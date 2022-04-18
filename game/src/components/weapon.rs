@@ -378,14 +378,14 @@ pub fn draw_missile_target(
                             -1.0,
                         ));
 
-                    /*cb.add_mesh_indexed(
+                    cb.add_mesh_indexed(
                         &target_indicator.verts,
                         &target_indicator.uvs,
                         &target_indicator.colors,
                         &target_indicator.indices,
                         &transform.to_cols_array_2d(),
                         None,
-                    );*/
+                    );
                 }
             } else if w.weapon_type == WeaponType::TrippleMissile {
                 let shooter_pos = m.pos;
@@ -426,14 +426,14 @@ pub fn draw_missile_target(
                             -1.0,
                         ));
 
-                    /*cb.add_mesh_indexed(
+                    cb.add_mesh_indexed(
                         &target_indicator.verts,
                         &target_indicator.uvs,
                         &target_indicator.colors,
                         &target_indicator.indices,
                         &transform.to_cols_array_2d(),
                         None,
-                    );*/
+                    );
                 }
             }
         }
