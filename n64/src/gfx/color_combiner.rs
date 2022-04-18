@@ -1,6 +1,8 @@
 #![allow(dead_code)]
 
-#[derive(Clone, Copy)]
+use strum_macros::FromRepr;
+
+#[derive(Clone, Copy, FromRepr)]
 pub enum ASrc {
     Combined = 0,
     Texel = 1,
@@ -12,7 +14,7 @@ pub enum ASrc {
     Zero = 8,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
 pub enum BSrc {
     Combined = 0,
     Texel = 1,
@@ -22,7 +24,7 @@ pub enum BSrc {
     Zero = 8,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
 pub enum CSrc {
     Combined = 0,
     Texel = 1,
@@ -37,7 +39,7 @@ pub enum CSrc {
     Zero = 16,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
 pub enum DSrc {
     Combined = 0,
     Texel = 1,
@@ -48,7 +50,7 @@ pub enum DSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
 pub enum AAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
@@ -59,7 +61,7 @@ pub enum AAlphaSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
 pub enum BAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
@@ -70,7 +72,7 @@ pub enum BAlphaSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
 pub enum CAlphaSrc {
     TexelAlpha = 1,
     PrimitiveAlpha = 3,
@@ -79,7 +81,7 @@ pub enum CAlphaSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, FromRepr)]
 pub enum DAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
@@ -108,12 +110,38 @@ impl Default for ColorCombiner {
             a: ASrc::Zero,
             b: BSrc::Zero,
             c: CSrc::Zero,
-            d: DSrc::Shade,
+            d: DSrc::Combined,
             aa: AAlphaSrc::Zero,
             ba: BAlphaSrc::Zero,
             ca: CAlphaSrc::Zero,
-            da: DAlphaSrc::ShadeAlpha,
+            da: DAlphaSrc::CombinedAlpha,
         }
+    }
+}
+
+impl From<u64> for ColorCombiner {
+    fn from(mode: u64) -> Self {
+        let sub_a_0 = (mode >> 52) & 0xf;
+        let sub_b_0 = (mode >> 28) & 0xf;
+        let mul_c_0 = (mode >> 47) & 0x1f;
+        let add_d_0 = (mode >> 15) & 0x7;
+
+        let sub_a_alpha_0 = (mode >> 44) & 0x7;
+        let sub_b_alpha_0 = (mode >> 12) & 0x7;
+        let mul_c_alpha_0 = (mode >> 41) & 0x7;
+        let add_d_alpha_0 = (mode >> 9) & 0x7;
+
+        let sub_a_1 = (mode >> 37) & 0xf;
+        let sub_b_1 = (mode >> 24) & 0xf;
+        let mul_c_1 = (mode >> 32) & 0x1f;
+        let add_d_1 = (mode >> 6) & 0x7;
+
+        let sub_a_alpha_1 = (mode >> 21) & 0x7;
+        let sub_b_alpha_1 = (mode >> 3) & 0x7;
+        let mul_c_alpha_1 = (mode >> 18) & 0x7;
+        let add_d_alpha_1 = (mode >> 0) & 0x7;
+
+        Default::default()
     }
 }
 

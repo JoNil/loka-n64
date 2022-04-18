@@ -205,9 +205,9 @@ fn shaded_triangle_coeff(
     // Color already in f16.16
     //let pOff = -(vb.x*nx + vb.y*ny + bi*nz);
 
-    n64_macros::debugln!("n dot a {:?}", (va.x) * nx + (va.y) * ny + (ai) * nz);
-    n64_macros::debugln!("n dot b {:?}", (vb.x) * nx + (vb.y) * ny + (bi) * nz);
-    n64_macros::debugln!("n dot c {:?}", (vc.x) * nx + (vc.y) * ny + (ci) * nz);
+    //n64_macros::debugln!("n dot a {:?}", (va.x) * nx + (va.y) * ny + (ai) * nz);
+    //n64_macros::debugln!("n dot b {:?}", (vb.x) * nx + (vb.y) * ny + (bi) * nz);
+    //n64_macros::debugln!("n dot c {:?}", (vc.x) * nx + (vc.y) * ny + (ci) * nz);
 
     //return (((-nx/nz) as i32)<<16, ((-ny/nz) as i32)<<16, (pOff as i32)<<16);
     //return ((-nx as i32)<<16, (-ny as i32)<<16, (pOff as i32)<<16);
@@ -222,7 +222,7 @@ fn shaded_triangle_coeff(
 
     //let ne = (nx*(vc.x - vb.x) + ny*(vc.y - vb.y));//
 
-    n64_macros::debugln!("ne {}", ne);
+    //n64_macros::debugln!("ne {}", ne);
     let norm = -((1 << 16) as f32) / nz;
     // return ((nx*norm) as i32, (ne*norm) as i32, (bi*norm) as i32);
     //return ((ne*norm) as i32, (ny*norm) as i32, (bi*norm) as i32);
@@ -276,6 +276,7 @@ impl<'a> CommandBuffer<'a> {
                 Vec2::ZERO,
                 vec2((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
             )
+            .set_combine_mode_old(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
             .set_combine_mode(ColorCombiner::default().to_command());
 
         CommandBuffer {

@@ -1311,6 +1311,7 @@ dependencies = [
  "rubato",
  "spin",
  "strum",
+ "strum_macros",
  "wgpu",
  "wgpu-mipmap",
  "winit",

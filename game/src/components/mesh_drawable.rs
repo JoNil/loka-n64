@@ -39,14 +39,14 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
                     ),
                 );
 
-            cb.add_mesh_indexed(
+            /*cb.add_mesh_indexed(
                 &component.model.verts,
                 &component.model.uvs,
                 &component.model.colors,
                 &component.model.indices,
                 &transform.to_cols_array_2d(),
                 None,
-            );
+            );*/
         }
     }
 }

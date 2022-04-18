@@ -14,6 +14,8 @@ n64-macros = { path = "../n64-macros" }
 n64-math = { path = "../n64-math" }
 n64-types = { path = "../n64-types" }
 spin = "0.9"
+strum = { version = "0.24", default-features = false }
+strum_macros = { version = "0.24", default-features = false }
 zerocopy = "0.6"
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
@@ -22,7 +24,6 @@ futures-executor = "0.3"
 lazy_static = "1"
 naga = { version = "0.8", features = ["glsl-in", "spv-out"] }
 rubato = { git = "https://github.com/JoNil/rubato.git" }
-strum = "0.24"
 wgpu = { version = "0.12", features = ["spirv"] }
 wgpu-mipmap = { git = "https://github.com/JoNil/wgpu-mipmap.git" }
 winit = "0.26"
