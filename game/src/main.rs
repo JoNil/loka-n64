@@ -29,7 +29,7 @@ use map::Map;
 use maps::MAP_1;
 use n64::{
     self, current_time_us,
-    gfx::{CommandBuffer, CommandBufferCache},
+    gfx::{color_combiner::ColorCombiner, CommandBuffer, CommandBufferCache},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
 use n64_math::{vec2, vec3, Color};
@@ -88,7 +88,6 @@ fn main() {
 
     let mut last_colored_rect_count = 0;
     let mut last_textured_rect_count = 0;
-
     loop {
         frame_begin_time = current_time_us();
 

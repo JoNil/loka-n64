@@ -2,7 +2,7 @@
 
 use strum_macros::FromRepr;
 
-#[derive(Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr)]
 pub enum ASrc {
     Combined = 0,
     Texel = 1,
@@ -12,19 +12,34 @@ pub enum ASrc {
     Noise = 7,
     One = 6,
     Zero = 8,
+    Zero1 = 9,
+    Zero2 = 10,
+    Zero3 = 11,
+    Zero4 = 12,
+    Zero5 = 13,
+    Zero6 = 14,
+    Zero7 = 15,
 }
 
-#[derive(Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr)]
 pub enum BSrc {
     Combined = 0,
     Texel = 1,
     Primitive = 3,
     Shade = 4,
     Environment = 5,
+    ConvertK4 = 7,
     Zero = 8,
+    Zero1 = 9,
+    Zero2 = 10,
+    Zero3 = 11,
+    Zero4 = 12,
+    Zero5 = 13,
+    Zero6 = 14,
+    Zero7 = 15,
 }
 
-#[derive(Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr)]
 pub enum CSrc {
     Combined = 0,
     Texel = 1,
@@ -36,10 +51,13 @@ pub enum CSrc {
     PrimitiveAlpha = 10,
     ShadeAlpha = 11,
     EnvironmentAlpha = 12,
+    LodFraction = 13,
+    PrimitiveLodFraction = 14,
+    ConvertK5 = 15,
     Zero = 16,
 }
 
-#[derive(Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr)]
 pub enum DSrc {
     Combined = 0,
     Texel = 1,
@@ -50,7 +68,7 @@ pub enum DSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr)]
 pub enum AAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
@@ -61,7 +79,7 @@ pub enum AAlphaSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr)]
 pub enum BAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
@@ -72,8 +90,9 @@ pub enum BAlphaSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr)]
 pub enum CAlphaSrc {
+    CombinedAlphaInvalid = 0,
     TexelAlpha = 1,
     PrimitiveAlpha = 3,
     ShadeAlpha = 4,
@@ -81,7 +100,7 @@ pub enum CAlphaSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy, FromRepr)]
+#[derive(Clone, Copy, Debug, FromRepr)]
 pub enum DAlphaSrc {
     CombinedAlpha = 0,
     TexelAlpha = 1,
@@ -92,7 +111,7 @@ pub enum DAlphaSrc {
     Zero = 7,
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, Debug)]
 pub struct ColorCombiner {
     pub a_0: ASrc,
     pub b_0: BSrc,
@@ -119,20 +138,20 @@ impl Default for ColorCombiner {
             a_0: ASrc::Zero,
             b_0: BSrc::Zero,
             c_0: CSrc::Zero,
-            d_0: DSrc::Combined,
+            d_0: DSrc::Shade,
             a_alpha_0: AAlphaSrc::Zero,
             b_alpha_0: BAlphaSrc::Zero,
             c_alpha_0: CAlphaSrc::Zero,
-            d_alpha_0: DAlphaSrc::CombinedAlpha,
+            d_alpha_0: DAlphaSrc::ShadeAlpha,
 
             a_1: ASrc::Zero,
             b_1: BSrc::Zero,
             c_1: CSrc::Zero,
-            d_1: DSrc::Zero,
+            d_1: DSrc::Shade,
             a_alpha_1: AAlphaSrc::Zero,
             b_alpha_1: BAlphaSrc::Zero,
             c_alpha_1: CAlphaSrc::Zero,
-            d_alpha_1: DAlphaSrc::Zero,
+            d_alpha_1: DAlphaSrc::ShadeAlpha,
         }
     }
 }
@@ -192,15 +211,15 @@ impl ColorCombiner {
         let c_alpha_0 = (self.c_alpha_0 as u64) << 41;
         let d_alpha_0 = (self.d_alpha_0 as u64) << 9;
 
-        let a_1 = (ASrc::Zero as u64) << 37;
-        let b_1 = (BSrc::Zero as u64) << 24;
-        let c_1 = (CSrc::Zero as u64) << 32;
-        let d_1 = (DSrc::Zero as u64) << 6;
+        let a_1 = (self.a_1 as u64) << 37;
+        let b_1 = (self.b_1 as u64) << 24;
+        let c_1 = (self.c_1 as u64) << 32;
+        let d_1 = (self.d_1 as u64) << 6;
 
-        let a_alpha_1 = (AAlphaSrc::Zero as u64) << 21;
-        let b_alpha_1 = (BAlphaSrc::Zero as u64) << 3;
-        let c_alpha_1 = (CAlphaSrc::Zero as u64) << 18;
-        let d_alpha_1 = DAlphaSrc::Zero as u64;
+        let a_alpha_1 = (self.a_alpha_1 as u64) << 21;
+        let b_alpha_1 = (self.b_alpha_1 as u64) << 3;
+        let c_alpha_1 = (self.c_alpha_1 as u64) << 18;
+        let d_alpha_1 = self.d_alpha_1 as u64;
 
         a_0 | b_0
             | c_0

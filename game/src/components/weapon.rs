@@ -322,6 +322,10 @@ pub fn draw_missile_target(
         b_0: BSrc::Zero,
         c_0: CSrc::Zero,
         d_0: DSrc::Environment,
+        a_1: ASrc::Zero,
+        b_1: BSrc::Zero,
+        c_1: CSrc::Zero,
+        d_1: DSrc::Environment,
         ..Default::default()
     });
 

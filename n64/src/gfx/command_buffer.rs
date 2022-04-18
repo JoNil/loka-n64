@@ -275,9 +275,7 @@ impl<'a> CommandBuffer<'a> {
             .set_scissor(
                 Vec2::ZERO,
                 vec2((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
-            )
-            .set_combine_mode_old(&[0, 0, 0, 0, 6, 1, 0, 15, 1, 0, 0, 0, 0, 7, 7, 7])
-            .set_combine_mode(ColorCombiner::default().to_command());
+            );
 
         CommandBuffer {
             out_tex,
