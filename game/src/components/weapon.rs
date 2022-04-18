@@ -318,10 +318,10 @@ pub fn draw_missile_target(
 
     // (a - b)*c + d
     cb.set_color_combiner_mode(ColorCombiner {
-        a: ASrc::Zero,
-        b: BSrc::Zero,
-        c: CSrc::Zero,
-        d: DSrc::Environment,
+        a_0: ASrc::Zero,
+        b_0: BSrc::Zero,
+        c_0: CSrc::Zero,
+        d_0: DSrc::Environment,
         ..Default::default()
     });
 

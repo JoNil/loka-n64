@@ -94,94 +94,128 @@ pub enum DAlphaSrc {
 
 #[derive(Clone, Copy)]
 pub struct ColorCombiner {
-    pub a: ASrc,
-    pub b: BSrc,
-    pub c: CSrc,
-    pub d: DSrc,
-    pub aa: AAlphaSrc,
-    pub ba: BAlphaSrc,
-    pub ca: CAlphaSrc,
-    pub da: DAlphaSrc,
+    pub a_0: ASrc,
+    pub b_0: BSrc,
+    pub c_0: CSrc,
+    pub d_0: DSrc,
+    pub a_alpha_0: AAlphaSrc,
+    pub b_alpha_0: BAlphaSrc,
+    pub c_alpha_0: CAlphaSrc,
+    pub d_alpha_0: DAlphaSrc,
+
+    pub a_1: ASrc,
+    pub b_1: BSrc,
+    pub c_1: CSrc,
+    pub d_1: DSrc,
+    pub a_alpha_1: AAlphaSrc,
+    pub b_alpha_1: BAlphaSrc,
+    pub c_alpha_1: CAlphaSrc,
+    pub d_alpha_1: DAlphaSrc,
 }
 
 impl Default for ColorCombiner {
     fn default() -> Self {
         Self {
-            a: ASrc::Zero,
-            b: BSrc::Zero,
-            c: CSrc::Zero,
-            d: DSrc::Combined,
-            aa: AAlphaSrc::Zero,
-            ba: BAlphaSrc::Zero,
-            ca: CAlphaSrc::Zero,
-            da: DAlphaSrc::CombinedAlpha,
+            a_0: ASrc::Zero,
+            b_0: BSrc::Zero,
+            c_0: CSrc::Zero,
+            d_0: DSrc::Combined,
+            a_alpha_0: AAlphaSrc::Zero,
+            b_alpha_0: BAlphaSrc::Zero,
+            c_alpha_0: CAlphaSrc::Zero,
+            d_alpha_0: DAlphaSrc::CombinedAlpha,
+
+            a_1: ASrc::Zero,
+            b_1: BSrc::Zero,
+            c_1: CSrc::Zero,
+            d_1: DSrc::Zero,
+            a_alpha_1: AAlphaSrc::Zero,
+            b_alpha_1: BAlphaSrc::Zero,
+            c_alpha_1: CAlphaSrc::Zero,
+            d_alpha_1: DAlphaSrc::Zero,
         }
     }
 }
 
 impl From<u64> for ColorCombiner {
     fn from(mode: u64) -> Self {
-        let sub_a_0 = (mode >> 52) & 0xf;
-        let sub_b_0 = (mode >> 28) & 0xf;
-        let mul_c_0 = (mode >> 47) & 0x1f;
-        let add_d_0 = (mode >> 15) & 0x7;
+        let a_0 = (mode >> 52) & 0xf;
+        let b_0 = (mode >> 28) & 0xf;
+        let c_0 = (mode >> 47) & 0x1f;
+        let d_0 = (mode >> 15) & 0x7;
 
-        let sub_a_alpha_0 = (mode >> 44) & 0x7;
-        let sub_b_alpha_0 = (mode >> 12) & 0x7;
-        let mul_c_alpha_0 = (mode >> 41) & 0x7;
-        let add_d_alpha_0 = (mode >> 9) & 0x7;
+        let a_alpha_0 = (mode >> 44) & 0x7;
+        let b_alpha_0 = (mode >> 12) & 0x7;
+        let c_alpha_0 = (mode >> 41) & 0x7;
+        let d_alpha_0 = (mode >> 9) & 0x7;
 
-        let sub_a_1 = (mode >> 37) & 0xf;
-        let sub_b_1 = (mode >> 24) & 0xf;
-        let mul_c_1 = (mode >> 32) & 0x1f;
-        let add_d_1 = (mode >> 6) & 0x7;
+        let a_1 = (mode >> 37) & 0xf;
+        let b_1 = (mode >> 24) & 0xf;
+        let c_1 = (mode >> 32) & 0x1f;
+        let d_1 = (mode >> 6) & 0x7;
 
-        let sub_a_alpha_1 = (mode >> 21) & 0x7;
-        let sub_b_alpha_1 = (mode >> 3) & 0x7;
-        let mul_c_alpha_1 = (mode >> 18) & 0x7;
-        let add_d_alpha_1 = (mode >> 0) & 0x7;
+        let a_alpha_1 = (mode >> 21) & 0x7;
+        let b_alpha_1 = (mode >> 3) & 0x7;
+        let c_alpha_1 = (mode >> 18) & 0x7;
+        let d_alpha_1 = mode & 0x7;
 
-        Default::default()
+        Self {
+            a_0: ASrc::from_repr(a_0 as usize).unwrap(),
+            b_0: BSrc::from_repr(b_0 as usize).unwrap(),
+            c_0: CSrc::from_repr(c_0 as usize).unwrap(),
+            d_0: DSrc::from_repr(d_0 as usize).unwrap(),
+            a_alpha_0: AAlphaSrc::from_repr(a_alpha_0 as usize).unwrap(),
+            b_alpha_0: BAlphaSrc::from_repr(b_alpha_0 as usize).unwrap(),
+            c_alpha_0: CAlphaSrc::from_repr(c_alpha_0 as usize).unwrap(),
+            d_alpha_0: DAlphaSrc::from_repr(d_alpha_0 as usize).unwrap(),
+            a_1: ASrc::from_repr(a_1 as usize).unwrap(),
+            b_1: BSrc::from_repr(b_1 as usize).unwrap(),
+            c_1: CSrc::from_repr(c_1 as usize).unwrap(),
+            d_1: DSrc::from_repr(d_1 as usize).unwrap(),
+            a_alpha_1: AAlphaSrc::from_repr(a_alpha_1 as usize).unwrap(),
+            b_alpha_1: BAlphaSrc::from_repr(b_alpha_1 as usize).unwrap(),
+            c_alpha_1: CAlphaSrc::from_repr(c_alpha_1 as usize).unwrap(),
+            d_alpha_1: DAlphaSrc::from_repr(d_alpha_1 as usize).unwrap(),
+        }
     }
 }
 
 impl ColorCombiner {
     pub fn to_command(&self) -> u64 {
-        let sub_a_0 = (self.a as u64) << 52;
-        let sub_b_0 = (self.b as u64) << 28;
-        let mul_c_0 = (self.c as u64) << 47;
-        let add_d_0 = (self.d as u64) << 15;
+        let a_0 = (self.a_0 as u64) << 52;
+        let b_0 = (self.b_0 as u64) << 28;
+        let c_0 = (self.c_0 as u64) << 47;
+        let d_0 = (self.d_0 as u64) << 15;
 
-        let sub_a_alpha_0 = (self.aa as u64) << 44;
-        let sub_b_alpha_0 = (self.ba as u64) << 12;
-        let mul_c_alpha_0 = (self.ca as u64) << 41;
-        let add_d_alpha_0 = (self.da as u64) << 9;
+        let a_alpha_0 = (self.a_alpha_0 as u64) << 44;
+        let b_alpha_0 = (self.b_alpha_0 as u64) << 12;
+        let c_alpha_0 = (self.c_alpha_0 as u64) << 41;
+        let d_alpha_0 = (self.d_alpha_0 as u64) << 9;
 
-        let sub_a_1 = (ASrc::Zero as u64) << 37;
-        let sub_b_1 = (BSrc::Zero as u64) << 24;
-        let mul_c_1 = (CSrc::Zero as u64) << 32;
-        let add_d_1 = (DSrc::Zero as u64) << 6;
+        let a_1 = (ASrc::Zero as u64) << 37;
+        let b_1 = (BSrc::Zero as u64) << 24;
+        let c_1 = (CSrc::Zero as u64) << 32;
+        let d_1 = (DSrc::Zero as u64) << 6;
 
-        let sub_a_alpha_1 = (AAlphaSrc::Zero as u64) << 21;
-        let sub_b_alpha_1 = (BAlphaSrc::Zero as u64) << 3;
-        let mul_c_alpha_1 = (CAlphaSrc::Zero as u64) << 18;
-        let add_d_alpha_1 = DAlphaSrc::Zero as u64;
+        let a_alpha_1 = (AAlphaSrc::Zero as u64) << 21;
+        let b_alpha_1 = (BAlphaSrc::Zero as u64) << 3;
+        let c_alpha_1 = (CAlphaSrc::Zero as u64) << 18;
+        let d_alpha_1 = DAlphaSrc::Zero as u64;
 
-        sub_a_0
-            | sub_b_0
-            | mul_c_0
-            | add_d_0
-            | sub_a_alpha_0
-            | sub_b_alpha_0
-            | mul_c_alpha_0
-            | add_d_alpha_0
-            | sub_a_1
-            | sub_b_1
-            | mul_c_1
-            | add_d_1
-            | sub_a_alpha_1
-            | sub_b_alpha_1
-            | mul_c_alpha_1
-            | add_d_alpha_1
+        a_0 | b_0
+            | c_0
+            | d_0
+            | a_alpha_0
+            | b_alpha_0
+            | c_alpha_0
+            | d_alpha_0
+            | a_1
+            | b_1
+            | c_1
+            | d_1
+            | a_alpha_1
+            | b_alpha_1
+            | c_alpha_1
+            | d_alpha_1
     }
 }
