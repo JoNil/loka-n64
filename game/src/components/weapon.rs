@@ -3,8 +3,10 @@ use core::f32::consts::PI;
 use n64::{
     current_time_us,
     gfx::{
-        color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
-        CommandBuffer,
+        color_combiner::{
+            AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombiner, DAlphaSrc, DSrc,
+        },
+        CommandBuffer, CycleType, Pipeline,
     },
     VideoMode,
 };
@@ -305,6 +307,37 @@ pub fn fire(
     }
 }
 
+static TARGET_PIPELINE: Pipeline = Pipeline {
+    cycle_type: CycleType::One,
+    combiner_mode: ColorCombiner {
+        a_0: ASrc::Zero,
+        b_0: BSrc::Zero,
+        c_0: CSrc::Zero,
+        d_0: DSrc::Environment,
+
+        a_alpha_0: AAlphaSrc::Zero,
+        b_alpha_0: BAlphaSrc::Zero,
+        c_alpha_0: CAlphaSrc::Zero,
+        d_alpha_0: DAlphaSrc::EnvironmentAlpha,
+
+        a_1: ASrc::Zero,
+        b_1: BSrc::Zero,
+        c_1: CSrc::Zero,
+        d_1: DSrc::Environment,
+
+        a_alpha_1: AAlphaSrc::Zero,
+        b_alpha_1: BAlphaSrc::Zero,
+        c_alpha_1: CAlphaSrc::Zero,
+        d_alpha_1: DAlphaSrc::EnvironmentAlpha,
+    },
+    texture: None,
+    prim_color: None,
+    env_color: None,
+    blend_color: None,
+    z_update: false,
+    z_compare: false,
+};
+
 pub fn draw_missile_target(
     world: &mut World,
     cb: &mut CommandBuffer,
@@ -316,29 +349,17 @@ pub fn draw_missile_target(
 
     let target_indicator = TARGET_INDICATOR.as_model_data();
 
-    // (a - b)*c + d
-    cb.set_color_combiner_mode(ColorCombiner {
-        a_0: ASrc::Zero,
-        b_0: BSrc::Zero,
-        c_0: CSrc::Zero,
-        d_0: DSrc::Environment,
-        a_1: ASrc::Zero,
-        b_1: BSrc::Zero,
-        c_1: CSrc::Zero,
-        d_1: DSrc::Environment,
-        ..Default::default()
-    });
-
     for player_entity in player.entities() {
         if let (Some(m), Some(w)) = (
             movable.lookup(*player_entity),
             weapon.lookup_mut(*player_entity),
         ) {
-            if current_time_us() - w.last_shoot_time > MISSILE_DELAY_MS as i64 * 1000 {
-                cb.set_env_color(0x008000ff);
+            let pipeline = if current_time_us() - w.last_shoot_time > MISSILE_DELAY_MS as i64 * 1000
+            {
+                TARGET_PIPELINE.with_env_color(Some(0x008000ff))
             } else {
-                cb.set_env_color(0x800000ff);
-            }
+                TARGET_PIPELINE.with_env_color(Some(0x800000ff))
+            };
 
             if w.weapon_type == WeaponType::Missile {
                 let shooter_pos = m.pos;
@@ -384,7 +405,7 @@ pub fn draw_missile_target(
                         &target_indicator.colors,
                         &target_indicator.indices,
                         &transform.to_cols_array_2d(),
-                        None,
+                        &pipeline,
                     );
                 }
             } else if w.weapon_type == WeaponType::TrippleMissile {
@@ -432,7 +453,7 @@ pub fn draw_missile_target(
                         &target_indicator.colors,
                         &target_indicator.indices,
                         &transform.to_cols_array_2d(),
-                        None,
+                        &pipeline,
                     );
                 }
             }

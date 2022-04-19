@@ -9,6 +9,7 @@ pub mod pickup;
 pub mod player;
 pub mod projectile;
 pub mod remove_when_below;
+pub mod shadow;
 pub mod size;
 pub mod spawner;
 pub mod sprite_drawable;

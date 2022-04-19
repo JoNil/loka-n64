@@ -23,7 +23,10 @@ pub(crate) struct UploadedTexture {
 
 pub(crate) struct Mesh {
     pub bind_group_layout: wgpu::BindGroupLayout,
-    pub pipeline: wgpu::RenderPipeline,
+    pub pipeline_with_depth_compare_and_depth_write: wgpu::RenderPipeline,
+    pub pipeline_with_depth_compare: wgpu::RenderPipeline,
+    pub pipeline_with_depth_write: wgpu::RenderPipeline,
+    pub pipeline_with_no_depth: wgpu::RenderPipeline,
     pub shader_storage_buffer: wgpu::Buffer,
     pub sampler: wgpu::Sampler,
     pub texture_cache: HashMap<usize, UploadedTexture>,
@@ -80,7 +83,24 @@ impl Mesh {
             include_str!("shaders/mesh.frag"),
         );
 
-        let pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
+        let target_desc = &[wgpu::ColorTargetState {
+            format: dst_tex_format,
+            blend: Some(wgpu::BlendState {
+                color: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::SrcAlpha,
+                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
+                    operation: wgpu::BlendOperation::Add,
+                },
+                alpha: wgpu::BlendComponent {
+                    src_factor: wgpu::BlendFactor::One,
+                    dst_factor: wgpu::BlendFactor::Zero,
+                    operation: wgpu::BlendOperation::Add,
+                },
+            }),
+            write_mask: wgpu::ColorWrites::ALL,
+        }];
+
+        let mut pipeline_desc = wgpu::RenderPipelineDescriptor {
             label: None,
             layout: Some(&pipeline_layout),
             vertex: wgpu::VertexState {
@@ -132,25 +152,40 @@ impl Mesh {
             fragment: Some(wgpu::FragmentState {
                 module: &fs_module,
                 entry_point: "main",
-                targets: &[wgpu::ColorTargetState {
-                    format: dst_tex_format,
-                    blend: Some(wgpu::BlendState {
-                        color: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::SrcAlpha,
-                            dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                            operation: wgpu::BlendOperation::Add,
-                        },
-                        alpha: wgpu::BlendComponent {
-                            src_factor: wgpu::BlendFactor::One,
-                            dst_factor: wgpu::BlendFactor::Zero,
-                            operation: wgpu::BlendOperation::Add,
-                        },
-                    }),
-                    write_mask: wgpu::ColorWrites::ALL,
-                }],
+                targets: target_desc,
             }),
             multiview: None,
+        };
+
+        let pipeline_with_depth_compare_and_depth_write =
+            device.create_render_pipeline(&pipeline_desc);
+
+        pipeline_desc.depth_stencil = Some(wgpu::DepthStencilState {
+            format: depth_format,
+            depth_write_enabled: false,
+            depth_compare: wgpu::CompareFunction::LessEqual,
+            stencil: wgpu::StencilState::default(),
+            bias: wgpu::DepthBiasState::default(),
         });
+        let pipeline_with_depth_compare = device.create_render_pipeline(&pipeline_desc);
+
+        pipeline_desc.depth_stencil = Some(wgpu::DepthStencilState {
+            format: depth_format,
+            depth_write_enabled: true,
+            depth_compare: wgpu::CompareFunction::Always,
+            stencil: wgpu::StencilState::default(),
+            bias: wgpu::DepthBiasState::default(),
+        });
+        let pipeline_with_depth_write = device.create_render_pipeline(&pipeline_desc);
+
+        pipeline_desc.depth_stencil = Some(wgpu::DepthStencilState {
+            format: depth_format,
+            depth_write_enabled: false,
+            depth_compare: wgpu::CompareFunction::Always,
+            stencil: wgpu::StencilState::default(),
+            bias: wgpu::DepthBiasState::default(),
+        });
+        let pipeline_with_no_depth = device.create_render_pipeline(&pipeline_desc);
 
         let shader_storage_buffer = device.create_buffer(&wgpu::BufferDescriptor {
             label: None,
@@ -178,7 +213,10 @@ impl Mesh {
 
         let mut mesh = Self {
             bind_group_layout,
-            pipeline,
+            pipeline_with_depth_compare_and_depth_write,
+            pipeline_with_depth_compare,
+            pipeline_with_depth_write,
+            pipeline_with_no_depth,
             shader_storage_buffer,
             sampler,
             texture_cache,

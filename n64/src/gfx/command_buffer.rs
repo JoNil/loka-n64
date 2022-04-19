@@ -307,24 +307,6 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn set_prim_color(&mut self, prim_color: u32) -> &mut Self {
-        self.cache.rdp.sync_pipe().set_prim_color(prim_color);
-        self
-    }
-
-    pub fn set_env_color(&mut self, env_color: u32) -> &mut Self {
-        self.cache.rdp.sync_pipe().set_env_color(env_color);
-        self
-    }
-
-    pub fn set_color_combiner_mode(&mut self, color_combiner: ColorCombiner) -> &mut Self {
-        self.cache
-            .rdp
-            .sync_pipe()
-            .set_combine_mode(color_combiner.to_command());
-        self
-    }
-
     pub fn add_colored_rect(
         &mut self,
         upper_left: Vec2,
@@ -341,6 +323,7 @@ impl<'a> CommandBuffer<'a> {
                     | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
                     | OTHER_MODE_FORCE_BLEND,
             )
+            .set_combine_mode(ColorCombiner::default().to_command())
             .set_fill_color(color)
             .fill_rectangle(upper_left, lower_right - vec2(1.0, 1.0));
 
@@ -355,19 +338,45 @@ impl<'a> CommandBuffer<'a> {
         blend_color: Option<u32>,
     ) -> &mut Self {
         self.textured_rect_count += 1;
-        self.cache.rdp.sync_pipe().sync_tile().set_other_modes(
-            OTHER_MODE_SAMPLE_TYPE
-                | OTHER_MODE_BI_LERP_0
-                | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
-                | OTHER_MODE_B_M2A_0_1
-                | if let Some(_) = blend_color {
-                    OTHER_MODE_B_M1A_0_2
-                } else {
-                    0
+        self.cache
+            .rdp
+            .sync_pipe()
+            .sync_tile()
+            .set_other_modes(
+                OTHER_MODE_SAMPLE_TYPE
+                    | OTHER_MODE_BI_LERP_0
+                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
+                    | OTHER_MODE_B_M2A_0_1
+                    | if let Some(_) = blend_color {
+                        OTHER_MODE_B_M1A_0_2
+                    } else {
+                        0
+                    }
+                    | OTHER_MODE_FORCE_BLEND
+                    | OTHER_MODE_IMAGE_READ_EN,
+            )
+            .set_combine_mode(
+                ColorCombiner {
+                    a_0: ASrc::Zero,
+                    b_0: BSrc::Zero,
+                    c_0: CSrc::Zero,
+                    d_0: DSrc::Texel,
+                    a_alpha_0: AAlphaSrc::Zero,
+                    b_alpha_0: BAlphaSrc::Zero,
+                    c_alpha_0: CAlphaSrc::Zero,
+                    d_alpha_0: DAlphaSrc::TexelAlpha,
+
+                    a_1: ASrc::Zero,
+                    b_1: BSrc::Zero,
+                    c_1: CSrc::Zero,
+                    d_1: DSrc::Texel,
+                    a_alpha_1: AAlphaSrc::Zero,
+                    b_alpha_1: BAlphaSrc::Zero,
+                    c_alpha_1: CAlphaSrc::Zero,
+                    d_alpha_1: DAlphaSrc::TexelAlpha,
                 }
-                | OTHER_MODE_FORCE_BLEND
-                | OTHER_MODE_IMAGE_READ_EN,
-        );
+                .to_command(),
+            );
 
         if let Some(blend_color) = blend_color {
             self.cache.rdp.set_blend_color(blend_color);
@@ -412,7 +421,7 @@ impl<'a> CommandBuffer<'a> {
         colors: &[u32],
         indices: &[[u8; 3]],
         transform: &[[f32; 4]; 4],
-        texture: Option<Texture<'static>>,
+        pipeline: &Pipeline,
     ) -> &mut Self {
         static mut STATIC_COMBINE_CYCLE: u32 = 0;
         let mut lastVal: u8 = 4;

@@ -4,6 +4,7 @@ use super::{
     keep_on_screen::KeepOnScreen,
     mesh_drawable::MeshDrawable,
     movable::Movable,
+    shadow::Shadow,
     size::Size,
     weapon::{self, Weapon, WeaponTarget, WeaponType},
 };
@@ -41,6 +42,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             model: SHIP_3.as_model_data(),
             rot: Quat::IDENTITY,
         })
+        .add(Shadow)
         .add(Health { health: 10000 })
         .add(Weapon {
             weapon_type: WeaponType::TrippleMissile,

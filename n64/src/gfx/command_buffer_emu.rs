@@ -1,5 +1,4 @@
-use super::color_combiner::ColorCombiner;
-use super::TextureMut;
+use super::{Pipeline, TextureMut};
 use crate::{gfx::Texture, graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
 use crate::{
     graphics::QUAD_INDEX_DATA,
@@ -35,10 +34,7 @@ enum Command {
         colors: Vec<u32>,
         indices: Vec<u8>,
         transform: [[f32; 4]; 4],
-        texture: Option<Texture<'static>>,
-        prim_color: u32,
-        env_color: u32,
-        color_combiner_mode: ColorCombiner,
+        pipeline: Pipeline,
         buffer_index: usize,
     },
 }
@@ -63,9 +59,6 @@ pub struct CommandBuffer<'a> {
     textured_rect_count: u32,
     mesh_count: u32,
     cache: &'a mut CommandBufferCache,
-    prim_color: u32,
-    env_color: u32,
-    color_combiner_mode: ColorCombiner,
 }
 
 impl<'a> CommandBuffer<'a> {
@@ -77,30 +70,12 @@ impl<'a> CommandBuffer<'a> {
             textured_rect_count: 0,
             mesh_count: 0,
             cache,
-            prim_color: 0,
-            env_color: 0,
-            color_combiner_mode: ColorCombiner::default(),
         }
     }
 
     pub fn clear(&mut self) -> &mut Self {
         self.clear = true;
         self.cache.commands.clear();
-        self
-    }
-
-    pub fn set_prim_color(&mut self, prim_color: u32) -> &mut Self {
-        self.prim_color = prim_color;
-        self
-    }
-
-    pub fn set_env_color(&mut self, env_color: u32) -> &mut Self {
-        self.env_color = env_color;
-        self
-    }
-
-    pub fn set_color_combiner_mode(&mut self, color_combiner_mode: ColorCombiner) -> &mut Self {
-        self.color_combiner_mode = color_combiner_mode;
         self
     }
 
@@ -149,7 +124,7 @@ impl<'a> CommandBuffer<'a> {
         colors: &[u32],
         indices: &[[u8; 3]],
         transform: &[[f32; 4]; 4],
-        texture: Option<Texture<'static>>,
+        pipeline: &Pipeline,
     ) -> &mut Self {
         self.mesh_count += 1;
 
@@ -159,10 +134,7 @@ impl<'a> CommandBuffer<'a> {
             colors: colors.to_owned(),
             indices: indices.iter().flatten().copied().collect(),
             transform: *transform,
-            texture,
-            prim_color: self.prim_color,
-            env_color: self.env_color,
-            color_combiner_mode: self.color_combiner_mode,
+            pipeline: *pipeline,
             buffer_index: 0,
         });
 
@@ -244,10 +216,7 @@ impl<'a> CommandBuffer<'a> {
                             colors,
                             indices,
                             transform,
-                            texture,
-                            prim_color,
-                            env_color,
-                            color_combiner_mode,
+                            pipeline,
                             buffer_index,
                             ..
                         } => {
@@ -306,7 +275,7 @@ impl<'a> CommandBuffer<'a> {
 
                             *buffer_index = render_pass_vertex_buffers.len() - 1;
 
-                            if let Some(texture) = texture {
+                            if let Some(texture) = &pipeline.texture {
                                 graphics.mesh.upload_texture_data(
                                     &graphics.device,
                                     &graphics.queue,
@@ -314,7 +283,9 @@ impl<'a> CommandBuffer<'a> {
                                 );
                             }
 
-                            let color_combiner_mode = color_combiner_mode.to_command();
+                            let color_combiner_mode = pipeline.combiner_mode.to_command();
+                            let prim_color = pipeline.prim_color.unwrap_or(0);
+                            let env_color = pipeline.env_color.unwrap_or(0);
 
                             mesh_uniforms.push(MeshUniforms {
                                 transform: *transform,
@@ -327,16 +298,16 @@ impl<'a> CommandBuffer<'a> {
                                     (color_combiner_mode & u32::MAX as u64) as u32,
                                 ],
                                 prim_color: [
-                                    ((*prim_color >> 24) & 0xff) as f32 / 255.0,
-                                    ((*prim_color >> 16) & 0xff) as f32 / 255.0,
-                                    ((*prim_color >> 8) & 0xff) as f32 / 255.0,
-                                    (*prim_color & 0xff) as f32 / 255.0,
+                                    ((prim_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((prim_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((prim_color >> 8) & 0xff) as f32 / 255.0,
+                                    (prim_color & 0xff) as f32 / 255.0,
                                 ],
                                 env_color: [
-                                    ((*env_color >> 24) & 0xff) as f32 / 255.0,
-                                    ((*env_color >> 16) & 0xff) as f32 / 255.0,
-                                    ((*env_color >> 8) & 0xff) as f32 / 255.0,
-                                    (*env_color & 0xff) as f32 / 255.0,
+                                    ((env_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((env_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((env_color >> 8) & 0xff) as f32 / 255.0,
+                                    (env_color & 0xff) as f32 / 255.0,
                                 ],
                             });
                         }
@@ -491,14 +462,23 @@ impl<'a> CommandBuffer<'a> {
                             }
                             Command::Mesh {
                                 indices,
-                                texture,
+                                pipeline,
                                 buffer_index,
                                 ..
                             } => {
-                                let tex_key = if let Some(texture) = texture {
+                                let tex_key = if let Some(texture) = &pipeline.texture {
                                     texture.data.as_ptr() as _
                                 } else {
                                     0
+                                };
+
+                                let pipeline = match (pipeline.z_compare, pipeline.z_update) {
+                                    (true, true) => {
+                                        &graphics.mesh.pipeline_with_depth_compare_and_depth_write
+                                    }
+                                    (true, false) => &graphics.mesh.pipeline_with_depth_compare,
+                                    (false, true) => &graphics.mesh.pipeline_with_depth_write,
+                                    (false, false) => &graphics.mesh.pipeline_with_no_depth,
                                 };
 
                                 render_pass.set_index_buffer(
@@ -509,7 +489,7 @@ impl<'a> CommandBuffer<'a> {
                                     0,
                                     render_pass_vertex_buffers[*buffer_index].slice(..),
                                 );
-                                render_pass.set_pipeline(&graphics.mesh.pipeline);
+                                render_pass.set_pipeline(pipeline);
                                 render_pass.set_bind_group(
                                     0,
                                     &graphics

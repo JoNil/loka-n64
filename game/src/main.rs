@@ -21,7 +21,7 @@ use components::{
     keep_on_screen,
     pickup::{self, spawn_pickup},
     player::draw_player_weapon,
-    remove_when_below, spawner,
+    remove_when_below, shadow, spawner,
     weapon::draw_missile_target,
 };
 use ecs::world::World;
@@ -29,7 +29,7 @@ use map::Map;
 use maps::MAP_1;
 use n64::{
     self, current_time_us,
-    gfx::{CommandBuffer, CommandBufferCache},
+    gfx::{CommandBuffer, CommandBufferCache, Pipeline},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
 use n64_math::{random_u32, vec2, vec3, Color};
@@ -134,6 +134,8 @@ fn main() {
 
                 map.render(&mut cb, VIDEO_MODE, &camera);
 
+                shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+
                 box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
                 sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
                 mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
@@ -188,7 +190,7 @@ fn main() {
                                 [0.0, 0.0, 1.0, 0.0],
                                 [0.0, 0.0, 0.0, 1.0],
                             ],
-                            None,
+                            &Pipeline::default(),
                         );
 
                         cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0), WHITE);

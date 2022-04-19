@@ -2,6 +2,7 @@
 
 use strum_macros::FromRepr;
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum ASrc {
     Combined = 0,
@@ -21,6 +22,7 @@ pub enum ASrc {
     Zero7 = 15,
 }
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum BSrc {
     Combined = 0,
@@ -39,6 +41,7 @@ pub enum BSrc {
     Zero7 = 15,
 }
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum CSrc {
     Combined = 0,
@@ -57,6 +60,7 @@ pub enum CSrc {
     Zero = 16,
 }
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum DSrc {
     Combined = 0,
@@ -68,6 +72,7 @@ pub enum DSrc {
     Zero = 7,
 }
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum AAlphaSrc {
     CombinedAlpha = 0,
@@ -79,6 +84,7 @@ pub enum AAlphaSrc {
     Zero = 7,
 }
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum BAlphaSrc {
     CombinedAlpha = 0,
@@ -90,6 +96,7 @@ pub enum BAlphaSrc {
     Zero = 7,
 }
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum CAlphaSrc {
     CombinedAlphaInvalid = 0,
@@ -100,6 +107,7 @@ pub enum CAlphaSrc {
     Zero = 7,
 }
 
+#[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum DAlphaSrc {
     CombinedAlpha = 0,
@@ -117,6 +125,7 @@ pub struct ColorCombiner {
     pub b_0: BSrc,
     pub c_0: CSrc,
     pub d_0: DSrc,
+
     pub a_alpha_0: AAlphaSrc,
     pub b_alpha_0: BAlphaSrc,
     pub c_alpha_0: CAlphaSrc,
@@ -126,6 +135,7 @@ pub struct ColorCombiner {
     pub b_1: BSrc,
     pub c_1: CSrc,
     pub d_1: DSrc,
+
     pub a_alpha_1: AAlphaSrc,
     pub b_alpha_1: BAlphaSrc,
     pub c_alpha_1: CAlphaSrc,
@@ -139,6 +149,7 @@ impl Default for ColorCombiner {
             b_0: BSrc::Zero,
             c_0: CSrc::Zero,
             d_0: DSrc::Shade,
+            
             a_alpha_0: AAlphaSrc::Zero,
             b_alpha_0: BAlphaSrc::Zero,
             c_alpha_0: CAlphaSrc::Zero,
@@ -148,6 +159,7 @@ impl Default for ColorCombiner {
             b_1: BSrc::Zero,
             c_1: CSrc::Zero,
             d_1: DSrc::Shade,
+
             a_alpha_1: AAlphaSrc::Zero,
             b_alpha_1: BAlphaSrc::Zero,
             c_alpha_1: CAlphaSrc::Zero,
@@ -179,22 +191,22 @@ impl From<u64> for ColorCombiner {
         let d_alpha_1 = mode & 0x7;
 
         Self {
-            a_0: ASrc::from_repr(a_0 as usize).unwrap(),
-            b_0: BSrc::from_repr(b_0 as usize).unwrap(),
-            c_0: CSrc::from_repr(c_0 as usize).unwrap(),
-            d_0: DSrc::from_repr(d_0 as usize).unwrap(),
-            a_alpha_0: AAlphaSrc::from_repr(a_alpha_0 as usize).unwrap(),
-            b_alpha_0: BAlphaSrc::from_repr(b_alpha_0 as usize).unwrap(),
-            c_alpha_0: CAlphaSrc::from_repr(c_alpha_0 as usize).unwrap(),
-            d_alpha_0: DAlphaSrc::from_repr(d_alpha_0 as usize).unwrap(),
-            a_1: ASrc::from_repr(a_1 as usize).unwrap(),
-            b_1: BSrc::from_repr(b_1 as usize).unwrap(),
-            c_1: CSrc::from_repr(c_1 as usize).unwrap(),
-            d_1: DSrc::from_repr(d_1 as usize).unwrap(),
-            a_alpha_1: AAlphaSrc::from_repr(a_alpha_1 as usize).unwrap(),
-            b_alpha_1: BAlphaSrc::from_repr(b_alpha_1 as usize).unwrap(),
-            c_alpha_1: CAlphaSrc::from_repr(c_alpha_1 as usize).unwrap(),
-            d_alpha_1: DAlphaSrc::from_repr(d_alpha_1 as usize).unwrap(),
+            a_0: ASrc::from_repr(a_0 as u8).unwrap(),
+            b_0: BSrc::from_repr(b_0 as u8).unwrap(),
+            c_0: CSrc::from_repr(c_0 as u8).unwrap(),
+            d_0: DSrc::from_repr(d_0 as u8).unwrap(),
+            a_alpha_0: AAlphaSrc::from_repr(a_alpha_0 as u8).unwrap(),
+            b_alpha_0: BAlphaSrc::from_repr(b_alpha_0 as u8).unwrap(),
+            c_alpha_0: CAlphaSrc::from_repr(c_alpha_0 as u8).unwrap(),
+            d_alpha_0: DAlphaSrc::from_repr(d_alpha_0 as u8).unwrap(),
+            a_1: ASrc::from_repr(a_1 as u8).unwrap(),
+            b_1: BSrc::from_repr(b_1 as u8).unwrap(),
+            c_1: CSrc::from_repr(c_1 as u8).unwrap(),
+            d_1: DSrc::from_repr(d_1 as u8).unwrap(),
+            a_alpha_1: AAlphaSrc::from_repr(a_alpha_1 as u8).unwrap(),
+            b_alpha_1: BAlphaSrc::from_repr(b_alpha_1 as u8).unwrap(),
+            c_alpha_1: CAlphaSrc::from_repr(c_alpha_1 as u8).unwrap(),
+            d_alpha_1: DAlphaSrc::from_repr(d_alpha_1 as u8).unwrap(),
         }
     }
 }
