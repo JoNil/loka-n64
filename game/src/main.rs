@@ -29,10 +29,10 @@ use map::Map;
 use maps::MAP_1;
 use n64::{
     self, current_time_us,
-    gfx::{color_combiner::ColorCombiner, CommandBuffer, CommandBufferCache},
+    gfx::{CommandBuffer, CommandBufferCache},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
-use n64_math::{vec2, vec3, Color};
+use n64_math::{random_u32, vec2, vec3, Color};
 use sound_mixer::SoundMixer;
 
 mod camera;
@@ -279,6 +279,14 @@ fn main() {
 
             let frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
             frame_used_time = frame_end_time - frame_begin_time;
+        }
+
+        {
+            // Cycle the random number generator
+            let now = current_time_us() as u64;
+            for _ in 0..(now & 0xf) {
+                let _ = random_u32();
+            }
         }
 
         world.housekeep();
