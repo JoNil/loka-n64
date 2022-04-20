@@ -1,4 +1,5 @@
 #![allow(dead_code)]
+#![allow(clippy::too_many_arguments)]
 
 use alloc::vec::Vec;
 use n64_math::{Color, Vec2};
@@ -289,7 +290,7 @@ impl RdpCommandBuilder {
                 | ((clamp_s as u64) << 9)
                 | ((mirror_s as u64) << 8)
                 | ((mask_s as u64) << 4)
-                | ((shift_s as u64) << 0),
+                | (shift_s as u64),
         ));
         self
     }
@@ -334,7 +335,7 @@ impl RdpCommandBuilder {
         inv_slope_mid: i32,
         inv_slope_high: i32,
     ) -> &mut RdpCommandBuilder {
-        let mut buffer = self.commands.as_mut().unwrap();
+        let buffer = self.commands.as_mut().unwrap();
         let mut command = COMMAND_EDGE_COEFFICIENTS;
         if shade {
             command |= 0x4;
@@ -351,27 +352,21 @@ impl RdpCommandBuilder {
                 | if right_major { 0x1u64 << 55 } else { 0u64 }
                 | (to_fixpoint_s_11_2(y_low_minor)) << 32
                 | (to_fixpoint_s_11_2(y_mid_minor)) << 16
-                | (to_fixpoint_s_11_2(y_high_major)) << 0,
+                | to_fixpoint_s_11_2(y_high_major),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
         // SIC Should be L, H, M order
         buffer.push(RdpCommand(
-            (x_low_int as u64) << 48
-                | (x_low_frac as u64) << 32
-                | (inv_slope_low as u32 as u64) << 0,
+            (x_low_int as u64) << 48 | (x_low_frac as u64) << 32 | (inv_slope_low as u32 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
-            (x_high_int as u64) << 48
-                | (x_high_frac as u64) << 32
-                | (inv_slope_high as u32 as u64) << 0,
+            (x_high_int as u64) << 48 | (x_high_frac as u64) << 32 | (inv_slope_high as u32 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
-            (x_mid_int as u64) << 48
-                | (x_mid_frac as u64) << 32
-                | (inv_slope_mid as u32 as u64) << 0,
+            (x_mid_int as u64) << 48 | (x_mid_frac as u64) << 32 | (inv_slope_mid as u32 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
@@ -398,7 +393,7 @@ impl RdpCommandBuilder {
         DbDy: i32,
         DaDy: i32,
     ) -> &mut RdpCommandBuilder {
-        let mut buffer = self.commands.as_mut().unwrap();
+        let buffer = self.commands.as_mut().unwrap();
         // Color
         // Delta Color X
         // Color fraction
@@ -407,28 +402,28 @@ impl RdpCommandBuilder {
             ((red >> 16) as u16 as u64) << 48
                 | ((green >> 16) as u16 as u64) << 32
                 | ((blue >> 16) as u16 as u64) << 16
-                | ((alpha >> 16) as u16 as u64) << 0,
+                | ((alpha >> 16) as u16 as u64),
         ));
         // n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDx >> 16) as u16 as u64) << 48
                 | ((DgDx >> 16) as u16 as u64) << 32
                 | ((DbDx >> 16) as u16 as u64) << 16
-                | ((DaDx >> 16) as u16 as u64) << 0,
+                | ((DaDx >> 16) as u16 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((red & 0x0000ffff) as u16 as u64) << 48
                 | ((green & 0x0000ffff) as u16 as u64) << 32
                 | ((blue & 0x0000ffff) as u16 as u64) << 16
-                | ((alpha & 0x0000ffff) as u16 as u64) << 0,
+                | ((alpha & 0x0000ffff) as u16 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDx & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDx & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDx & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDx & 0x0000ffff) as u16 as u64) << 0,
+                | ((DaDx & 0x0000ffff) as u16 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
@@ -445,28 +440,28 @@ impl RdpCommandBuilder {
             ((DrDe >> 16) as u16 as u64) << 48
                 | ((DgDe >> 16) as u16 as u64) << 32
                 | ((DbDe >> 16) as u16 as u64) << 16
-                | ((DaDe >> 16) as u16 as u64) << 0,
+                | ((DaDe >> 16) as u16 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDy >> 16) as u16 as u64) << 48
                 | ((DgDy >> 16) as u16 as u64) << 32
                 | ((DbDy >> 16) as u16 as u64) << 16
-                | ((DaDy >> 16) as u16 as u64) << 0,
+                | ((DaDy >> 16) as u16 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDe & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDe & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDe & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDe & 0x0000ffff) as u16 as u64) << 0,
+                | ((DaDe & 0x0000ffff) as u16 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((DrDy & 0x0000ffff) as u16 as u64) << 48
                 | ((DgDy & 0x0000ffff) as u16 as u64) << 32
                 | ((DbDy & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDy & 0x0000ffff) as u16 as u64) << 0,
+                | ((DaDy & 0x0000ffff) as u16 as u64),
         ));
         //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         //n64_macros::debugln!("--");
@@ -550,7 +545,7 @@ impl RdpCommandBuilder {
             (to_fixpoint_s_10_5(st_l) << 48)
                 | (to_fixpoint_s_10_5(st_t) << 32)
                 | (to_fixpoint_s_10_5(d_xy_d_st.x) << 16)
-                | (to_fixpoint_s_10_5(d_xy_d_st.y) << 0),
+                | to_fixpoint_s_10_5(d_xy_d_st.y),
         ));
         self
     }
@@ -585,7 +580,7 @@ impl RdpCommandBuilder {
 
 #[inline]
 fn to_fixpoint_10_2_as_integer(val: f32) -> u64 {
-    ((val as i16) * (1 << 2) & 0xffc) as u64
+    (((val as i16) * (1 << 2)) & 0xffc) as u64
 }
 
 #[inline]

@@ -47,7 +47,7 @@ impl Audio {
             self.ready_buffers.push_back(buffer);
         }
 
-        while !ai::full() && self.ready_buffers.len() > 0 && self.playing_buffers.len() > 0 {
+        while !ai::full() && !self.ready_buffers.is_empty() && !self.playing_buffers.is_empty() {
             self.free_buffers
                 .push_back(self.playing_buffers.pop_front().unwrap());
 

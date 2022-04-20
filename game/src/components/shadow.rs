@@ -1,5 +1,6 @@
 use super::{mesh_drawable::MeshDrawable, movable::Movable};
 use crate::{camera::Camera, ecs::world::World};
+use core::f32::consts::PI;
 use n64::{
     gfx::{
         color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
@@ -8,7 +9,6 @@ use n64::{
     VideoMode,
 };
 use n64_math::{vec3, Mat4};
-use std::f32::consts::PI;
 
 pub struct Shadow;
 

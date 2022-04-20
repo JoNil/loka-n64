@@ -88,6 +88,7 @@ fn main() {
 
     let mut last_colored_rect_count = 0;
     let mut last_textured_rect_count = 0;
+    let mut last_mesh_count = 0;
     loop {
         frame_begin_time = current_time_us();
 
@@ -126,7 +127,7 @@ fn main() {
         {
             // Graphics
 
-            let (colored_rect_count, textured_rect_count) = {
+            let (colored_rect_count, textured_rect_count, mesh_count) = {
                 let mut fb = n64.framebuffer.next_buffer();
                 let mut cb = CommandBuffer::new(&mut fb, &mut command_buffer_cache);
 
@@ -269,6 +270,7 @@ fn main() {
                         vec2(200.0, 30.0),
                         0x00af00ff,
                     );
+                    font::draw_number(&mut cb, last_mesh_count, vec2(300.0, 30.0), 0xaf0000ff);
                 }
 
                 draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
@@ -278,6 +280,7 @@ fn main() {
 
             last_colored_rect_count = colored_rect_count;
             last_textured_rect_count = textured_rect_count;
+            last_mesh_count = mesh_count;
 
             let frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
             frame_used_time = frame_end_time - frame_begin_time;

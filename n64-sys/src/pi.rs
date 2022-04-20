@@ -52,49 +52,45 @@ pub fn init() {
     }
 }
 
-pub fn read(dst: *mut u8, len: u32, pi_address: usize) {
-    unsafe {
-        data_cache_hit_writeback_invalidate_single(dst as usize);
+pub unsafe fn read(dst: *mut u8, len: u32, pi_address: usize) {
+    data_cache_hit_writeback_invalidate_single(dst as usize);
 
-        dma_wait();
+    dma_wait();
 
-        write_volatile(PI_STATUS, 3);
-        memory_barrier();
+    write_volatile(PI_STATUS, 3);
+    memory_barrier();
 
-        write_volatile(PI_RAM_ADDR, uncached_addr_mut(dst as _) as _);
-        memory_barrier();
+    write_volatile(PI_RAM_ADDR, uncached_addr_mut(dst as _) as _);
+    memory_barrier();
 
-        write_volatile(
-            PI_CART_ADDR,
-            virtual_to_physical((pi_address | 0x10000000) as *const u8),
-        );
-        memory_barrier();
+    write_volatile(
+        PI_CART_ADDR,
+        virtual_to_physical((pi_address | 0x10000000) as *const u8),
+    );
+    memory_barrier();
 
-        write_volatile(PI_WRITE_LENGTH, (len - 1) as _);
-        memory_barrier();
+    write_volatile(PI_WRITE_LENGTH, (len - 1) as _);
+    memory_barrier();
 
-        dma_wait();
-    }
+    dma_wait();
 }
 
-pub fn write(src: *const u8, len: u32, pi_address: usize) {
-    unsafe {
-        data_cache_hit_writeback_invalidate(slice::from_raw_parts(src, len as _));
+pub unsafe fn write(src: *const u8, len: u32, pi_address: usize) {
+    data_cache_hit_writeback_invalidate(slice::from_raw_parts(src, len as _));
 
-        dma_wait();
+    dma_wait();
 
-        write_volatile(PI_STATUS, 3);
-        memory_barrier();
+    write_volatile(PI_STATUS, 3);
+    memory_barrier();
 
-        write_volatile(PI_RAM_ADDR, uncached_addr(src as _) as _);
-        memory_barrier();
+    write_volatile(PI_RAM_ADDR, uncached_addr(src as _) as _);
+    memory_barrier();
 
-        write_volatile(PI_CART_ADDR, virtual_to_physical_mut(pi_address as *mut u8));
-        memory_barrier();
+    write_volatile(PI_CART_ADDR, virtual_to_physical_mut(pi_address as *mut u8));
+    memory_barrier();
 
-        write_volatile(PI_READ_LENGTH, (len - 1) as _);
-        memory_barrier();
+    write_volatile(PI_READ_LENGTH, (len - 1) as _);
+    memory_barrier();
 
-        dma_wait();
-    }
+    dma_wait();
 }

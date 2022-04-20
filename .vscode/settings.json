@@ -1,3 +1,18 @@
+/*{
+    "rust-analyzer.checkOnSave.overrideCommand": [
+        "cargo",
+        "+nightly",
+        "clippy",
+        "-Z=build-std=core,alloc",
+        "--message-format=json",
+        "--target=mips-nintendo64-none.json",
+        "-p",
+        "game",
+        "--",
+        "--allow",
+        "clippy::unusual_byte_groupings"
+    ]
+}*/
 {
     "rust-analyzer.checkOnSave.overrideCommand": [
         "cargo",

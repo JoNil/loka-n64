@@ -29,12 +29,12 @@ const USB_CMD_WR_NOP: u32 = USB_LE_CFG | USB_LE_CTR | USB_CFG_WR;
 const USB_CMD_WR: u32 = USB_LE_CFG | USB_LE_CTR | USB_CFG_WR | USB_CFG_ACT;
 
 fn register_write(reg: u16, val: u32) {
-    pi::write(&val as *const u32 as _, 4, REG_BASE + reg as usize);
+    unsafe { pi::write(&val as *const u32 as _, 4, REG_BASE + reg as usize) };
 }
 
 fn register_read(reg: u16) -> u32 {
     let mut val = 0;
-    pi::read(&mut val as *mut u32 as _, 4, REG_BASE + reg as usize);
+    unsafe { pi::read(&mut val as *mut u32 as _, 4, REG_BASE + reg as usize) };
     val
 }
 
@@ -76,11 +76,13 @@ pub fn usb_read(dst: &mut [u8]) -> bool {
         register_write(REG_USB_CFG, USB_CMD_RD | buffer_addr);
         usb_wait_unitil_done();
 
-        pi::read(
-            dst,
-            buffer_len as u32,
-            REG_BASE + REG_USB_DAT as usize + buffer_addr as usize,
-        );
+        unsafe {
+            pi::read(
+                dst,
+                buffer_len as u32,
+                REG_BASE + REG_USB_DAT as usize + buffer_addr as usize,
+            );
+        }
 
         dst = ((dst as usize) + buffer_len) as _;
         remaining -= buffer_len;
@@ -99,11 +101,13 @@ pub fn usb_write(src: &[u8]) -> bool {
         let buffer_len = if remaining < 512 { remaining } else { 512 };
         let buffer_addr = (512 - buffer_len) as u32;
 
-        pi::write(
-            src,
-            buffer_len as u32,
-            REG_BASE + REG_USB_DAT as usize + buffer_addr as usize,
-        );
+        unsafe {
+            pi::write(
+                src,
+                buffer_len as u32,
+                REG_BASE + REG_USB_DAT as usize + buffer_addr as usize,
+            );
+        }
         src = ((src as usize) + 512) as _;
 
         register_write(REG_USB_CFG, USB_CMD_WR | buffer_addr);
