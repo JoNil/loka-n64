@@ -17,10 +17,10 @@ pub fn apply(rdp: &mut RdpCommandBuilder, new: &Pipeline) {
     }
 
     if let Some(env_color) = new.env_color {
-        rdp.set_prim_color(env_color);
+        rdp.set_env_color(env_color);
     }
 
     if let Some(blend_color) = new.blend_color {
-        rdp.set_prim_color(blend_color);
+        rdp.set_blend_color(blend_color);
     }
 }
