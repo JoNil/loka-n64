@@ -2,10 +2,8 @@ use super::{mesh_drawable::MeshDrawable, movable::Movable};
 use crate::{camera::Camera, ecs::world::World};
 use n64::{
     gfx::{
-        color_combiner::{
-            AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombiner, DAlphaSrc, DSrc,
-        },
-        CommandBuffer, CycleType, Pipeline,
+        color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
+        CommandBuffer, Pipeline,
     },
     VideoMode,
 };
@@ -15,34 +13,16 @@ use std::f32::consts::PI;
 pub struct Shadow;
 
 static SHADOW_PIPELINE: Pipeline = Pipeline {
-    cycle_type: CycleType::One,
-    combiner_mode: ColorCombiner {
-        a_0: ASrc::Zero,
-        b_0: BSrc::Zero,
-        c_0: CSrc::Zero,
-        d_0: DSrc::Primitive,
-
-        a_alpha_0: AAlphaSrc::Zero,
-        b_alpha_0: BAlphaSrc::Zero,
-        c_alpha_0: CAlphaSrc::Zero,
-        d_alpha_0: DAlphaSrc::PrimitiveAlpha,
-
-        a_1: ASrc::Zero,
-        b_1: BSrc::Zero,
-        c_1: CSrc::Zero,
-        d_1: DSrc::Primitive,
-
-        a_alpha_1: AAlphaSrc::Zero,
-        b_alpha_1: BAlphaSrc::Zero,
-        c_alpha_1: CAlphaSrc::Zero,
-        d_alpha_1: DAlphaSrc::PrimitiveAlpha,
-    },
-    texture: None,
+    combiner_mode: ColorCombiner::one_cycle_symertical(
+        ASrc::Zero,
+        BSrc::Zero,
+        CSrc::Zero,
+        DSrc::Primitive,
+    ),
     prim_color: Some(0x10101080),
-    env_color: None,
-    blend_color: None,
     z_update: false,
     z_compare: true,
+    ..Pipeline::default()
 };
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {

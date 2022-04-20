@@ -22,11 +22,11 @@ pub struct Pipeline {
     pub z_compare: bool,
 }
 
-impl Default for Pipeline {
-    fn default() -> Self {
+impl Pipeline {
+    pub const fn default() -> Self {
         Self {
             cycle_type: CycleType::One,
-            combiner_mode: Default::default(),
+            combiner_mode: ColorCombiner::default(),
             prim_color: None,
             env_color: None,
             blend_color: None,
@@ -35,9 +35,7 @@ impl Default for Pipeline {
             z_compare: false,
         }
     }
-}
 
-impl Pipeline {
     pub fn with_cycle_type(&self, cycle_type: CycleType) -> Self {
         let mut res = *self;
         res.cycle_type = cycle_type;
@@ -84,5 +82,11 @@ impl Pipeline {
         let mut res = *self;
         res.z_compare = z_compare;
         res
+    }
+}
+
+impl Default for Pipeline {
+    fn default() -> Self {
+        Self::default()
     }
 }

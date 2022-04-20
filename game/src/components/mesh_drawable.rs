@@ -3,10 +3,8 @@ use crate::{camera::Camera, ecs::world::World, model::ModelData};
 use core::f32::consts::PI;
 use n64::{
     gfx::{
-        color_combiner::{
-            AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombiner, DAlphaSrc, DSrc,
-        },
-        CommandBuffer, CycleType, Pipeline,
+        color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
+        CommandBuffer, Pipeline,
     },
     VideoMode,
 };
@@ -18,34 +16,14 @@ pub struct MeshDrawable {
 }
 
 static MESH_PIPELINE: Pipeline = Pipeline {
-    cycle_type: CycleType::One,
-    combiner_mode: ColorCombiner {
-        a_0: ASrc::Zero,
-        b_0: BSrc::Zero,
-        c_0: CSrc::Zero,
-        d_0: DSrc::Shade,
-
-        a_alpha_0: AAlphaSrc::Zero,
-        b_alpha_0: BAlphaSrc::Zero,
-        c_alpha_0: CAlphaSrc::Zero,
-        d_alpha_0: DAlphaSrc::ShadeAlpha,
-
-        a_1: ASrc::Zero,
-        b_1: BSrc::Zero,
-        c_1: CSrc::Zero,
-        d_1: DSrc::Shade,
-
-        a_alpha_1: AAlphaSrc::Zero,
-        b_alpha_1: BAlphaSrc::Zero,
-        c_alpha_1: CAlphaSrc::Zero,
-        d_alpha_1: DAlphaSrc::ShadeAlpha,
-    },
-    prim_color: None,
-    env_color: None,
-    blend_color: None,
-    texture: None,
-    z_update: true,
+    combiner_mode: ColorCombiner::one_cycle_symertical(
+        ASrc::Zero,
+        BSrc::Zero,
+        CSrc::Zero,
+        DSrc::Shade,
+    ),
     z_compare: true,
+    ..Pipeline::default()
 };
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {

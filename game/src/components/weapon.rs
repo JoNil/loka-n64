@@ -3,10 +3,8 @@ use core::f32::consts::PI;
 use n64::{
     current_time_us,
     gfx::{
-        color_combiner::{
-            AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombiner, DAlphaSrc, DSrc,
-        },
-        CommandBuffer, CycleType, Pipeline,
+        color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
+        CommandBuffer, Pipeline,
     },
     VideoMode,
 };
@@ -308,34 +306,13 @@ pub fn fire(
 }
 
 static TARGET_PIPELINE: Pipeline = Pipeline {
-    cycle_type: CycleType::One,
-    combiner_mode: ColorCombiner {
-        a_0: ASrc::Zero,
-        b_0: BSrc::Zero,
-        c_0: CSrc::Zero,
-        d_0: DSrc::Environment,
-
-        a_alpha_0: AAlphaSrc::Zero,
-        b_alpha_0: BAlphaSrc::Zero,
-        c_alpha_0: CAlphaSrc::Zero,
-        d_alpha_0: DAlphaSrc::EnvironmentAlpha,
-
-        a_1: ASrc::Zero,
-        b_1: BSrc::Zero,
-        c_1: CSrc::Zero,
-        d_1: DSrc::Environment,
-
-        a_alpha_1: AAlphaSrc::Zero,
-        b_alpha_1: BAlphaSrc::Zero,
-        c_alpha_1: CAlphaSrc::Zero,
-        d_alpha_1: DAlphaSrc::EnvironmentAlpha,
-    },
-    texture: None,
-    prim_color: None,
-    env_color: None,
-    blend_color: None,
-    z_update: false,
-    z_compare: false,
+    combiner_mode: ColorCombiner::one_cycle_symertical(
+        ASrc::Zero,
+        BSrc::Zero,
+        CSrc::Zero,
+        DSrc::Environment,
+    ),
+    ..Pipeline::default()
 };
 
 pub fn draw_missile_target(

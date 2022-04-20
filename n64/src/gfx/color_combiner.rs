@@ -142,14 +142,14 @@ pub struct ColorCombiner {
     pub d_alpha_1: DAlphaSrc,
 }
 
-impl Default for ColorCombiner {
-    fn default() -> Self {
+impl ColorCombiner {
+    pub const fn default() -> Self {
         Self {
             a_0: ASrc::Zero,
             b_0: BSrc::Zero,
             c_0: CSrc::Zero,
             d_0: DSrc::Shade,
-            
+
             a_alpha_0: AAlphaSrc::Zero,
             b_alpha_0: BAlphaSrc::Zero,
             c_alpha_0: CAlphaSrc::Zero,
@@ -165,6 +165,70 @@ impl Default for ColorCombiner {
             c_alpha_1: CAlphaSrc::Zero,
             d_alpha_1: DAlphaSrc::ShadeAlpha,
         }
+    }
+
+    pub const fn one_cycle_symertical(a: ASrc, b: BSrc, c: CSrc, d: DSrc) -> Self {
+        Self {
+            a_0: a,
+            b_0: b,
+            c_0: c,
+            d_0: d,
+
+            a_alpha_0: a.to_symetrical_alpha(),
+            b_alpha_0: b.to_symetrical_alpha(),
+            c_alpha_0: c.to_symetrical_alpha(),
+            d_alpha_0: d.to_symetrical_alpha(),
+
+            a_1: a,
+            b_1: b,
+            c_1: c,
+            d_1: d,
+
+            a_alpha_1: a.to_symetrical_alpha(),
+            b_alpha_1: b.to_symetrical_alpha(),
+            c_alpha_1: c.to_symetrical_alpha(),
+            d_alpha_1: d.to_symetrical_alpha(),
+        }
+    }
+}
+
+impl ColorCombiner {
+    pub fn to_command(&self) -> u64 {
+        let a_0 = (self.a_0 as u64) << 52;
+        let b_0 = (self.b_0 as u64) << 28;
+        let c_0 = (self.c_0 as u64) << 47;
+        let d_0 = (self.d_0 as u64) << 15;
+
+        let a_alpha_0 = (self.a_alpha_0 as u64) << 44;
+        let b_alpha_0 = (self.b_alpha_0 as u64) << 12;
+        let c_alpha_0 = (self.c_alpha_0 as u64) << 41;
+        let d_alpha_0 = (self.d_alpha_0 as u64) << 9;
+
+        let a_1 = (self.a_1 as u64) << 37;
+        let b_1 = (self.b_1 as u64) << 24;
+        let c_1 = (self.c_1 as u64) << 32;
+        let d_1 = (self.d_1 as u64) << 6;
+
+        let a_alpha_1 = (self.a_alpha_1 as u64) << 21;
+        let b_alpha_1 = (self.b_alpha_1 as u64) << 3;
+        let c_alpha_1 = (self.c_alpha_1 as u64) << 18;
+        let d_alpha_1 = self.d_alpha_1 as u64;
+
+        a_0 | b_0
+            | c_0
+            | d_0
+            | a_alpha_0
+            | b_alpha_0
+            | c_alpha_0
+            | d_alpha_0
+            | a_1
+            | b_1
+            | c_1
+            | d_1
+            | a_alpha_1
+            | b_alpha_1
+            | c_alpha_1
+            | d_alpha_1
     }
 }
 
@@ -211,42 +275,86 @@ impl From<u64> for ColorCombiner {
     }
 }
 
-impl ColorCombiner {
-    pub fn to_command(&self) -> u64 {
-        let a_0 = (self.a_0 as u64) << 52;
-        let b_0 = (self.b_0 as u64) << 28;
-        let c_0 = (self.c_0 as u64) << 47;
-        let d_0 = (self.d_0 as u64) << 15;
+impl Default for ColorCombiner {
+    fn default() -> Self {
+        Self::default()
+    }
+}
 
-        let a_alpha_0 = (self.a_alpha_0 as u64) << 44;
-        let b_alpha_0 = (self.b_alpha_0 as u64) << 12;
-        let c_alpha_0 = (self.c_alpha_0 as u64) << 41;
-        let d_alpha_0 = (self.d_alpha_0 as u64) << 9;
+impl ASrc {
+    const fn to_symetrical_alpha(self) -> AAlphaSrc {
+        match self {
+            ASrc::Combined => AAlphaSrc::CombinedAlpha,
+            ASrc::Texel => AAlphaSrc::TexelAlpha,
+            ASrc::Primitive => AAlphaSrc::PrimitiveAlpha,
+            ASrc::Shade => AAlphaSrc::ShadeAlpha,
+            ASrc::Environment => AAlphaSrc::EnvironmentAlpha,
+            ASrc::Noise => AAlphaSrc::One,
+            ASrc::One => AAlphaSrc::One,
+            ASrc::Zero => AAlphaSrc::Zero,
+            ASrc::Zero1 => AAlphaSrc::Zero,
+            ASrc::Zero2 => AAlphaSrc::Zero,
+            ASrc::Zero3 => AAlphaSrc::Zero,
+            ASrc::Zero4 => AAlphaSrc::Zero,
+            ASrc::Zero5 => AAlphaSrc::Zero,
+            ASrc::Zero6 => AAlphaSrc::Zero,
+            ASrc::Zero7 => AAlphaSrc::Zero,
+        }
+    }
+}
 
-        let a_1 = (self.a_1 as u64) << 37;
-        let b_1 = (self.b_1 as u64) << 24;
-        let c_1 = (self.c_1 as u64) << 32;
-        let d_1 = (self.d_1 as u64) << 6;
+impl BSrc {
+    const fn to_symetrical_alpha(self) -> BAlphaSrc {
+        match self {
+            BSrc::Combined => BAlphaSrc::CombinedAlpha,
+            BSrc::Texel => BAlphaSrc::TexelAlpha,
+            BSrc::Primitive => BAlphaSrc::PrimitiveAlpha,
+            BSrc::Shade => BAlphaSrc::ShadeAlpha,
+            BSrc::Environment => BAlphaSrc::EnvironmentAlpha,
+            BSrc::ConvertK4 => BAlphaSrc::One,
+            BSrc::Zero => BAlphaSrc::Zero,
+            BSrc::Zero1 => BAlphaSrc::Zero,
+            BSrc::Zero2 => BAlphaSrc::Zero,
+            BSrc::Zero3 => BAlphaSrc::Zero,
+            BSrc::Zero4 => BAlphaSrc::Zero,
+            BSrc::Zero5 => BAlphaSrc::Zero,
+            BSrc::Zero6 => BAlphaSrc::Zero,
+            BSrc::Zero7 => BAlphaSrc::Zero,
+        }
+    }
+}
 
-        let a_alpha_1 = (self.a_alpha_1 as u64) << 21;
-        let b_alpha_1 = (self.b_alpha_1 as u64) << 3;
-        let c_alpha_1 = (self.c_alpha_1 as u64) << 18;
-        let d_alpha_1 = self.d_alpha_1 as u64;
+impl CSrc {
+    const fn to_symetrical_alpha(self) -> CAlphaSrc {
+        match self {
+            CSrc::Combined => CAlphaSrc::CombinedAlphaInvalid,
+            CSrc::Texel => CAlphaSrc::TexelAlpha,
+            CSrc::Primitive => CAlphaSrc::PrimitiveAlpha,
+            CSrc::Shade => CAlphaSrc::ShadeAlpha,
+            CSrc::Environment => CAlphaSrc::EnvironmentAlpha,
+            CSrc::CombinedAlpha => CAlphaSrc::CombinedAlphaInvalid,
+            CSrc::TexelAlpha => CAlphaSrc::TexelAlpha,
+            CSrc::PrimitiveAlpha => CAlphaSrc::PrimitiveAlpha,
+            CSrc::ShadeAlpha => CAlphaSrc::ShadeAlpha,
+            CSrc::EnvironmentAlpha => CAlphaSrc::EnvironmentAlpha,
+            CSrc::LodFraction => CAlphaSrc::Zero,
+            CSrc::PrimitiveLodFraction => CAlphaSrc::Zero,
+            CSrc::ConvertK5 => CAlphaSrc::Zero,
+            CSrc::Zero => CAlphaSrc::Zero,
+        }
+    }
+}
 
-        a_0 | b_0
-            | c_0
-            | d_0
-            | a_alpha_0
-            | b_alpha_0
-            | c_alpha_0
-            | d_alpha_0
-            | a_1
-            | b_1
-            | c_1
-            | d_1
-            | a_alpha_1
-            | b_alpha_1
-            | c_alpha_1
-            | d_alpha_1
+impl DSrc {
+    const fn to_symetrical_alpha(self) -> DAlphaSrc {
+        match self {
+            DSrc::Combined => DAlphaSrc::CombinedAlpha,
+            DSrc::Texel => DAlphaSrc::TexelAlpha,
+            DSrc::Primitive => DAlphaSrc::PrimitiveAlpha,
+            DSrc::Shade => DAlphaSrc::ShadeAlpha,
+            DSrc::Environment => DAlphaSrc::EnvironmentAlpha,
+            DSrc::One => DAlphaSrc::One,
+            DSrc::Zero => DAlphaSrc::Zero,
+        }
     }
 }
