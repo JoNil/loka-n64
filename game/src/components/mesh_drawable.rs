@@ -31,6 +31,8 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
 
     let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
 
+    cb.set_pipeline(&MESH_PIPELINE);
+
     for (component, entity) in mesh_drawable.components_and_entities() {
         if let Some(movable) = movable.lookup(entity) {
             let post_transform = Mat4::from_cols_array_2d(&[
@@ -57,7 +59,6 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
                 &component.model.colors,
                 &component.model.indices,
                 &transform.to_cols_array_2d(),
-                &MESH_PIPELINE,
             );
         }
     }

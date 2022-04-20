@@ -30,6 +30,8 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
 
     let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
 
+    cb.set_pipeline(&SHADOW_PIPELINE);
+
     for entity in shadow.entities() {
         if let (Some(mesh_drawable), Some(movable)) =
             (mesh_drawable.lookup(*entity), movable.lookup(*entity))
@@ -58,7 +60,6 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
                 &mesh_drawable.model.colors,
                 &mesh_drawable.model.indices,
                 &transform.to_cols_array_2d(),
-                &SHADOW_PIPELINE,
             );
         }
     }

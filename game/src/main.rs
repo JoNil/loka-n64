@@ -179,6 +179,7 @@ fn main() {
                         );
                         cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 10.0, v2.y + 10.0), BLUE);
 
+                        cb.set_pipeline(&Pipeline::default());
                         cb.add_mesh_indexed(
                             &[v0.into(), v1.into(), v2.into()],
                             &[[0.5, 1.0], [0.0, 0.0], [1.0, 0.0]],
@@ -190,7 +191,6 @@ fn main() {
                                 [0.0, 0.0, 1.0, 0.0],
                                 [0.0, 0.0, 0.0, 1.0],
                             ],
-                            &Pipeline::default(),
                         );
 
                         cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0), WHITE);

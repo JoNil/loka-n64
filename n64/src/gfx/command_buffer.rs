@@ -6,6 +6,7 @@ use n64_sys::rdp;
 use rdp_command_builder::*;
 
 mod rdp_command_builder;
+mod rdp_pipeline;
 
 fn float_to_unsigned_int_frac(val: f32) -> (u16, u16) {
     if 0.0 >= val {

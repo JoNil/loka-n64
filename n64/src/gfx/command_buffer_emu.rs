@@ -58,6 +58,7 @@ pub struct CommandBuffer<'a> {
     colored_rect_count: u32,
     textured_rect_count: u32,
     mesh_count: u32,
+    current_pipeline: Option<Pipeline>,
     cache: &'a mut CommandBufferCache,
 }
 
@@ -69,6 +70,7 @@ impl<'a> CommandBuffer<'a> {
             colored_rect_count: 0,
             textured_rect_count: 0,
             mesh_count: 0,
+            current_pipeline: None,
             cache,
         }
     }
@@ -76,6 +78,11 @@ impl<'a> CommandBuffer<'a> {
     pub fn clear(&mut self) -> &mut Self {
         self.clear = true;
         self.cache.commands.clear();
+        self
+    }
+
+    pub fn set_pipeline(&mut self, pipeline: &Pipeline) -> &mut Self {
+        self.current_pipeline = Some(*pipeline);
         self
     }
 
@@ -124,7 +131,6 @@ impl<'a> CommandBuffer<'a> {
         colors: &[u32],
         indices: &[[u8; 3]],
         transform: &[[f32; 4]; 4],
-        pipeline: &Pipeline,
     ) -> &mut Self {
         self.mesh_count += 1;
 
@@ -134,7 +140,9 @@ impl<'a> CommandBuffer<'a> {
             colors: colors.to_owned(),
             indices: indices.iter().flatten().copied().collect(),
             transform: *transform,
-            pipeline: *pipeline,
+            pipeline: self
+                .current_pipeline
+                .expect("No pipeline has been set on the command buffer"),
             buffer_index: 0,
         });
 

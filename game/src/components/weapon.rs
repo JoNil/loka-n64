@@ -338,6 +338,8 @@ pub fn draw_missile_target(
                 TARGET_PIPELINE.with_env_color(Some(0x800000ff))
             };
 
+            cb.set_pipeline(&pipeline);
+
             if w.weapon_type == WeaponType::Missile {
                 let shooter_pos = m.pos;
 
@@ -382,7 +384,6 @@ pub fn draw_missile_target(
                         &target_indicator.colors,
                         &target_indicator.indices,
                         &transform.to_cols_array_2d(),
-                        &pipeline,
                     );
                 }
             } else if w.weapon_type == WeaponType::TrippleMissile {
@@ -430,7 +431,6 @@ pub fn draw_missile_target(
                         &target_indicator.colors,
                         &target_indicator.indices,
                         &transform.to_cols_array_2d(),
-                        &pipeline,
                     );
                 }
             }
