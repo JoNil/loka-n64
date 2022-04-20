@@ -29,6 +29,7 @@ pub struct CommandBuffer<'a> {
     colored_rect_count: u32,
     textured_rect_count: u32,
     mesh_count: u32,
+    current_pipeline: Option<Pipeline>,
     cache: &'a mut CommandBufferCache,
 }
 
@@ -54,6 +55,7 @@ impl<'a> CommandBuffer<'a> {
             colored_rect_count: 0,
             textured_rect_count: 0,
             mesh_count: 0,
+            current_pipeline: None,
             cache,
         }
     }
@@ -80,7 +82,7 @@ impl<'a> CommandBuffer<'a> {
     }
 
     pub fn set_pipeline(&mut self, pipeline: &Pipeline) -> &mut Self {
-        rdp_pipeline::apply(&mut self.cache.rdp, pipeline);
+        rdp_pipeline::apply(&mut self.cache.rdp, &mut self.current_pipeline, pipeline);
         self
     }
 

@@ -5,6 +5,7 @@ use super::{color_combiner::ColorCombiner, Texture};
 pub enum CycleType {
     One,
     Two,
+    Fill,
 }
 
 #[derive(Copy, Clone)]
@@ -17,6 +18,7 @@ pub struct Pipeline {
     pub prim_color: Option<u32>,
     pub env_color: Option<u32>,
     pub blend_color: Option<u32>,
+    pub fill_color: Option<u32>,
 
     pub z_update: bool,
     pub z_compare: bool,
@@ -30,6 +32,7 @@ impl Pipeline {
             prim_color: None,
             env_color: None,
             blend_color: None,
+            fill_color: None,
             texture: None,
             z_update: false,
             z_compare: false,

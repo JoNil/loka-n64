@@ -1,10 +1,11 @@
 use super::rdp_command_builder::*;
 use crate::gfx::pipeline::Pipeline;
 
-pub fn apply(rdp: &mut RdpCommandBuilder, new: &Pipeline) {
+pub fn apply(rdp: &mut RdpCommandBuilder, current: &mut Option<Pipeline>, new: &Pipeline) {
     let other_modes = OTHER_MODE_CYCLE_TYPE_1_CYCLE
         | OTHER_MODE_SAMPLE_TYPE
         | OTHER_MODE_BI_LERP_0
+        | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
         | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
         | OTHER_MODE_B_M1A_0_0;
 
