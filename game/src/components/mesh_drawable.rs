@@ -23,6 +23,7 @@ static MESH_PIPELINE: Pipeline = Pipeline {
         DSrc::Shade,
     ),
     z_compare: true,
+    z_update: true,
     ..Pipeline::default()
 };
 
