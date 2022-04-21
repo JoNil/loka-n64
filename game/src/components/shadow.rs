@@ -3,7 +3,7 @@ use crate::{camera::Camera, ecs::world::World};
 use core::f32::consts::PI;
 use n64::{
     gfx::{
-        color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
+        color_combiner::{ColorCombiner, DSrc},
         CommandBuffer, Pipeline,
     },
     VideoMode,
