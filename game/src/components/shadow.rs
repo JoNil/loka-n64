@@ -13,13 +13,9 @@ use n64_math::{vec3, Mat4};
 pub struct Shadow;
 
 static SHADOW_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::simple(
-        ASrc::Zero,
-        BSrc::Zero,
-        CSrc::Zero,
-        DSrc::Primitive,
-    ),
+    combiner_mode: ColorCombiner::single(DSrc::Primitive),
     prim_color: Some(0x10101080),
+    blend: true,
     z_update: false,
     z_compare: true,
     ..Pipeline::default()

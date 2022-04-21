@@ -73,7 +73,7 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
             | OTHER_MODE_BI_LERP_0
             | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
             | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
-            | OTHER_MODE_B_M1A_0_0;
+            | OTHER_MODE_B_M2A_0_1;
 
         if pipeline.cycle_type == CycleType::Two {
             other_modes |= OTHER_MODE_CYCLE_TYPE_2_CYCLE;
