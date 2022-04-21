@@ -1,5 +1,8 @@
 use crate::textures::*;
-use n64::gfx::{CommandBuffer, StaticTexture};
+use n64::gfx::{
+    color_combiner::{ColorCombiner, DSrc},
+    CommandBuffer, Pipeline, StaticTexture,
+};
 use n64_math::{const_vec2, Vec2};
 
 static ATLAS: &[&StaticTexture] = &[
@@ -100,6 +103,12 @@ static ATLAS: &[&StaticTexture] = &[
     &FONT_1_TILDE,
 ];
 
+static FONT_PIPELINE: Pipeline = Pipeline {
+    combiner_mode: ColorCombiner::single(DSrc::Texel),
+    blend: true,
+    ..Pipeline::default()
+};
+
 const GLYPH_SIZE: Vec2 = const_vec2!([11.0, 0.0]);
 
 #[inline]
@@ -146,16 +155,19 @@ pub fn draw_text(cb: &mut CommandBuffer, text: &str, upper_left: Vec2, color: u3
 }
 
 pub fn draw_char(cb: &mut CommandBuffer, ch: char, pos: Vec2, color: u32) {
-    cb.add_textured_rect(
-        pos,
-        pos + Vec2::new(16.0, 16.0),
-        match ch {
-            ' '..='~' => ATLAS[(ch as usize) - (' ' as usize)],
-            _ => &FONT_1_BAD,
-        }
-        .as_texture(),
-        Some(color),
+    cb.set_pipeline(
+        &FONT_PIPELINE
+            .with_texture(Some(
+                match ch {
+                    ' '..='~' => ATLAS[(ch as usize) - (' ' as usize)],
+                    _ => &FONT_1_BAD,
+                }
+                .as_texture(),
+            ))
+            .with_blend_color(Some(color)),
     );
+
+    cb.add_textured_rect(pos, pos + Vec2::new(16.0, 16.0));
 }
 
 pub fn text_width(text: &str) -> i32 {

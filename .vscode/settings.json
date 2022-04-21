@@ -1,4 +1,4 @@
-/*{
+{
     "rust-analyzer.checkOnSave.overrideCommand": [
         "cargo",
         "+nightly",
@@ -8,20 +8,24 @@
         "--target=mips-nintendo64-none.json",
         "-p",
         "game",
+        "--target-dir",
+        "target/analyzer",
         "--",
         "--allow",
         "clippy::unusual_byte_groupings"
-    ]
-}*/
-{
+    ],
+}
+/*{
     "rust-analyzer.checkOnSave.overrideCommand": [
         "cargo",
         "clippy",
         "--message-format=json",
         "-p",
         "game",
+        "--target-dir",
+        "target/analyzer",
         "--",
         "--allow",
         "clippy::unusual_byte_groupings"
     ]
-}
+}*/

@@ -1,6 +1,9 @@
 use crate::{camera::Camera, components::enemy::add_enemy, ecs::world::World};
 use n64::{
-    gfx::{CommandBuffer, StaticTexture},
+    gfx::{
+        color_combiner::{ColorCombiner, DSrc},
+        CommandBuffer, Pipeline, StaticTexture,
+    },
     VideoMode,
 };
 use n64_math::Vec2;
@@ -20,6 +23,12 @@ pub struct StaticMapData {
     pub layers: &'static [u8],
     pub objects: &'static [&'static [StaticObject]],
 }
+
+static MAP_PIPELINE: Pipeline = Pipeline {
+    combiner_mode: ColorCombiner::single(DSrc::Texel),
+    blend: true,
+    ..Pipeline::default()
+};
 
 pub struct Map {
     data: &'static StaticMapData,
@@ -92,11 +101,14 @@ impl Map {
                     let upper_left = pos;
                     let lower_right = pos + tile_scale;
 
+                    cb.set_pipeline(
+                        &MAP_PIPELINE
+                            .with_texture(Some(self.data.tiles[(tile - 1) as usize].as_texture())),
+                    );
+
                     cb.add_textured_rect(
                         upper_left - camera_pixel_pos,
                         lower_right - camera_pixel_pos,
-                        self.data.tiles[(tile - 1) as usize].as_texture(),
-                        None,
                     );
                 }
             }

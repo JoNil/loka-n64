@@ -1,4 +1,4 @@
-use super::{Pipeline, TextureMut};
+use super::{FillPipeline, Pipeline, TextureMut};
 use crate::{gfx::Texture, graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
 use crate::{
     graphics::QUAD_INDEX_DATA,
@@ -81,17 +81,17 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
+    pub fn set_fill_pipeline(&mut self, pipeline: &FillPipeline) -> &mut Self {
+        self.current_fill_pipeline = Some(*pipeline);
+        self
+    }
+
     pub fn set_pipeline(&mut self, pipeline: &Pipeline) -> &mut Self {
         self.current_pipeline = Some(*pipeline);
         self
     }
 
-    pub fn add_colored_rect(
-        &mut self,
-        upper_left: Vec2,
-        lower_right: Vec2,
-        color: Color,
-    ) -> &mut Self {
+    pub fn add_colored_rect(&mut self, upper_left: Vec2, lower_right: Vec2) -> &mut Self {
         self.colored_rect_count += 1;
         self.cache.commands.push(Command::ColoredRect {
             upper_left,
@@ -102,13 +102,7 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn add_textured_rect(
-        &mut self,
-        upper_left: Vec2,
-        lower_right: Vec2,
-        texture: Texture<'static>,
-        blend_color: Option<u32>,
-    ) -> &mut Self {
+    pub fn add_textured_rect(&mut self, upper_left: Vec2, lower_right: Vec2) -> &mut Self {
         self.textured_rect_count += 1;
         self.cache.commands.push(Command::TexturedRect {
             upper_left,

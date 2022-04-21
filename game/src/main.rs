@@ -29,7 +29,7 @@ use map::Map;
 use maps::MAP_1;
 use n64::{
     self, current_time_us,
-    gfx::{CommandBuffer, CommandBufferCache, Pipeline},
+    gfx::{CommandBuffer, CommandBufferCache, FillPipeline, Pipeline},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
 use n64_math::{random_u32, vec2, vec3, Color};
@@ -52,6 +52,8 @@ const RED: Color = Color::new(0b10000_00011_00011_1);
 const GREEN: Color = Color::new(0b00011_10000_00011_1);
 const BLUE: Color = Color::new(0b0011_00011_10000_1);
 const WHITE: Color = Color::new(0b11111_11111_11111_1);
+
+static DEBUG_PIPELINE: FillPipeline = FillPipeline::default();
 
 const VIDEO_MODE: VideoMode = VideoMode::Pal {
     width: 320,
@@ -172,13 +174,12 @@ fn main() {
                             0.0,
                         );
 
-                        cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 10.0, v0.y + 10.0), RED);
-                        cb.add_colored_rect(
-                            vec2(v1.x, v1.y),
-                            vec2(v1.x + 10.0, v1.y + 10.0),
-                            GREEN,
-                        );
-                        cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 10.0, v2.y + 10.0), BLUE);
+                        cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(RED));
+                        cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 10.0, v0.y + 10.0));
+                        cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(GREEN));
+                        cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 10.0, v1.y + 10.0));
+                        cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(BLUE));
+                        cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 10.0, v2.y + 10.0));
 
                         cb.set_pipeline(&Pipeline::default());
                         cb.add_mesh_indexed(
@@ -194,9 +195,10 @@ fn main() {
                             ],
                         );
 
-                        cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0), WHITE);
-                        cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 2.0, v1.y + 2.0), WHITE);
-                        cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 2.0, v2.y + 2.0), WHITE);
+                        cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(WHITE));
+                        cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0));
+                        cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 2.0, v1.y + 2.0));
+                        cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 2.0, v2.y + 2.0));
                     }
                 }
 

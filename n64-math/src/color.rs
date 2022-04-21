@@ -1,7 +1,7 @@
 use zerocopy::{AsBytes, FromBytes, Unaligned};
 
 #[repr(C, packed)]
-#[derive(Clone, Copy, Debug, Default, AsBytes, FromBytes, Unaligned)]
+#[derive(Clone, Copy, Debug, Default, AsBytes, FromBytes, Unaligned, PartialEq, Eq)]
 pub struct Color {
     value: u16,
 }

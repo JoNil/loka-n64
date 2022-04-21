@@ -2,15 +2,16 @@ use super::{
     color_combiner::{
         AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombiner, DAlphaSrc, DSrc,
     },
-    Pipeline, Texture, TextureMut,
+    FillPipeline, Pipeline, Texture, TextureMut,
 };
 use crate::graphics::Graphics;
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
+use rdp_state::RdpState;
 
 mod rdp_command_builder;
-mod rdp_pipeline;
+mod rdp_state;
 
 pub struct CommandBufferCache {
     rdp: RdpCommandBuilder,
@@ -29,7 +30,7 @@ pub struct CommandBuffer<'a> {
     colored_rect_count: u32,
     textured_rect_count: u32,
     mesh_count: u32,
-    current_pipeline: Option<Pipeline>,
+    current_state: RdpState,
     cache: &'a mut CommandBufferCache,
 }
 
@@ -55,141 +56,58 @@ impl<'a> CommandBuffer<'a> {
             colored_rect_count: 0,
             textured_rect_count: 0,
             mesh_count: 0,
-            current_pipeline: None,
+            current_state: RdpState::default(),
             cache,
         }
     }
 
     pub fn clear(&mut self) -> &mut Self {
-        self.cache
-            .rdp
-            .sync_pipe()
-            .set_other_modes(
-                OTHER_MODE_CYCLE_TYPE_FILL
-                    | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
-                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER,
-            )
-            .set_fill_color(Color::new(0b00000_00000_00000_1))
-            .fill_rectangle(
-                vec2(0.0, 0.0),
-                vec2(
-                    (self.out_tex.width - 1) as f32,
-                    (self.out_tex.height - 1) as f32,
-                ),
-            );
+        rdp_state::apply_fill_pipeline(
+            &mut self.cache.rdp,
+            &mut self.current_state,
+            &FillPipeline::default(),
+        );
 
+        self.cache.rdp.fill_rectangle(
+            vec2(0.0, 0.0),
+            vec2(
+                (self.out_tex.width - 1) as f32,
+                (self.out_tex.height - 1) as f32,
+            ),
+        );
+
+        self
+    }
+
+    pub fn set_fill_pipeline(&mut self, pipeline: &FillPipeline) -> &mut Self {
+        rdp_state::apply_fill_pipeline(&mut self.cache.rdp, &mut self.current_state, pipeline);
         self
     }
 
     pub fn set_pipeline(&mut self, pipeline: &Pipeline) -> &mut Self {
-        rdp_pipeline::apply(&mut self.cache.rdp, &mut self.current_pipeline, pipeline);
+        rdp_state::apply_pipeline(&mut self.cache.rdp, &mut self.current_state, pipeline);
         self
     }
 
-    pub fn add_colored_rect(
-        &mut self,
-        upper_left: Vec2,
-        lower_right: Vec2,
-        color: Color,
-    ) -> &mut Self {
+    pub fn add_colored_rect(&mut self, upper_left: Vec2, lower_right: Vec2) -> &mut Self {
         self.colored_rect_count += 1;
         self.cache
             .rdp
-            .sync_pipe()
-            .set_other_modes(
-                OTHER_MODE_CYCLE_TYPE_FILL
-                    | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
-                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
-                    | OTHER_MODE_FORCE_BLEND,
-            )
-            .set_combine_mode(ColorCombiner::default().to_command())
-            .set_fill_color(color)
             .fill_rectangle(upper_left, lower_right - vec2(1.0, 1.0));
 
         self
     }
 
-    pub fn add_textured_rect(
-        &mut self,
-        upper_left: Vec2,
-        lower_right: Vec2,
-        texture: Texture<'static>,
-        blend_color: Option<u32>,
-    ) -> &mut Self {
+    pub fn add_textured_rect(&mut self, upper_left: Vec2, lower_right: Vec2) -> &mut Self {
         self.textured_rect_count += 1;
-        self.cache
-            .rdp
-            .sync_pipe()
-            .sync_tile()
-            .set_other_modes(
-                OTHER_MODE_SAMPLE_TYPE
-                    | OTHER_MODE_BI_LERP_0
-                    | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
-                    | OTHER_MODE_B_M2A_0_1
-                    | if blend_color.is_some() {
-                        OTHER_MODE_B_M1A_0_2
-                    } else {
-                        0
-                    }
-                    | OTHER_MODE_FORCE_BLEND
-                    | OTHER_MODE_IMAGE_READ_EN,
-            )
-            .set_combine_mode(
-                ColorCombiner {
-                    a_0: ASrc::Zero,
-                    b_0: BSrc::Zero,
-                    c_0: CSrc::Zero,
-                    d_0: DSrc::Texel,
-                    a_alpha_0: AAlphaSrc::Zero,
-                    b_alpha_0: BAlphaSrc::Zero,
-                    c_alpha_0: CAlphaSrc::Zero,
-                    d_alpha_0: DAlphaSrc::TexelAlpha,
 
-                    a_1: ASrc::Zero,
-                    b_1: BSrc::Zero,
-                    c_1: CSrc::Zero,
-                    d_1: DSrc::Texel,
-                    a_alpha_1: AAlphaSrc::Zero,
-                    b_alpha_1: BAlphaSrc::Zero,
-                    c_alpha_1: CAlphaSrc::Zero,
-                    d_alpha_1: DAlphaSrc::TexelAlpha,
-                }
-                .to_command(),
-            );
-
-        if let Some(blend_color) = blend_color {
-            self.cache.rdp.set_blend_color(blend_color);
-        }
-
-        self.cache
-            .rdp
-            .set_texture_image(
-                FORMAT_RGBA,
-                SIZE_OF_PIXEL_16B,
-                texture.width as u16,
-                texture.data.as_ptr() as *const u16,
-            )
-            .set_tile(
-                FORMAT_RGBA,
-                SIZE_OF_PIXEL_16B,
-                texture.width as u16,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-            )
-            .load_tile(
-                vec2((texture.width) as f32, (texture.height) as f32),
-                vec2(0.0, 0.0),
-                0,
-            )
-            .texture_rectangle(upper_left, lower_right, 0, vec2(0.0, 0.0), vec2(32.0, 32.0));
+        self.cache.rdp.texture_rectangle(
+            upper_left,
+            lower_right,
+            0,
+            vec2(0.0, 0.0),
+            vec2(32.0, 32.0),
+        );
         self
     }
 

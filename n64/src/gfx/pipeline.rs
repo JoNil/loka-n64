@@ -1,11 +1,46 @@
 use super::{color_combiner::ColorCombiner, Texture};
+use n64_math::Color;
+
+#[derive(Copy, Clone)]
+pub struct FillPipeline {
+    pub combiner_mode: ColorCombiner,
+    pub fill_color: Color,
+    pub blend: bool,
+}
+
+impl FillPipeline {
+    pub const fn default() -> Self {
+        Self {
+            combiner_mode: ColorCombiner::default(),
+            fill_color: Color::new(0b00000_00000_00000_1),
+            blend: false,
+        }
+    }
+
+    pub fn with_combiner_mode(&self, combiner_mode: ColorCombiner) -> Self {
+        let mut res = *self;
+        res.combiner_mode = combiner_mode;
+        res
+    }
+
+    pub fn with_fill_color(&self, fill_color: Color) -> Self {
+        let mut res = *self;
+        res.fill_color = fill_color;
+        res
+    }
+
+    pub fn with_blend(&self, blend: bool) -> Self {
+        let mut res = *self;
+        res.blend = blend;
+        res
+    }
+}
 
 #[repr(u8)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum CycleType {
     One,
     Two,
-    Fill,
 }
 
 #[derive(Copy, Clone)]
@@ -18,8 +53,8 @@ pub struct Pipeline {
     pub prim_color: Option<u32>,
     pub env_color: Option<u32>,
     pub blend_color: Option<u32>,
-    pub fill_color: Option<u32>,
 
+    pub blend: bool,
     pub z_update: bool,
     pub z_compare: bool,
 }
@@ -32,8 +67,8 @@ impl Pipeline {
             prim_color: None,
             env_color: None,
             blend_color: None,
-            fill_color: None,
             texture: None,
+            blend: false,
             z_update: false,
             z_compare: false,
         }
@@ -72,6 +107,12 @@ impl Pipeline {
     pub fn with_blend_color(&self, blend_color: Option<u32>) -> Self {
         let mut res = *self;
         res.blend_color = blend_color;
+        res
+    }
+
+    pub fn with_blend(&self, blend: bool) -> Self {
+        let mut res = *self;
+        res.blend = blend;
         res
     }
 

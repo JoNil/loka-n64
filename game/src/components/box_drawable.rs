@@ -1,7 +1,12 @@
 use super::{movable::Movable, size::Size};
 use crate::{camera::Camera, ecs::world::World};
-use n64::{gfx::CommandBuffer, VideoMode};
+use n64::{
+    gfx::{CommandBuffer, FillPipeline},
+    VideoMode,
+};
 use n64_math::{Color, Vec2};
+
+static BOX_PIPELINE: FillPipeline = FillPipeline::default();
 
 pub struct BoxDrawable {
     pub color: Color,
@@ -19,10 +24,11 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
 
             let screen_size = Vec2::new(video_mode.width() as f32, video_mode.height() as f32);
 
+            cb.set_fill_pipeline(&BOX_PIPELINE.with_fill_color(component.color));
+
             cb.add_colored_rect(
                 (upper_left - camera.pos) * screen_size,
                 (lower_right - camera.pos) * screen_size,
-                component.color,
             );
         }
     }

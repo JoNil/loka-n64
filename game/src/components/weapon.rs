@@ -306,12 +306,7 @@ pub fn fire(
 }
 
 static TARGET_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::one_cycle_symertical(
-        ASrc::Zero,
-        BSrc::Zero,
-        CSrc::Zero,
-        DSrc::Environment,
-    ),
+    combiner_mode: ColorCombiner::simple(ASrc::Zero, BSrc::Zero, CSrc::Zero, DSrc::Environment),
     ..Pipeline::default()
 };
 
@@ -321,6 +316,8 @@ pub fn draw_missile_target(
     video_mode: VideoMode,
     camera: &Camera,
 ) {
+    return;
+
     let (player, enemy, weapon, movable) =
         world.components.get4::<Player, Enemy, Weapon, Movable>();
 

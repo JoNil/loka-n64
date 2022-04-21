@@ -1,10 +1,19 @@
 use super::{movable::Movable, size::Size};
 use crate::{camera::Camera, ecs::world::World};
 use n64::{
-    gfx::{CommandBuffer, Texture},
+    gfx::{
+        color_combiner::{ColorCombiner, DSrc},
+        CommandBuffer, Pipeline, Texture,
+    },
     VideoMode,
 };
 use n64_math::Vec2;
+
+static SPRITE_PIPELINE: Pipeline = Pipeline {
+    combiner_mode: ColorCombiner::single(DSrc::Texel),
+    blend: true,
+    ..Pipeline::default()
+};
 
 #[derive(Copy, Clone)]
 pub struct SpriteDrawable {
@@ -23,11 +32,11 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
 
             let screen_size = Vec2::new(video_mode.width() as f32, video_mode.height() as f32);
 
+            cb.set_pipeline(&SPRITE_PIPELINE.with_texture(Some(component.texture)));
+
             cb.add_textured_rect(
                 (upper_left - camera.pos) * screen_size,
                 (lower_right - camera.pos) * screen_size,
-                component.texture,
-                None,
             );
         }
     }

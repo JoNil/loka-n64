@@ -13,7 +13,7 @@ use n64_math::{vec3, Mat4};
 pub struct Shadow;
 
 static SHADOW_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::one_cycle_symertical(
+    combiner_mode: ColorCombiner::simple(
         ASrc::Zero,
         BSrc::Zero,
         CSrc::Zero,

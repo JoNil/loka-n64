@@ -167,7 +167,31 @@ impl ColorCombiner {
         }
     }
 
-    pub const fn one_cycle_symertical(a: ASrc, b: BSrc, c: CSrc, d: DSrc) -> Self {
+    pub const fn single(d: DSrc) -> Self {
+        Self {
+            a_0: ASrc::Zero,
+            b_0: BSrc::Zero,
+            c_0: CSrc::Zero,
+            d_0: d,
+
+            a_alpha_0: AAlphaSrc::Zero,
+            b_alpha_0: BAlphaSrc::Zero,
+            c_alpha_0: CAlphaSrc::Zero,
+            d_alpha_0: d.to_symetrical_alpha(),
+
+            a_1: ASrc::Zero,
+            b_1: BSrc::Zero,
+            c_1: CSrc::Zero,
+            d_1: d,
+
+            a_alpha_1: AAlphaSrc::Zero,
+            b_alpha_1: BAlphaSrc::Zero,
+            c_alpha_1: CAlphaSrc::Zero,
+            d_alpha_1: d.to_symetrical_alpha(),
+        }
+    }
+
+    pub const fn simple(a: ASrc, b: BSrc, c: CSrc, d: DSrc) -> Self {
         Self {
             a_0: a,
             b_0: b,

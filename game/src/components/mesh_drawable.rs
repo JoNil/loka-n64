@@ -16,7 +16,7 @@ pub struct MeshDrawable {
 }
 
 static MESH_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::one_cycle_symertical(
+    combiner_mode: ColorCombiner::simple(
         ASrc::Zero,
         BSrc::Zero,
         CSrc::Zero,
