@@ -1,5 +1,4 @@
 use super::{FillPipeline, Pipeline, TextureMut};
-use crate::{gfx::Texture, graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
 use crate::{
     graphics::QUAD_INDEX_DATA,
     graphics_emu::{
@@ -9,6 +8,7 @@ use crate::{
         Graphics,
     },
 };
+use crate::{graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
 use assert_into::AssertInto;
 use n64_math::{Color, Vec2};
 use std::mem;
@@ -20,13 +20,12 @@ enum Command {
     ColoredRect {
         upper_left: Vec2,
         lower_right: Vec2,
-        color: Color,
+        pipeline: EmuPipeline,
     },
     TexturedRect {
         upper_left: Vec2,
         lower_right: Vec2,
-        texture: Texture<'static>,
-        blend_color: u32,
+        pipeline: Pipeline,
     },
     Mesh {
         verts: Vec<[f32; 3]>,
@@ -52,13 +51,27 @@ impl CommandBufferCache {
     }
 }
 
+enum EmuPipeline {
+    Pipeline(Pipeline),
+    FillPipeline(FillPipeline),
+}
+
+impl EmuPipeline {
+    fn as_pipeline(&self) -> &Pipeline {
+        match self {
+            EmuPipeline::Pipeline(pipeline) => pipeline,
+            _ => panic!("Pipeline is not valid"),
+        }
+    }
+}
+
 pub struct CommandBuffer<'a> {
     out_tex: &'a mut TextureMut<'a>,
     clear: bool,
     colored_rect_count: u32,
     textured_rect_count: u32,
     mesh_count: u32,
-    current_pipeline: Option<Pipeline>,
+    current_pipeline: Option<EmuPipeline>,
     cache: &'a mut CommandBufferCache,
 }
 
@@ -82,12 +95,12 @@ impl<'a> CommandBuffer<'a> {
     }
 
     pub fn set_fill_pipeline(&mut self, pipeline: &FillPipeline) -> &mut Self {
-        self.current_fill_pipeline = Some(*pipeline);
+        self.current_pipeline = Some(EmuPipeline::FillPipeline(*pipeline));
         self
     }
 
     pub fn set_pipeline(&mut self, pipeline: &Pipeline) -> &mut Self {
-        self.current_pipeline = Some(*pipeline);
+        self.current_pipeline = Some(EmuPipeline::Pipeline(*pipeline));
         self
     }
 
@@ -96,7 +109,7 @@ impl<'a> CommandBuffer<'a> {
         self.cache.commands.push(Command::ColoredRect {
             upper_left,
             lower_right,
-            color,
+            pipeline: self.current_pipeline.expect("No pipelien set"),
         });
 
         self
@@ -107,12 +120,10 @@ impl<'a> CommandBuffer<'a> {
         self.cache.commands.push(Command::TexturedRect {
             upper_left,
             lower_right,
-            texture,
-            blend_color: if let Some(blend_color) = blend_color {
-                blend_color
-            } else {
-                0xff_ff_ff_ff
-            },
+            pipeline: *self
+                .current_pipeline
+                .expect("No pipeline has been set on the command buffer")
+                .as_pipeline(),
         });
 
         self
@@ -134,9 +145,10 @@ impl<'a> CommandBuffer<'a> {
             colors: colors.to_owned(),
             indices: indices.iter().flatten().copied().collect(),
             transform: *transform,
-            pipeline: self
+            pipeline: *self
                 .current_pipeline
-                .expect("No pipeline has been set on the command buffer"),
+                .expect("No pipeline has been set on the command buffer")
+                .as_pipeline(),
             buffer_index: 0,
         });
 
