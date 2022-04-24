@@ -51,6 +51,7 @@ impl CommandBufferCache {
     }
 }
 
+#[derive(Copy, Clone)]
 enum EmuPipeline {
     Pipeline(Pipeline),
     FillPipeline(FillPipeline),
@@ -61,6 +62,13 @@ impl EmuPipeline {
         match self {
             EmuPipeline::Pipeline(pipeline) => pipeline,
             _ => panic!("Pipeline is not valid"),
+        }
+    }
+
+    fn as_fill_pipeline(&self) -> &FillPipeline {
+        match self {
+            EmuPipeline::FillPipeline(pipeline) => pipeline,
+            _ => panic!("FillPipeline is not valid"),
         }
     }
 }
@@ -183,12 +191,14 @@ impl<'a> CommandBuffer<'a> {
                         Command::ColoredRect {
                             upper_left,
                             lower_right,
-                            color,
+                            pipeline,
                         } => {
                             let size = *lower_right - *upper_left;
                             let scale = size / window_size;
                             let offset_x = 2.0 * upper_left.x / window_size.x - 1.0 + scale.x;
                             let offset_y = 2.0 * upper_left.y / window_size.y - 1.0 + scale.y;
+
+                            let color = pipeline.as_fill_pipeline().fill_color;
 
                             colored_rect_uniforms.push(ColoredRectUniforms {
                                 color: color.to_rgba(),
@@ -199,13 +209,15 @@ impl<'a> CommandBuffer<'a> {
                         Command::TexturedRect {
                             upper_left,
                             lower_right,
-                            texture,
-                            blend_color,
+                            pipeline,
                         } => {
+                            let texture = pipeline.texture.expect("Invalid pipeline");
+                            let blend_color = pipeline.blend_color.unwrap_or(0xffffffff);
+
                             graphics.textured_rect.upload_texture_data(
                                 &graphics.device,
                                 &graphics.queue,
-                                texture,
+                                &texture,
                             );
 
                             let size = *lower_right - *upper_left;
@@ -217,10 +229,10 @@ impl<'a> CommandBuffer<'a> {
                                 offset: [offset_x, offset_y],
                                 scale: [scale.x, scale.y],
                                 blend_color: [
-                                    ((*blend_color >> 24) & 0xff) as f32 / 255.0,
-                                    ((*blend_color >> 16) & 0xff) as f32 / 255.0,
-                                    ((*blend_color >> 8) & 0xff) as f32 / 255.0,
-                                    (*blend_color & 0xff) as f32 / 255.0,
+                                    ((blend_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((blend_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((blend_color >> 8) & 0xff) as f32 / 255.0,
+                                    (blend_color & 0xff) as f32 / 255.0,
                                 ],
                             });
                         }
@@ -449,7 +461,7 @@ impl<'a> CommandBuffer<'a> {
                                 );
                                 colored_rect_index += 1;
                             }
-                            Command::TexturedRect { texture, .. } => {
+                            Command::TexturedRect { pipeline, .. } => {
                                 render_pass.set_index_buffer(
                                     graphics.quad_index_buf.slice(..),
                                     wgpu::IndexFormat::Uint16,
@@ -462,7 +474,14 @@ impl<'a> CommandBuffer<'a> {
                                     &graphics
                                         .textured_rect
                                         .texture_cache
-                                        .get(&(texture.data.as_ptr() as _))
+                                        .get(
+                                            &(pipeline
+                                                .texture
+                                                .expect("Invalid pipeline")
+                                                .data
+                                                .as_ptr()
+                                                as _),
+                                        )
                                         .unwrap()
                                         .bind_group,
                                     &[],
