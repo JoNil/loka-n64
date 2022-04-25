@@ -68,6 +68,9 @@ Mips
 - https://hack64.net/wiki/doku.php?id=r4300
 - https://www.kth.se/social/files/563c63c9f276547044e8695f/mips-ref-sheet.pdf
 
+GBI
+- https://github.com/n64decomp/libreultra/blob/master/include/2.0I/PR/gbi.h
+
 Other
 - http://n64dev.50megs.com/n64dox.html
 - http://n64dev.org/
