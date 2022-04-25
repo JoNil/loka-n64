@@ -12,6 +12,7 @@ cfg_if::cfg_if! {
     }
 }
 
+pub mod blender;
 pub mod color_combiner;
 mod pipeline;
 mod texture;
