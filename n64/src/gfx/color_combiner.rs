@@ -2,6 +2,8 @@
 
 use strum_macros::FromRepr;
 
+// color = (a - b)*c + d
+
 #[repr(u8)]
 #[derive(Clone, Copy, Debug, FromRepr)]
 pub enum ASrc {

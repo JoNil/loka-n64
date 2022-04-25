@@ -13,6 +13,8 @@ use rdp_state::RdpState;
 mod rdp_command_builder;
 mod rdp_state;
 
+// Note: Primitive color, g*DPSetPrimColor( ), primitive depth, g*DPSetPrimDepth( ), and scissor, g*DPSetScissor( ), are attributes that do not require any syncs.
+
 pub struct CommandBufferCache {
     rdp: RdpCommandBuilder,
 }
