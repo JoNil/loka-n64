@@ -3,7 +3,7 @@ use std::{env, error::Error, ffi::OsStr, fs};
 
 #[rustfmt::skip]
 macro_rules! TEXTURE_TEMPLATE { () => {
-r##"pub static {name}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes_align_as!(Color, {path:?}));
+r##"pub static {name}: StaticTexture = StaticTexture::from_static({width}, {height}, include_bytes_align_as!(TextureAlignment, {path:?}));
 "##
 }; }
 
@@ -13,8 +13,7 @@ r##"// This file is generated
 
 #![cfg_attr(rustfmt, rustfmt::skip)]
 
-use n64_math::Color;
-use n64::gfx::StaticTexture;
+use n64::gfx::{{StaticTexture, TextureAlignment}};
 use n64::include_bytes_align_as;
 
 {textures}"##

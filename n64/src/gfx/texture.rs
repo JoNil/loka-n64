@@ -1,6 +1,9 @@
 use n64_math::Color;
 use zerocopy::LayoutVerified;
 
+#[repr(align(8))]
+pub struct TextureAlignment;
+
 #[derive(Copy, Clone)]
 pub struct Texture<'a> {
     pub width: i32,
@@ -49,6 +52,7 @@ impl<'a> TextureMut<'a> {
 pub struct StaticTexture {
     pub width: i32,
     pub height: i32,
+    // Should be 8 byte aligned
     pub data: &'static [u8],
 }
 

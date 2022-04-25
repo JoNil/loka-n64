@@ -1,6 +1,6 @@
 pub use command_buffer::{CommandBuffer, CommandBufferCache};
 pub use pipeline::{CycleType, FillPipeline, Pipeline};
-pub use texture::{StaticTexture, Texture, TextureMut};
+pub use texture::{StaticTexture, Texture, TextureAlignment, TextureMut};
 
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {
