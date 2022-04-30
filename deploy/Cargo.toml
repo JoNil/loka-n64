@@ -5,6 +5,7 @@ authors = ["Jonathan Nilsson <jonathan@voysys.se>"]
 edition = "2021"
 
 [dependencies]
-serialport = "4"
+n64-types = { path = "../n64-types" }
 puffin = { version = "0.13", features = ["packing", "serialization"] }
 puffin_http = "0.10"
+serialport = "4"

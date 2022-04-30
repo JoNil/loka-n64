@@ -1,16 +1,23 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
+use core::marker::PhantomData;
+
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {
 
         use n64_sys::sys::current_time_us;
-        use n64_types::{ScopeData, PROFILER_MESSAGE_MAGIC};
+        use n64_types::{ScopeData, MESSAGE_MAGIC_PROFILER};
 
-        #[repr(C, align(16))]
-        pub struct Profiler {
+        #[repr(C, packed)]
+        pub struct ProfilerMessageBuffer {
             message_header_buffer: u8,
             current_index: i16,
             scopes: [ScopeData; 1024],
+        }
+
+        #[repr(C, align(16))]
+        pub struct Profiler {
+            b: ProfilerMessageBuffer,
             current_depth: i16,
         }
 
@@ -22,10 +29,10 @@ cfg_if::cfg_if! {
 
                 self.current_depth += 1;
 
-                let index = self.current_index;
-                self.current_index += 1;
+                let index = self.b.current_index;
+                self.b.current_index += 1;
 
-                self.scopes[self.current_index as usize] = ScopeData {
+                self.b.scopes[self.b.current_index as usize] = ScopeData {
                     start: now_us,
                     end: 0,
                     depth: self.current_depth,
@@ -37,7 +44,7 @@ cfg_if::cfg_if! {
 
             #[inline]
             pub fn end_scope(&mut self, index: i16) {
-                self.scopes[index as usize].end = current_time_us() as i32;
+                self.b.scopes[index as usize].end = current_time_us() as i32;
             }
 
             #[inline]
@@ -46,20 +53,22 @@ cfg_if::cfg_if! {
                     core::assert!(n64_sys::ed::usb_write(
                         core::slice::from_raw_parts(
                             self as *const Profiler as *const u8,
-                            1 + 2 + (self.current_index - 1) as usize * core::mem::size_of::<ScopeData>())
+                            core::mem::size_of::<ProfilerMessageBuffer>())
                     ));
                 }
-                self.current_index = 0;
+                self.b.current_index = 0;
                 self.current_depth = 0;
             }
         }
 
-        pub static mut GLOBAL_PROFILER: Profiler = Profiler {
-            message_header_buffer: PROFILER_MESSAGE_MAGIC,
-            current_index: 0,
-            scopes: [ScopeData::default(); 1024],
+        pub static GLOBAL_PROFILER: spin::Mutex<Profiler> = spin::Mutex::new(Profiler {
+            b: ProfilerMessageBuffer {
+                message_header_buffer: MESSAGE_MAGIC_PROFILER,
+                current_index: 0,
+                scopes: [ScopeData::default(); 1024],
+            },
             current_depth: 0,
-        };
+        });
 
         pub struct ProfilerScope {
             index: i16,
@@ -70,8 +79,8 @@ cfg_if::cfg_if! {
             #[inline]
             pub fn new(name: &'static str) -> Self {
                 Self {
-                    index: unsafe { GLOBAL_PROFILER.begin_scope(name) },
-                    _dont_send_me: Default::default(),
+                    index: GLOBAL_PROFILER.lock().begin_scope(name),
+                    _dont_send_me: PhantomData,
                 }
             }
         }
@@ -79,7 +88,7 @@ cfg_if::cfg_if! {
         impl Drop for ProfilerScope {
             #[inline]
             fn drop(&mut self) {
-                unsafe { GLOBAL_PROFILER.end_scope(self.index); }
+                GLOBAL_PROFILER.lock().end_scope(self.index);
             }
         }
 
@@ -89,17 +98,14 @@ cfg_if::cfg_if! {
         #[macro_export]
         macro_rules! frame {
             () => {
-                unsafe {
-                    $crate::GLOBAL_PROFILER.frame();
-                }
+                $crate::GLOBAL_PROFILER.lock().frame();
             };
         }
 
         #[macro_export]
         macro_rules! scope {
             ($id:expr) => {
-                let _profiler_scope =
-                    $crate::ProfilerScope::new($id);
+                let _profiler_scope = $crate::ProfilerScope::new($id);
             };
         }
 

@@ -585,6 +585,7 @@ dependencies = [
 name = "deploy"
 version = "0.1.0"
 dependencies = [
+ "n64-types",
  "puffin",
  "puffin_http",
  "serialport",
@@ -1251,6 +1252,7 @@ version = "0.1.0"
 dependencies = [
  "cfg-if 1.0.0",
  "n64-sys",
+ "n64-types",
  "spin",
 ]
 

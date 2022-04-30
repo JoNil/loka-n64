@@ -1,7 +1,5 @@
 use zerocopy::{AsBytes, FromBytes, Unaligned};
 
-pub const PROFILER_MESSAGE_MAGIC: u8 = 0x1c;
-
 #[repr(C, packed)]
 #[derive(Copy, Clone, FromBytes, AsBytes, Unaligned)]
 pub struct ScopeData {

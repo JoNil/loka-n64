@@ -316,6 +316,7 @@ pub fn draw_missile_target(
     video_mode: VideoMode,
     camera: &Camera,
 ) {
+    return;
     let (player, enemy, weapon, movable) =
         world.components.get4::<Player, Enemy, Weapon, Movable>();
 

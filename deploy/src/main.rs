@@ -1,3 +1,4 @@
+use n64_types::MESSAGE_MAGIC_PRINT;
 use serialport::SerialPort;
 use std::{
     env,
@@ -96,21 +97,18 @@ fn main() -> Result<(), Box<dyn Error>> {
         write_cmd(&mut *ed, b's', 0, 0, 0);
     }
 
-    let mut p = profiler::ThreadProfiler::default();
-
     loop {
-        puffin::GlobalProfiler::lock().new_frame();
-        let a = p.begin_scope("main", "", "");
-
         let mut buf = [0; 1];
-        {
-            let a = p.begin_scope("read", "", "");
-            if ed.read(&mut buf).is_ok() {
-                print!("{}", buf[0] as char);
-                io::stdout().flush().ok();
+
+        if ed.read(&mut buf).is_ok() {
+            if buf[0] == MESSAGE_MAGIC_PRINT {
+                for _ in 0..18 {
+                    if ed.read(&mut buf).is_ok() {
+                        print!("{}", buf[0] as char);
+                        io::stdout().flush().ok();
+                    }
+                }
             }
-            p.end_scope(a);
         }
-        p.end_scope(a);
     }
 }
