@@ -32,6 +32,7 @@ use n64::{
     gfx::{CommandBuffer, CommandBufferCache, FillPipeline, Pipeline},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
+use n64_macros::debugln;
 use n64_math::{random_u32, vec2, vec3, Color};
 use sound_mixer::SoundMixer;
 
@@ -64,6 +65,7 @@ const DEBUG_TRIANGLES: bool = false;
 
 fn main() {
     let mut n64 = N64::new(VIDEO_MODE);
+    let _profiler = n64_profiler::Profiler::init();
 
     let mut world = World::new();
     let map = Map::load(MAP_1);
@@ -92,6 +94,9 @@ fn main() {
     let mut last_textured_rect_count = 0;
     let mut last_mesh_count = 0;
     loop {
+        n64_profiler::frame!();
+        n64_profiler::scope!("Frame");
+
         frame_begin_time = current_time_us();
 
         {
@@ -100,7 +105,7 @@ fn main() {
         }
 
         {
-            // Update
+            n64_profiler::scope!("Update");
 
             n64.controllers.update(&n64.graphics);
 
@@ -120,14 +125,15 @@ fn main() {
         }
 
         {
-            // Audio
+            n64_profiler::scope!("Audio");
+
             n64.audio.update(|buffer| {
                 sound_mixer.mix(buffer);
             });
         }
 
         {
-            // Graphics
+            n64_profiler::scope!("Graphics");
 
             let (colored_rect_count, textured_rect_count, mesh_count) = {
                 let mut fb = n64.framebuffer.next_buffer();
@@ -284,7 +290,10 @@ fn main() {
             last_textured_rect_count = textured_rect_count;
             last_mesh_count = mesh_count;
 
-            let frame_end_time = n64.graphics.swap_buffers(&mut n64.framebuffer);
+            let frame_end_time = {
+                n64_profiler::scope!("Swap");
+                n64.graphics.swap_buffers(&mut n64.framebuffer)
+            };
             frame_used_time = frame_end_time - frame_begin_time;
         }
 

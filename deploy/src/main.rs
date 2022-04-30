@@ -8,6 +8,8 @@ use std::{
     time::Duration,
 };
 
+mod profiler;
+
 fn write_cmd(port: &mut dyn SerialPort, cmd: u8, addr: u32, len: u32, arg: u32) {
     let len = len / 512;
 
@@ -59,6 +61,11 @@ fn find_everdrive() -> Box<dyn SerialPort> {
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
+    let _puffin_server =
+        puffin_http::Server::new(&format!("0.0.0.0:{}", puffin_http::DEFAULT_PORT)).unwrap();
+
+    puffin::set_scopes_on(true);
+
     if !env::current_dir()?.ends_with("loka-n64") {
         env::set_current_dir("../")?;
     }
@@ -83,17 +90,27 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let rom = fs::read("target/mips-nintendo64-none/release/game.n64").unwrap();
 
-    write_cmd(&mut *ed, b'W', 0x10000000, rom.len() as u32, 0);
+    {
+        write_cmd(&mut *ed, b'W', 0x10000000, rom.len() as u32, 0);
+        ed.write_all(&rom).unwrap();
+        write_cmd(&mut *ed, b's', 0, 0, 0);
+    }
 
-    ed.write_all(&rom).unwrap();
-
-    write_cmd(&mut *ed, b's', 0, 0, 0);
+    let mut p = profiler::ThreadProfiler::default();
 
     loop {
+        puffin::GlobalProfiler::lock().new_frame();
+        let a = p.begin_scope("main", "", "");
+
         let mut buf = [0; 1];
-        if ed.read(&mut buf).is_ok() {
-            print!("{}", buf[0] as char);
-            io::stdout().flush().ok();
+        {
+            let a = p.begin_scope("read", "", "");
+            if ed.read(&mut buf).is_ok() {
+                print!("{}", buf[0] as char);
+                io::stdout().flush().ok();
+            }
+            p.end_scope(a);
         }
+        p.end_scope(a);
     }
 }

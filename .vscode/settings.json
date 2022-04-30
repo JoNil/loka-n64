@@ -29,3 +29,14 @@
         "clippy::unusual_byte_groupings"
     ]
 }
+/*{
+    "rust-analyzer.checkOnSave.overrideCommand": [
+        "cargo",
+        "clippy",
+        "--message-format=json",
+        "-p",
+        "deploy",
+        "--target-dir",
+        "target/analyzer",
+    ]
+}*/

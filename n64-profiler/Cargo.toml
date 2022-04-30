@@ -1,0 +1,16 @@
+[package]
+name = "n64-profiler"
+version = "0.1.0"
+authors = ["Jonathan Nilsson <jonathan@voysys.se>"]
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+cfg-if = "1"
+
+[target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
+puffin = { version = "0.13", features = ["packing", "serialization"] }
+puffin_http = "0.10"
+
+[target.'cfg(target_vendor = "nintendo64")'.dependencies]

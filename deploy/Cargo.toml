@@ -6,3 +6,5 @@ edition = "2021"
 
 [dependencies]
 serialport = "4"
+puffin = { version = "0.13", features = ["packing", "serialization"] }
+puffin_http = "0.10"

@@ -11,7 +11,7 @@ authors = [
 categories = ["memory-management", "no-std", "embedded", "n64", "nintendo-64"]
 description = "n64_alloc: The N64 Allocator"
 license = "MPL-2.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 memory_units = "0.4.0"

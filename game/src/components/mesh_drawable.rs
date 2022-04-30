@@ -16,18 +16,14 @@ pub struct MeshDrawable {
 }
 
 static MESH_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::simple(
-        ASrc::Zero,
-        BSrc::Zero,
-        CSrc::Zero,
-        DSrc::Shade,
-    ),
+    combiner_mode: ColorCombiner::simple(ASrc::Zero, BSrc::Zero, CSrc::Zero, DSrc::Shade),
     z_compare: true,
     z_update: true,
     ..Pipeline::default()
 };
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
+    return;
     let (mesh_drawable, movable) = world.components.get2::<MeshDrawable, Movable>();
 
     let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);

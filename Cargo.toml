@@ -1,7 +1,4 @@
-cargo-features = ["resolver"]
-
 [workspace]
-
 members = [
     "extract_boot_code",
     "game",
