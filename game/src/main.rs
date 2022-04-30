@@ -32,7 +32,6 @@ use n64::{
     gfx::{CommandBuffer, CommandBufferCache, FillPipeline, Pipeline},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
-use n64_macros::debugln;
 use n64_math::{random_u32, vec2, vec3, Color};
 use sound_mixer::SoundMixer;
 
@@ -358,7 +357,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
             RED,
             alloc::format!(
                 "{}:{}",
-                location.file().rsplit("\\").nth(0).unwrap_or(""),
+                location.file().rsplit('\\').next().unwrap_or(""),
                 location.line()
             )
             .as_bytes(),
@@ -381,6 +380,7 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
         n64_sys::vi::set_vi_buffer(out_tex.data);
     }
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 
@@ -399,6 +399,7 @@ fn oom(_: core::alloc::Layout) -> ! {
         n64_sys::vi::set_vi_buffer(out_tex.data);
     }
 
+    #[allow(clippy::empty_loop)]
     loop {}
 }
 

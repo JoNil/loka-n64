@@ -1269,6 +1269,7 @@ version = "0.1.0"
 dependencies = [
  "cfg-if 1.0.0",
  "n64-sys",
+ "n64-types",
  "puffin",
  "puffin_http",
  "spin",
@@ -1285,6 +1286,9 @@ dependencies = [
 [[package]]
 name = "n64-types"
 version = "0.1.0"
+dependencies = [
+ "zerocopy",
+]
 
 [[package]]
 name = "naga"

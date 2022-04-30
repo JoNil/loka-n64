@@ -4,10 +4,13 @@ members = [
     "deploy",
     "extract_boot_code",
     "game",
+    "game-pipeline",
     "n64-alloc",
+    "n64-macros",
     "n64-math",
     "n64-profiler",
     "n64-sys",
+    "n64-types",
     "n64",
 ]
 
