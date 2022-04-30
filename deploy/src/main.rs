@@ -1,10 +1,11 @@
-use n64_types::MESSAGE_MAGIC_PRINT;
+use n64_types::{ScopeData, MESSAGE_MAGIC_PRINT};
 use serialport::SerialPort;
 use std::{
     env,
     error::Error,
     fs,
     io::{self, Write},
+    mem::size_of,
     process::{self, Command},
     time::Duration,
 };
@@ -102,13 +103,36 @@ fn main() -> Result<(), Box<dyn Error>> {
 
         if ed.read(&mut buf).is_ok() {
             if buf[0] == MESSAGE_MAGIC_PRINT {
-                for _ in 0..18 {
-                    if ed.read(&mut buf).is_ok() {
-                        print!("{}", buf[0] as char);
-                        io::stdout().flush().ok();
-                    }
+                for _ in 0..17 {
+                    assert_eq!(ed.read(&mut buf).unwrap(), 1);
+                    print!("{}", buf[0] as char);
+                    io::stdout().flush().ok();
                 }
             }
+            println!("{:?}: {}", buf[0] as char, buf[0]);
+            io::stdout().flush().ok();
+            /*if buf[0] == MESSAGE_MAGIC_PRINT {
+                let mut size_buf = [0; 2];
+                assert_eq!(ed.read(&mut size_buf).unwrap(), 2);
+
+                let scope_count = i16::from_be_bytes(size_buf);
+
+                dbg!(scope_count);
+
+                let mut scopes = Vec::new();
+                scopes.resize(scope_count as usize * size_of::<ScopeData>(), 0);
+
+                for i in 0..scope_count {
+                    assert_eq!(
+                        ed.read(
+                            &mut scopes[(i as usize * size_of::<ScopeData>())
+                                ..((i + 1) as usize * size_of::<ScopeData>())]
+                        )
+                        .unwrap(),
+                        size_of::<ScopeData>()
+                    );
+                }
+            }*/
         }
     }
 }

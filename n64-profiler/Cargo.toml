@@ -17,3 +17,4 @@ puffin_http = "0.10"
 n64-sys = { path = "../n64-sys" }
 n64-types = { path = "../n64-types" }
 spin = "0.9"
+zerocopy = "0.6"

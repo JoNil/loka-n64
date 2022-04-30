@@ -94,6 +94,8 @@ fn main() {
     let mut last_textured_rect_count = 0;
     let mut last_mesh_count = 0;
     loop {
+        //n64::debugln!("Frame");
+
         n64_profiler::frame!();
         n64_profiler::scope!("Frame");
 

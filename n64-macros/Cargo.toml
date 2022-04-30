@@ -13,3 +13,4 @@ cfg-if = "1"
 spin = "0.9"
 n64-sys = { path = "../n64-sys" }
 n64-types = { path = "../n64-types" }
+zerocopy = "0.6"

@@ -1254,6 +1254,7 @@ dependencies = [
  "n64-sys",
  "n64-types",
  "spin",
+ "zerocopy",
 ]
 
 [[package]]
@@ -1275,6 +1276,7 @@ dependencies = [
  "puffin",
  "puffin_http",
  "spin",
+ "zerocopy",
 ]
 
 [[package]]

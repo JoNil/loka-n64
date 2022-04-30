@@ -1,14 +1,15 @@
 #![cfg_attr(target_vendor = "nintendo64", no_std)]
 
-use core::marker::PhantomData;
-
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {
 
+        use core::marker::PhantomData;
         use n64_sys::sys::current_time_us;
         use n64_types::{ScopeData, MESSAGE_MAGIC_PROFILER};
+        use zerocopy::AsBytes;
 
         #[repr(C, packed)]
+        #[derive(AsBytes)]
         pub struct ProfilerMessageBuffer {
             message_header_buffer: u8,
             current_index: i16,
@@ -49,13 +50,9 @@ cfg_if::cfg_if! {
 
             #[inline]
             pub fn frame(&mut self) {
-                unsafe {
-                    core::assert!(n64_sys::ed::usb_write(
-                        core::slice::from_raw_parts(
-                            self as *const Profiler as *const u8,
-                            core::mem::size_of::<ProfilerMessageBuffer>())
-                    ));
-                }
+                core::assert!(n64_sys::ed::usb_write(
+                    &self.b.as_bytes()[..(3 + self.b.current_index as usize * core::mem::size_of::<ScopeData>())]
+                ));
                 self.b.current_index = 0;
                 self.current_depth = 0;
             }
@@ -72,7 +69,7 @@ cfg_if::cfg_if! {
 
         pub struct ProfilerScope {
             index: i16,
-            _dont_send_me: core::marker::PhantomData<*const ()>,
+            _dont_send_me: PhantomData<*const ()>,
         }
 
         impl ProfilerScope {

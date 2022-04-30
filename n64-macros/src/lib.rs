@@ -3,10 +3,13 @@
 cfg_if::cfg_if! {
     if #[cfg(target_vendor = "nintendo64")] {
 
+        use zerocopy::AsBytes;
+
         #[repr(C, packed)]
+        #[derive(AsBytes)]
         pub struct DebugWriteMessageBuffer {
             buffer_message_header: u8,
-            buffer: [u8; 18],
+            buffer: [u8; 17],
         }
 
         #[repr(C, align(16))]
@@ -18,7 +21,7 @@ cfg_if::cfg_if! {
         pub static GLOBAL_DEBUG_PRINT: spin::Mutex<DebugWrite> = spin::Mutex::new(DebugWrite {
             b: DebugWriteMessageBuffer {
                 buffer_message_header: n64_types::MESSAGE_MAGIC_PRINT,
-                buffer: [b'z'; 18],
+                buffer: [0; 17],
             },
             cursor: 0,
         });
@@ -31,14 +34,8 @@ cfg_if::cfg_if! {
                     self.b.buffer[self.cursor as usize] = *byte;
                     self.cursor += 1;
 
-                    if self.cursor == 18 {
-                        core::assert!(n64_sys::ed::usb_write(
-                            unsafe {
-                                core::slice::from_raw_parts(
-                                    &self.b as *const DebugWriteMessageBuffer as *const u8,
-                                    core::mem::size_of::<DebugWriteMessageBuffer>())
-                            }
-                        ));
+                    if self.cursor == 17 {
+                        core::assert!(n64_sys::ed::usb_write(self.b.as_bytes()));
                         self.cursor = 0;
                     }
                 }
@@ -59,13 +56,7 @@ cfg_if::cfg_if! {
             let cursor = lock.cursor;
             if cursor > 0 {
                 lock.b.buffer[(cursor as usize)..].fill(b'\r');
-                core::assert!(n64_sys::ed::usb_write(
-                    unsafe {
-                        core::slice::from_raw_parts(
-                            &lock.b as *const DebugWriteMessageBuffer as *const u8,
-                            core::mem::size_of::<DebugWriteMessageBuffer>())
-                    }
-                ));
+                core::assert!(n64_sys::ed::usb_write(lock.b.as_bytes()));
                 lock.cursor = 0;
             }
         }
