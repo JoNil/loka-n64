@@ -64,8 +64,9 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
 const DEBUG_TRIANGLES: bool = false;
 
 fn main() {
+    n64_profiler::init();
+
     let mut n64 = N64::new(VIDEO_MODE);
-    let _profiler = n64_profiler::Profiler::init();
 
     let mut world = World::new();
     let map = Map::load(MAP_1);
@@ -132,170 +133,168 @@ fn main() {
             });
         }
 
-        {
+        let (colored_rect_count, textured_rect_count, mesh_count) = {
             n64_profiler::scope!("Graphics");
 
-            let (colored_rect_count, textured_rect_count, mesh_count) = {
-                let mut fb = n64.framebuffer.next_buffer();
-                let mut cb = CommandBuffer::new(&mut fb, &mut command_buffer_cache);
+            let mut fb = n64.framebuffer.next_buffer();
+            let mut cb = CommandBuffer::new(&mut fb, &mut command_buffer_cache);
 
-                cb.clear();
+            cb.clear();
 
-                map.render(&mut cb, VIDEO_MODE, &camera);
+            map.render(&mut cb, VIDEO_MODE, &camera);
 
-                shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-                box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
-                sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
-                mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-                draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
+            draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-                {
-                    if DEBUG_TRIANGLES {
-                        let x_limit = 320.0;
-                        let y_limit = 240.0;
+            {
+                if DEBUG_TRIANGLES {
+                    let x_limit = 320.0;
+                    let y_limit = 240.0;
 
-                        let x_off = x_limit * 0.5;
-                        let y_off = y_limit * 0.5;
-                        let x_scale = x_limit * 0.125;
-                        let y_scale = y_limit * 0.125;
+                    let x_off = x_limit * 0.5;
+                    let y_off = y_limit * 0.5;
+                    let x_scale = x_limit * 0.125;
+                    let y_scale = y_limit * 0.125;
 
-                        let speed = 0.05; // 0.05
-                        let t = speed * (frame_begin_time as f32) / 1e6;
-                        let p = 2.0943951;
-                        let v0 = vec3(
-                            x_off + x_scale * libm::cosf(t),
-                            y_off + y_scale * libm::sinf(t),
-                            0.0,
-                        );
-                        let v1 = vec3(
-                            x_off + x_scale * libm::cosf(t + p),
-                            y_off + y_scale * libm::sinf(t + p),
-                            0.0,
-                        );
-                        let v2 = vec3(
-                            x_off + x_scale * libm::cosf(t - p),
-                            y_off + y_scale * libm::sinf(t - p),
-                            0.0,
-                        );
+                    let speed = 0.05; // 0.05
+                    let t = speed * (frame_begin_time as f32) / 1e6;
+                    let p = 2.0943951;
+                    let v0 = vec3(
+                        x_off + x_scale * libm::cosf(t),
+                        y_off + y_scale * libm::sinf(t),
+                        0.0,
+                    );
+                    let v1 = vec3(
+                        x_off + x_scale * libm::cosf(t + p),
+                        y_off + y_scale * libm::sinf(t + p),
+                        0.0,
+                    );
+                    let v2 = vec3(
+                        x_off + x_scale * libm::cosf(t - p),
+                        y_off + y_scale * libm::sinf(t - p),
+                        0.0,
+                    );
 
-                        cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(RED));
-                        cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 10.0, v0.y + 10.0));
-                        cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(GREEN));
-                        cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 10.0, v1.y + 10.0));
-                        cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(BLUE));
-                        cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 10.0, v2.y + 10.0));
+                    cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(RED));
+                    cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 10.0, v0.y + 10.0));
+                    cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(GREEN));
+                    cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 10.0, v1.y + 10.0));
+                    cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(BLUE));
+                    cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 10.0, v2.y + 10.0));
 
-                        cb.set_pipeline(&Pipeline::default());
-                        cb.add_mesh_indexed(
-                            &[v0.into(), v1.into(), v2.into()],
-                            &[[0.5, 1.0], [0.0, 0.0], [1.0, 0.0]],
-                            &[0xff_00_00_ff, 0x00_ff_00_ff, 0x00_00_ff_ff],
-                            &[[0, 1, 2]],
-                            &[
-                                [1.0, 0.0, 0.0, 0.0],
-                                [0.0, 1.0, 0.0, 0.0],
-                                [0.0, 0.0, 1.0, 0.0],
-                                [0.0, 0.0, 0.0, 1.0],
-                            ],
-                        );
+                    cb.set_pipeline(&Pipeline::default());
+                    cb.add_mesh_indexed(
+                        &[v0.into(), v1.into(), v2.into()],
+                        &[[0.5, 1.0], [0.0, 0.0], [1.0, 0.0]],
+                        &[0xff_00_00_ff, 0x00_ff_00_ff, 0x00_00_ff_ff],
+                        &[[0, 1, 2]],
+                        &[
+                            [1.0, 0.0, 0.0, 0.0],
+                            [0.0, 1.0, 0.0, 0.0],
+                            [0.0, 0.0, 1.0, 0.0],
+                            [0.0, 0.0, 0.0, 1.0],
+                        ],
+                    );
 
-                        cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(WHITE));
-                        cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0));
-                        cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 2.0, v1.y + 2.0));
-                        cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 2.0, v2.y + 2.0));
-                    }
+                    cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(WHITE));
+                    cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0));
+                    cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 2.0, v1.y + 2.0));
+                    cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 2.0, v2.y + 2.0));
                 }
+            }
 
+            font::draw_number(
+                &mut cb,
+                world
+                    .components
+                    .get::<Player>()
+                    .lookup(player)
+                    .map(|p| p.score)
+                    .unwrap_or(0),
+                vec2(300.0, 10.0),
+                0x0000efff,
+            );
+            font::draw_number(
+                &mut cb,
+                world
+                    .components
+                    .get::<Health>()
+                    .lookup(player)
+                    .map(|hc| hc.health)
+                    .unwrap_or(0),
+                vec2(300.0, 215.0),
+                0xaf0000ff,
+            );
+
+            #[cfg(target_vendor = "nintendo64")]
+            {
                 font::draw_number(
                     &mut cb,
-                    world
-                        .components
-                        .get::<Player>()
-                        .lookup(player)
-                        .map(|p| p.score)
-                        .unwrap_or(0),
-                    vec2(300.0, 10.0),
-                    0x0000efff,
+                    n64_alloc::BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
+                    vec2(100.0, 160.0),
+                    0xff0000ff,
                 );
                 font::draw_number(
                     &mut cb,
-                    world
-                        .components
-                        .get::<Health>()
-                        .lookup(player)
-                        .map(|hc| hc.health)
-                        .unwrap_or(0),
-                    vec2(300.0, 215.0),
-                    0xaf0000ff,
+                    n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
+                    vec2(100.0, 180.0),
+                    0xff0000ff,
                 );
+                font::draw_number(
+                    &mut cb,
+                    *n64_alloc::PAGE_OFFSET.lock() as i32,
+                    vec2(100.0, 200.0),
+                    0xff0000ff,
+                );
+            }
 
-                #[cfg(target_vendor = "nintendo64")]
-                {
-                    font::draw_number(
-                        &mut cb,
-                        n64_alloc::BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
-                        vec2(100.0, 160.0),
-                        0xff0000ff,
-                    );
-                    font::draw_number(
-                        &mut cb,
-                        n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
-                        vec2(100.0, 180.0),
-                        0xff0000ff,
-                    );
-                    font::draw_number(
-                        &mut cb,
-                        *n64_alloc::PAGE_OFFSET.lock() as i32,
-                        vec2(100.0, 200.0),
-                        0xff0000ff,
-                    );
-                }
+            {
+                font::draw_number(
+                    &mut cb,
+                    (dt * 1000.0 * 1000.0) as i32,
+                    vec2(100.0, 10.0),
+                    0x00af00ff,
+                );
+                font::draw_number(
+                    &mut cb,
+                    frame_used_time as i32,
+                    vec2(200.0, 10.0),
+                    0x00af00ff,
+                );
+                font::draw_number(
+                    &mut cb,
+                    last_colored_rect_count,
+                    vec2(100.0, 30.0),
+                    0x00af00ff,
+                );
+                font::draw_number(
+                    &mut cb,
+                    last_textured_rect_count,
+                    vec2(200.0, 30.0),
+                    0x00af00ff,
+                );
+                font::draw_number(&mut cb, last_mesh_count, vec2(300.0, 30.0), 0xaf0000ff);
+            }
 
-                {
-                    font::draw_number(
-                        &mut cb,
-                        (dt * 1000.0 * 1000.0) as i32,
-                        vec2(100.0, 10.0),
-                        0x00af00ff,
-                    );
-                    font::draw_number(
-                        &mut cb,
-                        frame_used_time as i32,
-                        vec2(200.0, 10.0),
-                        0x00af00ff,
-                    );
-                    font::draw_number(
-                        &mut cb,
-                        last_colored_rect_count,
-                        vec2(100.0, 30.0),
-                        0x00af00ff,
-                    );
-                    font::draw_number(
-                        &mut cb,
-                        last_textured_rect_count,
-                        vec2(200.0, 30.0),
-                        0x00af00ff,
-                    );
-                    font::draw_number(&mut cb, last_mesh_count, vec2(300.0, 30.0), 0xaf0000ff);
-                }
+            draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
 
-                draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
+            cb.run(&mut n64.graphics)
+        };
 
-                cb.run(&mut n64.graphics)
-            };
+        last_colored_rect_count = colored_rect_count;
+        last_textured_rect_count = textured_rect_count;
+        last_mesh_count = mesh_count;
 
-            last_colored_rect_count = colored_rect_count;
-            last_textured_rect_count = textured_rect_count;
-            last_mesh_count = mesh_count;
-
-            let frame_end_time = {
-                n64_profiler::scope!("Swap");
-                n64.graphics.swap_buffers(&mut n64.framebuffer)
-            };
-            frame_used_time = frame_end_time - frame_begin_time;
-        }
+        let frame_end_time = {
+            n64_profiler::scope!("Swap");
+            n64.graphics.swap_buffers(&mut n64.framebuffer)
+        };
+        frame_used_time = frame_end_time - frame_begin_time;
 
         {
             // Cycle the random number generator
@@ -305,7 +304,10 @@ fn main() {
             }
         }
 
-        world.housekeep();
+        {
+            n64_profiler::scope!("Housekeep");
+            world.housekeep();
+        }
 
         if !health::is_alive(world.components.get::<Health>(), player) {
             break;

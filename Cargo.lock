@@ -1268,8 +1268,10 @@ name = "n64-profiler"
 version = "0.1.0"
 dependencies = [
  "cfg-if 1.0.0",
+ "n64-sys",
  "puffin",
  "puffin_http",
+ "spin",
 ]
 
 [[package]]

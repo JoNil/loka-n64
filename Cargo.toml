@@ -1,13 +1,14 @@
 [workspace]
 members = [
-    "extract_boot_code",
-    "game",
-    "n64",
-    "n64-sys",
-    "n64-math",
-    "n64-alloc",
     "byteswap",
     "deploy",
+    "extract_boot_code",
+    "game",
+    "n64-alloc",
+    "n64-math",
+    "n64-profiler",
+    "n64-sys",
+    "n64",
 ]
 
 default-members = ["deploy"]
