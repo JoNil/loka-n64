@@ -9,8 +9,8 @@ cfg_if::cfg_if! {
         #[repr(C, align(16))]
         pub struct Profiler {
             message_header_buffer: u8,
-            scopes: [ScopeData; 1024],
             current_index: i16,
+            scopes: [ScopeData; 1024],
             current_depth: i16,
         }
 
@@ -46,7 +46,7 @@ cfg_if::cfg_if! {
                     core::assert!(n64_sys::ed::usb_write(
                         core::slice::from_raw_parts(
                             self as *const Profiler as *const u8,
-                            1 + (self.current_index - 1) as usize * core::mem::size_of::<ScopeData>())
+                            1 + 2 + (self.current_index - 1) as usize * core::mem::size_of::<ScopeData>())
                     ));
                 }
                 self.current_index = 0;
@@ -56,8 +56,8 @@ cfg_if::cfg_if! {
 
         pub static mut GLOBAL_PROFILER: Profiler = Profiler {
             message_header_buffer: PROFILER_MESSAGE_MAGIC,
-            scopes: [ScopeData::default(); 1024],
             current_index: 0,
+            scopes: [ScopeData::default(); 1024],
             current_depth: 0,
         };
 
