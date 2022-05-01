@@ -2,15 +2,13 @@ pub use command_buffer::{CommandBuffer, CommandBufferCache};
 pub use pipeline::{CycleType, FillPipeline, Pipeline};
 pub use texture::{StaticTexture, Texture, TextureAlignment, TextureMut};
 
-cfg_if::cfg_if! {
-    if #[cfg(target_vendor = "nintendo64")] {
-        mod command_buffer;
+#[cfg(target_vendor = "nintendo64")]
+mod command_buffer;
 
-    } else {
-        mod command_buffer_emu;
-        use command_buffer_emu as command_buffer;
-    }
-}
+#[cfg(not(target_vendor = "nintendo64"))]
+mod command_buffer_emu;
+#[cfg(not(target_vendor = "nintendo64"))]
+use command_buffer_emu as command_buffer;
 
 pub mod blender;
 pub mod color_combiner;

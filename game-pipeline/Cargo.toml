@@ -15,5 +15,5 @@ itertools = "0.10"
 meshopt = "0.1"
 n64-math = { path = "../n64-math" }
 png = { version = "0.17", default-features = false }
-tiled = { git = "https://github.com/JoNil/rs-tiled.git" }
+tiled = { git = "https://github.com/JoNil/rs-tiled.git", rev = "8fc09b8d63defb28ecf87b678785cb01292d575c" }
 zerocopy = "0.6"

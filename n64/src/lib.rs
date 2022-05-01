@@ -15,21 +15,26 @@ pub mod utils;
 
 mod framebuffer;
 
-cfg_if::cfg_if! {
-    if #[cfg(target_vendor = "nintendo64")] {
-        mod audio;
-        mod graphics;
-        mod controllers;
-    } else {
-        pub mod audio_emu;
-        pub mod graphics_emu;
-        pub mod controllers_emu;
+#[cfg(target_vendor = "nintendo64")]
+mod audio;
+#[cfg(target_vendor = "nintendo64")]
+mod controllers;
+#[cfg(target_vendor = "nintendo64")]
+mod graphics;
 
-        use audio_emu as audio;
-        use graphics_emu as graphics;
-        use controllers_emu as controllers;
-    }
-}
+#[cfg(not(target_vendor = "nintendo64"))]
+pub mod audio_emu;
+#[cfg(not(target_vendor = "nintendo64"))]
+pub mod controllers_emu;
+#[cfg(not(target_vendor = "nintendo64"))]
+pub mod graphics_emu;
+
+#[cfg(not(target_vendor = "nintendo64"))]
+use audio_emu as audio;
+#[cfg(not(target_vendor = "nintendo64"))]
+use controllers_emu as controllers;
+#[cfg(not(target_vendor = "nintendo64"))]
+use graphics_emu as graphics;
 
 pub struct N64 {
     pub audio: Audio,
@@ -61,24 +66,32 @@ impl N64 {
     }
 }
 
-cfg_if::cfg_if! {
-    if #[cfg(target_vendor = "nintendo64")] {
-        #[inline]
-        pub fn current_time_us() -> i64 {
-            n64_sys::sys::current_time_us()
-        }
-    } else {
-
-        use lazy_static::lazy_static;
-        use std::time::Instant;
-
-        lazy_static! {
-            static ref BEGINNING: Instant = Instant::now();
-        }
-
-        #[inline]
-        pub fn current_time_us() -> i64 {
-            (BEGINNING.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i64
-        }
+#[cfg(target_vendor = "nintendo64")]
+mod inner {
+    #[inline]
+    pub fn current_time_us() -> i64 {
+        n64_sys::sys::current_time_us()
     }
 }
+
+#[cfg(not(target_vendor = "nintendo64"))]
+mod inner {
+
+    use lazy_static::lazy_static;
+    use std::time::Instant;
+
+    lazy_static! {
+        static ref BEGINNING: Instant = Instant::now();
+    }
+
+    #[inline]
+    pub fn current_time_us() -> i64 {
+        (BEGINNING.elapsed().as_secs_f64() * 1000.0 * 1000.0) as i64
+    }
+}
+
+#[cfg(target_vendor = "nintendo64")]
+pub use inner::*;
+
+#[cfg(not(target_vendor = "nintendo64"))]
+pub use inner::*;
