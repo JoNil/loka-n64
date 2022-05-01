@@ -7,7 +7,6 @@ edition = "2021"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-cfg-if = "1"
 hashbrown = { version = "0.12", default-features = false }
 libm = "0.2"
 n64 = { path = "../n64" }
