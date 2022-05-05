@@ -1,4 +1,4 @@
-use n64_types::{ScopeData, MESSAGE_MAGIC_PRINT};
+use n64_types::{ScopeData, MESSAGE_MAGIC_PRINT, MESSAGE_MAGIC_PROFILER};
 use serialport::SerialPort;
 use std::{
     env,
@@ -106,11 +106,20 @@ fn main() -> Result<(), Box<dyn Error>> {
                 for _ in 0..17 {
                     assert_eq!(ed.read(&mut buf).unwrap(), 1);
                     print!("{}", buf[0] as char);
+                    //println!("{:?}: {}", buf[0] as char, buf[0]);
                     io::stdout().flush().ok();
                 }
             }
-            println!("{:?}: {}", buf[0] as char, buf[0]);
-            io::stdout().flush().ok();
+            if buf[0] == MESSAGE_MAGIC_PROFILER {
+                for _ in 0..17 {
+                    assert_eq!(ed.read(&mut buf).unwrap(), 1);
+                    //print!("{}", buf[0] as char);
+                    //println!("{:?}: {}", buf[0] as char, buf[0]);
+                    //io::stdout().flush().ok();
+                }
+            }
+            //println!("{:?}: {}", buf[0] as char, buf[0]);
+            //io::stdout().flush().ok();
             /*if buf[0] == MESSAGE_MAGIC_PRINT {
                 let mut size_buf = [0; 2];
                 assert_eq!(ed.read(&mut size_buf).unwrap(), 2);

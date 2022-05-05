@@ -5,12 +5,16 @@ mod inner {
 
     use zerocopy::AsBytes;
 
+    const MESSAGE_BUFFER_SIZE: usize = 17;
+
     #[repr(C, packed)]
     #[derive(AsBytes)]
     pub struct DebugWriteMessageBuffer {
         buffer_message_header: u8,
-        buffer: [u8; 17],
+        buffer: [u8; MESSAGE_BUFFER_SIZE],
     }
+
+    n64_types::static_assert!(core::mem::size_of::<DebugWriteMessageBuffer>() == 18);
 
     #[repr(C, align(16))]
     pub struct DebugWrite {
@@ -21,7 +25,7 @@ mod inner {
     pub static GLOBAL_DEBUG_PRINT: spin::Mutex<DebugWrite> = spin::Mutex::new(DebugWrite {
         b: DebugWriteMessageBuffer {
             buffer_message_header: n64_types::MESSAGE_MAGIC_PRINT,
-            buffer: [0; 17],
+            buffer: [0; MESSAGE_BUFFER_SIZE],
         },
         cursor: 0,
     });
@@ -32,7 +36,7 @@ mod inner {
                 self.b.buffer[self.cursor as usize] = *byte;
                 self.cursor += 1;
 
-                if self.cursor == 17 {
+                if self.cursor == MESSAGE_BUFFER_SIZE as u16 {
                     core::assert!(n64_sys::ed::usb_write(self.b.as_bytes()));
                     self.cursor = 0;
                 }

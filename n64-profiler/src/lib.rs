@@ -12,13 +12,22 @@ mod inner {
     #[derive(AsBytes)]
     pub struct ProfilerMessageBuffer {
         message_header_buffer: u8,
-        current_index: i16,
-        scopes: [ScopeData; 1024],
+        scope: ScopeData,
+        index: i16,
+        count: i16,
+        _padding: [u8; 1],
     }
 
+    n64_types::static_assert!(core::mem::size_of::<ProfilerMessageBuffer>() == 18);
+
     #[repr(C, align(16))]
-    pub struct Profiler {
+    pub struct ProfilerMessage {
         b: ProfilerMessageBuffer,
+    }
+
+    pub struct Profiler {
+        scopes: [ScopeData; 128],
+        current_index: i16,
         current_depth: i16,
     }
 
@@ -30,10 +39,10 @@ mod inner {
 
             self.current_depth += 1;
 
-            let index = self.b.current_index;
-            self.b.current_index += 1;
+            let index = self.current_index;
+            self.current_index += 1;
 
-            self.b.scopes[self.b.current_index as usize] = ScopeData {
+            self.scopes[self.current_index as usize] = ScopeData {
                 start: now_us,
                 end: 0,
                 depth: self.current_depth,
@@ -45,26 +54,32 @@ mod inner {
 
         #[inline]
         pub fn end_scope(&mut self, index: i16) {
-            self.b.scopes[index as usize].end = current_time_us() as i32;
+            self.scopes[index as usize].end = current_time_us() as i32;
         }
 
         #[inline]
         pub fn frame(&mut self) {
-            core::assert!(n64_sys::ed::usb_write(
-                &self.b.as_bytes()
-                    [..(3 + self.b.current_index as usize * core::mem::size_of::<ScopeData>())]
-            ));
-            self.b.current_index = 0;
+            for i in 0..self.current_index {
+                let msg = ProfilerMessage {
+                    b: ProfilerMessageBuffer {
+                        message_header_buffer: MESSAGE_MAGIC_PROFILER,
+                        scope: self.scopes[i as usize],
+                        index: i,
+                        count: self.current_index,
+                        _padding: [0],
+                    },
+                };
+
+                core::assert!(n64_sys::ed::usb_write(msg.b.as_bytes()));
+            }
+            self.current_index = 0;
             self.current_depth = 0;
         }
     }
 
     pub static GLOBAL_PROFILER: spin::Mutex<Profiler> = spin::Mutex::new(Profiler {
-        b: ProfilerMessageBuffer {
-            message_header_buffer: MESSAGE_MAGIC_PROFILER,
-            current_index: 0,
-            scopes: [ScopeData::default(); 1024],
-        },
+        scopes: [ScopeData::default(); 128],
+        current_index: 0,
         current_depth: 0,
     });
 
