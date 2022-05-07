@@ -191,10 +191,13 @@ impl<'a> CommandBuffer<'a> {
 
                 if true {
                     // TODO: Calc nz once
-                    let color_tri: [[i32; 3]; 3] = [[255, 0, 0], [0, 255, 0], [0, 0, 255]];
-                    let color_h = color_tri[vhi as usize];
-                    let color_m = color_tri[vmi as usize];
-                    let color_l = color_tri[vli as usize];
+                    //let color_tri: [[i32; 3]; 3] = [[255, 0, 0], [0, 255, 0], [0, 0, 255]];
+                    //let color_h = color_tri[vhi as usize];
+                    //let color_m = color_tri[vmi as usize];
+                    //let color_l = color_tri[vli as usize];
+                    let color_h = color_to_i32(colors[triangle[vhi as usize] as usize]);
+                    let color_m = color_to_i32(colors[triangle[vmi as usize] as usize]);
+                    let color_l = color_to_i32(colors[triangle[vli as usize] as usize]);
 
                     let (r_dx, r_dy, r_de, r_off) = shaded_triangle_coeff(
                         vh,
@@ -539,4 +542,12 @@ fn shaded_triangle_coeff(
     //return (((-nx/nz) as i32)<<16, 0, (bi as i32)<<16);
     //return (0, 0, (bi as i32)<<16);
     //return (0, ((-ny/nz) as i32)<<16, (bi as i32)<<16);
+}
+
+fn color_to_i32(color : u32) -> [i32;3] {
+    [
+        ((color >> 24) & 0xff) as i32,
+        ((color >> 16) & 0xff) as i32,
+        ((color >>  8) & 0xff) as i32,
+    ]
 }
