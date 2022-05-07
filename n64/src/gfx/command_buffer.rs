@@ -175,7 +175,7 @@ impl<'a> CommandBuffer<'a> {
             v1.y = libm::fmaxf(libm::fminf(v1.y, y_limit), 0.0);
             v2.y = libm::fmaxf(libm::fminf(v2.y, y_limit), 0.0);
 
-            if triangle_has_zero_area(v0, v1, v2) {
+            if triangle_is_too_small(v0, v1, v2) {
                 continue;
             }
             // Vh is the highest point (smallest y value)
@@ -504,17 +504,10 @@ fn find_color_d(ch: i32, ci: i32, dh: f32, di: f32) -> i32 {
     (((ci - ch) as f32) / ad) as i32
 }
 
-fn triangle_has_zero_area(v0: Vec3, v1: Vec3, v2: Vec3) -> bool {
-    let cross_a = f32_to_fixed_16_16((v0.x - v1.x) * (v2.y - v1.y));
-    let cross_b = f32_to_fixed_16_16((v0.y - v1.y) * (v2.x - v1.x));
-
-    //n64_macros::debugln!("v0 {:?}", v0);
-    //n64_macros::debugln!("v1 {:?}", v1);
-    //n64_macros::debugln!("v2 {:?}", v2);
-    //n64_macros::debugln!("crossA {:?}", crossA);
-    //n64_macros::debugln!("crossB {:?}", crossB);
-
-    cross_a == cross_b
+fn triangle_is_too_small(v0: Vec3, v1: Vec3, v2: Vec3) -> bool {
+    let nz = (v0.x - v1.x) * (v2.y - v1.y) - (v0.y - v1.y) * (v2.x - v1.x);
+    // Nz is area * 2
+    (nz < 2.0) && (-2.0 < nz)
 }
 
 // TODO: Take nz and va-vb & vc-vb instead
