@@ -138,7 +138,7 @@ fn main() {
         let (colored_rect_count, textured_rect_count, mesh_count) = {
             n64_profiler::scope!("Graphics");
 
-            let mut fb = n64.framebuffer.next_buffer();
+            let fb = n64.framebuffer.next_buffer();
             let mut cb = CommandBuffer::new(fb, &mut command_buffer_cache);
 
             cb.clear();
