@@ -1,5 +1,6 @@
 use crate::textures::*;
 use n64::gfx::{
+    blender::{Blender, PMCycleOne},
     color_combiner::{ColorCombiner, DSrc},
     CommandBuffer, Pipeline, StaticTexture,
 };
@@ -105,6 +106,7 @@ static ATLAS: &[&StaticTexture] = &[
 
 static FONT_PIPELINE: Pipeline = Pipeline {
     combiner_mode: ColorCombiner::single(DSrc::Texel),
+    blender: Blender::simple(PMCycleOne::BlendColor, PMCycleOne::Memory),
     blend: true,
     ..Pipeline::default()
 };

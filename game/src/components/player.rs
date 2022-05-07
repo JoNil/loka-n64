@@ -4,7 +4,6 @@ use super::{
     keep_on_screen::KeepOnScreen,
     mesh_drawable::MeshDrawable,
     movable::Movable,
-    print_position::PrintPosition,
     shadow::Shadow,
     size::Size,
     weapon::{self, Weapon, WeaponTarget, WeaponType},
