@@ -7,6 +7,7 @@ pub struct Framebuffer {
     using_framebuffer_a: bool,
     framebuffer_a: Box<[Color]>,
     framebuffer_b: Box<[Color]>,
+    depth_buffer: Box<[u16]>,
 }
 
 impl Framebuffer {
@@ -25,6 +26,11 @@ impl Framebuffer {
                 buffer.resize_with(video_mode.size() as usize, || Color::new(0x0001));
                 buffer.into_boxed_slice()
             },
+            depth_buffer: {
+                let mut buffer = Vec::new();
+                buffer.resize_with(video_mode.size() as usize, || 0);
+                buffer.into_boxed_slice()
+            },
         }
     }
 
@@ -34,18 +40,24 @@ impl Framebuffer {
     }
 
     #[inline]
-    pub fn next_buffer(&mut self) -> TextureMut {
+    pub fn next_buffer(&mut self) -> (TextureMut, &mut [u16]) {
         if self.using_framebuffer_a {
-            TextureMut::new(
-                self.video_mode.width(),
-                self.video_mode.height(),
-                &mut self.framebuffer_a[..],
+            (
+                TextureMut::new(
+                    self.video_mode.width(),
+                    self.video_mode.height(),
+                    &mut self.framebuffer_a[..],
+                ),
+                &mut *self.depth_buffer,
             )
         } else {
-            TextureMut::new(
-                self.video_mode.width(),
-                self.video_mode.height(),
-                &mut self.framebuffer_b[..],
+            (
+                TextureMut::new(
+                    self.video_mode.width(),
+                    self.video_mode.height(),
+                    &mut self.framebuffer_b[..],
+                ),
+                &mut *self.depth_buffer,
             )
         }
     }
