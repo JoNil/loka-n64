@@ -78,12 +78,12 @@ impl Blender {
     pub const fn default() -> Self {
         Self {
             p_0: PMCycleOne::ColorCombinerRgb,
-            m_0: PMCycleOne::ColorCombinerRgb,
+            m_0: PMCycleOne::Memory,
             a_0: ASrc::ColorCombinerAlpha,
             b_0: BSrc::OneMinusA,
 
             p_1: PMCycleTwo::FirstCycleNumerator,
-            m_1: PMCycleTwo::FirstCycleNumerator,
+            m_1: PMCycleTwo::Memory,
             a_1: ASrc::ColorCombinerAlpha,
             b_1: BSrc::OneMinusA,
 
@@ -105,7 +105,10 @@ impl Blender {
         let b_1 = (self.b_1 as u64) << 20;
         let m_1 = (self.m_1 as u64) << 16;
 
-        a_0 | p_0 | b_0 | m_0 | a_1 | p_1 | b_1 | m_1
+        let rgb_dither = (self.rgb_dither as u64) << 38;
+        let alpha_dither = (self.alpha_dither as u64) << 36;
+
+        a_0 | p_0 | b_0 | m_0 | a_1 | p_1 | b_1 | m_1 | rgb_dither | alpha_dither
     }
 }
 

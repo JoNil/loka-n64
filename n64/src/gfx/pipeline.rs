@@ -1,4 +1,4 @@
-use super::{color_combiner::ColorCombiner, Texture};
+use super::{blender::Blender, color_combiner::ColorCombiner, Texture};
 use n64_math::Color;
 
 #[derive(Copy, Clone)]
@@ -47,6 +47,7 @@ pub enum CycleType {
 pub struct Pipeline {
     pub cycle_type: CycleType,
     pub combiner_mode: ColorCombiner,
+    pub blender: Blender,
 
     pub texture: Option<Texture<'static>>,
 
@@ -64,6 +65,7 @@ impl Pipeline {
         Self {
             cycle_type: CycleType::One,
             combiner_mode: ColorCombiner::default(),
+            blender: Blender::default(),
             prim_color: None,
             env_color: None,
             blend_color: None,

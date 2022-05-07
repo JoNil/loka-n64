@@ -28,9 +28,7 @@ pub fn apply_fill_pipeline(
     let mut emitted_sync = false;
 
     {
-        let mut other_modes = OTHER_MODE_CYCLE_TYPE_FILL
-            | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
-            | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER;
+        let mut other_modes = OTHER_MODE_CYCLE_TYPE_FILL;
 
         if pipeline.blend {
             other_modes |= OTHER_MODE_FORCE_BLEND;
@@ -68,19 +66,13 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
     let mut emitted_sync = false;
 
     {
-        let mut other_modes = OTHER_MODE_CYCLE_TYPE_1_CYCLE
-            | OTHER_MODE_SAMPLE_TYPE
-            | OTHER_MODE_BI_LERP_0
-            | OTHER_MODE_RGB_DITHER_SEL_NO_DITHER
-            | OTHER_MODE_ALPHA_DITHER_SEL_NO_DITHER
-            | OTHER_MODE_B_M2A_0_1;
+        let mut other_modes =
+            OTHER_MODE_CYCLE_TYPE_1_CYCLE | OTHER_MODE_SAMPLE_TYPE | OTHER_MODE_BI_LERP_0;
+
+        other_modes |= pipeline.blender.to_command();
 
         if pipeline.cycle_type == CycleType::Two {
             other_modes |= OTHER_MODE_CYCLE_TYPE_2_CYCLE;
-        }
-
-        if pipeline.blend_color.is_some() {
-            other_modes |= OTHER_MODE_B_M1A_0_2;
         }
 
         if pipeline.blend {

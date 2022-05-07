@@ -1,11 +1,6 @@
-use super::{
-    color_combiner::{
-        AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombiner, DAlphaSrc, DSrc,
-    },
-    FillPipeline, Pipeline, Texture, TextureMut,
-};
+use super::{ FillPipeline, Pipeline, TextureMut};
 use crate::graphics::Graphics;
-use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
+use n64_math::{vec2, Mat4, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
 use rdp_state::RdpState;
@@ -544,10 +539,10 @@ fn shaded_triangle_coeff(
     //return (0, ((-ny/nz) as i32)<<16, (bi as i32)<<16);
 }
 
-fn color_to_i32(color : u32) -> [i32;3] {
+fn color_to_i32(color: u32) -> [i32; 3] {
     [
         ((color >> 24) & 0xff) as i32,
         ((color >> 16) & 0xff) as i32,
-        ((color >>  8) & 0xff) as i32,
+        ((color >> 8) & 0xff) as i32,
     ]
 }
