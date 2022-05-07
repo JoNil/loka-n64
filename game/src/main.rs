@@ -14,7 +14,7 @@ use crate::components::{
     health::{self, Health},
     mesh_drawable, missile, movable,
     player::{self, spawn_player, Player},
-    projectile, sprite_drawable,
+    print_position, projectile, sprite_drawable,
 };
 use camera::Camera;
 use components::{
@@ -124,6 +124,7 @@ fn main() {
             spawner::update(&mut world, &camera);
             keep_on_screen::update(&mut world, &camera);
             remove_when_below::update(&mut world, &camera);
+            print_position::print(&mut world);
         }
 
         {

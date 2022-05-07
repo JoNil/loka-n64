@@ -4,6 +4,7 @@ use super::{
     keep_on_screen::KeepOnScreen,
     mesh_drawable::MeshDrawable,
     movable::Movable,
+    print_position::PrintPosition,
     shadow::Shadow,
     size::Size,
     weapon::{self, Weapon, WeaponTarget, WeaponType},
@@ -51,6 +52,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
         })
         .add(Player { score: 0 })
         .add(KeepOnScreen)
+        .add(PrintPosition)
         .entity()
 }
 

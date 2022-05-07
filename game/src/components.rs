@@ -7,6 +7,7 @@ pub mod missile;
 pub mod movable;
 pub mod pickup;
 pub mod player;
+pub mod print_position;
 pub mod projectile;
 pub mod remove_when_below;
 pub mod shadow;
