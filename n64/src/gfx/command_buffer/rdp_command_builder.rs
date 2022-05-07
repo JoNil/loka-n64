@@ -388,8 +388,8 @@ impl RdpCommandBuilder {
         texture: bool,
         z_buffer: bool,
         right_major: bool,
-        level: u8,
-        tile: u8,
+        _level: u8,
+        _tile: u8,
         y_low_minor: f32,
         y_mid_minor: f32,
         y_high_major: f32,
@@ -422,21 +422,17 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_s_11_2(y_mid_minor)) << 16
                 | to_fixpoint_s_11_2(y_high_major),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
         // SIC Should be L, H, M order
         buffer.push(RdpCommand(
             (x_low_int as u64) << 48 | (x_low_frac as u64) << 32 | (inv_slope_low as u32 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             (x_high_int as u64) << 48 | (x_high_frac as u64) << 32 | (inv_slope_high as u32 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             (x_mid_int as u64) << 48 | (x_mid_frac as u64) << 32 | (inv_slope_mid as u32 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
 
         self
     }
@@ -448,18 +444,18 @@ impl RdpCommandBuilder {
         green: i32,
         blue: i32,
         alpha: i32,
-        DrDx: i32,
-        DgDx: i32,
-        DbDx: i32,
-        DaDx: i32,
-        DrDe: i32,
-        DgDe: i32,
-        DbDe: i32,
-        DaDe: i32,
-        DrDy: i32,
-        DgDy: i32,
-        DbDy: i32,
-        DaDy: i32,
+        dr_dx: i32,
+        dg_dx: i32,
+        db_dx: i32,
+        da_dx: i32,
+        dr_de: i32,
+        dg_de: i32,
+        db_de: i32,
+        da_de: i32,
+        dr_dy: i32,
+        dg_dy: i32,
+        db_dy: i32,
+        da_dy: i32,
     ) -> &mut RdpCommandBuilder {
         let buffer = self.commands.as_mut().unwrap();
         // Color
@@ -472,67 +468,53 @@ impl RdpCommandBuilder {
                 | ((blue >> 16) as u16 as u64) << 16
                 | ((alpha >> 16) as u16 as u64),
         ));
-        // n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
-            ((DrDx >> 16) as u16 as u64) << 48
-                | ((DgDx >> 16) as u16 as u64) << 32
-                | ((DbDx >> 16) as u16 as u64) << 16
-                | ((DaDx >> 16) as u16 as u64),
+            ((dr_dx >> 16) as u16 as u64) << 48
+                | ((dg_dx >> 16) as u16 as u64) << 32
+                | ((db_dx >> 16) as u16 as u64) << 16
+                | ((da_dx >> 16) as u16 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
             ((red & 0x0000ffff) as u16 as u64) << 48
                 | ((green & 0x0000ffff) as u16 as u64) << 32
                 | ((blue & 0x0000ffff) as u16 as u64) << 16
                 | ((alpha & 0x0000ffff) as u16 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
-            ((DrDx & 0x0000ffff) as u16 as u64) << 48
-                | ((DgDx & 0x0000ffff) as u16 as u64) << 32
-                | ((DbDx & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDx & 0x0000ffff) as u16 as u64),
+            ((dr_dx & 0x0000ffff) as u16 as u64) << 48
+                | ((dg_dx & 0x0000ffff) as u16 as u64) << 32
+                | ((db_dx & 0x0000ffff) as u16 as u64) << 16
+                | ((da_dx & 0x0000ffff) as u16 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
-
-        //n64_macros::debugln!("{} {} {} {}", red, green, blue, alpha);
-        //n64_macros::debugln!("((red >> 16) as u16 as u64){} ",((red >> 16) as u16 as u64));
-        //n64_macros::debugln!("((green >> 16) as u16 as u64){} ",((green >> 16) as u16 as u64));
-        //n64_macros::debugln!("((blue >> 16) as u16 as u64){} ",((blue >> 16) as u16 as u64));
 
         // Delta Color Edge
         // Delta Color Y
         // Delta Color Edge fraction
         // Delta Color Y fraction
         buffer.push(RdpCommand(
-            ((DrDe >> 16) as u16 as u64) << 48
-                | ((DgDe >> 16) as u16 as u64) << 32
-                | ((DbDe >> 16) as u16 as u64) << 16
-                | ((DaDe >> 16) as u16 as u64),
+            ((dr_de >> 16) as u16 as u64) << 48
+                | ((dg_de >> 16) as u16 as u64) << 32
+                | ((db_de >> 16) as u16 as u64) << 16
+                | ((da_de >> 16) as u16 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
-            ((DrDy >> 16) as u16 as u64) << 48
-                | ((DgDy >> 16) as u16 as u64) << 32
-                | ((DbDy >> 16) as u16 as u64) << 16
-                | ((DaDy >> 16) as u16 as u64),
+            ((dr_dy >> 16) as u16 as u64) << 48
+                | ((dg_dy >> 16) as u16 as u64) << 32
+                | ((db_dy >> 16) as u16 as u64) << 16
+                | ((da_dy >> 16) as u16 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
-            ((DrDe & 0x0000ffff) as u16 as u64) << 48
-                | ((DgDe & 0x0000ffff) as u16 as u64) << 32
-                | ((DbDe & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDe & 0x0000ffff) as u16 as u64),
+            ((dr_de & 0x0000ffff) as u16 as u64) << 48
+                | ((dg_de & 0x0000ffff) as u16 as u64) << 32
+                | ((db_de & 0x0000ffff) as u16 as u64) << 16
+                | ((da_de & 0x0000ffff) as u16 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
         buffer.push(RdpCommand(
-            ((DrDy & 0x0000ffff) as u16 as u64) << 48
-                | ((DgDy & 0x0000ffff) as u16 as u64) << 32
-                | ((DbDy & 0x0000ffff) as u16 as u64) << 16
-                | ((DaDy & 0x0000ffff) as u16 as u64),
+            ((dr_dy & 0x0000ffff) as u16 as u64) << 48
+                | ((dg_dy & 0x0000ffff) as u16 as u64) << 32
+                | ((db_dy & 0x0000ffff) as u16 as u64) << 16
+                | ((da_dy & 0x0000ffff) as u16 as u64),
         ));
-        //n64_macros::debugln!("{:016x}", buffer.last().unwrap().0 as u64);
-        //n64_macros::debugln!("--");
 
         self
     }
@@ -597,6 +579,7 @@ fn to_fixpoint_10_2_as_integer(val: f32) -> u64 {
 fn to_fixpoint_s_11_2(val: f32) -> u64 {
     let val2 = val * (1 << 2) as f32;
 
+    #[allow(clippy::unnecessary_cast)]
     if val2 < -0x8000 as f32 {
         (-0x8000 as i16 & 0x3fff) as u64
     } else if val2 > 0x7fff as f32 {
