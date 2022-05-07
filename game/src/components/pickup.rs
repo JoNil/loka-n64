@@ -2,6 +2,7 @@ use super::{
     mesh_drawable::MeshDrawable,
     movable::Movable,
     player::Player,
+    remove_when_below::RemoveWhenBelow,
     size::Size,
     weapon::{Weapon, WeaponType},
 };
@@ -18,7 +19,7 @@ use crate::{
 use n64_math::{random_u32, vec2, Aabb2, Quat, Vec2};
 use strum::{EnumCount, IntoEnumIterator};
 
-struct Pickup {}
+pub struct Pickup;
 
 pub fn spawn_pickup(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
     entities
@@ -34,7 +35,8 @@ pub fn spawn_pickup(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             model: WEAPON_PICKUP.as_model_data(),
             rot: Quat::IDENTITY,
         })
-        .add(Pickup {})
+        .add(Pickup)
+        .add(RemoveWhenBelow)
         .entity()
 }
 
