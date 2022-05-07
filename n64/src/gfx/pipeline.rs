@@ -12,7 +12,7 @@ impl FillPipeline {
     pub const fn default() -> Self {
         Self {
             combiner_mode: ColorCombiner::default(),
-            fill_color: Color::new(0b00000_00000_00000_1),
+            fill_color: Color::new(0),
             blend: false,
         }
     }

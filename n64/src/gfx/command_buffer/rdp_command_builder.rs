@@ -97,23 +97,24 @@ pub const FORMAT_IA: u8 = 3; // Set_Tile/Set_Texture_Image/Set_Color_Image: Imag
 pub const FORMAT_I: u8 = 4; // Set_Tile/Set_Texture_Image/Set_Color_Image: Image Data Format I (Bit 53..55)
 
 pub const COMMAND_SET_COLOR_IMAGE: u64 = 0xff;
-pub const COMMAND_SET_SCISSOR: u64 = 0xed;
-pub const COMMAND_SET_OTHER_MODE: u64 = 0xef;
+pub const COMMAND_SET_Z_IMAGE: u64 = 0xfe;
+pub const COMMAND_SET_TEXTURE_IMAGE: u64 = 0xfd;
+pub const COMMAND_SET_COMBINE_MODE: u64 = 0xfc;
 pub const COMMAND_SET_ENV_COLOR: u64 = 0xfb;
 pub const COMMAND_SET_PRIM_COLOR: u64 = 0xfa;
 pub const COMMAND_SET_BLEND_COLOR: u64 = 0xf9;
 pub const COMMAND_SET_FOG_COLOR: u64 = 0xf8;
 pub const COMMAND_SET_FILL_COLOR: u64 = 0xf7;
-pub const COMMAND_SET_COMBINE_MODE: u64 = 0xfc;
-pub const COMMAND_SET_TEXTURE_IMAGE: u64 = 0xfd;
+pub const COMMAND_FILL_RECTANGLE: u64 = 0xf6;
 pub const COMMAND_SET_TILE: u64 = 0xf5;
 pub const COMMAND_LOAD_TILE: u64 = 0xf4;
-pub const COMMAND_EDGE_COEFFICIENTS: u64 = 0xc8;
-pub const COMMAND_FILL_RECTANGLE: u64 = 0xf6;
-pub const COMMAND_TEXTURE_RECTANGLE: u64 = 0xe4;
+pub const COMMAND_SET_OTHER_MODE: u64 = 0xef;
+pub const COMMAND_SET_SCISSOR: u64 = 0xed;
 pub const COMMAND_SYNC_FULL: u64 = 0xe9;
-pub const COMMAND_SYNC_PIPE: u64 = 0xe7;
 pub const COMMAND_SYNC_TILE: u64 = 0xe8;
+pub const COMMAND_SYNC_PIPE: u64 = 0xe7;
+pub const COMMAND_TEXTURE_RECTANGLE: u64 = 0xe4;
+pub const COMMAND_EDGE_COEFFICIENTS: u64 = 0xc8;
 
 fn fixed_16_16_to_f32(fixed_point: i32) -> f32 {
     let sign = fixed_point.signum();
@@ -166,23 +167,38 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_scissor(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
+    pub fn set_z_image(&mut self, image: *mut u16) -> &mut RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
-            (COMMAND_SET_SCISSOR << 56)
-                | (to_fixpoint_10_2_as_integer(top_left.x) << (32 + 12))
-                | (to_fixpoint_10_2_as_integer(top_left.y) << 32)
-                | (to_fixpoint_10_2_as_integer(bottom_right.x) << 12)
-                | (to_fixpoint_10_2_as_integer(bottom_right.y)),
+            (COMMAND_SET_Z_IMAGE << 56) | virtual_to_physical_mut(image) as u64,
         ));
 
         self
     }
 
     #[inline]
-    pub fn set_other_modes(&mut self, flags: u64) -> &mut RdpCommandBuilder {
+    pub fn set_texture_image(
+        &mut self,
+        format: u8,
+        size: u8,
+        width: u16,
+        image: *const u16,
+    ) -> &mut RdpCommandBuilder {
         self.commands.as_mut().unwrap().push(RdpCommand(
-            (COMMAND_SET_OTHER_MODE << 56) | (flags & ((1 << 56) - 1)) | 0x0000_000F_0000_0000,
+            (COMMAND_SET_TEXTURE_IMAGE << 56)
+                | (((format & 0b111) as u64) << 53)
+                | (((size & 0b11) as u64) << 51)
+                | ((width as u64 - 1) << 32)
+                | (virtual_to_physical(image) as u64),
         ));
+        self
+    }
+
+    #[inline]
+    pub fn set_combine_mode(&mut self, value: u64) -> &mut RdpCommandBuilder {
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand((COMMAND_SET_COMBINE_MODE << 56) | value));
         self
     }
 
@@ -233,29 +249,33 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn set_texture_image(
-        &mut self,
-        format: u8,
-        size: u8,
-        width: u16,
-        image: *const u16,
-    ) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
-            (COMMAND_SET_TEXTURE_IMAGE << 56)
-                | (((format & 0b111) as u64) << 53)
-                | (((size & 0b11) as u64) << 51)
-                | ((width as u64 - 1) << 32)
-                | (virtual_to_physical(image) as u64),
-        ));
-        self
-    }
+    pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
+        let mut l = top_left.x;
+        let mut t = top_left.y;
+        let r = bottom_right.x;
+        let b = bottom_right.y;
 
-    #[inline]
-    pub fn set_combine_mode(&mut self, value: u64) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand((COMMAND_SET_COMBINE_MODE << 56) | value));
+        if r < 0.0 || b < 0.0 {
+            // Outside drawing area.
+            return self;
+        }
+
+        if l < 0.0 {
+            l = 0.0;
+        }
+
+        if t < 0.0 {
+            t = 0.0;
+        }
+
+        self.commands.as_mut().unwrap().push(RdpCommand(
+            (COMMAND_FILL_RECTANGLE << 56)
+                | (to_fixpoint_10_2_as_integer(r) << (32 + 12))
+                | (to_fixpoint_10_2_as_integer(b) << 32)
+                | (to_fixpoint_10_2_as_integer(l) << 12)
+                | (to_fixpoint_10_2_as_integer(t)),
+        ));
+
         self
     }
 
@@ -310,6 +330,54 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_10_2_as_integer(top_left.x) << 12)
                 | (to_fixpoint_10_2_as_integer(top_left.y)),
         ));
+        self
+    }
+
+    #[inline]
+    pub fn set_other_modes(&mut self, flags: u64) -> &mut RdpCommandBuilder {
+        self.commands.as_mut().unwrap().push(RdpCommand(
+            (COMMAND_SET_OTHER_MODE << 56) | (flags & ((1 << 56) - 1)) | 0x0000_000F_0000_0000,
+        ));
+        self
+    }
+
+    #[inline]
+    pub fn set_scissor(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
+        self.commands.as_mut().unwrap().push(RdpCommand(
+            (COMMAND_SET_SCISSOR << 56)
+                | (to_fixpoint_10_2_as_integer(top_left.x) << (32 + 12))
+                | (to_fixpoint_10_2_as_integer(top_left.y) << 32)
+                | (to_fixpoint_10_2_as_integer(bottom_right.x) << 12)
+                | (to_fixpoint_10_2_as_integer(bottom_right.y)),
+        ));
+
+        self
+    }
+
+    #[inline]
+    pub fn sync_full(&mut self) -> &mut RdpCommandBuilder {
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand(COMMAND_SYNC_FULL << 56));
+        self
+    }
+
+    #[inline]
+    pub fn sync_tile(&mut self) -> &mut RdpCommandBuilder {
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand(COMMAND_SYNC_TILE << 56));
+        self
+    }
+
+    #[inline]
+    pub fn sync_pipe(&mut self) -> &mut RdpCommandBuilder {
+        self.commands
+            .as_mut()
+            .unwrap()
+            .push(RdpCommand(COMMAND_SYNC_PIPE << 56));
         self
     }
 
@@ -470,37 +538,6 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
-    pub fn fill_rectangle(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
-        let mut l = top_left.x;
-        let mut t = top_left.y;
-        let r = bottom_right.x;
-        let b = bottom_right.y;
-
-        if r < 0.0 || b < 0.0 {
-            // Outside drawing area.
-            return self;
-        }
-
-        if l < 0.0 {
-            l = 0.0;
-        }
-
-        if t < 0.0 {
-            t = 0.0;
-        }
-
-        self.commands.as_mut().unwrap().push(RdpCommand(
-            (COMMAND_FILL_RECTANGLE << 56)
-                | (to_fixpoint_10_2_as_integer(r) << (32 + 12))
-                | (to_fixpoint_10_2_as_integer(b) << 32)
-                | (to_fixpoint_10_2_as_integer(l) << 12)
-                | (to_fixpoint_10_2_as_integer(t)),
-        ));
-
-        self
-    }
-
-    #[inline]
     pub fn texture_rectangle(
         &mut self,
         top_left: Vec2,
@@ -547,33 +584,6 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_s_10_5(d_xy_d_st.x) << 16)
                 | to_fixpoint_s_10_5(d_xy_d_st.y),
         ));
-        self
-    }
-
-    #[inline]
-    pub fn sync_full(&mut self) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand(COMMAND_SYNC_FULL << 56));
-        self
-    }
-
-    #[inline]
-    pub fn sync_pipe(&mut self) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand(COMMAND_SYNC_PIPE << 56));
-        self
-    }
-
-    #[inline]
-    pub fn sync_tile(&mut self) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand(COMMAND_SYNC_TILE << 56));
         self
     }
 }

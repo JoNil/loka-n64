@@ -1,6 +1,6 @@
-use super::{ FillPipeline, Pipeline, TextureMut};
+use super::{FillPipeline, Pipeline, TextureMut};
 use crate::graphics::Graphics;
-use n64_math::{vec2, Mat4, Vec2, Vec3};
+use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
 use rdp_state::RdpState;
@@ -23,7 +23,8 @@ impl CommandBufferCache {
 }
 
 pub struct CommandBuffer<'a> {
-    out_tex: &'a mut TextureMut<'a>,
+    out_tex: TextureMut<'a>,
+    z_buffer: &'a mut [u16],
     colored_rect_count: u32,
     textured_rect_count: u32,
     mesh_count: u32,
@@ -32,7 +33,10 @@ pub struct CommandBuffer<'a> {
 }
 
 impl<'a> CommandBuffer<'a> {
-    pub fn new(out_tex: &'a mut TextureMut<'a>, cache: &'a mut CommandBufferCache) -> Self {
+    pub fn new(
+        (out_tex, z_buffer): (TextureMut<'a>, &'a mut [u16]),
+        cache: &'a mut CommandBufferCache,
+    ) -> Self {
         cache.rdp.clear();
 
         cache
@@ -43,6 +47,7 @@ impl<'a> CommandBuffer<'a> {
                 out_tex.width as u16,
                 out_tex.data.as_mut_ptr() as *mut u16,
             )
+            .set_z_image(z_buffer.as_mut_ptr() as *mut u16)
             .set_scissor(
                 Vec2::ZERO,
                 vec2((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
@@ -50,6 +55,7 @@ impl<'a> CommandBuffer<'a> {
 
         CommandBuffer {
             out_tex,
+            z_buffer,
             colored_rect_count: 0,
             textured_rect_count: 0,
             mesh_count: 0,
@@ -62,7 +68,10 @@ impl<'a> CommandBuffer<'a> {
         rdp_state::apply_fill_pipeline(
             &mut self.cache.rdp,
             &mut self.current_state,
-            &FillPipeline::default(),
+            &FillPipeline {
+                fill_color: Color::new(0b00000_00000_00000_1),
+                ..FillPipeline::default()
+            },
         );
 
         self.cache.rdp.fill_rectangle(
@@ -71,6 +80,37 @@ impl<'a> CommandBuffer<'a> {
                 (self.out_tex.width - 1) as f32,
                 (self.out_tex.height - 1) as f32,
             ),
+        );
+
+        self.cache.rdp.set_color_image(
+            FORMAT_RGBA,
+            SIZE_OF_PIXEL_16B,
+            self.out_tex.width as u16,
+            self.z_buffer.as_mut_ptr() as *mut u16,
+        );
+
+        rdp_state::apply_fill_pipeline(
+            &mut self.cache.rdp,
+            &mut self.current_state,
+            &FillPipeline {
+                fill_color: Color::new(0x7fff),
+                ..FillPipeline::default()
+            },
+        );
+
+        self.cache.rdp.fill_rectangle(
+            vec2(0.0, 0.0),
+            vec2(
+                (self.out_tex.width - 1) as f32,
+                (self.out_tex.height - 1) as f32,
+            ),
+        );
+
+        self.cache.rdp.set_color_image(
+            FORMAT_RGBA,
+            SIZE_OF_PIXEL_16B,
+            self.out_tex.width as u16,
+            self.out_tex.data.as_mut_ptr() as *mut u16,
         );
 
         self

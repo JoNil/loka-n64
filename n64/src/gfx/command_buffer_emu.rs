@@ -74,7 +74,7 @@ impl EmuPipeline {
 }
 
 pub struct CommandBuffer<'a> {
-    out_tex: &'a mut TextureMut<'a>,
+    out_tex: TextureMut<'a>,
     clear: bool,
     colored_rect_count: u32,
     textured_rect_count: u32,
@@ -84,7 +84,10 @@ pub struct CommandBuffer<'a> {
 }
 
 impl<'a> CommandBuffer<'a> {
-    pub fn new(out_tex: &'a mut TextureMut<'a>, cache: &'a mut CommandBufferCache) -> Self {
+    pub fn new(
+        (out_tex, _): (TextureMut<'a>, &'a mut [u16]),
+        cache: &'a mut CommandBufferCache,
+    ) -> Self {
         Self {
             out_tex,
             clear: false,

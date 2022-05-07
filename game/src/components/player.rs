@@ -52,7 +52,6 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
         })
         .add(Player { score: 0 })
         .add(KeepOnScreen)
-        .add(PrintPosition)
         .entity()
 }
 

@@ -139,7 +139,7 @@ fn main() {
             n64_profiler::scope!("Graphics");
 
             let mut fb = n64.framebuffer.next_buffer();
-            let mut cb = CommandBuffer::new(&mut fb, &mut command_buffer_cache);
+            let mut cb = CommandBuffer::new(fb, &mut command_buffer_cache);
 
             cb.clear();
 
@@ -319,8 +319,8 @@ fn main() {
     loop {
         {
             let mut out_tex = n64.framebuffer.next_buffer();
-            slow_cpu_clear(out_tex.data);
-            ipl3font::draw_str(&mut out_tex, 50, 10, RED, b"GAME OVER");
+            slow_cpu_clear(out_tex.0.data);
+            ipl3font::draw_str(&mut out_tex.0, 50, 10, RED, b"GAME OVER");
         }
 
         n64.graphics.swap_buffers(&mut n64.framebuffer);

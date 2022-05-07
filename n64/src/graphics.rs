@@ -6,7 +6,7 @@ pub struct Graphics {}
 impl Graphics {
     #[inline]
     pub(crate) fn new(video_mode: VideoMode, framebuffer: &mut Framebuffer) -> Self {
-        vi::init(video_mode, framebuffer.next_buffer().data);
+        vi::init(video_mode, framebuffer.next_buffer().0.data);
         rdp::init();
         Self {}
     }
@@ -18,7 +18,7 @@ impl Graphics {
         let frame_end_time = current_time_us();
 
         vi::wait_for_vblank();
-        unsafe { vi::set_vi_buffer(fb.data) };
+        unsafe { vi::set_vi_buffer(fb.0.data) };
 
         framebuffer.swap_buffer();
 
