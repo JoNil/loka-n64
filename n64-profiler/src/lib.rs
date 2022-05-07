@@ -59,7 +59,7 @@ mod inner {
 
         #[inline]
         pub fn frame(&mut self) {
-            for i in 0..self.current_index {
+            /*for i in 0..self.current_index {
                 let msg = ProfilerMessage {
                     b: ProfilerMessageBuffer {
                         message_header_buffer: MESSAGE_MAGIC_PROFILER,
@@ -71,7 +71,7 @@ mod inner {
                 };
 
                 core::assert!(n64_sys::ed::usb_write(msg.b.as_bytes()));
-            }
+            }*/
             self.current_index = 0;
             self.current_depth = 0;
         }
