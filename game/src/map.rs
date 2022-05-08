@@ -1,7 +1,7 @@
 use crate::{camera::Camera, components::enemy::add_enemy, ecs::world::World};
 use n64::{
     gfx::{
-        color_combiner::{ColorCombiner, DSrc},
+        color_combiner_mode::{ColorCombinerMode, DSrc},
         CommandBuffer, Pipeline, StaticTexture,
     },
     VideoMode,
@@ -25,7 +25,7 @@ pub struct StaticMapData {
 }
 
 static MAP_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::single(DSrc::Texel),
+    color_combiner_mode: ColorCombinerMode::single(DSrc::Texel),
     blend: true,
     ..Pipeline::default()
 };

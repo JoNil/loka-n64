@@ -3,7 +3,7 @@ use core::f32::consts::PI;
 use n64::{
     current_time_us,
     gfx::{
-        color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
+        color_combiner_mode::{ASrc, BSrc, CSrc, ColorCombinerMode, DSrc},
         CommandBuffer, Pipeline,
     },
     VideoMode,
@@ -306,7 +306,7 @@ pub fn fire(
 }
 
 static TARGET_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::simple(ASrc::Zero, BSrc::Zero, CSrc::Zero, DSrc::Environment),
+    color_combiner_mode: ColorCombinerMode::simple(ASrc::Zero, BSrc::Zero, CSrc::Zero, DSrc::Environment),
     ..Pipeline::default()
 };
 

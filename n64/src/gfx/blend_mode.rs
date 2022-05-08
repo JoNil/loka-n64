@@ -59,7 +59,7 @@ pub enum AlphaDither {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct Blender {
+pub struct BlendMode {
     p_0: PMCycleOne,
     a_0: ASrc,
     m_0: PMCycleOne,
@@ -74,7 +74,7 @@ pub struct Blender {
     alpha_dither: AlphaDither,
 }
 
-impl Blender {
+impl BlendMode {
     pub const fn default() -> Self {
         Self {
             p_0: PMCycleOne::ColorCombinerRgb,
@@ -127,7 +127,7 @@ impl Blender {
     }
 }
 
-impl Blender {
+impl BlendMode {
     pub fn to_command(&self) -> u64 {
         let p_0 = (self.p_0 as u64) << 30;
         let a_0 = (self.a_0 as u64) << 26;
@@ -146,7 +146,7 @@ impl Blender {
     }
 }
 
-impl Default for Blender {
+impl Default for BlendMode {
     fn default() -> Self {
         Self::default()
     }

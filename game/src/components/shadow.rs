@@ -3,7 +3,7 @@ use crate::{camera::Camera, ecs::world::World};
 use core::f32::consts::PI;
 use n64::{
     gfx::{
-        color_combiner::{ColorCombiner, DSrc},
+        color_combiner_mode::{ColorCombinerMode, DSrc},
         CommandBuffer, Pipeline,
     },
     VideoMode,
@@ -13,7 +13,7 @@ use n64_math::{vec3, Mat4};
 pub struct Shadow;
 
 static SHADOW_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::single(DSrc::Primitive),
+    color_combiner_mode: ColorCombinerMode::single(DSrc::Primitive),
     prim_color: Some(0x10101060),
     blend: true,
     z_update: false,

@@ -2,7 +2,7 @@ use super::{movable::Movable, size::Size};
 use crate::{camera::Camera, ecs::world::World};
 use n64::{
     gfx::{
-        color_combiner::{ColorCombiner, DSrc},
+        color_combiner_mode::{ColorCombinerMode, DSrc},
         CommandBuffer, Pipeline, Texture,
     },
     VideoMode,
@@ -10,7 +10,7 @@ use n64::{
 use n64_math::Vec2;
 
 static SPRITE_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::single(DSrc::Texel),
+    color_combiner_mode: ColorCombinerMode::single(DSrc::Texel),
     blend: true,
     ..Pipeline::default()
 };

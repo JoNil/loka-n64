@@ -3,7 +3,7 @@ use crate::{camera::Camera, ecs::world::World, model::ModelData};
 use core::f32::consts::PI;
 use n64::{
     gfx::{
-        color_combiner::{ASrc, BSrc, CSrc, ColorCombiner, DSrc},
+        color_combiner_mode::{ASrc, BSrc, CSrc, ColorCombinerMode, DSrc},
         CommandBuffer, Pipeline,
     },
     VideoMode,
@@ -16,7 +16,7 @@ pub struct MeshDrawable {
 }
 
 static MESH_PIPELINE: Pipeline = Pipeline {
-    combiner_mode: ColorCombiner::simple(ASrc::Zero, BSrc::Zero, CSrc::Zero, DSrc::Shade),
+    color_combiner_mode: ColorCombinerMode::simple(ASrc::Zero, BSrc::Zero, CSrc::Zero, DSrc::Shade),
     z_compare: true,
     z_update: true,
     ..Pipeline::default()

@@ -1,9 +1,9 @@
-use super::{blender::Blender, color_combiner::ColorCombiner, Texture};
+use super::{blend_mode::BlendMode, color_combiner_mode::ColorCombinerMode, Texture};
 use n64_math::Color;
 
 #[derive(Copy, Clone)]
 pub struct FillPipeline {
-    pub combiner_mode: ColorCombiner,
+    pub color_combiner_mode: ColorCombinerMode,
     pub fill_color: Color,
     pub blend: bool,
 }
@@ -11,15 +11,15 @@ pub struct FillPipeline {
 impl FillPipeline {
     pub const fn default() -> Self {
         Self {
-            combiner_mode: ColorCombiner::default(),
+            color_combiner_mode: ColorCombinerMode::default(),
             fill_color: Color::new(0),
             blend: false,
         }
     }
 
-    pub fn with_combiner_mode(&self, combiner_mode: ColorCombiner) -> Self {
+    pub fn with_combiner_mode(&self, combiner_mode: ColorCombinerMode) -> Self {
         let mut res = *self;
-        res.combiner_mode = combiner_mode;
+        res.color_combiner_mode = combiner_mode;
         res
     }
 
@@ -46,14 +46,15 @@ pub enum CycleType {
 #[derive(Copy, Clone)]
 pub struct Pipeline {
     pub cycle_type: CycleType,
-    pub combiner_mode: ColorCombiner,
-    pub blender: Blender,
+    pub color_combiner_mode: ColorCombinerMode,
+    pub blend_mode: BlendMode,
 
     pub texture: Option<Texture<'static>>,
 
     pub prim_color: Option<u32>,
     pub env_color: Option<u32>,
     pub blend_color: Option<u32>,
+    pub fog_color: Option<u32>,
 
     pub blend: bool,
     pub z_update: bool,
@@ -64,11 +65,12 @@ impl Pipeline {
     pub const fn default() -> Self {
         Self {
             cycle_type: CycleType::One,
-            combiner_mode: ColorCombiner::default(),
-            blender: Blender::default(),
+            color_combiner_mode: ColorCombinerMode::default(),
+            blend_mode: BlendMode::default(),
             prim_color: None,
             env_color: None,
             blend_color: None,
+            fog_color: None,
             texture: None,
             blend: false,
             z_update: false,
@@ -82,9 +84,15 @@ impl Pipeline {
         res
     }
 
-    pub fn with_combiner_mode(&self, combiner_mode: ColorCombiner) -> Self {
+    pub fn with_combiner_mode(&self, combiner_mode: ColorCombinerMode) -> Self {
         let mut res = *self;
-        res.combiner_mode = combiner_mode;
+        res.color_combiner_mode = combiner_mode;
+        res
+    }
+
+    pub fn with_blend_mode(&self, blend_mode: BlendMode) -> Self {
+        let mut res = *self;
+        res.blend_mode = blend_mode;
         res
     }
 
@@ -109,6 +117,12 @@ impl Pipeline {
     pub fn with_blend_color(&self, blend_color: Option<u32>) -> Self {
         let mut res = *self;
         res.blend_color = blend_color;
+        res
+    }
+
+    pub fn with_fog_color(&self, fog_color: Option<u32>) -> Self {
+        let mut res = *self;
+        res.fog_color = fog_color;
         res
     }
 

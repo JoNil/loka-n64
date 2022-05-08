@@ -4,8 +4,11 @@ layout(location = 0) in vec2 v_tex_coord;
 layout(location = 1) in vec4 v_color;
 
 layout(location = 2) in flat uvec2 v_color_combiner_mode;
-layout(location = 3) in flat vec4 v_prim_color;
-layout(location = 4) in flat vec4 v_env_color;
+layout(location = 3) in flat uvec2 v_blend_mode;
+layout(location = 4) in flat vec4 v_prim_color;
+layout(location = 5) in flat vec4 v_env_color;
+layout(location = 6) in flat vec4 v_blend_color;
+layout(location = 7) in flat vec4 v_fog_color;
 
 layout(location = 0) out vec4 o_color;
 
@@ -18,6 +21,8 @@ void main() {
     vec4 texel_color = texture(sampler2D(t_tex, s_tex), v_tex_coord);
     vec4 prim_color = v_prim_color;
     vec4 env_color = v_env_color;
+    vec4 blend_color = v_blend_color;
+    vec4 fog_color = v_fog_color;
 
     uvec2 color_combiner_mode = v_color_combiner_mode;
 

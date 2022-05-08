@@ -10,7 +10,7 @@ mod command_buffer_emu;
 #[cfg(not(target_vendor = "nintendo64"))]
 use command_buffer_emu as command_buffer;
 
-pub mod blender;
-pub mod color_combiner;
+pub mod blend_mode;
+pub mod color_combiner_mode;
 mod pipeline;
 mod texture;

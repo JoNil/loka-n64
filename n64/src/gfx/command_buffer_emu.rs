@@ -312,9 +312,12 @@ impl<'a> CommandBuffer<'a> {
                                 );
                             }
 
-                            let color_combiner_mode = pipeline.combiner_mode.to_command();
+                            let color_combiner_mode = pipeline.color_combiner_mode.to_command();
+                            let blend_mode = pipeline.blend_mode.to_command();
                             let prim_color = pipeline.prim_color.unwrap_or(0);
                             let env_color = pipeline.env_color.unwrap_or(0);
+                            let blend_color = pipeline.blend_color.unwrap_or(0);
+                            let fog_color = pipeline.fog_color.unwrap_or(0);
 
                             mesh_uniforms.push(MeshUniforms {
                                 transform: *transform,
@@ -325,6 +328,10 @@ impl<'a> CommandBuffer<'a> {
                                 combine_mode: [
                                     ((color_combiner_mode >> 32) & u32::MAX as u64) as u32,
                                     (color_combiner_mode & u32::MAX as u64) as u32,
+                                ],
+                                blend_mode: [
+                                    ((blend_mode >> 32) & u32::MAX as u64) as u32,
+                                    (blend_mode & u32::MAX as u64) as u32,
                                 ],
                                 prim_color: [
                                     ((prim_color >> 24) & 0xff) as f32 / 255.0,
@@ -337,6 +344,18 @@ impl<'a> CommandBuffer<'a> {
                                     ((env_color >> 16) & 0xff) as f32 / 255.0,
                                     ((env_color >> 8) & 0xff) as f32 / 255.0,
                                     (env_color & 0xff) as f32 / 255.0,
+                                ],
+                                blend_color: [
+                                    ((blend_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((blend_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((blend_color >> 8) & 0xff) as f32 / 255.0,
+                                    (blend_color & 0xff) as f32 / 255.0,
+                                ],
+                                fog_color: [
+                                    ((fog_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((fog_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((fog_color >> 8) & 0xff) as f32 / 255.0,
+                                    (fog_color & 0xff) as f32 / 255.0,
                                 ],
                             });
                         }

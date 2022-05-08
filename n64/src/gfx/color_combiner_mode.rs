@@ -122,7 +122,7 @@ pub enum DAlphaSrc {
 }
 
 #[derive(Clone, Copy, Debug)]
-pub struct ColorCombiner {
+pub struct ColorCombinerMode {
     pub a_0: ASrc,
     pub b_0: BSrc,
     pub c_0: CSrc,
@@ -144,7 +144,7 @@ pub struct ColorCombiner {
     pub d_alpha_1: DAlphaSrc,
 }
 
-impl ColorCombiner {
+impl ColorCombinerMode {
     pub const fn default() -> Self {
         Self {
             a_0: ASrc::Zero,
@@ -218,7 +218,7 @@ impl ColorCombiner {
     }
 }
 
-impl ColorCombiner {
+impl ColorCombinerMode {
     pub fn to_command(&self) -> u64 {
         let a_0 = (self.a_0 as u64) << 52;
         let b_0 = (self.b_0 as u64) << 28;
@@ -258,7 +258,7 @@ impl ColorCombiner {
     }
 }
 
-impl From<u64> for ColorCombiner {
+impl From<u64> for ColorCombinerMode {
     fn from(mode: u64) -> Self {
         let a_0 = (mode >> 52) & 0xf;
         let b_0 = (mode >> 28) & 0xf;
@@ -301,7 +301,7 @@ impl From<u64> for ColorCombiner {
     }
 }
 
-impl Default for ColorCombiner {
+impl Default for ColorCombinerMode {
     fn default() -> Self {
         Self::default()
     }

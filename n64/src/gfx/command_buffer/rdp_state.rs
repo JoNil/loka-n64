@@ -5,7 +5,7 @@ use n64_math::{vec2, Color};
 #[derive(Copy, Clone, Default)]
 pub struct RdpState {
     other_modes: u64,
-    combine_mode: u64,
+    color_combiner_mode: u64,
     fill_color: Color,
     prim_color: u32,
     env_color: u32,
@@ -42,12 +42,12 @@ pub fn apply_fill_pipeline(
     }
 
     {
-        let combine_mode = pipeline.combiner_mode.to_command();
+        let color_combiner_mode = pipeline.color_combiner_mode.to_command();
 
-        if combine_mode != state.combine_mode {
+        if color_combiner_mode != state.color_combiner_mode {
             apply_sync_if_first_change(rdp, &mut emitted_sync);
-            rdp.set_combine_mode(combine_mode);
-            state.combine_mode = combine_mode;
+            rdp.set_combine_mode(color_combiner_mode);
+            state.color_combiner_mode = color_combiner_mode;
         }
     }
 
@@ -69,7 +69,7 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
         let mut other_modes =
             OTHER_MODE_CYCLE_TYPE_1_CYCLE | OTHER_MODE_SAMPLE_TYPE | OTHER_MODE_BI_LERP_0;
 
-        other_modes |= pipeline.blender.to_command();
+        other_modes |= pipeline.blend_mode.to_command();
 
         if pipeline.cycle_type == CycleType::Two {
             other_modes |= OTHER_MODE_CYCLE_TYPE_2_CYCLE;
@@ -92,12 +92,12 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
     }
 
     {
-        let combine_mode = pipeline.combiner_mode.to_command();
+        let color_combiner_mode = pipeline.color_combiner_mode.to_command();
 
-        if combine_mode != state.combine_mode {
+        if color_combiner_mode != state.color_combiner_mode {
             apply_sync_if_first_change(rdp, &mut emitted_sync);
-            rdp.set_combine_mode(combine_mode);
-            state.combine_mode = combine_mode;
+            rdp.set_combine_mode(color_combiner_mode);
+            state.color_combiner_mode = color_combiner_mode;
         }
     }
 
