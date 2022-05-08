@@ -170,6 +170,23 @@ impl<'a> CommandBuffer<'a> {
         let dst = DstTexture::new(&graphics.device, self.out_tex.width, self.out_tex.height);
         let window_size = Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32);
 
+        let out_bind_group = graphics
+            .device
+            .create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &graphics.mesh.out_bind_group_layout,
+                entries: &[
+                    wgpu::BindGroupEntry {
+                        binding: 0,
+                        resource: wgpu::BindingResource::TextureView(&dst.tex_view),
+                    },
+                    wgpu::BindGroupEntry {
+                        binding: 1,
+                        resource: wgpu::BindingResource::Sampler(&graphics.mesh.out_sampler),
+                    },
+                ],
+                label: None,
+            });
+
         assert!(self.colored_rect_count <= MAX_COLORED_RECTS as u32);
         assert!(self.textured_rect_count <= MAX_TEXTURED_RECTS as u32);
         assert!(self.mesh_count <= MAX_MESHES as u32);
@@ -549,6 +566,11 @@ impl<'a> CommandBuffer<'a> {
                                 render_pass.set_pipeline(pipeline);
                                 render_pass.set_bind_group(
                                     0,
+                                    &graphics.mesh.shader_storage_buffer_bind_group,
+                                    &[],
+                                );
+                                render_pass.set_bind_group(
+                                    1,
                                     &graphics
                                         .mesh
                                         .texture_cache
@@ -557,6 +579,7 @@ impl<'a> CommandBuffer<'a> {
                                         .bind_group,
                                     &[],
                                 );
+                                render_pass.set_bind_group(2, &out_bind_group, &[]);
                                 render_pass.draw_indexed(
                                     0..(indices.len() as u32),
                                     0,

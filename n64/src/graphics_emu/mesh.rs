@@ -25,13 +25,17 @@ pub(crate) struct UploadedTexture {
 }
 
 pub(crate) struct Mesh {
-    pub bind_group_layout: wgpu::BindGroupLayout,
+    pub _uniforms_bind_group_layout: wgpu::BindGroupLayout,
+    pub tex_bind_group_layout: wgpu::BindGroupLayout,
+    pub out_bind_group_layout: wgpu::BindGroupLayout,
     pub pipeline_with_depth_compare_and_depth_write: wgpu::RenderPipeline,
     pub pipeline_with_depth_compare: wgpu::RenderPipeline,
     pub pipeline_with_depth_write: wgpu::RenderPipeline,
     pub pipeline_with_no_depth: wgpu::RenderPipeline,
     pub shader_storage_buffer: wgpu::Buffer,
-    pub sampler: wgpu::Sampler,
+    pub shader_storage_buffer_bind_group: wgpu::BindGroup,
+    pub tex_sampler: wgpu::Sampler,
+    pub out_sampler: wgpu::Sampler,
     pub texture_cache: HashMap<usize, UploadedTexture>,
 }
 
@@ -42,9 +46,9 @@ impl Mesh {
         dst_tex_format: wgpu::TextureFormat,
         depth_format: wgpu::TextureFormat,
     ) -> Self {
-        let bind_group_layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            entries: &[
-                wgpu::BindGroupLayoutEntry {
+        let uniforms_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[wgpu::BindGroupLayoutEntry {
                     binding: 0,
                     visibility: wgpu::ShaderStages::VERTEX,
                     ty: wgpu::BindingType::Buffer {
@@ -53,30 +57,63 @@ impl Mesh {
                         min_binding_size: None,
                     },
                     count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 1,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Texture {
-                        sample_type: wgpu::TextureSampleType::Float { filterable: true },
-                        view_dimension: wgpu::TextureViewDimension::D2,
-                        multisampled: false,
+                }],
+                label: None,
+            });
+
+        let tex_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: true },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: false,
+                        },
+                        count: None,
                     },
-                    count: None,
-                },
-                wgpu::BindGroupLayoutEntry {
-                    binding: 2,
-                    visibility: wgpu::ShaderStages::FRAGMENT,
-                    ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
-                    count: None,
-                },
-            ],
-            label: None,
-        });
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::Filtering),
+                        count: None,
+                    },
+                ],
+                label: None,
+            });
+
+        let out_bind_group_layout =
+            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
+                entries: &[
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 0,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Texture {
+                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
+                            view_dimension: wgpu::TextureViewDimension::D2,
+                            multisampled: true,
+                        },
+                        count: None,
+                    },
+                    wgpu::BindGroupLayoutEntry {
+                        binding: 1,
+                        visibility: wgpu::ShaderStages::FRAGMENT,
+                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
+                        count: None,
+                    },
+                ],
+                label: None,
+            });
 
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[&bind_group_layout],
+            bind_group_layouts: &[
+                &uniforms_bind_group_layout,
+                &tex_bind_group_layout,
+                &out_bind_group_layout,
+            ],
             push_constant_ranges: &[],
         });
 
@@ -88,18 +125,7 @@ impl Mesh {
 
         let target_desc = &[wgpu::ColorTargetState {
             format: dst_tex_format,
-            blend: Some(wgpu::BlendState {
-                color: wgpu::BlendComponent {
-                    src_factor: wgpu::BlendFactor::SrcAlpha,
-                    dst_factor: wgpu::BlendFactor::OneMinusSrcAlpha,
-                    operation: wgpu::BlendOperation::Add,
-                },
-                alpha: wgpu::BlendComponent {
-                    src_factor: wgpu::BlendFactor::One,
-                    dst_factor: wgpu::BlendFactor::Zero,
-                    operation: wgpu::BlendOperation::Add,
-                },
-            }),
+            blend: None,
             write_mask: wgpu::ColorWrites::ALL,
         }];
 
@@ -197,7 +223,19 @@ impl Mesh {
             mapped_at_creation: false,
         });
 
-        let sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+        let shader_storage_buffer_bind_group =
+            device.create_bind_group(&wgpu::BindGroupDescriptor {
+                layout: &uniforms_bind_group_layout,
+                entries: &[wgpu::BindGroupEntry {
+                    binding: 0,
+                    resource: wgpu::BindingResource::Buffer(
+                        shader_storage_buffer.as_entire_buffer_binding(),
+                    ),
+                }],
+                label: None,
+            });
+
+        let tex_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
             label: None,
             address_mode_u: wgpu::AddressMode::ClampToEdge,
             address_mode_v: wgpu::AddressMode::ClampToEdge,
@@ -206,7 +244,22 @@ impl Mesh {
             min_filter: wgpu::FilterMode::Linear,
             mipmap_filter: wgpu::FilterMode::Nearest,
             lod_min_clamp: 0.0,
-            lod_max_clamp: 100.0,
+            lod_max_clamp: f32::MAX,
+            compare: None,
+            anisotropy_clamp: None,
+            border_color: None,
+        });
+
+        let out_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
+            label: None,
+            address_mode_u: wgpu::AddressMode::ClampToEdge,
+            address_mode_v: wgpu::AddressMode::ClampToEdge,
+            address_mode_w: wgpu::AddressMode::ClampToEdge,
+            mag_filter: wgpu::FilterMode::Nearest,
+            min_filter: wgpu::FilterMode::Nearest,
+            mipmap_filter: wgpu::FilterMode::Nearest,
+            lod_min_clamp: 0.0,
+            lod_max_clamp: f32::MAX,
             compare: None,
             anisotropy_clamp: None,
             border_color: None,
@@ -215,13 +268,17 @@ impl Mesh {
         let texture_cache = HashMap::new();
 
         let mut mesh = Self {
-            bind_group_layout,
+            _uniforms_bind_group_layout: uniforms_bind_group_layout,
+            tex_bind_group_layout,
+            out_bind_group_layout,
             pipeline_with_depth_compare_and_depth_write,
             pipeline_with_depth_compare,
             pipeline_with_depth_write,
             pipeline_with_no_depth,
             shader_storage_buffer,
-            sampler,
+            shader_storage_buffer_bind_group,
+            tex_sampler,
+            out_sampler,
             texture_cache,
         };
 
@@ -271,21 +328,15 @@ impl Mesh {
         let tex_view = tex.create_view(&Default::default());
 
         let bind_group = device.create_bind_group(&wgpu::BindGroupDescriptor {
-            layout: &self.bind_group_layout,
+            layout: &self.tex_bind_group_layout,
             entries: &[
                 wgpu::BindGroupEntry {
                     binding: 0,
-                    resource: wgpu::BindingResource::Buffer(
-                        self.shader_storage_buffer.as_entire_buffer_binding(),
-                    ),
-                },
-                wgpu::BindGroupEntry {
-                    binding: 1,
                     resource: wgpu::BindingResource::TextureView(&tex_view),
                 },
                 wgpu::BindGroupEntry {
-                    binding: 2,
-                    resource: wgpu::BindingResource::Sampler(&self.sampler),
+                    binding: 1,
+                    resource: wgpu::BindingResource::Sampler(&self.tex_sampler),
                 },
             ],
             label: None,

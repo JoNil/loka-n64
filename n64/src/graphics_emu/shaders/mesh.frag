@@ -12,8 +12,11 @@ layout(location = 7) in flat vec4 v_fog_color;
 
 layout(location = 0) out vec4 o_color;
 
-layout(set = 0, binding = 1) uniform texture2D t_tex;
-layout(set = 0, binding = 2) uniform sampler s_tex;
+layout(set = 1, binding = 0) uniform texture2D t_tex;
+layout(set = 1, binding = 1) uniform sampler s_tex;
+
+layout(set = 2, binding = 0) uniform texture2D t_output;
+layout(set = 2, binding = 1) uniform sampler s_output;
 
 vec4 color_combiner() {
     vec4 shade_color = v_color;
@@ -224,7 +227,8 @@ vec4 color_combiner() {
         (a.a - b.a) * c.a + d.a);
 }
 
-vec4 blender() {
+vec4 blender(vec4 input) {
+    vec4 memory = texelFetch(sampler2D(t_output, s_output), ivec2(gl_FragCoord.xy), 0);
     vec4 blend_color = v_blend_color;
     vec4 fog_color = v_fog_color;
     return vec4(0.0);

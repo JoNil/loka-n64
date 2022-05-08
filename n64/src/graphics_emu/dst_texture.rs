@@ -27,7 +27,7 @@ impl DstTexture {
         };
 
         let tex = device.create_texture(&wgpu::TextureDescriptor {
-            label: None,
+            label: Some("Out"),
             size: tex_extent,
             mip_level_count: 1,
             sample_count: 4,
@@ -35,7 +35,8 @@ impl DstTexture {
             format: TEXUTRE_FORMAT,
             usage: wgpu::TextureUsages::COPY_DST
                 | wgpu::TextureUsages::COPY_SRC
-                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+                | wgpu::TextureUsages::RENDER_ATTACHMENT
+                | wgpu::TextureUsages::TEXTURE_BINDING,
         });
         let tex_view = tex.create_view(&Default::default());
 
