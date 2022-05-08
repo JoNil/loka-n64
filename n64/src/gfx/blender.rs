@@ -92,6 +92,23 @@ impl Blender {
         }
     }
 
+    pub const fn one(p: PMCycleOne, a: ASrc, m: PMCycleOne, b: BSrc) -> Self {
+        Self {
+            p_0: p,
+            a_0: a,
+            m_0: m,
+            b_0: b,
+
+            p_1: PMCycleTwo::from_cycle_one(p),
+            a_1: a,
+            m_1: PMCycleTwo::from_cycle_one(m),
+            b_1: b,
+
+            rgb_dither: RgbDither::NoDither,
+            alpha_dither: AlphaDither::NoDither,
+        }
+    }
+
     pub const fn simple(p: PMCycleOne, m: PMCycleOne) -> Self {
         Self {
             p_0: p,

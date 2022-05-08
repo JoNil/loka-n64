@@ -77,6 +77,7 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
 
         if pipeline.blend {
             other_modes |= OTHER_MODE_FORCE_BLEND;
+            other_modes |= OTHER_MODE_IMAGE_READ_EN;
         }
 
         if pipeline.texture.is_some() {
