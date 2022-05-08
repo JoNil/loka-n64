@@ -321,9 +321,11 @@ impl<'a> CommandBuffer<'a> {
 
                             mesh_uniforms.push(MeshUniforms {
                                 transform: *transform,
-                                screen_size: [
+                                screen_size_and_pad: [
                                     graphics.video_mode.width() as f32,
                                     graphics.video_mode.height() as f32,
+                                    0.0,
+                                    0.0,
                                 ],
                                 combine_mode: [
                                     ((color_combiner_mode >> 32) & u32::MAX as u64) as u32,

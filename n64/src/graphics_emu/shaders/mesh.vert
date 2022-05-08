@@ -15,7 +15,7 @@ layout(location = 7) out flat vec4 v_fog_color;
 
 struct Uniforms {
     mat4 u_transform;
-    vec2 u_screen_size;
+    vec4 u_screen_size_and_pad;
     uvec2 u_color_combiner_mode;
     uvec2 u_blend_mode;
     vec4 u_prim_color;
@@ -41,7 +41,7 @@ void main() {
     vec4 position = uniforms[gl_InstanceIndex].u_transform * vec4(a_pos, 1.0);
     gl_Position =
         vec4(
-            -1.0 + 2.0 * position.x / uniforms[gl_InstanceIndex].u_screen_size.x,
-            -1.0 + 2.0 * position.y / uniforms[gl_InstanceIndex].u_screen_size.y,
+            -1.0 + 2.0 * position.x / uniforms[gl_InstanceIndex].u_screen_size_and_pad.x,
+            -1.0 + 2.0 * position.y / uniforms[gl_InstanceIndex].u_screen_size_and_pad.y,
             position.zw);
 }
