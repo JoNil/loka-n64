@@ -27,7 +27,6 @@ pub(crate) struct UploadedTexture {
 pub(crate) struct Mesh {
     pub _uniforms_bind_group_layout: wgpu::BindGroupLayout,
     pub tex_bind_group_layout: wgpu::BindGroupLayout,
-    pub out_bind_group_layout: wgpu::BindGroupLayout,
     pub pipeline_with_depth_compare_and_depth_write: wgpu::RenderPipeline,
     pub pipeline_with_depth_compare: wgpu::RenderPipeline,
     pub pipeline_with_depth_write: wgpu::RenderPipeline,
@@ -35,7 +34,6 @@ pub(crate) struct Mesh {
     pub shader_storage_buffer: wgpu::Buffer,
     pub shader_storage_buffer_bind_group: wgpu::BindGroup,
     pub tex_sampler: wgpu::Sampler,
-    pub out_sampler: wgpu::Sampler,
     pub texture_cache: HashMap<usize, UploadedTexture>,
 }
 
@@ -84,36 +82,9 @@ impl Mesh {
                 label: None,
             });
 
-        let out_bind_group_layout =
-            device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-                entries: &[
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 0,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Texture {
-                            sample_type: wgpu::TextureSampleType::Float { filterable: false },
-                            view_dimension: wgpu::TextureViewDimension::D2,
-                            multisampled: true,
-                        },
-                        count: None,
-                    },
-                    wgpu::BindGroupLayoutEntry {
-                        binding: 1,
-                        visibility: wgpu::ShaderStages::FRAGMENT,
-                        ty: wgpu::BindingType::Sampler(wgpu::SamplerBindingType::NonFiltering),
-                        count: None,
-                    },
-                ],
-                label: None,
-            });
-
         let pipeline_layout = device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
             label: None,
-            bind_group_layouts: &[
-                &uniforms_bind_group_layout,
-                &tex_bind_group_layout,
-                &out_bind_group_layout,
-            ],
+            bind_group_layouts: &[&uniforms_bind_group_layout, &tex_bind_group_layout],
             push_constant_ranges: &[],
         });
 
@@ -250,27 +221,11 @@ impl Mesh {
             border_color: None,
         });
 
-        let out_sampler = device.create_sampler(&wgpu::SamplerDescriptor {
-            label: None,
-            address_mode_u: wgpu::AddressMode::ClampToEdge,
-            address_mode_v: wgpu::AddressMode::ClampToEdge,
-            address_mode_w: wgpu::AddressMode::ClampToEdge,
-            mag_filter: wgpu::FilterMode::Nearest,
-            min_filter: wgpu::FilterMode::Nearest,
-            mipmap_filter: wgpu::FilterMode::Nearest,
-            lod_min_clamp: 0.0,
-            lod_max_clamp: f32::MAX,
-            compare: None,
-            anisotropy_clamp: None,
-            border_color: None,
-        });
-
         let texture_cache = HashMap::new();
 
         let mut mesh = Self {
             _uniforms_bind_group_layout: uniforms_bind_group_layout,
             tex_bind_group_layout,
-            out_bind_group_layout,
             pipeline_with_depth_compare_and_depth_write,
             pipeline_with_depth_compare,
             pipeline_with_depth_write,
@@ -278,7 +233,6 @@ impl Mesh {
             shader_storage_buffer,
             shader_storage_buffer_bind_group,
             tex_sampler,
-            out_sampler,
             texture_cache,
         };
 
