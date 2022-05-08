@@ -35,7 +35,7 @@ void main() {
     v_blend_mode = uniforms[gl_InstanceIndex].u_blend_mode;
     v_prim_color = uniforms[gl_InstanceIndex].u_prim_color;
     v_env_color = uniforms[gl_InstanceIndex].u_env_color;
-    u_blend_color = uniforms[gl_InstanceIndex].u_blend_color;
+    v_blend_color = uniforms[gl_InstanceIndex].u_blend_color;
     v_fog_color = uniforms[gl_InstanceIndex].u_fog_color;
 
     vec4 position = uniforms[gl_InstanceIndex].u_transform * vec4(a_pos, 1.0);
