@@ -71,7 +71,7 @@ pub fn draw_player_weapon(world: &mut World, cb: &mut CommandBuffer, video_mode:
                 video_mode.height() as f32 * 0.9,
             );
 
-            draw_text(cb, text, pos, 0x80808080);
+            draw_text(cb, text, pos, 0x202020a0);
         }
     }
 }

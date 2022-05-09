@@ -215,7 +215,6 @@ impl<'a> CommandBuffer<'a> {
                             pipeline,
                         } => {
                             let texture = pipeline.texture.expect("Invalid pipeline");
-                            let blend_color = pipeline.blend_color.unwrap_or(0xffffffff);
 
                             graphics.textured_rect.upload_texture_data(
                                 &graphics.device,
@@ -228,14 +227,47 @@ impl<'a> CommandBuffer<'a> {
                             let offset_x = 2.0 * upper_left.x / window_size.x - 1.0 + scale.x;
                             let offset_y = 2.0 * upper_left.y / window_size.y - 1.0 + scale.y;
 
+                            let color_combiner_mode = pipeline.color_combiner_mode.to_command();
+                            let blend_mode = pipeline.blend_mode.to_command();
+                            let prim_color = pipeline.prim_color.unwrap_or(0);
+                            let env_color = pipeline.env_color.unwrap_or(0);
+                            let blend_color = pipeline.blend_color.unwrap_or(0);
+                            let fog_color = pipeline.fog_color.unwrap_or(0);
+
                             textured_rect_uniforms.push(TexturedRectUniforms {
                                 offset: [offset_x, offset_y],
                                 scale: [scale.x, scale.y],
+                                combine_mode: [
+                                    ((color_combiner_mode >> 32) & u32::MAX as u64) as u32,
+                                    (color_combiner_mode & u32::MAX as u64) as u32,
+                                ],
+                                blend_mode: [
+                                    ((blend_mode >> 32) & u32::MAX as u64) as u32,
+                                    (blend_mode & u32::MAX as u64) as u32,
+                                ],
+                                prim_color: [
+                                    ((prim_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((prim_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((prim_color >> 8) & 0xff) as f32 / 255.0,
+                                    (prim_color & 0xff) as f32 / 255.0,
+                                ],
+                                env_color: [
+                                    ((env_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((env_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((env_color >> 8) & 0xff) as f32 / 255.0,
+                                    (env_color & 0xff) as f32 / 255.0,
+                                ],
                                 blend_color: [
                                     ((blend_color >> 24) & 0xff) as f32 / 255.0,
                                     ((blend_color >> 16) & 0xff) as f32 / 255.0,
                                     ((blend_color >> 8) & 0xff) as f32 / 255.0,
                                     (blend_color & 0xff) as f32 / 255.0,
+                                ],
+                                fog_color: [
+                                    ((fog_color >> 24) & 0xff) as f32 / 255.0,
+                                    ((fog_color >> 16) & 0xff) as f32 / 255.0,
+                                    ((fog_color >> 8) & 0xff) as f32 / 255.0,
+                                    (fog_color & 0xff) as f32 / 255.0,
                                 ],
                             });
                         }

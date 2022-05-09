@@ -216,6 +216,40 @@ impl ColorCombinerMode {
             d_alpha_1: d.to_symetrical_alpha(),
         }
     }
+
+    #[allow(clippy::too_many_arguments)]
+    pub const fn one(
+        a: ASrc,
+        b: BSrc,
+        c: CSrc,
+        d: DSrc,
+        a_alpha: AAlphaSrc,
+        b_alpha: BAlphaSrc,
+        c_alpha: CAlphaSrc,
+        d_alpha: DAlphaSrc,
+    ) -> Self {
+        Self {
+            a_0: a,
+            b_0: b,
+            c_0: c,
+            d_0: d,
+
+            a_alpha_0: a_alpha,
+            b_alpha_0: b_alpha,
+            c_alpha_0: c_alpha,
+            d_alpha_0: d_alpha,
+
+            a_1: a,
+            b_1: b,
+            c_1: c,
+            d_1: d,
+
+            a_alpha_1: a_alpha,
+            b_alpha_1: b_alpha,
+            c_alpha_1: c_alpha,
+            d_alpha_1: d_alpha,
+        }
+    }
 }
 
 impl ColorCombinerMode {

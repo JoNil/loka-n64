@@ -1,7 +1,8 @@
 use crate::textures::*;
 use n64::gfx::{
-    blend_mode::{BlendMode, PMCycleOne},
-    color_combiner_mode::{ColorCombinerMode, DSrc},
+    color_combiner_mode::{
+        AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombinerMode, DAlphaSrc, DSrc,
+    },
     CommandBuffer, Pipeline, StaticTexture,
 };
 use n64_math::{const_vec2, Vec2};
@@ -105,8 +106,16 @@ static ATLAS: &[&StaticTexture] = &[
 ];
 
 static FONT_PIPELINE: Pipeline = Pipeline {
-    color_combiner_mode: ColorCombinerMode::single(DSrc::Texel),
-    blend_mode: BlendMode::simple(PMCycleOne::BlendColor, PMCycleOne::Memory),
+    color_combiner_mode: ColorCombinerMode::one(
+        ASrc::Zero,
+        BSrc::Zero,
+        CSrc::Zero,
+        DSrc::Primitive,
+        AAlphaSrc::TexelAlpha,
+        BAlphaSrc::Zero,
+        CAlphaSrc::PrimitiveAlpha,
+        DAlphaSrc::Zero,
+    ),
     blend: true,
     ..Pipeline::default()
 };
@@ -166,7 +175,7 @@ pub fn draw_char(cb: &mut CommandBuffer, ch: char, pos: Vec2, color: u32) {
                 }
                 .as_texture(),
             ))
-            .with_blend_color(Some(color)),
+            .with_prim_color(Some(color)),
     );
 
     cb.add_textured_rect(pos, pos + Vec2::new(16.0, 16.0));
