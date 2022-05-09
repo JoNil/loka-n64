@@ -93,13 +93,17 @@ fn main() {
     let mut last_colored_rect_count = 0;
     let mut last_textured_rect_count = 0;
     let mut last_mesh_count = 0;
+
+    let mut frame_count = 0;
+
     loop {
-        //n64::debugln!("Frame");
+        frame_begin_time = current_time_us();
+
+        n64::debugln!("Frame: {}", frame_count);
+        frame_count += 1;
 
         n64_profiler::frame!();
         n64_profiler::scope!("Frame");
-
-        frame_begin_time = current_time_us();
 
         {
             dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;

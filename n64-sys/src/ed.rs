@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::pi;
+use crate::{pi, sys::current_time_us};
 
 const REG_BASE: usize = 0xBF80_0000;
 
@@ -116,6 +116,10 @@ pub fn usb_write(src: &[u8]) -> bool {
 
         remaining -= buffer_len;
     }
+
+    // For some reson the transfers gets corruped when doing a lot of them in a row with no waits in between...
+    let start = current_time_us();
+    while current_time_us() - start < 10 {}
 
     true
 }

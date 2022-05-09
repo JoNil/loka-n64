@@ -5,7 +5,7 @@ mod inner {
 
     use zerocopy::AsBytes;
 
-    const MESSAGE_BUFFER_SIZE: usize = 17;
+    const MESSAGE_BUFFER_SIZE: usize = 31;
 
     #[repr(C, packed)]
     #[derive(AsBytes)]
@@ -14,7 +14,7 @@ mod inner {
         buffer: [u8; MESSAGE_BUFFER_SIZE],
     }
 
-    n64_types::static_assert!(core::mem::size_of::<DebugWriteMessageBuffer>() == 18);
+    n64_types::static_assert!(core::mem::size_of::<DebugWriteMessageBuffer>() == 32);
 
     #[repr(C, align(16))]
     pub struct DebugWrite {

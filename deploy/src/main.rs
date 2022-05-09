@@ -42,7 +42,7 @@ fn find_everdrive() -> Box<dyn SerialPort> {
 
     for port in ports {
         let mut port = serialport::new(port.port_name, 9600)
-            .timeout(Duration::from_millis(100))
+            .timeout(Duration::from_millis(1000))
             .open()
             .expect("Failed to open port");
 
@@ -101,47 +101,47 @@ fn main() -> Result<(), Box<dyn Error>> {
     loop {
         let mut buf = [0; 1];
 
-        if ed.read(&mut buf).is_ok() {
-            if buf[0] == MESSAGE_MAGIC_PRINT {
-                for _ in 0..17 {
-                    assert_eq!(ed.read(&mut buf).unwrap(), 1);
-                    print!("{}", buf[0] as char);
-                    //println!("{:?}: {}", buf[0] as char, buf[0]);
-                    io::stdout().flush().ok();
-                }
+        assert_eq!(ed.read(&mut buf).unwrap(), 1);
+
+        if buf[0] == MESSAGE_MAGIC_PRINT {
+            for _ in 0..31 {
+                assert_eq!(ed.read(&mut buf).unwrap(), 1);
+                print!("{}", buf[0] as char);
+                //println!("{:?}: {}", buf[0] as char, buf[0]);
+                io::stdout().flush().ok();
             }
-            if buf[0] == MESSAGE_MAGIC_PROFILER {
-                for _ in 0..17 {
-                    assert_eq!(ed.read(&mut buf).unwrap(), 1);
-                    //print!("{}", buf[0] as char);
-                    //println!("{:?}: {}", buf[0] as char, buf[0]);
-                    //io::stdout().flush().ok();
-                }
-            }
-            //println!("{:?}: {}", buf[0] as char, buf[0]);
-            //io::stdout().flush().ok();
-            /*if buf[0] == MESSAGE_MAGIC_PRINT {
-                let mut size_buf = [0; 2];
-                assert_eq!(ed.read(&mut size_buf).unwrap(), 2);
-
-                let scope_count = i16::from_be_bytes(size_buf);
-
-                dbg!(scope_count);
-
-                let mut scopes = Vec::new();
-                scopes.resize(scope_count as usize * size_of::<ScopeData>(), 0);
-
-                for i in 0..scope_count {
-                    assert_eq!(
-                        ed.read(
-                            &mut scopes[(i as usize * size_of::<ScopeData>())
-                                ..((i + 1) as usize * size_of::<ScopeData>())]
-                        )
-                        .unwrap(),
-                        size_of::<ScopeData>()
-                    );
-                }
-            }*/
         }
+        if buf[0] == MESSAGE_MAGIC_PROFILER {
+            for _ in 0..17 {
+                assert_eq!(ed.read(&mut buf).unwrap(), 1);
+                //print!("{}", buf[0] as char);
+                //println!("{:?}: {}", buf[0] as char, buf[0]);
+                //io::stdout().flush().ok();
+            }
+        }
+        //println!("{:?}: {}", buf[0] as char, buf[0]);
+        //io::stdout().flush().ok();
+        /*if buf[0] == MESSAGE_MAGIC_PRINT {
+            let mut size_buf = [0; 2];
+            assert_eq!(ed.read(&mut size_buf).unwrap(), 2);
+
+            let scope_count = i16::from_be_bytes(size_buf);
+
+            dbg!(scope_count);
+
+            let mut scopes = Vec::new();
+            scopes.resize(scope_count as usize * size_of::<ScopeData>(), 0);
+
+            for i in 0..scope_count {
+                assert_eq!(
+                    ed.read(
+                        &mut scopes[(i as usize * size_of::<ScopeData>())
+                            ..((i + 1) as usize * size_of::<ScopeData>())]
+                    )
+                    .unwrap(),
+                    size_of::<ScopeData>()
+                );
+            }
+        }*/
     }
 }
