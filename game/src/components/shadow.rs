@@ -44,9 +44,9 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
                 * Mat4::from_rotation_translation(
                     mesh_drawable.rot,
                     vec3(
-                        movable.pos.x - camera.pos.x - 0.05,
-                        movable.pos.y - camera.pos.y + 0.1,
-                        -1.2,
+                        movable.pos.x - camera.pos.x - 0.02,
+                        movable.pos.y - camera.pos.y + 0.12,
+                        -1.1,
                     ),
                 );
 

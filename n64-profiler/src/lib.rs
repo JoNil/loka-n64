@@ -130,7 +130,7 @@ mod inner {
 
     pub fn init() {
         Box::leak(Box::new(
-            puffin_http::Server::new(&format!("0.0.0.0:{}", puffin_http::DEFAULT_PORT)).unwrap(),
+            puffin_http::Server::new(&format!("0.0.0.0:{}", puffin_http::DEFAULT_PORT)).ok(),
         ));
     }
 

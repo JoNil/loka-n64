@@ -64,7 +64,7 @@ fn find_everdrive() -> Box<dyn SerialPort> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let _puffin_server =
-        puffin_http::Server::new(&format!("0.0.0.0:{}", puffin_http::DEFAULT_PORT)).unwrap();
+        puffin_http::Server::new(&format!("0.0.0.0:{}", puffin_http::DEFAULT_PORT)).ok();
 
     puffin::set_scopes_on(true);
 
