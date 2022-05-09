@@ -43,9 +43,12 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             rot: Quat::IDENTITY,
         })
         .add(Shadow)
-        .add(Health { health: 10000 })
+        .add(Health {
+            health: 10000,
+            damaged_this_frame: true,
+        })
         .add(Weapon {
-            weapon_type: WeaponType::TrippleMissile,
+            weapon_type: WeaponType::Laser,
             last_shoot_time: i64::MIN / 2,
             direction: 0.0,
         })

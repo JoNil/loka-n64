@@ -74,7 +74,10 @@ pub fn shoot_bullet(
             speed: speed + speed_offset,
         })
         .add(Size { size: BULLET.size })
-        .add(Health { health: 5 })
+        .add(Health {
+            health: 5,
+            damaged_this_frame: true,
+        })
         .add(MeshDrawable {
             model: BULLET.as_model_data(),
             rot: Quat::IDENTITY,
@@ -111,7 +114,10 @@ pub fn shoot_missile(
             speed: speed + speed_offset,
         })
         .add(Size { size: MISSILE_SIZE })
-        .add(Health { health: 15 })
+        .add(Health {
+            health: 15,
+            damaged_this_frame: true,
+        })
         .add(MeshDrawable {
             model: MISSILE.as_model_data(),
             rot: Quat::IDENTITY,
@@ -146,7 +152,7 @@ pub fn shoot_laser(
         })
         .add(Projectile {
             target_type,
-            damage: 1,
+            damage: 2,
             projectile_collision_grace_period_ms: 0,
         });
 }
@@ -306,7 +312,12 @@ pub fn fire(
 }
 
 static TARGET_PIPELINE: Pipeline = Pipeline {
-    color_combiner_mode: ColorCombinerMode::simple(ASrc::Zero, BSrc::Zero, CSrc::Zero, DSrc::Environment),
+    color_combiner_mode: ColorCombinerMode::simple(
+        ASrc::Zero,
+        BSrc::Zero,
+        CSrc::Zero,
+        DSrc::Environment,
+    ),
     ..Pipeline::default()
 };
 

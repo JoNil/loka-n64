@@ -1,9 +1,11 @@
-use super::movable::Movable;
+use super::{health::Health, movable::Movable};
 use crate::{camera::Camera, ecs::world::World, model::ModelData};
 use core::f32::consts::PI;
 use n64::{
     gfx::{
-        color_combiner_mode::{ASrc, BSrc, CSrc, ColorCombinerMode, DSrc},
+        color_combiner_mode::{
+            AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombinerMode, DAlphaSrc, DSrc,
+        },
         CommandBuffer, Pipeline,
     },
     VideoMode,
@@ -23,14 +25,32 @@ static MESH_PIPELINE: Pipeline = Pipeline {
 };
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-    let (mesh_drawable, movable) = world.components.get2::<MeshDrawable, Movable>();
+    let (mesh_drawable, movable, health) = world.components.get3::<MeshDrawable, Movable, Health>();
 
     let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
 
-    cb.set_pipeline(&MESH_PIPELINE);
-
     for (component, entity) in mesh_drawable.components_and_entities() {
         if let Some(movable) = movable.lookup(entity) {
+            let mut pipeline = MESH_PIPELINE;
+
+            if let Some(health) = health.lookup(entity) {
+                if health.damaged_this_frame {
+                    pipeline.color_combiner_mode = ColorCombinerMode::one(
+                        ASrc::One,
+                        BSrc::Zero,
+                        CSrc::Texel,
+                        DSrc::Primitive,
+                        AAlphaSrc::Zero,
+                        BAlphaSrc::Zero,
+                        CAlphaSrc::Zero,
+                        DAlphaSrc::TexelAlpha,
+                    );
+                    pipeline.prim_color = Some(0xa0a0a0ff);
+                }
+            }
+
+            cb.set_pipeline(&pipeline);
+
             let post_transform = Mat4::from_cols_array_2d(&[
                 [video_mode.width() as f32, 0.0, 0.0, 0.0],
                 [0.0, video_mode.height() as f32, 0.0, 0.0],

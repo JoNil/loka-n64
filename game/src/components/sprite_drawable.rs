@@ -1,8 +1,10 @@
-use super::{movable::Movable, size::Size};
+use super::{health::Health, movable::Movable, size::Size};
 use crate::{camera::Camera, ecs::world::World};
 use n64::{
     gfx::{
-        color_combiner_mode::{ColorCombinerMode, DSrc},
+        color_combiner_mode::{
+            AAlphaSrc, ASrc, BAlphaSrc, BSrc, CAlphaSrc, CSrc, ColorCombinerMode, DAlphaSrc, DSrc,
+        },
         CommandBuffer, Pipeline, Texture,
     },
     VideoMode,
@@ -21,7 +23,9 @@ pub struct SpriteDrawable {
 }
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-    let (sprite_drawable, movable, size) = world.components.get3::<SpriteDrawable, Movable, Size>();
+    let (sprite_drawable, movable, size, health) = world
+        .components
+        .get4::<SpriteDrawable, Movable, Size, Health>();
 
     for (component, entity) in sprite_drawable.components_and_entities() {
         if let (Some(movable), Some(size)) = (movable.lookup(entity), size.lookup(entity)) {
@@ -32,7 +36,25 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
 
             let screen_size = Vec2::new(video_mode.width() as f32, video_mode.height() as f32);
 
-            cb.set_pipeline(&SPRITE_PIPELINE.with_texture(Some(component.texture)));
+            let mut pipeline = SPRITE_PIPELINE.with_texture(Some(component.texture));
+
+            if let Some(health) = health.lookup(entity) {
+                if health.damaged_this_frame {
+                    pipeline.color_combiner_mode = ColorCombinerMode::one(
+                        ASrc::One,
+                        BSrc::Zero,
+                        CSrc::Texel,
+                        DSrc::Primitive,
+                        AAlphaSrc::Zero,
+                        BAlphaSrc::Zero,
+                        CAlphaSrc::Zero,
+                        DAlphaSrc::TexelAlpha,
+                    );
+                    pipeline.prim_color = Some(0xa0a0a0ff);
+                }
+            }
+
+            cb.set_pipeline(&pipeline);
 
             cb.add_textured_rect(
                 (upper_left - camera.pos) * screen_size,

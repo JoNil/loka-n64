@@ -113,6 +113,8 @@ fn main() {
 
             camera.update(&n64.controllers, dt, &VIDEO_MODE);
 
+            health::clear_was_damaged(&mut world);
+
             enemy::update(&mut world, &mut sound_mixer, dt);
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
             missile::update(&mut world, dt);

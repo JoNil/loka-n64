@@ -53,7 +53,10 @@ pub fn spawn_enemy(
         .add(movable)
         .add(size)
         .add(SpriteDrawable { texture })
-        .add(Health { health: 100 })
+        .add(Health {
+            health: 100,
+            damaged_this_frame: false,
+        })
         .add(Weapon {
             weapon_type: WeaponType::Bullet,
             last_shoot_time: 0,
