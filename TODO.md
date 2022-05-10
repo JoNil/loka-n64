@@ -1,8 +1,9 @@
 # loka-n64
 
 Fixes
-- Fix usb serial transfer
-    - Profiling info
+- Center projection on screen, left vs right rotation looks different
+- Profiling zone names
+- Vertex cache?
 
 Ideas
 - Spawn Wave
@@ -10,7 +11,7 @@ Ideas
 
 Optimizations
 - Font to 1 bit per pixel texture
-- Console gpu work overlap with cpu work
+- Console gpu work overlap with cpu work, already does??? What is our gpu time?
 
 Later
 - Spirv till rsp?
