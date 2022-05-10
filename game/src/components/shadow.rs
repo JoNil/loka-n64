@@ -22,6 +22,8 @@ static SHADOW_PIPELINE: Pipeline = Pipeline {
 };
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
+    n64_profiler::scope!("shadow::draw");
+
     let (mesh_drawable, shadow, movable) = world.components.get3::<MeshDrawable, Shadow, Movable>();
 
     let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);

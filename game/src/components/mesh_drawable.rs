@@ -25,6 +25,8 @@ static MESH_PIPELINE: Pipeline = Pipeline {
 };
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
+    n64_profiler::scope!("mesh_drawable::draw");
+
     let (mesh_drawable, movable, health) = world.components.get3::<MeshDrawable, Movable, Health>();
 
     let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);

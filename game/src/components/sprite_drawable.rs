@@ -23,6 +23,9 @@ pub struct SpriteDrawable {
 }
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
+
+    n64_profiler::scope!("sprite_drawable::draw");
+
     let (sprite_drawable, movable, size, health) = world
         .components
         .get4::<SpriteDrawable, Movable, Size, Health>();
