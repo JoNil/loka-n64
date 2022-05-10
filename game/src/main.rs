@@ -141,10 +141,11 @@ fn main() {
             });
         }
 
-        let mut cb = CommandBuffer::new(n64.framebuffer.next_buffer(), &mut command_buffer_cache);
-
-        {
+        let cb = {
             n64_profiler::scope!("Command Buffer");
+
+            let mut cb =
+                CommandBuffer::new(n64.framebuffer.next_buffer(), &mut command_buffer_cache);
 
             cb.clear();
 
@@ -289,7 +290,9 @@ fn main() {
             }
 
             draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
-        }
+
+            cb
+        };
 
         let (colored_rect_count, textured_rect_count, mesh_count) = {
             n64_profiler::scope!("Gpu");

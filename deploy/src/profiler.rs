@@ -10,12 +10,16 @@ pub fn global_reporter(info: ThreadInfo, stream_info: &StreamInfoRef<'_>) {
 pub struct N64Profiler {
     stream_info: StreamInfo,
     start_time_ns: Option<NanoSecond>,
+    start_time_n64: Option<i32>,
     end_time_queue: Vec<(usize, NanoSecond)>,
     current_depth: i32,
 }
 
 impl N64Profiler {
     pub fn submit_scope(&mut self, scope: ScopeData) {
+        self.start_time_ns = Some(self.start_time_ns.unwrap_or(puffin::now_ns()));
+        self.start_time_n64 = Some(self.start_time_n64.unwrap_or(scope.start));
+
         while self.current_depth >= scope.depth as i32 {
             if let Some((start_offset, end_ns)) = self.end_time_queue.pop() {
                 self.stream_info.stream.end_scope(start_offset, end_ns);
@@ -25,12 +29,13 @@ impl N64Profiler {
             self.current_depth = (self.current_depth - 1).max(0);
         }
 
-        let start_ns = scope.start as i64 * 1000;
-        let end_ns = scope.end as i64 * 1000;
+        let start_ns = self.start_time_ns.unwrap()
+            + (scope.start - self.start_time_n64.unwrap()) as i64 * 1000;
+        let end_ns =
+            self.start_time_ns.unwrap() + (scope.end - self.start_time_n64.unwrap()) as i64 * 1000;
         let id = scope.id;
         let id = format!("{}", id);
 
-        self.start_time_ns = Some(self.start_time_ns.unwrap_or(start_ns));
         self.current_depth = scope.depth as i32;
         self.stream_info.range_ns.0 = self.stream_info.range_ns.0.min(start_ns);
         self.stream_info.range_ns.1 = self.stream_info.range_ns.1.max(end_ns);
