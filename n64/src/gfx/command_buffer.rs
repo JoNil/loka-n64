@@ -165,8 +165,8 @@ impl<'a> CommandBuffer<'a> {
             let mut v1 = transform.project_point3(Vec3::from(verts[triangle[1] as usize]));
             let mut v2 = transform.project_point3(Vec3::from(verts[triangle[2] as usize]));
 
-            let x_limit = 320.0;
-            let y_limit = 240.0;
+            let x_limit = self.out_tex.width;
+            let y_limit = self.out_tex.height;
 
             v0.x = libm::fmaxf(libm::fminf(v0.x, x_limit), 0.0);
             v1.x = libm::fmaxf(libm::fminf(v1.x, x_limit), 0.0);
