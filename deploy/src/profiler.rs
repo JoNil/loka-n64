@@ -1,3 +1,4 @@
+use n64_types::ScopeData;
 use puffin::{GlobalProfiler, NanoSecond, StreamInfo, StreamInfoRef, ThreadInfo};
 
 pub fn global_reporter(info: ThreadInfo, stream_info: &StreamInfoRef<'_>) {
@@ -6,51 +7,56 @@ pub fn global_reporter(info: ThreadInfo, stream_info: &StreamInfoRef<'_>) {
 
 /// Collects profiling data for one thread
 #[derive(Default)]
-pub struct ThreadProfiler {
+pub struct N64Profiler {
     stream_info: StreamInfo,
-    /// Current depth.
-    depth: usize,
     start_time_ns: Option<NanoSecond>,
+    end_time_queue: Vec<(usize, NanoSecond)>,
+    current_depth: i32,
 }
 
-impl ThreadProfiler {
-    /// Returns position where to write scope size once the scope is closed.
-    #[must_use]
-    pub fn begin_scope(&mut self, id: &str, location: &str, data: &str) -> usize {
-        let now_ns = puffin::now_ns();
-        self.start_time_ns = Some(self.start_time_ns.unwrap_or(now_ns));
+impl N64Profiler {
+    pub fn submit_scope(&mut self, scope: ScopeData) {
+        while self.current_depth >= scope.depth as i32 {
+            if let Some((start_offset, end_ns)) = self.end_time_queue.pop() {
+                self.stream_info.stream.end_scope(start_offset, end_ns);
+            } else {
+                break;
+            }
+            self.current_depth = (self.current_depth - 1).max(0);
+        }
 
-        self.depth += 1;
+        let start_ns = scope.start as i64 * 1000;
+        let end_ns = scope.end as i64 * 1000;
+        let id = scope.id;
+        let id = format!("{}", id);
 
-        self.stream_info.range_ns.0 = self.stream_info.range_ns.0.min(now_ns);
-        self.stream_info
+        self.start_time_ns = Some(self.start_time_ns.unwrap_or(start_ns));
+        self.current_depth = scope.depth as i32;
+        self.stream_info.range_ns.0 = self.stream_info.range_ns.0.min(start_ns);
+        self.stream_info.range_ns.1 = self.stream_info.range_ns.1.max(end_ns);
+        self.stream_info.depth = self.stream_info.depth.max(scope.depth as usize);
+        self.stream_info.num_scopes += 1;
+
+        let start_offset = self
+            .stream_info
             .stream
-            .begin_scope(now_ns, id, location, data)
+            .begin_scope(start_ns, &id, "n64", "");
+
+        self.end_time_queue.push((start_offset, end_ns));
     }
 
-    pub fn end_scope(&mut self, start_offset: usize) {
-        let now_ns = puffin::now_ns();
-        self.stream_info.depth = self.stream_info.depth.max(self.depth);
-        self.stream_info.num_scopes += 1;
-        self.stream_info.range_ns.1 = self.stream_info.range_ns.1.max(now_ns);
-
-        if self.depth > 0 {
-            self.depth -= 1;
-        } else {
-            eprintln!("puffin ERROR: Mismatched scope begin/end calls");
+    pub fn flush_frame(&mut self) {
+        while let Some((start_offset, end_ns)) = self.end_time_queue.pop() {
+            self.stream_info.stream.end_scope(start_offset, end_ns);
         }
 
-        self.stream_info.stream.end_scope(start_offset, now_ns);
+        let info = ThreadInfo {
+            start_time_ns: self.start_time_ns,
+            name: "N64".to_string(),
+        };
+        global_reporter(info, &self.stream_info.as_stream_into_ref());
 
-        if self.depth == 0 {
-            // We have no open scopes.
-            // This is a good time to report our profiling stream to the global profiler:
-            let info = ThreadInfo {
-                start_time_ns: self.start_time_ns,
-                name: std::thread::current().name().unwrap_or_default().to_owned(),
-            };
-            global_reporter(info, &self.stream_info.as_stream_into_ref());
-            self.stream_info.clear();
-        }
+        self.stream_info.clear();
+        self.current_depth = 0;
     }
 }

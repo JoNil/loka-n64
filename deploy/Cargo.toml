@@ -9,3 +9,4 @@ n64-types = { path = "../n64-types" }
 puffin = { version = "0.13", features = ["packing", "serialization"] }
 puffin_http = "0.10"
 serialport = "4"
+zerocopy = "0.6"

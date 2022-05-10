@@ -99,7 +99,7 @@ fn main() {
     loop {
         frame_begin_time = current_time_us();
 
-        n64::debugln!("Frame: {}", frame_count);
+        //n64::debugln!("Frame: {}", frame_count);
         frame_count += 1;
 
         n64_profiler::frame!();
@@ -141,11 +141,10 @@ fn main() {
             });
         }
 
-        let (colored_rect_count, textured_rect_count, mesh_count) = {
-            n64_profiler::scope!("Graphics");
+        let mut cb = CommandBuffer::new(n64.framebuffer.next_buffer(), &mut command_buffer_cache);
 
-            let fb = n64.framebuffer.next_buffer();
-            let mut cb = CommandBuffer::new(fb, &mut command_buffer_cache);
+        {
+            n64_profiler::scope!("Command Buffer");
 
             cb.clear();
 
@@ -290,7 +289,11 @@ fn main() {
             }
 
             draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
+        }
 
+        let (colored_rect_count, textured_rect_count, mesh_count) = {
+            n64_profiler::scope!("Gpu");
+            let cb = cb;
             cb.run(&mut n64.graphics)
         };
 

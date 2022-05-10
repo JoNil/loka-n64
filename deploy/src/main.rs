@@ -1,4 +1,5 @@
-use n64_types::{ScopeData, MESSAGE_MAGIC_PRINT, MESSAGE_MAGIC_PROFILER};
+use crate::profiler::N64Profiler;
+use n64_types::{ProfilerMessageBuffer, MESSAGE_MAGIC_PRINT, MESSAGE_MAGIC_PROFILER};
 use serialport::SerialPort;
 use std::{
     env,
@@ -9,6 +10,7 @@ use std::{
     process::{self, Command},
     time::Duration,
 };
+use zerocopy::LayoutVerified;
 
 mod profiler;
 
@@ -98,50 +100,46 @@ fn main() -> Result<(), Box<dyn Error>> {
         write_cmd(&mut *ed, b's', 0, 0, 0);
     }
 
-    loop {
-        let mut buf = [0; 1];
+    let mut profiler = N64Profiler::default();
 
-        assert_eq!(ed.read(&mut buf).unwrap(), 1);
+    loop {
+        let mut buf = [0; 32];
+
+        assert_eq!(ed.read(&mut buf[0..1]).unwrap(), 1);
 
         if buf[0] == MESSAGE_MAGIC_PRINT {
-            for _ in 0..31 {
-                assert_eq!(ed.read(&mut buf).unwrap(), 1);
-                print!("{}", buf[0] as char);
-                //println!("{:?}: {}", buf[0] as char, buf[0]);
+            assert_eq!(ed.read(&mut buf[1..32]).unwrap(), 31);
+            for b in &buf[1..32] {
+                print!("{}", *b as char);
                 io::stdout().flush().ok();
             }
         }
         if buf[0] == MESSAGE_MAGIC_PROFILER {
-            for _ in 0..17 {
-                assert_eq!(ed.read(&mut buf).unwrap(), 1);
-                //print!("{}", buf[0] as char);
-                //println!("{:?}: {}", buf[0] as char, buf[0]);
-                //io::stdout().flush().ok();
+            assert_eq!(
+                ed.read(&mut buf[1..size_of::<ProfilerMessageBuffer>()])
+                    .unwrap(),
+                size_of::<ProfilerMessageBuffer>() - 1
+            );
+            let profiler_message = LayoutVerified::<&[u8], ProfilerMessageBuffer>::new_unaligned(
+                &buf[..size_of::<ProfilerMessageBuffer>()],
+            )
+            .unwrap();
+            let profiler_message = profiler_message.into_ref();
+
+            let index = i16::from_be(profiler_message.index);
+            let count = i16::from_be(profiler_message.count);
+
+            let scope = profiler_message.get_scope_from_be();
+
+            if index == 0 {
+                puffin::GlobalProfiler::lock().new_frame();
+            }
+
+            profiler.submit_scope(scope);
+
+            if index == count - 1 {
+                profiler.flush_frame();
             }
         }
-        //println!("{:?}: {}", buf[0] as char, buf[0]);
-        //io::stdout().flush().ok();
-        /*if buf[0] == MESSAGE_MAGIC_PRINT {
-            let mut size_buf = [0; 2];
-            assert_eq!(ed.read(&mut size_buf).unwrap(), 2);
-
-            let scope_count = i16::from_be_bytes(size_buf);
-
-            dbg!(scope_count);
-
-            let mut scopes = Vec::new();
-            scopes.resize(scope_count as usize * size_of::<ScopeData>(), 0);
-
-            for i in 0..scope_count {
-                assert_eq!(
-                    ed.read(
-                        &mut scopes[(i as usize * size_of::<ScopeData>())
-                            ..((i + 1) as usize * size_of::<ScopeData>())]
-                    )
-                    .unwrap(),
-                    size_of::<ScopeData>()
-                );
-            }
-        }*/
     }
 }

@@ -619,6 +619,7 @@ dependencies = [
  "puffin",
  "puffin_http",
  "serialport",
+ "zerocopy",
 ]
 
 [[package]]

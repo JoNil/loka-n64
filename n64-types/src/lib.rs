@@ -1,6 +1,6 @@
 #![no_std]
 
-pub use profiler::ScopeData;
+pub use profiler::{ProfilerMessageBuffer, ScopeData};
 pub use rdp_command::RdpCommand;
 pub use video_mode::VideoMode;
 

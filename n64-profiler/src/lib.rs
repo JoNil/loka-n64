@@ -5,20 +5,8 @@ mod inner {
 
     use core::marker::PhantomData;
     use n64_sys::sys::current_time_us;
-    use n64_types::{ScopeData, MESSAGE_MAGIC_PROFILER};
+    use n64_types::{ProfilerMessageBuffer, ScopeData, MESSAGE_MAGIC_PROFILER};
     use zerocopy::AsBytes;
-
-    #[repr(C, packed)]
-    #[derive(AsBytes)]
-    pub struct ProfilerMessageBuffer {
-        message_header_buffer: u8,
-        scope: ScopeData,
-        index: i16,
-        count: i16,
-        _padding: [u8; 1],
-    }
-
-    n64_types::static_assert!(core::mem::size_of::<ProfilerMessageBuffer>() == 18);
 
     #[repr(C, align(16))]
     pub struct ProfilerMessage {
@@ -28,7 +16,7 @@ mod inner {
     pub struct Profiler {
         scopes: [ScopeData; 128],
         current_index: i16,
-        current_depth: i16,
+        current_depth: u8,
     }
 
     impl Profiler {
@@ -37,17 +25,17 @@ mod inner {
         pub fn begin_scope(&mut self, name: &'static str) -> i16 {
             let now_us = current_time_us() as i32;
 
-            self.current_depth += 1;
-
             let index = self.current_index;
-            self.current_index += 1;
 
-            self.scopes[self.current_index as usize] = ScopeData {
+            self.scopes[index as usize] = ScopeData {
                 start: now_us,
                 end: 0,
                 depth: self.current_depth,
-                id: 0,
+                id: index,
             };
+
+            self.current_depth += 1;
+            self.current_index += 1;
 
             index
         }
@@ -55,6 +43,7 @@ mod inner {
         #[inline]
         pub fn end_scope(&mut self, index: i16) {
             self.scopes[index as usize].end = current_time_us() as i32;
+            self.current_depth -= 1;
         }
 
         #[inline]
@@ -66,7 +55,6 @@ mod inner {
                         scope: self.scopes[i as usize],
                         index: i,
                         count: self.current_index,
-                        _padding: [0; 1],
                     },
                 };
 
