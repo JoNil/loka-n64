@@ -3,7 +3,6 @@
 Fixes
 - Center projection on screen, left vs right rotation looks different
 - Profiling zone names
-- Vertex cache?
 
 Ideas
 - Spawn Wave

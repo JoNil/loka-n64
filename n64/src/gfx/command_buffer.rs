@@ -1,5 +1,6 @@
 use super::{FillPipeline, Pipeline, TextureMut};
 use crate::graphics::Graphics;
+use alloc::boxed::Box;
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
@@ -12,13 +13,30 @@ mod rdp_state;
 
 pub struct CommandBufferCache {
     rdp: RdpCommandBuilder,
+    vertex_cache: Box<[(Vec3, i32); 256]>,
+    vertex_cache_generation: i32,
 }
 
 impl CommandBufferCache {
     pub fn new() -> Self {
         Self {
             rdp: RdpCommandBuilder::new(),
+            vertex_cache: Box::new([(Vec3::ZERO, 0); 256]),
+            vertex_cache_generation: 0,
         }
+    }
+
+    fn get(&mut self, index: u8, f: impl FnOnce() -> Vec3) -> Vec3 {
+        let cached = self.vertex_cache[index as usize];
+        if cached.1 == self.vertex_cache_generation {
+            return cached.0;
+        }
+
+        let v = f();
+
+        self.vertex_cache[index as usize] = (v, self.vertex_cache_generation);
+
+        v
     }
 }
 
@@ -160,10 +178,18 @@ impl<'a> CommandBuffer<'a> {
 
         let transform = Mat4::from_cols_array_2d(transform);
 
+        self.cache.vertex_cache_generation = self.cache.vertex_cache_generation.wrapping_add(1);
+
         for triangle in indices {
-            let mut v0 = transform.project_point3(Vec3::from(verts[triangle[0] as usize]));
-            let mut v1 = transform.project_point3(Vec3::from(verts[triangle[1] as usize]));
-            let mut v2 = transform.project_point3(Vec3::from(verts[triangle[2] as usize]));
+            let mut v0 = self.cache.get(triangle[0], || {
+                transform.project_point3(Vec3::from(verts[triangle[0] as usize]))
+            });
+            let mut v1 = self.cache.get(triangle[1], || {
+                transform.project_point3(Vec3::from(verts[triangle[1] as usize]))
+            });
+            let mut v2 = self.cache.get(triangle[2], || {
+                transform.project_point3(Vec3::from(verts[triangle[2] as usize]))
+            });
 
             let x_limit = self.out_tex.width as f32;
             let y_limit = self.out_tex.height as f32;
