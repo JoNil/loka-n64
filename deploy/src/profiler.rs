@@ -1,5 +1,6 @@
 use n64_types::ScopeData;
 use puffin::{GlobalProfiler, NanoSecond, StreamInfo, StreamInfoRef, ThreadInfo};
+use std::collections::HashMap;
 
 pub fn global_reporter(info: ThreadInfo, stream_info: &StreamInfoRef<'_>) {
     GlobalProfiler::lock().report(info, stream_info);
@@ -16,7 +17,7 @@ pub struct N64Profiler {
 }
 
 impl N64Profiler {
-    pub fn submit_scope(&mut self, scope: ScopeData) {
+    pub fn submit_scope(&mut self, scope: ScopeData, scope_names: &HashMap<i16, String>) {
         self.start_time_ns = Some(self.start_time_ns.unwrap_or(puffin::now_ns()));
         self.start_time_n64 = Some(self.start_time_n64.unwrap_or(scope.start));
 
@@ -34,7 +35,7 @@ impl N64Profiler {
         let end_ns =
             self.start_time_ns.unwrap() + (scope.end - self.start_time_n64.unwrap()) as i64 * 1000;
         let id = scope.id;
-        let id = format!("{}", id);
+        let id = format!("{}", scope_names.get(&id).unwrap());
 
         self.current_depth = scope.depth as i32;
         self.stream_info.range_ns.0 = self.stream_info.range_ns.0.min(start_ns);

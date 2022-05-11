@@ -2,6 +2,7 @@ use crate::profiler::N64Profiler;
 use n64_types::{ProfilerMessageBuffer, MESSAGE_MAGIC_PRINT, MESSAGE_MAGIC_PROFILER};
 use serialport::SerialPort;
 use std::{
+    collections::HashMap,
     env,
     error::Error,
     fs,
@@ -64,6 +65,22 @@ fn find_everdrive() -> Box<dyn SerialPort> {
     process::exit(1);
 }
 
+fn fetch_scope_names() -> HashMap<i16, String> {
+    let file = fs::read_to_string("scope_names.txt").unwrap();
+
+    let mut res = HashMap::new();
+
+    for line in file.lines() {
+        let mut parts = line.split(':');
+        let id = parts.next().unwrap().trim().parse::<i16>().unwrap();
+        let name = parts.next().unwrap().trim();
+
+        res.insert(id, name.to_string());
+    }
+
+    res
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     let _puffin_server =
         puffin_http::Server::new(&format!("0.0.0.0:{}", puffin_http::DEFAULT_PORT)).ok();
@@ -87,6 +104,8 @@ fn main() -> Result<(), Box<dyn Error>> {
         ])
         .status()?
         .success());
+
+    let scope_names = fetch_scope_names();
 
     let mut ed = find_everdrive();
 
@@ -135,7 +154,7 @@ fn main() -> Result<(), Box<dyn Error>> {
                 puffin::GlobalProfiler::lock().new_frame();
             }
 
-            profiler.submit_scope(scope);
+            profiler.submit_scope(scope, &scope_names);
 
             if index == count - 1 {
                 profiler.flush_frame();

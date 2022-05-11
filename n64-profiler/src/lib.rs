@@ -3,6 +3,8 @@
 #[cfg(target_vendor = "nintendo64")]
 mod inner {
 
+    pub use n64_profiler_macro;
+
     use core::marker::PhantomData;
     use n64_sys::sys::current_time_us;
     use n64_types::{ProfilerMessageBuffer, ScopeData, MESSAGE_MAGIC_PROFILER};
@@ -22,7 +24,7 @@ mod inner {
     impl Profiler {
         #[inline]
         #[must_use]
-        pub fn begin_scope(&mut self, name: &'static str) -> i16 {
+        pub fn begin_scope(&mut self, id: i16) -> i16 {
             let now_us = current_time_us() as i32;
 
             let index = self.current_index;
@@ -31,7 +33,7 @@ mod inner {
                 start: now_us,
                 end: 0,
                 depth: self.current_depth,
-                id: index,
+                id,
             };
 
             self.current_depth += 1;
@@ -79,9 +81,9 @@ mod inner {
 
     impl ProfilerScope {
         #[inline]
-        pub fn new(name: &'static str) -> Self {
+        pub fn new(id: i16) -> Self {
             Self {
-                index: GLOBAL_PROFILER.lock().begin_scope(name),
+                index: GLOBAL_PROFILER.lock().begin_scope(id),
                 _dont_send_me: PhantomData,
             }
         }
@@ -107,7 +109,8 @@ mod inner {
     #[macro_export]
     macro_rules! scope {
         ($id:expr) => {
-            let _profiler_scope = $crate::ProfilerScope::new($id);
+            let _profiler_scope =
+                $crate::ProfilerScope::new($crate::n64_profiler_macro::scope_name_to_id!($id));
         };
     }
 }
