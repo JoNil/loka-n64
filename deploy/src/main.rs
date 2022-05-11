@@ -71,7 +71,7 @@ fn fetch_scope_names() -> HashMap<i16, String> {
     let mut res = HashMap::new();
 
     for line in file.lines() {
-        let mut parts = line.split(':');
+        let mut parts = line.split(';');
         let id = parts.next().unwrap().trim().parse::<i16>().unwrap();
         let name = parts.next().unwrap().trim();
 

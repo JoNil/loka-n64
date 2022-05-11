@@ -24,7 +24,7 @@ pub fn scope_name_to_id(name: proc_macro::TokenStream) -> proc_macro::TokenStrea
         lock.next_id += 1;
 
         lock.out
-            .write_all(format!("{id}: {name}\n").as_bytes())
+            .write_all(format!("{id};{name}\n").as_bytes())
             .unwrap();
 
         id
