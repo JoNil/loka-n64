@@ -137,7 +137,7 @@ fn main() {
         }
 
         let cb = {
-            n64_profiler::scope!("Command Buffer");
+            n64_profiler::scope!("Build Command Buffer");
 
             let mut cb =
                 CommandBuffer::new(n64.framebuffer.next_buffer(), &mut command_buffer_cache);
@@ -290,9 +290,9 @@ fn main() {
         };
 
         let (colored_rect_count, textured_rect_count, mesh_count) = {
-            n64_profiler::scope!("Gpu");
+            n64_profiler::scope!("Submit Command Buffer");
             let cb = cb;
-            cb.run(&mut n64.graphics)
+            cb.submit(&mut n64.graphics)
         };
 
         last_colored_rect_count = colored_rect_count;

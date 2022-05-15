@@ -41,23 +41,6 @@ const RDP_STATUS_CLR_PLC: usize = 0x080; // RDP_STATUS: Clear PIPELINE COUNTER (
 const RDP_STATUS_CLR_CMC: usize = 0x100; // RDP_STATUS: Clear COMMAND COUNTER (Bit 8)
 const RDP_STATUS_CLR_CLK: usize = 0x200; // RDP_STATUS: Clear CLOCK COUNTER (Bit 9)
 
-#[inline]
-pub fn wait_for_done() {
-    let start = crate::sys::current_time_us();
-
-    loop {
-        let status = unsafe { read_volatile(RDP_STATUS) };
-
-        if status & RDP_STATUS_CMB == 0 && status & RDP_STATUS_PLB == 0 {
-            return;
-        }
-
-        if crate::sys::current_time_us() - start > 1_000_000 {
-            return;
-        }
-    }
-}
-
 static mut COMMANDS: Option<Vec<RdpCommand>> = None;
 
 #[inline]
@@ -75,7 +58,7 @@ pub unsafe fn swap_commands(commands: Vec<RdpCommand>) -> Vec<RdpCommand> {
 }
 
 #[inline]
-pub unsafe fn run_command_buffer() {
+pub unsafe fn start_command_buffer() {
     if let Some(commands) = &COMMANDS {
         if commands.is_empty() {
             return;
@@ -99,7 +82,22 @@ pub unsafe fn run_command_buffer() {
             (commands.as_ptr().add(commands.len()) as usize) | 0xa000_0000,
         );
         memory_barrier();
+    }
+}
 
-        wait_for_done();
+#[inline]
+pub fn wait_for_done() {
+    let start = crate::sys::current_time_us();
+
+    loop {
+        let status = unsafe { read_volatile(RDP_STATUS) };
+
+        if status & RDP_STATUS_CMB == 0 && status & RDP_STATUS_PLB == 0 {
+            return;
+        }
+
+        if crate::sys::current_time_us() - start > 1_000_000 {
+            return;
+        }
     }
 }

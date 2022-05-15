@@ -166,7 +166,7 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn run(self, graphics: &mut Graphics) -> (i32, i32, i32) {
+    pub fn submit(self, graphics: &mut Graphics) -> (i32, i32, i32) {
         let dst = DstTexture::new(&graphics.device, self.out_tex.width, self.out_tex.height);
         let window_size = Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32);
 
