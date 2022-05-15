@@ -2,6 +2,7 @@
 
 Fixes
 - Project with less fov
+- Remove all calls to memory_barrier, they emit unneeded cache 0x0 instructions
 
 Ideas
 - Z buffer
