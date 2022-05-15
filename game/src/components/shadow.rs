@@ -26,7 +26,26 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
 
     let (mesh_drawable, shadow, movable) = world.components.get3::<MeshDrawable, Shadow, Movable>();
 
+    let half_width = 0.5 * video_mode.width() as f32;
+    let half_height = 0.5 * video_mode.height() as f32;
+
+    let post_transform = Mat4::from_cols_array_2d(&[
+        [half_width, 0.0, 0.0, 0.0],
+        [0.0, half_height, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [half_width, half_height, 0.0, 1.0],
+    ]);
+
     let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
+
+    let pre_transform = Mat4::from_cols_array_2d(&[
+        [2.0, 0.0, 0.0, 0.0],
+        [0.0, 2.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [-1.0, -1.0, 0.0, 1.0],
+    ]);
+
+    let proj = post_transform * proj * pre_transform;
 
     cb.set_pipeline(&SHADOW_PIPELINE);
 
@@ -34,19 +53,11 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
         if let (Some(mesh_drawable), Some(movable)) =
             (mesh_drawable.lookup(*entity), movable.lookup(*entity))
         {
-            let post_transform = Mat4::from_cols_array_2d(&[
-                [video_mode.width() as f32, 0.0, 0.0, 0.0],
-                [0.0, video_mode.height() as f32, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 0.0],
-                [0.0, 0.0, 0.0, 1.0],
-            ]);
-
-            let transform = post_transform
-                * proj
+            let transform = proj
                 * Mat4::from_rotation_translation(
                     mesh_drawable.rot,
                     vec3(
-                        movable.pos.x - camera.pos.x - 0.02,
+                        movable.pos.x - camera.pos.x - 0.06,
                         movable.pos.y - camera.pos.y + 0.12,
                         -1.1,
                     ),

@@ -1,7 +1,7 @@
 # loka-n64
 
 Fixes
-- Center projection on screen, left vs right rotation looks different
+- Project with less fov
 
 Ideas
 - Z buffer
