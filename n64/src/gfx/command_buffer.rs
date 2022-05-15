@@ -59,6 +59,7 @@ impl<'a> CommandBuffer<'a> {
 
         cache
             .rdp
+            .sync_pipe()
             .set_color_image(
                 FORMAT_RGBA,
                 SIZE_OF_PIXEL_16B,
@@ -293,6 +294,7 @@ impl<'a> CommandBuffer<'a> {
         unsafe {
             self.cache.rdp.commands =
                 Some(rdp::swap_commands(self.cache.rdp.commands.take().unwrap()));
+
             rdp::run_command_buffer();
         };
 

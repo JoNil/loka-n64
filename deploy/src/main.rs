@@ -45,7 +45,7 @@ fn find_everdrive() -> Box<dyn SerialPort> {
 
     for port in ports {
         let mut port = serialport::new(port.port_name, 9600)
-            .timeout(Duration::from_millis(1000))
+            .timeout(Duration::from_millis(3000))
             .open()
             .expect("Failed to open port");
 

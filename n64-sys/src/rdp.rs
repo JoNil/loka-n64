@@ -42,11 +42,17 @@ const RDP_STATUS_CLR_CMC: usize = 0x100; // RDP_STATUS: Clear COMMAND COUNTER (B
 const RDP_STATUS_CLR_CLK: usize = 0x200; // RDP_STATUS: Clear CLOCK COUNTER (Bit 9)
 
 #[inline]
-fn wait_for_done() {
+pub fn wait_for_done() {
+    let start = crate::sys::current_time_us();
+
     loop {
         let status = unsafe { read_volatile(RDP_STATUS) };
 
-        if status & RDP_STATUS_CMB != 0 {
+        if status & RDP_STATUS_CMB == 0 && status & RDP_STATUS_PLB == 0 {
+            return;
+        }
+
+        if crate::sys::current_time_us() - start > 1_000_000 {
             return;
         }
     }
