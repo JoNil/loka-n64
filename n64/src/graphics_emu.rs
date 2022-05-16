@@ -372,8 +372,9 @@ impl Graphics {
 
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
         self.poll_events(framebuffer);
+        let swap_time = self.render_cpu_buffer(framebuffer);
         framebuffer.swap();
-        self.render_cpu_buffer(framebuffer)
+        swap_time
     }
 }
 
