@@ -10,16 +10,22 @@ struct PlayingSound {
 
 pub struct SoundMixer {
     playing_sounds: Vec<PlayingSound>,
+    done: Vec<i32>,
 }
 
 impl SoundMixer {
     pub fn new() -> Self {
         Self {
             playing_sounds: Vec::with_capacity(16),
+            done: Vec::with_capacity(16),
         }
     }
 
     pub fn play_sound(&mut self, sound: SoundData) {
+        if self.playing_sounds.len() == 16 {
+            return;
+        }
+
         self.playing_sounds.push(PlayingSound {
             sound,
             current_sample: 0,
@@ -37,17 +43,14 @@ impl SoundMixer {
                 } else {
                     #[cfg(target_vendor = "nintendo64")]
                     {
-                        accumulator = accumulator.saturating_add(
-                            playing_sound.sound.samples[playing_sound.current_sample] as i32,
-                        );
+                        accumulator +=
+                            playing_sound.sound.samples[playing_sound.current_sample] as i32;
                     }
 
                     #[cfg(not(target_vendor = "nintendo64"))]
                     {
-                        accumulator = accumulator.saturating_add(
-                            playing_sound.sound.samples[playing_sound.current_sample].swap_bytes()
-                                as i32,
-                        );
+                        accumulator += playing_sound.sound.samples[playing_sound.current_sample]
+                            .swap_bytes() as i32;
                     }
 
                     playing_sound.current_sample += 1;
@@ -60,11 +63,16 @@ impl SoundMixer {
             out_sample[1] = accumulator;
         }
 
-        self.playing_sounds = self
-            .playing_sounds
-            .iter()
-            .copied()
-            .filter(|s| !s.done)
-            .collect();
+        for (i, playing_sound) in self.playing_sounds.iter().enumerate() {
+            if playing_sound.done {
+                self.done.push(i as i32);
+            }
+        }
+
+        for done in self.done.iter().rev() {
+            self.playing_sounds.swap_remove(*done as usize);
+        }
+
+        self.done.clear();
     }
 }
