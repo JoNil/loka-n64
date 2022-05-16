@@ -2,7 +2,6 @@ use crate::{
     gfx::Texture,
     graphics_emu::{shader, Vertex},
 };
-use libm::log2f;
 use std::{collections::HashMap, mem, num::NonZeroU32};
 use wgpu::SamplerBindingType;
 use wgpu_mipmap::{MipmapGenerator, RenderMipmapGenerator};
@@ -210,7 +209,7 @@ impl TexturedRect {
         let tex_descriptor = wgpu::TextureDescriptor {
             label: None,
             size: tex_extent,
-            mip_level_count: 1 + log2f(texture.width.max(texture.height) as f32) as u32,
+            mip_level_count: 1 + f32::log2(texture.width.max(texture.height) as f32) as u32,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: tex_format,
