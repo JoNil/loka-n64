@@ -55,7 +55,7 @@ impl Map {
     }
 
     pub fn render(&self, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-        n64_profiler::scope!("map::render");
+        n64::scope!("map::render");
 
         let tiles_in_layer = (self.data.width_in_tiles * self.data.height_in_tiles) as usize;
 

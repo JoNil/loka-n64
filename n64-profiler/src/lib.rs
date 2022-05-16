@@ -97,7 +97,7 @@ mod inner {
     }
 
     #[inline]
-    pub fn init() {}
+    pub fn init_profiler() {}
 
     #[macro_export]
     macro_rules! frame {
@@ -120,7 +120,7 @@ mod inner {
 
     pub use puffin;
 
-    pub fn init() {
+    pub fn init_profiler() {
         Box::leak(Box::new(
             puffin_http::Server::new(&format!("0.0.0.0:{}", puffin_http::DEFAULT_PORT)).ok(),
         ));

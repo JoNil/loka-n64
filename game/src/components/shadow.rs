@@ -22,7 +22,7 @@ static SHADOW_PIPELINE: Pipeline = Pipeline {
 };
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-    n64_profiler::scope!("shadow::draw");
+    n64::scope!("shadow::draw");
 
     let (mesh_drawable, shadow, movable) = world.components.get3::<MeshDrawable, Shadow, Movable>();
 

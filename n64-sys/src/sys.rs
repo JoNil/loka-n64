@@ -1,4 +1,4 @@
-use core::{arch::asm, mem::size_of, sync::atomic::Ordering};
+use core::{arch::asm, mem::size_of};
 
 #[inline]
 pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {

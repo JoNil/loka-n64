@@ -6,9 +6,15 @@ pub use audio::Audio;
 pub use controllers::Controllers;
 pub use framebuffer::Framebuffer;
 pub use graphics::Graphics;
-pub use n64_macros::{debug, debugflush, debugln};
-use n64_math::Color;
-pub use n64_types::VideoMode;
+
+pub use n64_macros::*;
+pub use n64_profiler::*;
+pub use n64_types::*;
+
+#[cfg(target_vendor = "nintendo64")]
+pub use n64_alloc::*;
+#[cfg(target_vendor = "nintendo64")]
+pub use n64_sys::*;
 
 pub mod gfx;
 pub mod ipl3font;
@@ -96,7 +102,7 @@ pub use inner::*;
 pub use inner::*;
 
 #[inline]
-pub fn slow_cpu_clear(fb: &mut [Color]) {
+pub fn slow_cpu_clear(fb: &mut [n64_math::Color]) {
     #[allow(clippy::cast_ptr_alignment)]
     let mut p = fb.as_mut_ptr() as *mut u32;
 

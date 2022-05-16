@@ -63,7 +63,7 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
 const DEBUG_TRIANGLES: bool = false;
 
 fn main() {
-    n64_profiler::init();
+    n64::init_profiler();
 
     let mut n64 = N64::new(VIDEO_MODE);
 
@@ -95,8 +95,8 @@ fn main() {
     let mut last_mesh_count = 0;
 
     loop {
-        n64_profiler::frame!();
-        n64_profiler::scope!("Frame");
+        n64::frame!();
+        n64::scope!("Frame");
 
         {
             frame_begin_time = current_time_us();
@@ -105,7 +105,7 @@ fn main() {
         }
 
         {
-            n64_profiler::scope!("Update");
+            n64::scope!("Update");
 
             n64.controllers.update(&n64.graphics);
 
@@ -128,7 +128,7 @@ fn main() {
         }
 
         {
-            n64_profiler::scope!("Audio");
+            n64::scope!("Audio");
 
             n64.audio.update(|buffer| {
                 sound_mixer.mix(buffer);
@@ -136,7 +136,7 @@ fn main() {
         }
 
         let cb = {
-            n64_profiler::scope!("Build Command Buffer");
+            n64::scope!("Build Command Buffer");
 
             let mut cb =
                 CommandBuffer::new(n64.framebuffer.vi_buffer_token(), &mut command_buffer_cache);
@@ -237,19 +237,19 @@ fn main() {
             {
                 font::draw_number(
                     &mut cb,
-                    n64_alloc::BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
+                    n64::ALLOC_BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
                     vec2(100.0, 160.0),
                     0xff0000ff,
                 );
                 font::draw_number(
                     &mut cb,
-                    n64_alloc::BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
+                    n64::ALLOC_BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
                     vec2(100.0, 180.0),
                     0xff0000ff,
                 );
                 font::draw_number(
                     &mut cb,
-                    *n64_alloc::PAGE_OFFSET.lock() as i32,
+                    *n64::ALLOC_PAGE_OFFSET.lock() as i32,
                     vec2(100.0, 200.0),
                     0xff0000ff,
                 );
@@ -284,12 +284,12 @@ fn main() {
         };
 
         swap_time = {
-            n64_profiler::scope!("Swap");
+            n64::scope!("Swap");
             n64.graphics.swap_buffers(&mut n64.framebuffer)
         };
 
         let (colored_rect_count, textured_rect_count, mesh_count) = {
-            n64_profiler::scope!("Submit Command Buffer");
+            n64::scope!("Submit Command Buffer");
             let cb = cb;
             cb.submit(&mut n64.graphics)
         };
@@ -307,7 +307,7 @@ fn main() {
         }
 
         {
-            n64_profiler::scope!("Housekeep");
+            n64::scope!("Housekeep");
             world.housekeep();
         }
 
@@ -329,7 +329,7 @@ fn main() {
 
 #[cfg(target_vendor = "nintendo64")]
 #[global_allocator]
-static ALLOC: n64_alloc::N64Alloc = n64_alloc::N64Alloc::INIT;
+static ALLOC: n64::N64Alloc = n64::N64Alloc::INIT;
 
 #[cfg(target_vendor = "nintendo64")]
 #[start]
@@ -341,12 +341,12 @@ fn start(_argc: isize, _argv: *const *const u8) -> isize {
 #[cfg(target_vendor = "nintendo64")]
 #[panic_handler]
 fn panic(info: &core::panic::PanicInfo) -> ! {
-    n64_macros::debugln!("{}", &info);
+    n64::debugln!("{}", &info);
 
     const GREEN: Color = Color::new(0b00011_10000_00011_1);
 
     let mut out_tex = n64::gfx::TextureMut::new(VIDEO_MODE.width(), VIDEO_MODE.height(), unsafe {
-        core::slice::from_raw_parts_mut(n64_sys::vi::get_vi_buffer(), VIDEO_MODE.size() as usize)
+        core::slice::from_raw_parts_mut(n64::vi::get_vi_buffer(), VIDEO_MODE.size() as usize)
     });
 
     slow_cpu_clear(out_tex.data);
@@ -379,8 +379,8 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
     }
 
     unsafe {
-        n64_sys::sys::data_cache_hit_writeback(out_tex.data);
-        n64_sys::vi::set_vi_buffer(out_tex.data);
+        n64::sys::data_cache_hit_writeback(out_tex.data);
+        n64::vi::set_vi_buffer(out_tex.data);
     }
 
     #[allow(clippy::empty_loop)]
@@ -391,15 +391,15 @@ fn panic(info: &core::panic::PanicInfo) -> ! {
 #[alloc_error_handler]
 fn oom(_: core::alloc::Layout) -> ! {
     let mut out_tex = n64::gfx::TextureMut::new(VIDEO_MODE.width(), VIDEO_MODE.height(), unsafe {
-        core::slice::from_raw_parts_mut(n64_sys::vi::get_vi_buffer(), VIDEO_MODE.size() as usize)
+        core::slice::from_raw_parts_mut(n64::vi::get_vi_buffer(), VIDEO_MODE.size() as usize)
     });
 
     slow_cpu_clear(out_tex.data);
     ipl3font::draw_str(&mut out_tex, 50, 15, RED, b"OUT OF MEMORY!");
 
     unsafe {
-        n64_sys::sys::data_cache_hit_writeback(out_tex.data);
-        n64_sys::vi::set_vi_buffer(out_tex.data);
+        n64::sys::data_cache_hit_writeback(out_tex.data);
+        n64::vi::set_vi_buffer(out_tex.data);
     }
 
     #[allow(clippy::empty_loop)]

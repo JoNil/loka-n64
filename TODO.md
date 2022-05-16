@@ -1,7 +1,6 @@
 # loka-n64
 
-- Reexport everything from n64 crate
-- Remove lazy_static use once_cell
+- Better math primitives asm
 
 Fixes
 - Project with less fov
