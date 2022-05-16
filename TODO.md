@@ -1,7 +1,5 @@
 # loka-n64
 
-- Better math primitives asm
-
 Fixes
 - Project with less fov
 
