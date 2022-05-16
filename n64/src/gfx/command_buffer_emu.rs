@@ -1,5 +1,6 @@
-use super::{FillPipeline, Pipeline, TextureMut};
+use super::{FillPipeline, Pipeline};
 use crate::{
+    framebuffer::ViBufferToken,
     graphics::QUAD_INDEX_DATA,
     graphics_emu::{
         colored_rect::{ColoredRectUniforms, MAX_COLORED_RECTS},
@@ -10,7 +11,9 @@ use crate::{
 };
 use crate::{graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
 use assert_into::AssertInto;
+use core::slice;
 use n64_math::{Color, Vec2};
+use n64_types::VideoMode;
 use std::mem;
 use std::num::NonZeroU32;
 use wgpu::util::DeviceExt;
@@ -38,14 +41,15 @@ enum Command {
     },
 }
 
-#[derive(Default)]
 pub struct CommandBufferCache {
+    video_mode: VideoMode,
     commands: Vec<Command>,
 }
 
 impl CommandBufferCache {
-    pub fn new(_video_mode: VideoMode) -> Self {
+    pub fn new(video_mode: VideoMode) -> Self {
         Self {
+            video_mode,
             commands: Vec::new(),
         }
     }
@@ -164,8 +168,15 @@ impl<'a> CommandBuffer<'a> {
     }
 
     pub fn submit(self, graphics: &mut Graphics) -> (i32, i32, i32) {
-        let dst = DstTexture::new(&graphics.device, self.out_tex.width, self.out_tex.height);
-        let window_size = Vec2::new(self.out_tex.width as f32, self.out_tex.height as f32);
+        let dst = DstTexture::new(
+            &graphics.device,
+            self.cache.video_mode.width(),
+            self.cache.video_mode.height(),
+        );
+        let window_size = Vec2::new(
+            self.cache.video_mode.width() as f32,
+            self.cache.video_mode.height() as f32,
+        );
 
         assert!(self.colored_rect_count <= MAX_COLORED_RECTS as u32);
         assert!(self.textured_rect_count <= MAX_TEXTURED_RECTS as u32);
@@ -630,8 +641,8 @@ impl<'a> CommandBuffer<'a> {
                     buffer: &dst.buffer,
                     layout: wgpu::ImageDataLayout {
                         offset: 0,
-                        bytes_per_row: NonZeroU32::new(4 * self.out_tex.width as u32),
-                        rows_per_image: NonZeroU32::new(self.out_tex.height as u32),
+                        bytes_per_row: NonZeroU32::new(4 * self.cache.video_mode.width() as u32),
+                        rows_per_image: NonZeroU32::new(self.cache.video_mode.height() as u32),
                     },
                 },
                 dst.tex_extent,
@@ -645,7 +656,10 @@ impl<'a> CommandBuffer<'a> {
         {
             futures_executor::block_on(async {
                 dst.buffer
-                    .slice(0..((4 * self.out_tex.width * self.out_tex.height) as u64))
+                    .slice(
+                        0..((4 * self.cache.video_mode.width() * self.cache.video_mode.height())
+                            as u64),
+                    )
                     .map_async(wgpu::MapMode::Read)
                     .await
             })
@@ -653,14 +667,17 @@ impl<'a> CommandBuffer<'a> {
 
             let mapped_colored_rect_dst_buffer = dst
                 .buffer
-                .slice(0..((4 * self.out_tex.width * self.out_tex.height) as u64))
+                .slice(
+                    0..((4 * self.cache.video_mode.width() * self.cache.video_mode.height())
+                        as u64),
+                )
                 .get_mapped_range();
 
-            for (fb_color, mapped_color) in self
-                .out_tex
-                .data
-                .iter_mut()
-                .zip(mapped_colored_rect_dst_buffer.chunks(4))
+            for (fb_color, mapped_color) in unsafe {
+                slice::from_raw_parts_mut(self.out_tex.0, self.cache.video_mode.size() as usize)
+            }
+            .iter_mut()
+            .zip(mapped_colored_rect_dst_buffer.chunks(4))
             {
                 *fb_color = Color::from_bytes(mapped_color.assert_into());
             }

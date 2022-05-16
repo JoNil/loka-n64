@@ -281,9 +281,9 @@ impl Graphics {
     }
 
     pub(crate) fn render_cpu_buffer(&mut self, framebuffer: &mut Framebuffer) -> i64 {
-        let fb = framebuffer.next_buffer();
+        let fb = framebuffer.gpu_buffer();
 
-        for (pixel, data) in fb.0.data.iter().zip(self.copy_tex.src_buffer.chunks_mut(4)) {
+        for (pixel, data) in fb.data.iter().zip(self.copy_tex.src_buffer.chunks_mut(4)) {
             let rgba = pixel.to_rgba();
 
             data[0] = (rgba[0] * 255.0) as u8;
@@ -373,7 +373,7 @@ impl Graphics {
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
         self.poll_events(framebuffer);
         let frame_end_time = self.render_cpu_buffer(framebuffer);
-        framebuffer.swap_buffer();
+        framebuffer.swap();
         frame_end_time
     }
 }
