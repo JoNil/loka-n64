@@ -20,8 +20,8 @@ zerocopy = "0.6"
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
 cpal = "0.13"
 futures-executor = "0.3"
-lazy_static = "1"
 naga = { version = "0.8", features = ["glsl-in", "spv-out"] }
+once_cell = "1"
 rubato = { git = "https://github.com/JoNil/rubato.git" }
 wgpu = { version = "0.12", features = ["spirv"] }
 wgpu-mipmap = { git = "https://github.com/JoNil/wgpu-mipmap.git" }

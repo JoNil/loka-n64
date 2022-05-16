@@ -78,12 +78,10 @@ mod inner {
 #[cfg(not(target_vendor = "nintendo64"))]
 mod inner {
 
-    use lazy_static::lazy_static;
+    use once_cell::sync::Lazy;
     use std::time::Instant;
 
-    lazy_static! {
-        static ref BEGINNING: Instant = Instant::now();
-    }
+    static BEGINNING: Lazy<Instant> = Lazy::new(Instant::now);
 
     #[inline]
     pub fn current_time_us() -> i64 {
