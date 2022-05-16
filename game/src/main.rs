@@ -87,7 +87,7 @@ fn main() {
 
     let mut frame_begin_time;
     let mut last_frame_begin_time = current_time_us();
-    let mut frame_used_time = 0;
+    let mut swap_time = 0;
     let mut dt;
 
     let mut last_colored_rect_count = 0;
@@ -95,12 +95,11 @@ fn main() {
     let mut last_mesh_count = 0;
 
     loop {
-        frame_begin_time = current_time_us();
-
         n64_profiler::frame!();
         n64_profiler::scope!("Frame");
 
         {
+            frame_begin_time = current_time_us();
             dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;
             last_frame_begin_time = frame_begin_time;
         }
@@ -257,15 +256,10 @@ fn main() {
             }
 
             {
+                font::draw_number(&mut cb, (dt * 1e6) as i32, vec2(100.0, 10.0), 0x00af00ff);
                 font::draw_number(
                     &mut cb,
-                    (dt * 1000.0 * 1000.0) as i32,
-                    vec2(100.0, 10.0),
-                    0x00af00ff,
-                );
-                font::draw_number(
-                    &mut cb,
-                    frame_used_time as i32,
+                    (dt * 1e6) as i32 - swap_time as i32,
                     vec2(200.0, 10.0),
                     0x00af00ff,
                 );
@@ -289,11 +283,10 @@ fn main() {
             cb
         };
 
-        let frame_end_time = {
+        swap_time = {
             n64_profiler::scope!("Swap");
             n64.graphics.swap_buffers(&mut n64.framebuffer)
         };
-        frame_used_time = frame_end_time - frame_begin_time;
 
         let (colored_rect_count, textured_rect_count, mesh_count) = {
             n64_profiler::scope!("Submit Command Buffer");

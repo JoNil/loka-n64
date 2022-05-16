@@ -31,20 +31,22 @@ impl Framebuffer {
         }
     }
 
+    #[inline]
+    pub(crate) fn swap(&mut self) {
+        mem::swap(&mut self.vi_buffer.0, &mut self.gpu_buffer.0)
+    }
+
+    #[inline]
+    pub fn vi_buffer_token(&mut self) -> ViBufferToken {
+        ViBufferToken(self.vi_buffer.0.as_mut_ptr())
+    }
+
+    #[inline]
     pub fn gpu_buffer(&mut self) -> TextureMut {
         TextureMut {
             width: self.video_mode.width(),
             height: self.video_mode.height(),
             data: &mut self.gpu_buffer.0,
         }
-    }
-
-    #[inline]
-    pub(crate) fn swap(&mut self) {
-        mem::swap(&mut self.vi_buffer.0, &mut self.gpu_buffer.0)
-    }
-
-    pub fn vi_buffer_token(&mut self) -> ViBufferToken {
-        ViBufferToken(self.vi_buffer.0.as_mut_ptr())
     }
 }

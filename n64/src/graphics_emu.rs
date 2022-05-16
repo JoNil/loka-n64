@@ -361,20 +361,19 @@ impl Graphics {
             encoder.finish()
         };
 
-        let frame_end_time = current_time_us();
-
         self.queue.submit(Some(render_command_buf));
 
+        let swap_start = current_time_us();
         frame.present();
+        let swap_end = current_time_us();
 
-        frame_end_time
+        swap_end - swap_start
     }
 
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
         self.poll_events(framebuffer);
-        let frame_end_time = self.render_cpu_buffer(framebuffer);
         framebuffer.swap();
-        frame_end_time
+        self.render_cpu_buffer(framebuffer)
     }
 }
 

@@ -17,11 +17,11 @@ impl Graphics {
 
         framebuffer.swap();
 
-        let frame_end_time = current_time_us();
-
+        let swap_start = current_time_us();
         vi::wait_for_vblank();
+        let swap_end = current_time_us();
         unsafe { vi::set_vi_buffer(&mut framebuffer.vi_buffer.0) };
 
-        frame_end_time
+        swap_end - swap_start
     }
 }
