@@ -44,7 +44,7 @@ pub struct CommandBufferCache {
 }
 
 impl CommandBufferCache {
-    pub fn new() -> Self {
+    pub fn new(_video_mode: VideoMode) -> Self {
         Self {
             commands: Vec::new(),
         }
@@ -74,7 +74,7 @@ impl EmuPipeline {
 }
 
 pub struct CommandBuffer<'a> {
-    out_tex: TextureMut<'a>,
+    out_tex: ViBufferToken,
     clear: bool,
     colored_rect_count: u32,
     textured_rect_count: u32,
@@ -84,10 +84,7 @@ pub struct CommandBuffer<'a> {
 }
 
 impl<'a> CommandBuffer<'a> {
-    pub fn new(
-        (out_tex, _): (TextureMut<'a>, &'a mut [u16]),
-        cache: &'a mut CommandBufferCache,
-    ) -> Self {
+    pub fn new(out_tex: ViBufferToken, cache: &'a mut CommandBufferCache) -> Self {
         Self {
             out_tex,
             clear: false,

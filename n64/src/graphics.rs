@@ -6,23 +6,21 @@ pub struct Graphics {}
 impl Graphics {
     #[inline]
     pub(crate) fn new(video_mode: VideoMode, framebuffer: &mut Framebuffer) -> Self {
-        vi::init(video_mode, framebuffer.next_buffer().0.data);
+        vi::init(video_mode, &mut framebuffer.vi_buffer.0);
         rdp::init();
         Self {}
     }
 
     #[inline]
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
-        let fb = framebuffer.next_buffer();
-
         rdp::wait_for_done();
+
+        framebuffer.swap();
 
         let frame_end_time = current_time_us();
 
         vi::wait_for_vblank();
-        unsafe { vi::set_vi_buffer(fb.0.data) };
-
-        framebuffer.swap_buffer();
+        unsafe { vi::set_vi_buffer(&mut framebuffer.vi_buffer.0) };
 
         frame_end_time
     }

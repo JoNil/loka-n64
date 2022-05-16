@@ -77,7 +77,7 @@ fn main() {
 
     let mut sound_mixer = SoundMixer::new();
     let mut camera = Camera::new(start_pos);
-    let mut command_buffer_cache = CommandBufferCache::new();
+    let mut command_buffer_cache = CommandBufferCache::new(VIDEO_MODE);
 
     let _test_pickup = spawn_pickup(&mut world.entities, start_pos + vec2(0.5, 0.2));
 
@@ -140,7 +140,7 @@ fn main() {
             n64_profiler::scope!("Build Command Buffer");
 
             let mut cb =
-                CommandBuffer::new(n64.framebuffer.next_buffer(), &mut command_buffer_cache);
+                CommandBuffer::new(n64.framebuffer.vi_buffer_token(), &mut command_buffer_cache);
 
             cb.clear();
 
@@ -289,6 +289,12 @@ fn main() {
             cb
         };
 
+        let frame_end_time = {
+            n64_profiler::scope!("Swap");
+            n64.graphics.swap_buffers(&mut n64.framebuffer)
+        };
+        frame_used_time = frame_end_time - frame_begin_time;
+
         let (colored_rect_count, textured_rect_count, mesh_count) = {
             n64_profiler::scope!("Submit Command Buffer");
             let cb = cb;
@@ -298,12 +304,6 @@ fn main() {
         last_colored_rect_count = colored_rect_count;
         last_textured_rect_count = textured_rect_count;
         last_mesh_count = mesh_count;
-
-        let frame_end_time = {
-            n64_profiler::scope!("Swap");
-            n64.graphics.swap_buffers(&mut n64.framebuffer)
-        };
-        frame_used_time = frame_end_time - frame_begin_time;
 
         {
             // Cycle the random number generator
@@ -325,9 +325,9 @@ fn main() {
 
     loop {
         {
-            let mut out_tex = n64.framebuffer.next_buffer();
-            slow_cpu_clear(out_tex.0.data);
-            ipl3font::draw_str(&mut out_tex.0, 50, 10, RED, b"GAME OVER");
+            let mut out_tex = n64.framebuffer.gpu_buffer();
+            slow_cpu_clear(out_tex.data);
+            ipl3font::draw_str(&mut out_tex, 50, 10, RED, b"GAME OVER");
         }
 
         n64.graphics.swap_buffers(&mut n64.framebuffer);

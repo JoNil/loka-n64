@@ -1,6 +1,6 @@
-use super::{FillPipeline, Pipeline, TextureMut};
-use crate::graphics::Graphics;
-use alloc::boxed::Box;
+use super::{FillPipeline, Pipeline};
+use crate::{framebuffer::ViBufferToken, graphics::Graphics, VideoMode};
+use alloc::{boxed::Box, vec::Vec};
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
@@ -12,15 +12,23 @@ mod rdp_state;
 // Note: Primitive color, g*DPSetPrimColor( ), primitive depth, g*DPSetPrimDepth( ), and scissor, g*DPSetScissor( ), are attributes that do not require any syncs.
 
 pub struct CommandBufferCache {
+    video_mode: VideoMode,
     rdp: RdpCommandBuilder,
+    depth_buffer: Box<[u16]>,
     vertex_cache: Box<[(Vec3, i32); 256]>,
     vertex_cache_generation: i32,
 }
 
 impl CommandBufferCache {
-    pub fn new() -> Self {
+    pub fn new(video_mode: VideoMode) -> Self {
         Self {
+            video_mode,
             rdp: RdpCommandBuilder::new(),
+            depth_buffer: {
+                let mut buffer = Vec::new();
+                buffer.resize_with(video_mode.size() as usize, || 0);
+                buffer.into_boxed_slice()
+            },
             vertex_cache: Box::new([(Vec3::ZERO, 0); 256]),
             vertex_cache_generation: 0,
         }
@@ -41,8 +49,7 @@ impl CommandBufferCache {
 }
 
 pub struct CommandBuffer<'a> {
-    out_tex: TextureMut<'a>,
-    z_buffer: &'a mut [u16],
+    out_tex: ViBufferToken,
     colored_rect_count: u32,
     textured_rect_count: u32,
     mesh_count: u32,
@@ -51,10 +58,7 @@ pub struct CommandBuffer<'a> {
 }
 
 impl<'a> CommandBuffer<'a> {
-    pub fn new(
-        (out_tex, z_buffer): (TextureMut<'a>, &'a mut [u16]),
-        cache: &'a mut CommandBufferCache,
-    ) -> Self {
+    pub fn new(out_tex: ViBufferToken, cache: &'a mut CommandBufferCache) -> Self {
         cache.rdp.clear();
 
         cache
@@ -63,18 +67,20 @@ impl<'a> CommandBuffer<'a> {
             .set_color_image(
                 FORMAT_RGBA,
                 SIZE_OF_PIXEL_16B,
-                out_tex.width as u16,
-                out_tex.data.as_mut_ptr() as *mut u16,
+                cache.video_mode.width() as u16,
+                out_tex.0 as *mut u16,
             )
-            .set_z_image(z_buffer.as_mut_ptr() as *mut u16)
+            .set_z_image(cache.depth_buffer.as_mut_ptr())
             .set_scissor(
                 Vec2::ZERO,
-                vec2((out_tex.width - 1) as f32, (out_tex.height - 1) as f32),
+                vec2(
+                    (cache.video_mode.width() - 1) as f32,
+                    (cache.video_mode.height() - 1) as f32,
+                ),
             );
 
         CommandBuffer {
             out_tex,
-            z_buffer,
             colored_rect_count: 0,
             textured_rect_count: 0,
             mesh_count: 0,
@@ -96,16 +102,16 @@ impl<'a> CommandBuffer<'a> {
         self.cache.rdp.fill_rectangle(
             vec2(0.0, 0.0),
             vec2(
-                (self.out_tex.width - 1) as f32,
-                (self.out_tex.height - 1) as f32,
+                (self.cache.video_mode.width() - 1) as f32,
+                (self.cache.video_mode.height() - 1) as f32,
             ),
         );
 
         self.cache.rdp.set_color_image(
             FORMAT_RGBA,
             SIZE_OF_PIXEL_16B,
-            self.out_tex.width as u16,
-            self.z_buffer.as_mut_ptr() as *mut u16,
+            self.cache.video_mode.width() as u16,
+            self.cache.depth_buffer.as_mut_ptr(),
         );
 
         rdp_state::apply_fill_pipeline(
@@ -120,16 +126,16 @@ impl<'a> CommandBuffer<'a> {
         self.cache.rdp.fill_rectangle(
             vec2(0.0, 0.0),
             vec2(
-                (self.out_tex.width - 1) as f32,
-                (self.out_tex.height - 1) as f32,
+                (self.cache.video_mode.width() - 1) as f32,
+                (self.cache.video_mode.height() - 1) as f32,
             ),
         );
 
         self.cache.rdp.set_color_image(
             FORMAT_RGBA,
             SIZE_OF_PIXEL_16B,
-            self.out_tex.width as u16,
-            self.out_tex.data.as_mut_ptr() as *mut u16,
+            self.cache.video_mode.width() as u16,
+            self.out_tex.0 as *mut u16,
         );
 
         self
@@ -192,8 +198,8 @@ impl<'a> CommandBuffer<'a> {
                 transform.project_point3(Vec3::from(verts[triangle[2] as usize]))
             });
 
-            let x_limit = self.out_tex.width as f32;
-            let y_limit = self.out_tex.height as f32;
+            let x_limit = self.cache.video_mode.width() as f32;
+            let y_limit = self.cache.video_mode.height() as f32;
 
             v0.x = libm::fmaxf(libm::fminf(v0.x, x_limit), 0.0);
             v1.x = libm::fmaxf(libm::fminf(v1.x, x_limit), 0.0);
@@ -296,6 +302,9 @@ impl<'a> CommandBuffer<'a> {
                 Some(rdp::swap_commands(self.cache.rdp.commands.take().unwrap()));
 
             rdp::start_command_buffer();
+
+            // Uncomment this to see full gpu time
+            //rdp::wait_for_done();
         };
 
         (
@@ -303,12 +312,6 @@ impl<'a> CommandBuffer<'a> {
             self.textured_rect_count as i32,
             self.mesh_count as i32,
         )
-    }
-}
-
-impl Default for CommandBufferCache {
-    fn default() -> Self {
-        Self::new()
     }
 }
 

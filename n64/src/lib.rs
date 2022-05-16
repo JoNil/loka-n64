@@ -4,9 +4,10 @@ extern crate alloc;
 
 pub use audio::Audio;
 pub use controllers::Controllers;
-pub use framebuffer::{slow_cpu_clear, Framebuffer};
+pub use framebuffer::Framebuffer;
 pub use graphics::Graphics;
 pub use n64_macros::{debug, debugflush, debugln};
+use n64_math::Color;
 pub use n64_types::VideoMode;
 
 pub mod gfx;

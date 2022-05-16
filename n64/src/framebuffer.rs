@@ -1,77 +1,50 @@
 use crate::{gfx::TextureMut, VideoMode};
 use alloc::{boxed::Box, vec::Vec};
+use core::mem;
 use n64_math::Color;
+
+pub struct ViFramebuffer(pub(crate) Box<[Color]>);
+pub struct ViBufferToken(pub(crate) *mut Color);
+pub struct GpuFramebuffer(pub(crate) Box<[Color]>);
 
 pub struct Framebuffer {
     video_mode: VideoMode,
-    using_framebuffer_a: bool,
-    framebuffer_a: Box<[Color]>,
-    framebuffer_b: Box<[Color]>,
-    depth_buffer: Box<[u16]>,
+    pub(crate) vi_buffer: ViFramebuffer,
+    pub(crate) gpu_buffer: GpuFramebuffer,
 }
 
 impl Framebuffer {
     #[inline]
     pub(crate) fn new(video_mode: VideoMode) -> Self {
-        Self {
+        Framebuffer {
             video_mode,
-            using_framebuffer_a: false,
-            framebuffer_a: {
+            vi_buffer: ViFramebuffer({
                 let mut buffer = Vec::new();
                 buffer.resize_with(video_mode.size() as usize, || Color::new(0x0001));
                 buffer.into_boxed_slice()
-            },
-            framebuffer_b: {
+            }),
+            gpu_buffer: GpuFramebuffer({
                 let mut buffer = Vec::new();
                 buffer.resize_with(video_mode.size() as usize, || Color::new(0x0001));
                 buffer.into_boxed_slice()
-            },
-            depth_buffer: {
-                let mut buffer = Vec::new();
-                buffer.resize_with(video_mode.size() as usize, || 0);
-                buffer.into_boxed_slice()
-            },
+            }),
+        }
+    }
+
+    pub fn gpu_buffer(&mut self) -> TextureMut {
+        TextureMut {
+            width: self.video_mode.width(),
+            height: self.video_mode.height(),
+            data: &mut self.gpu_buffer.0,
         }
     }
 
     #[inline]
-    pub(crate) fn swap_buffer(&mut self) {
-        self.using_framebuffer_a = !self.using_framebuffer_a;
+    pub(crate) fn swap(&mut self) {
+        mem::swap(&mut self.vi_buffer.0, &mut self.gpu_buffer.0)
     }
 
-    #[inline]
-    pub fn next_buffer(&mut self) -> (TextureMut, &mut [u16]) {
-        if self.using_framebuffer_a {
-            (
-                TextureMut::new(
-                    self.video_mode.width(),
-                    self.video_mode.height(),
-                    &mut self.framebuffer_a[..],
-                ),
-                &mut *self.depth_buffer,
-            )
-        } else {
-            (
-                TextureMut::new(
-                    self.video_mode.width(),
-                    self.video_mode.height(),
-                    &mut self.framebuffer_b[..],
-                ),
-                &mut *self.depth_buffer,
-            )
-        }
-    }
-}
-
-#[inline]
-pub fn slow_cpu_clear(fb: &mut [Color]) {
-    #[allow(clippy::cast_ptr_alignment)]
-    let mut p = fb.as_mut_ptr() as *mut u32;
-
-    for _ in 0..(fb.len() / 2) {
-        unsafe {
-            p.write_unaligned(0x0001_0001);
-            p = p.offset(1);
-        }
+    pub fn vi_buffer_token(&mut self) -> ViBufferToken {
+        ViBufferToken(self.vi_buffer.0.as_mut_ptr())
     }
 }
