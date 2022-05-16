@@ -13,8 +13,6 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
 
         i += 16;
     }
-
-    memory_barrier();
 }
 
 #[inline]
@@ -22,7 +20,6 @@ pub unsafe fn data_cache_hit_writeback_invalidate_single(addr: usize) {
     let addr = addr & 0xffff_fff0;
 
     asm!("cache 0x15, ({})", in(reg) addr);
-    memory_barrier();
 }
 
 #[inline]
@@ -38,8 +35,6 @@ pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
 
         i += 16;
     }
-
-    memory_barrier();
 }
 
 #[inline]
@@ -47,7 +42,6 @@ pub unsafe fn data_cache_hit_writeback_single(addr: usize) {
     let addr = addr & 0xffff_fff0;
 
     asm!("cache 0x19, ({})", in(reg) addr);
-    memory_barrier();
 }
 
 #[inline]
@@ -63,8 +57,6 @@ pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
 
         i += 16;
     }
-
-    memory_barrier();
 }
 
 #[inline]
@@ -72,7 +64,6 @@ pub unsafe fn data_cache_hit_invalidate_single(addr: usize) {
     let addr = addr & 0xffff_fff0;
 
     asm!("cache 0x11, ({})", in(reg) addr);
-    memory_barrier();
 }
 
 #[inline]
@@ -93,11 +84,6 @@ pub fn virtual_to_physical<T>(address: *const T) -> usize {
 #[inline]
 pub fn virtual_to_physical_mut<T>(address: *mut T) -> usize {
     (address as usize) & 0x1fff_ffff
-}
-
-#[inline]
-pub unsafe fn memory_barrier() {
-    core::sync::atomic::fence(Ordering::SeqCst);
 }
 
 #[inline]

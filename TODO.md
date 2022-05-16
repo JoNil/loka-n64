@@ -1,8 +1,6 @@
 # loka-n64
 
-- Make gpu paralell with cpu and sync correctly
 - Reexport everything from n64 crate
-- Remove all calls to memory_barrier, they emit unneeded cache 0x0 instructions
 - Remove lazy_static use once_cell
 
 Fixes

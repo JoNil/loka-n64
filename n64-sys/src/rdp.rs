@@ -1,6 +1,6 @@
 #![allow(dead_code)]
 
-use crate::sys::{data_cache_hit_writeback, memory_barrier};
+use crate::sys::data_cache_hit_writeback;
 use alloc::vec::Vec;
 use core::ptr::{read_volatile, write_volatile};
 use n64_types::RdpCommand;
@@ -70,18 +70,14 @@ pub unsafe fn start_command_buffer() {
             RDP_STATUS,
             RDP_STATUS_CLR_XBS | RDP_STATUS_CLR_FRZ | RDP_STATUS_CLR_FLS,
         );
-        memory_barrier();
-
         write_volatile(
             RDP_COMMAND_BUFFER_START,
             (commands.as_ptr() as usize) | 0xa000_0000,
         );
-        memory_barrier();
         write_volatile(
             RDP_COMMAND_BUFFER_END,
             (commands.as_ptr().add(commands.len()) as usize) | 0xa000_0000,
         );
-        memory_barrier();
     }
 }
 

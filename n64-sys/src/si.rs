@@ -1,6 +1,6 @@
 use crate::sys::{
-    data_cache_hit_writeback_invalidate, memory_barrier, uncached_addr, uncached_addr_mut,
-    virtual_to_physical, virtual_to_physical_mut,
+    data_cache_hit_writeback_invalidate, uncached_addr, uncached_addr_mut, virtual_to_physical,
+    virtual_to_physical_mut,
 };
 use core::intrinsics::volatile_copy_nonoverlapping_memory;
 use core::ptr::{read_volatile, write_volatile};
@@ -35,21 +35,15 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
             inblock.len(),
         );
 
-        dma_wait();
-
         write_volatile(SI_ADDR, virtual_to_physical(inblock_temp.as_ptr()));
-        memory_barrier();
         write_volatile(SI_START_WRITE, PIF_RAM);
-        memory_barrier();
 
         dma_wait();
 
         data_cache_hit_writeback_invalidate(&outblock_temp);
 
         write_volatile(SI_ADDR, virtual_to_physical_mut(outblock_temp.as_mut_ptr()));
-        memory_barrier();
         write_volatile(SI_START_READ, PIF_RAM);
-        memory_barrier();
 
         dma_wait();
 

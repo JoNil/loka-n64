@@ -1,6 +1,6 @@
 use crate::sys::{
-    data_cache_hit_writeback_invalidate, data_cache_hit_writeback_invalidate_single,
-    memory_barrier, uncached_addr, uncached_addr_mut, virtual_to_physical, virtual_to_physical_mut,
+    data_cache_hit_writeback_invalidate, data_cache_hit_writeback_invalidate_single, uncached_addr,
+    uncached_addr_mut, virtual_to_physical, virtual_to_physical_mut,
 };
 use core::{
     ptr::{read_volatile, write_volatile},
@@ -30,11 +30,7 @@ const PI_STATUS_IO_BUSY: usize = 0x0002;
 
 #[inline]
 fn dma_wait() {
-    unsafe {
-        while read_volatile(PI_STATUS) & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY) > 0 {
-            memory_barrier();
-        }
-    }
+    unsafe { while read_volatile(PI_STATUS) & (PI_STATUS_DMA_BUSY | PI_STATUS_IO_BUSY) > 0 {} }
 }
 
 pub fn init() {
@@ -55,22 +51,13 @@ pub fn init() {
 pub unsafe fn read(dst: *mut u8, len: u32, pi_address: usize) {
     data_cache_hit_writeback_invalidate_single(dst as usize);
 
-    dma_wait();
-
     write_volatile(PI_STATUS, 3);
-    memory_barrier();
-
     write_volatile(PI_RAM_ADDR, uncached_addr_mut(dst as _) as _);
-    memory_barrier();
-
     write_volatile(
         PI_CART_ADDR,
         virtual_to_physical((pi_address | 0x10000000) as *const u8),
     );
-    memory_barrier();
-
     write_volatile(PI_WRITE_LENGTH, (len - 1) as _);
-    memory_barrier();
 
     dma_wait();
 }
@@ -78,19 +65,10 @@ pub unsafe fn read(dst: *mut u8, len: u32, pi_address: usize) {
 pub unsafe fn write(src: *const u8, len: u32, pi_address: usize) {
     data_cache_hit_writeback_invalidate(slice::from_raw_parts(src, len as _));
 
-    dma_wait();
-
     write_volatile(PI_STATUS, 3);
-    memory_barrier();
-
     write_volatile(PI_RAM_ADDR, uncached_addr(src as _) as _);
-    memory_barrier();
-
     write_volatile(PI_CART_ADDR, virtual_to_physical_mut(pi_address as *mut u8));
-    memory_barrier();
-
     write_volatile(PI_READ_LENGTH, (len - 1) as _);
-    memory_barrier();
 
     dma_wait();
 }
