@@ -210,75 +210,79 @@ fn main() {
                 }
             }
 
-            font::draw_number(
-                &mut cb,
-                world
-                    .components
-                    .get::<Player>()
-                    .lookup(player)
-                    .map(|p| p.score)
-                    .unwrap_or(0),
-                vec2(300.0, 10.0),
-                0x0000efff,
-            );
-            font::draw_number(
-                &mut cb,
-                world
-                    .components
-                    .get::<Health>()
-                    .lookup(player)
-                    .map(|hc| hc.health)
-                    .unwrap_or(0),
-                vec2(300.0, 215.0),
-                0xaf0000ff,
-            );
-
-            #[cfg(target_vendor = "nintendo64")]
             {
-                font::draw_number(
-                    &mut cb,
-                    n64::ALLOC_BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
-                    vec2(100.0, 160.0),
-                    0xff0000ff,
-                );
-                font::draw_number(
-                    &mut cb,
-                    n64::ALLOC_BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
-                    vec2(100.0, 180.0),
-                    0xff0000ff,
-                );
-                font::draw_number(
-                    &mut cb,
-                    *n64::ALLOC_PAGE_OFFSET.lock() as i32,
-                    vec2(100.0, 200.0),
-                    0xff0000ff,
-                );
-            }
+                n64::scope!("HUD");
 
-            {
-                font::draw_number(&mut cb, (dt * 1e6) as i32, vec2(100.0, 10.0), 0x00af00ff);
                 font::draw_number(
                     &mut cb,
-                    (dt * 1e6) as i32 - swap_time as i32,
-                    vec2(200.0, 10.0),
-                    0x00af00ff,
+                    world
+                        .components
+                        .get::<Player>()
+                        .lookup(player)
+                        .map(|p| p.score)
+                        .unwrap_or(0),
+                    vec2(300.0, 10.0),
+                    0x0000efff,
                 );
                 font::draw_number(
                     &mut cb,
-                    last_colored_rect_count,
-                    vec2(100.0, 30.0),
-                    0x00af00ff,
+                    world
+                        .components
+                        .get::<Health>()
+                        .lookup(player)
+                        .map(|hc| hc.health)
+                        .unwrap_or(0),
+                    vec2(300.0, 215.0),
+                    0xaf0000ff,
                 );
-                font::draw_number(
-                    &mut cb,
-                    last_textured_rect_count,
-                    vec2(200.0, 30.0),
-                    0x00af00ff,
-                );
-                font::draw_number(&mut cb, last_mesh_count, vec2(300.0, 30.0), 0xaf0000ff);
-            }
 
-            draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
+                #[cfg(target_vendor = "nintendo64")]
+                {
+                    font::draw_number(
+                        &mut cb,
+                        n64::ALLOC_BYTES_USED.load(core::sync::atomic::Ordering::SeqCst),
+                        vec2(100.0, 160.0),
+                        0xff0000ff,
+                    );
+                    font::draw_number(
+                        &mut cb,
+                        n64::ALLOC_BYTES_LEFT.load(core::sync::atomic::Ordering::SeqCst),
+                        vec2(100.0, 180.0),
+                        0xff0000ff,
+                    );
+                    font::draw_number(
+                        &mut cb,
+                        *n64::ALLOC_PAGE_OFFSET.lock() as i32,
+                        vec2(100.0, 200.0),
+                        0xff0000ff,
+                    );
+                }
+
+                {
+                    font::draw_number(&mut cb, (dt * 1e6) as i32, vec2(100.0, 10.0), 0x00af00ff);
+                    font::draw_number(
+                        &mut cb,
+                        (dt * 1e6) as i32 - swap_time as i32,
+                        vec2(200.0, 10.0),
+                        0x00af00ff,
+                    );
+                    font::draw_number(
+                        &mut cb,
+                        last_colored_rect_count,
+                        vec2(100.0, 30.0),
+                        0x00af00ff,
+                    );
+                    font::draw_number(
+                        &mut cb,
+                        last_textured_rect_count,
+                        vec2(200.0, 30.0),
+                        0x00af00ff,
+                    );
+                    font::draw_number(&mut cb, last_mesh_count, vec2(300.0, 30.0), 0xaf0000ff);
+                }
+
+                draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
+            }
 
             cb
         };
