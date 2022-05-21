@@ -1,7 +1,7 @@
 use super::{FillPipeline, Pipeline};
 use crate::{framebuffer::ViBufferToken, graphics::Graphics, VideoMode};
 use alloc::{boxed::Box, vec::Vec};
-use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
+use n64_math::{vec2, vec3, Color, Mat4, Vec2, Vec3};
 use n64_sys::rdp;
 use rdp_command_builder::*;
 use rdp_state::RdpState;
@@ -192,13 +192,13 @@ impl<'a> CommandBuffer<'a> {
 
         for triangle in indices {
             let mut v0 = self.cache.get(triangle[0], || {
-                transform.project_point3(Vec3::from(verts[triangle[0] as usize]))
+                truncate_to_pixel(transform.project_point3(Vec3::from(verts[triangle[0] as usize])))
             });
             let mut v1 = self.cache.get(triangle[1], || {
-                transform.project_point3(Vec3::from(verts[triangle[1] as usize]))
+                truncate_to_pixel(transform.project_point3(Vec3::from(verts[triangle[1] as usize])))
             });
             let mut v2 = self.cache.get(triangle[2], || {
-                transform.project_point3(Vec3::from(verts[triangle[2] as usize]))
+                truncate_to_pixel(transform.project_point3(Vec3::from(verts[triangle[2] as usize])))
             });
 
             let x_limit = self.cache.video_mode.width() as f32;
@@ -460,9 +460,8 @@ fn sorted_triangle_indices(v0: Vec3, v1: Vec3, v2: Vec3) -> (u8, u8, u8) {
 }
 
 fn triangle_is_too_small(v0: Vec3, v1: Vec3, v2: Vec3) -> bool {
-    let nz = (v0.x - v1.x) * (v2.y - v1.y) - (v0.y - v1.y) * (v2.x - v1.x);
-    // Nz is area * 2
-    (nz < 2.0) && (-2.0 < nz)
+    // Check area == 0
+    (v0.x - v1.x) * (v2.y - v1.y) == (v0.y - v1.y) * (v2.x - v1.x)
 }
 
 // TODO: Take nz and va-vb & vc-vb instead
@@ -482,9 +481,10 @@ fn shaded_triangle_coeff(
 
     let norm = -((1 << 16) as f32) / nz;
 
-    let dcdx = (nx * norm) as i32;
-    let dcdy = (ny * norm) as i32;
-    let dcde = (ne * norm) as i32;
+    let dcdx = safe_cast_i32(nx * norm);
+    let dcdy = safe_cast_i32(ny * norm);
+    let dcde = safe_cast_i32(ne * norm);
+
     let color = (((bi as i32) << 16) as f32) as i32;
 
     (dcdx, dcdy, dcde, color)
@@ -496,4 +496,22 @@ fn color_to_i32(color: u32) -> [i32; 3] {
         ((color >> 16) & 0xff) as i32,
         ((color >> 8) & 0xff) as i32,
     ]
+}
+
+fn truncate_to_pixel(val: Vec3) -> Vec3 {
+    vec3(
+        libm::floorf(val.x),
+        libm::floorf(val.y),
+        libm::floorf(val.z),
+    )
+}
+
+fn safe_cast_i32(val: f32) -> i32 {
+    if (i32::MAX as f32) < val {
+        i32::MAX
+    } else if (i32::MIN as f32) > val {
+        i32::MIN
+    } else {
+        val as i32
+    }
 }
