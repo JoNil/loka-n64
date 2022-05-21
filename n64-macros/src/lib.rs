@@ -39,6 +39,9 @@ mod inner {
                 if self.cursor == MESSAGE_BUFFER_SIZE as u16 {
                     core::assert!(n64_sys::ed::usb_write(self.b.as_bytes()));
                     self.cursor = 0;
+
+                    let start = n64_sys::sys::current_time_us();
+                    while n64_sys::sys::current_time_us() - start < 2000 {}
                 }
             }
 
@@ -61,6 +64,9 @@ mod inner {
             core::assert!(n64_sys::ed::usb_write(lock.b.as_bytes()));
             lock.cursor = 0;
         }
+
+        let start = n64_sys::sys::current_time_us();
+        while n64_sys::sys::current_time_us() - start < 2000 {}
     }
 }
 
