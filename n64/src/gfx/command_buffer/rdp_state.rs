@@ -82,7 +82,7 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
             ZMode::Decal => OTHER_MODE_Z_MODE_DECAL,
         };
 
-        if pipeline.z_src == ZSrc::Pixel {
+        if pipeline.z_src == ZSrc::Primitive {
             other_modes |= OTHER_MODE_Z_SOURCE_SEL;
         }
 
