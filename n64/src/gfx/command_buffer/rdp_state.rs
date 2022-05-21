@@ -75,6 +75,14 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
             other_modes |= OTHER_MODE_CYCLE_TYPE_2_CYCLE;
         }
 
+        if pipeline.z_update {
+            other_modes |= OTHER_MODE_Z_UPDATE_EN;
+        }
+
+        if pipeline.z_compare {
+            other_modes |= OTHER_MODE_Z_COMPARE_EN;
+        }
+
         if pipeline.blend {
             other_modes |= OTHER_MODE_FORCE_BLEND;
             other_modes |= OTHER_MODE_IMAGE_READ_EN;
