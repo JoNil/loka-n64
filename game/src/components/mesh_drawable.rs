@@ -59,7 +59,7 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
                     pipeline.color_combiner_mode = ColorCombinerMode::one(
                         ASrc::One,
                         BSrc::Zero,
-                        CSrc::Texel,
+                        CSrc::Shade,
                         DSrc::Primitive,
                         AAlphaSrc::Zero,
                         BAlphaSrc::Zero,
