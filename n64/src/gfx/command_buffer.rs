@@ -35,7 +35,10 @@ impl CommandBufferCache {
     }
 
     fn get(&mut self, index: u8, f: impl FnOnce() -> Vec3) -> Vec3 {
-        let cached = self.vertex_cache[index as usize];
+        // Transform every vertex to cache first
+        // No need for generation
+
+        let cached = &self.vertex_cache[index as usize];
         if cached.1 == self.vertex_cache_generation {
             return cached.0;
         }
