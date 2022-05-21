@@ -1,5 +1,5 @@
 use super::rdp_command_builder::*;
-use crate::gfx::{CycleType, FillPipeline, Pipeline, ZMode};
+use crate::gfx::{CycleType, FillPipeline, Pipeline, ZMode, ZSrc};
 use n64_math::{vec2, Color};
 
 #[derive(Copy, Clone, Default)]
@@ -82,12 +82,18 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
             ZMode::Decal => OTHER_MODE_Z_MODE_DECAL,
         };
 
+        if pipeline.z_src == ZSrc::Pixel {
+            other_modes |= OTHER_MODE_Z_SOURCE_SEL;
+        }
+
         if pipeline.z_update {
             other_modes |= OTHER_MODE_Z_UPDATE_EN;
+            other_modes |= OTHER_MODE_IMAGE_READ_EN;
         }
 
         if pipeline.z_compare {
             other_modes |= OTHER_MODE_Z_COMPARE_EN;
+            other_modes |= OTHER_MODE_IMAGE_READ_EN;
         }
 
         if pipeline.blend {

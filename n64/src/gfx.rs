@@ -1,5 +1,5 @@
 pub use command_buffer::{CommandBuffer, CommandBufferCache};
-pub use pipeline::{CycleType, FillPipeline, Pipeline, ZMode};
+pub use pipeline::{CycleType, FillPipeline, Pipeline, ZMode, ZSrc};
 pub use texture::{StaticTexture, Texture, TextureAlignment, TextureMut};
 
 #[cfg(target_vendor = "nintendo64")]

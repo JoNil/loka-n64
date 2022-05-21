@@ -47,6 +47,13 @@ pub enum ZMode {
 
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Eq)]
+pub enum ZSrc {
+    Primitive,
+    Pixel,
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum CycleType {
     One,
     Two,
@@ -67,6 +74,7 @@ pub struct Pipeline {
 
     pub blend: bool,
     pub z_mode: ZMode,
+    pub z_src: ZSrc,
     pub z_update: bool,
     pub z_compare: bool,
 }
@@ -84,6 +92,7 @@ impl Pipeline {
             texture: None,
             blend: false,
             z_mode: ZMode::Decal,
+            z_src: ZSrc::Pixel,
             z_update: false,
             z_compare: false,
         }
