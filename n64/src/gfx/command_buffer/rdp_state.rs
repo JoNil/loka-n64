@@ -1,5 +1,5 @@
 use super::rdp_command_builder::*;
-use crate::gfx::{CycleType, FillPipeline, Pipeline};
+use crate::gfx::{CycleType, FillPipeline, Pipeline, ZMode};
 use n64_math::{vec2, Color};
 
 #[derive(Copy, Clone, Default)]
@@ -74,6 +74,13 @@ pub fn apply_pipeline(rdp: &mut RdpCommandBuilder, state: &mut RdpState, pipelin
         if pipeline.cycle_type == CycleType::Two {
             other_modes |= OTHER_MODE_CYCLE_TYPE_2_CYCLE;
         }
+
+        other_modes |= match pipeline.z_mode {
+            ZMode::Opaque => OTHER_MODE_Z_MODE_OPAQUE,
+            ZMode::Interpenetrating => OTHER_MODE_Z_MODE_INTERPENETRATING,
+            ZMode::Transparent => OTHER_MODE_Z_MODE_TRANSPARENT,
+            ZMode::Decal => OTHER_MODE_Z_MODE_DECAL,
+        };
 
         if pipeline.z_update {
             other_modes |= OTHER_MODE_Z_UPDATE_EN;

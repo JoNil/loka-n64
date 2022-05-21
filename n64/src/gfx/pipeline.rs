@@ -38,6 +38,15 @@ impl FillPipeline {
 
 #[repr(u8)]
 #[derive(Copy, Clone, PartialEq, Eq)]
+pub enum ZMode {
+    Opaque,
+    Interpenetrating,
+    Transparent,
+    Decal,
+}
+
+#[repr(u8)]
+#[derive(Copy, Clone, PartialEq, Eq)]
 pub enum CycleType {
     One,
     Two,
@@ -57,6 +66,7 @@ pub struct Pipeline {
     pub fog_color: Option<u32>,
 
     pub blend: bool,
+    pub z_mode: ZMode,
     pub z_update: bool,
     pub z_compare: bool,
 }
@@ -73,6 +83,7 @@ impl Pipeline {
             fog_color: None,
             texture: None,
             blend: false,
+            z_mode: ZMode::Decal,
             z_update: false,
             z_compare: false,
         }
@@ -129,6 +140,12 @@ impl Pipeline {
     pub fn with_blend(&self, blend: bool) -> Self {
         let mut res = *self;
         res.blend = blend;
+        res
+    }
+
+    pub fn with_z_mode(&self, z_mode: ZMode) -> Self {
+        let mut res = *self;
+        res.z_mode = z_mode;
         res
     }
 
