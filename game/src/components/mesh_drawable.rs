@@ -39,7 +39,7 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
         [half_width, half_height, 0.0, 1.0],
     ]);
 
-    let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.01, 1000.0);
+    let proj = Mat4::perspective_rh_gl(PI / 2.0, 1.0, 0.1, 10.0);
 
     let pre_transform = Mat4::from_cols_array_2d(&[
         [2.0, 0.0, 0.0, 0.0],

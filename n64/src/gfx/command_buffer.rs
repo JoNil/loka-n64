@@ -229,11 +229,13 @@ impl<'a> CommandBuffer<'a> {
             let right_major = is_triangle_right_major(vh, vm, vl);
 
             let is_shaded = true;
+            let is_texured = false;
+            let is_z_buffered = true;
 
             self.cache.rdp.edge_coefficients(
                 is_shaded,
-                false,
-                false,
+                is_texured,
+                is_z_buffered,
                 right_major,
                 0,
                 0,
@@ -292,6 +294,11 @@ impl<'a> CommandBuffer<'a> {
                     r_de, g_de, b_de, 0, // Delta color Edge
                     r_dy, g_dy, b_dy, 0, // Delta color y
                 );
+            }
+
+            if is_z_buffered {
+                let (z, dx, de, dy) = z_triangle_coeff(vh, vm, vl);
+                self.cache.rdp.z_buffer_coefficients(z, dx, de, dy);
             }
         }
         self
@@ -485,7 +492,7 @@ fn shaded_triangle_coeff(
     let dcdy = safe_cast_i32(ny * norm);
     let dcde = safe_cast_i32(ne * norm);
 
-    let color = (((bi as i32) << 16) as f32) as i32;
+    let color = safe_cast_i32(bi * 65536.0);
 
     (dcdx, dcdy, dcde, color)
 }
@@ -498,12 +505,25 @@ fn color_to_i32(color: u32) -> [i32; 3] {
     ]
 }
 
+fn z_buff_val_transform(z: f32) -> f32 {
+    let scale = 0x3ff as f32;
+    32.0 * z * scale
+}
+
+fn z_triangle_coeff(vh: Vec3, vm: Vec3, vl: Vec3) -> (i32, i32, i32, i32) {
+    let (dx, dy, de, val) = shaded_triangle_coeff(
+        vh,
+        vm,
+        vl,
+        z_buff_val_transform(vh.z),
+        z_buff_val_transform(vm.z),
+        z_buff_val_transform(vl.z),
+    );
+    (val, dx, de, dy)
+}
+
 fn truncate_to_pixel(val: Vec3) -> Vec3 {
-    vec3(
-        libm::floorf(val.x),
-        libm::floorf(val.y),
-        libm::floorf(val.z),
-    )
+    vec3(libm::floorf(val.x), libm::floorf(val.y), val.z)
 }
 
 fn safe_cast_i32(val: f32) -> i32 {

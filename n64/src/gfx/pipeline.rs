@@ -91,7 +91,7 @@ impl Pipeline {
             fog_color: None,
             texture: None,
             blend: false,
-            z_mode: ZMode::Decal,
+            z_mode: ZMode::Opaque,
             z_src: ZSrc::Pixel,
             z_update: false,
             z_compare: false,

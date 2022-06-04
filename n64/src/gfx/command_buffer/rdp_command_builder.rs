@@ -520,6 +520,21 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
+    pub fn z_buffer_coefficients(
+        &mut self,
+        z: i32,
+        dx: i32,
+        de: i32,
+        dy: i32,
+    ) -> &mut RdpCommandBuilder {
+        let buffer = self.commands.as_mut().unwrap();
+        buffer.push(RdpCommand((z as u32 as u64) << 32 | (dx as u32 as u64)));
+        buffer.push(RdpCommand((de as u32 as u64) << 32 | (dy as u32 as u64)));
+
+        self
+    }
+
+    #[inline]
     pub fn texture_rectangle(
         &mut self,
         top_left: Vec2,
