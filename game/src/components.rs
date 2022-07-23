@@ -14,4 +14,5 @@ pub mod shadow;
 pub mod size;
 pub mod spawner;
 pub mod sprite_drawable;
+pub mod waypoint_ai;
 pub mod weapon;

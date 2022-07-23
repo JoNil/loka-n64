@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <template>
  <tileset firstgid="1" source="../tiles/aircraft.tsx"/>
- <object type="enemy_diver" gid="1073741838" width="32" height="24">
+ <object type="enemy_diver" gid="14" width="32" height="24" rotation="180">
   <properties>
    <property name="health" type="float" value="200"/>
   </properties>
