@@ -133,7 +133,7 @@ fn load_tile_image(
 }
 
 fn parse_map_tiles(
-    out_dir: &str,
+    out_dir: &Path,
     map_path: &Path,
     name: &str,
     uppercase_name: &str,
@@ -152,7 +152,7 @@ fn parse_map_tiles(
         let width: i32 = map.tile_width.assert_into();
         let height: i32 = map.tile_height.assert_into();
 
-        let tile_path = Path::new(out_dir)
+        let tile_path = out_dir
             .join(format!("{}_tile_{}", name, *id))
             .with_extension("ntex");
         let tile_path = tile_path.to_str().ok_or("Bad Path")?;
@@ -207,7 +207,7 @@ r##"    StaticObject {{
 
 fn parse_map_objects(
     map: &Map,
-    out_dir: &str,
+    out_dir: &Path,
     map_path: &Path,
     tileset_image_cache: &mut HashMap<PathBuf, Image>,
     emitted_object_texture: &mut HashSet<String>,
@@ -243,7 +243,7 @@ fn parse_map_objects(
                 ));
 
                 if !emitted_object_texture.contains(&object_texture_ident) {
-                    let object_texture_path = Path::new(out_dir)
+                    let object_texture_path = out_dir
                         .join(format!("object_{}_{}", tileset.name, template_object.gid))
                         .with_extension("ntex");
 
@@ -317,7 +317,7 @@ use n64::include_bytes_align_as;
 "##
 }; }
 
-pub fn parse(out_dir: &str) -> Result<(), Box<dyn Error>> {
+pub fn parse(out_dir: &Path) {
     let mut maps = Vec::new();
     let mut tiles = Vec::new();
 
@@ -330,7 +330,8 @@ pub fn parse(out_dir: &str) -> Result<(), Box<dyn Error>> {
     let mut tileset_image_cache = HashMap::new();
     let mut emitted_object_texture = HashSet::new();
 
-    for path in fs::read_dir("maps")?
+    for path in fs::read_dir("maps")
+        .unwrap()
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("tmx")))
@@ -341,18 +342,13 @@ pub fn parse(out_dir: &str) -> Result<(), Box<dyn Error>> {
 
         println!("rerun-if-changed={}", path.to_string_lossy());
 
-        let name = path
-            .file_stem()
-            .ok_or("No File Stem")?
-            .to_str()
-            .ok_or("Bad Os String")?;
+        let name = path.file_stem().unwrap().to_str().unwrap();
         let uppercase_name = name.to_uppercase();
 
         let map = {
-            let file = File::open(&path)
-                .map_err(|e| format!("Unable to open {}: {}", path.to_string_lossy(), e))?;
+            let file = File::open(&path).unwrap();
             let reader = BufReader::new(file);
-            tiled::parse_with_path(reader, &path)?
+            tiled::parse_with_path(reader, &path).unwrap()
         };
 
         let mut layers = Vec::new();
@@ -382,14 +378,15 @@ pub fn parse(out_dir: &str) -> Result<(), Box<dyn Error>> {
             &map,
             &used_tile_ids,
             &mut tileset_image_cache,
-        )?;
+        )
+        .unwrap();
 
         tiles.extend_from_slice(&map_tiles);
 
-        let map_data_path = Path::new(out_dir).join(name).with_extension("nmap");
-        let map_data_path = map_data_path.to_str().ok_or("Bad Path")?;
+        let map_data_path = out_dir.join(name).with_extension("nmap");
+        let map_data_path = map_data_path.to_str().unwrap();
 
-        write_binary_file_if_changed(map_data_path, &layers)?;
+        write_binary_file_if_changed(map_data_path, &layers).unwrap();
 
         let (objects, object_textures) = parse_map_objects(
             &map,
@@ -397,7 +394,8 @@ pub fn parse(out_dir: &str) -> Result<(), Box<dyn Error>> {
             &path,
             &mut tileset_image_cache,
             &mut emitted_object_texture,
-        )?;
+        )
+        .unwrap();
 
         let map_name_ident = uppercase_name.to_string();
         let tiles_name_ident = format!("{}_TILES", &uppercase_name);
@@ -431,7 +429,9 @@ pub fn parse(out_dir: &str) -> Result<(), Box<dyn Error>> {
         maps = maps.join(""),
     );
 
-    write_file_if_changed(env::current_dir()?.join("src").join("maps.rs"), maps)?;
-
-    Ok(())
+    write_file_if_changed(
+        env::current_dir().unwrap().join("src").join("maps.rs"),
+        maps,
+    )
+    .unwrap();
 }

@@ -3,7 +3,7 @@ use assert_into::AssertInto;
 use blend::{Blend, Instance};
 use meshopt::{generate_vertex_remap, remap_index_buffer, remap_vertex_buffer};
 use n64_math::{vec2, Vec2};
-use std::{env, error::Error, ffi::OsStr, fs};
+use std::{env, ffi::OsStr, fs};
 use zerocopy::AsBytes;
 
 #[rustfmt::skip]
@@ -149,10 +149,11 @@ fn byteswap_u32_slice(data: &[u8]) -> Vec<u8> {
     res
 }
 
-pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
+pub(crate) fn parse() {
     let mut models = String::new();
 
-    for path in fs::read_dir("models")?
+    for path in fs::read_dir("models")
+        .unwrap()
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("blend")))
@@ -167,7 +168,7 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
                     let data = obj.get("data");
 
                     let name = format!("{}", file_name);
-                    let out_base_path = path.canonicalize()?.with_file_name(&name);
+                    let out_base_path = path.canonicalize().unwrap().with_file_name(&name);
 
                     if let Some(model) = parse_model(data) {
                         let verts_path = out_base_path.with_extension("nvert");
@@ -178,16 +179,20 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
                         write_binary_file_if_changed(
                             &verts_path,
                             byteswap_u32_slice(model.verts.as_bytes()),
-                        )?;
+                        )
+                        .unwrap();
                         write_binary_file_if_changed(
                             &uvs_path,
                             byteswap_u32_slice(model.uvs.as_bytes()),
-                        )?;
+                        )
+                        .unwrap();
                         write_binary_file_if_changed(
                             &colors_path,
                             byteswap_u32_slice(model.colors.as_bytes()),
-                        )?;
-                        write_binary_file_if_changed(&indices_path, model.indices.as_bytes())?;
+                        )
+                        .unwrap();
+                        write_binary_file_if_changed(&indices_path, model.indices.as_bytes())
+                            .unwrap();
 
                         models.push_str(&format!(
                             MODEL_TEMPLATE!(),
@@ -207,7 +212,9 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
 
     let models = format!(MODELS_TEMPLATE!(), models = models);
 
-    write_file_if_changed(env::current_dir()?.join("src").join("models.rs"), models)?;
-
-    Ok(())
+    write_file_if_changed(
+        env::current_dir().unwrap().join("src").join("models.rs"),
+        models,
+    )
+    .unwrap();
 }

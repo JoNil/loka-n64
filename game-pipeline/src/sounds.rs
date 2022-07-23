@@ -1,13 +1,14 @@
 use crate::utils::{write_binary_file_if_changed, write_file_if_changed};
 use itertools::Itertools;
-use std::{env, error::Error, ffi::OsStr, fs, path::Path};
+use std::{env, ffi::OsStr, fs, path::Path};
 use zerocopy::AsBytes;
 
-fn load_wav(path: impl AsRef<Path>) -> Result<Vec<i16>, Box<dyn Error>> {
+fn load_wav(path: impl AsRef<Path>) -> Vec<i16> {
     println!("rerun-if-changed={}", path.as_ref().to_string_lossy());
 
     let reader = hound::WavReader::open(path.as_ref())
-        .map_err(|e| format!("Unable to load: {}, {}", path.as_ref().to_string_lossy(), e))?;
+        .map_err(|e| format!("Unable to load: {}, {}", path.as_ref().to_string_lossy(), e))
+        .unwrap();
 
     let spec = reader.spec();
 
@@ -32,7 +33,7 @@ fn load_wav(path: impl AsRef<Path>) -> Result<Vec<i16>, Box<dyn Error>> {
         }
     }
 
-    Ok(data)
+    data
 }
 
 #[rustfmt::skip]
@@ -53,19 +54,20 @@ use n64::include_bytes_align_as;
 {sounds}"##
 }; }
 
-pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
+pub(crate) fn parse() {
     let mut sounds = String::new();
 
-    for path in fs::read_dir("sounds")?
+    for path in fs::read_dir("sounds")
+        .unwrap()
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("wav")))
     {
         if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
-            let out_path = path.canonicalize()?.with_extension("nsnd");
-            let wav = load_wav(&path)?;
+            let out_path = path.canonicalize().unwrap().with_extension("nsnd");
+            let wav = load_wav(&path);
 
-            write_binary_file_if_changed(&out_path, wav.as_bytes())?;
+            write_binary_file_if_changed(&out_path, wav.as_bytes()).unwrap();
 
             sounds.push_str(&format!(
                 SOUND_TEMPLATE!(),
@@ -77,7 +79,9 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
 
     let sounds = format!(SOUNDS_TEMPLATE!(), sounds = sounds);
 
-    write_file_if_changed(env::current_dir()?.join("src").join("sounds.rs"), sounds)?;
-
-    Ok(())
+    write_file_if_changed(
+        env::current_dir().unwrap().join("src").join("sounds.rs"),
+        sounds,
+    )
+    .unwrap();
 }

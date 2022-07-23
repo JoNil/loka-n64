@@ -1,7 +1,6 @@
-use std::{env, error::Error};
+use std::{env, path::Path};
 
-fn main() -> Result<(), Box<dyn Error>> {
-    let out_dir = env::var("OUT_DIR")?;
-    game_pipeline::run(&out_dir)?;
-    Ok(())
+fn main() {
+    let out_dir = env::var("OUT_DIR").unwrap();
+    game_pipeline::run(Path::new(&out_dir));
 }

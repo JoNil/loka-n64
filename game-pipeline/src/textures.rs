@@ -1,5 +1,5 @@
 use crate::{image::load_png, utils::write_binary_file_if_changed, utils::write_file_if_changed};
-use std::{env, error::Error, ffi::OsStr, fs};
+use std::{env, ffi::OsStr, fs};
 
 #[rustfmt::skip]
 macro_rules! TEXTURE_TEMPLATE { () => {
@@ -19,19 +19,20 @@ use n64::include_bytes_align_as;
 {textures}"##
 }; }
 
-pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
+pub(crate) fn parse() {
     let mut textures = String::new();
 
-    for path in fs::read_dir("textures")?
+    for path in fs::read_dir("textures")
+        .unwrap()
         .filter_map(|e| e.ok())
         .map(|e| e.path())
         .filter(|path| path.extension() == Some(OsStr::new("png")))
     {
         if let Some(name) = path.file_stem().map(|n| n.to_string_lossy()) {
-            let out_path = path.canonicalize()?.with_extension("ntex");
-            let image = load_png(path.as_path(), false, None)?;
+            let out_path = path.canonicalize().unwrap().with_extension("ntex");
+            let image = load_png(path.as_path(), false, None).unwrap();
 
-            write_binary_file_if_changed(&out_path, &image.data)?;
+            write_binary_file_if_changed(&out_path, &image.data).unwrap();
 
             textures.push_str(&format!(
                 TEXTURE_TEMPLATE!(),
@@ -46,9 +47,8 @@ pub(crate) fn parse() -> Result<(), Box<dyn Error>> {
     let textures = format!(TEXTURES_TEMPLATE!(), textures = textures);
 
     write_file_if_changed(
-        env::current_dir()?.join("src").join("textures.rs"),
+        env::current_dir().unwrap().join("src").join("textures.rs"),
         textures,
-    )?;
-
-    Ok(())
+    )
+    .unwrap();
 }
