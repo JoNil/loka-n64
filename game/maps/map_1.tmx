@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<map version="1.2" tiledversion="1.3.4" orientation="orthogonal" renderorder="right-down" width="12" height="100" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="42">
+<map version="1.9" tiledversion="1.9.0" orientation="orthogonal" renderorder="right-down" width="12" height="100" tilewidth="32" tileheight="32" infinite="0" nextlayerid="9" nextobjectid="53">
  <tileset firstgid="1" source="tiles/terrain_atlas.tsx"/>
  <tileset firstgid="1025" source="tiles/base_out_atlas.tsx"/>
  <tileset firstgid="2049" source="tiles/space-blks-1.034.tsx"/>
@@ -452,5 +452,11 @@
   <object id="39" template="templates/enemy_1.tx" x="330.667" y="2791.92"/>
   <object id="40" template="templates/enemy_1.tx" x="160.667" y="2814.42"/>
   <object id="41" template="templates/enemy_1.tx" x="106.333" y="2791.75"/>
+  <object id="46" template="templates/boss_01.tx" x="131.5" y="29.5"/>
+  <object id="47" template="templates/enemy_2.tx" x="161.5" y="2249.5"/>
+  <object id="49" template="templates/enemy_2.tx" x="162.5" y="2214.5"/>
+  <object id="50" template="templates/enemy_2.tx" x="161.5" y="2180"/>
+  <object id="51" template="templates/enemy_2.tx" x="162" y="2144.5"/>
+  <object id="52" template="templates/enemy_2.tx" x="162.5" y="2111"/>
  </objectgroup>
 </map>
