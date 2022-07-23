@@ -95,34 +95,6 @@ pub fn spawn_enemy_diver(
         .add(RemoveWhenBelow);
 }
 
-pub fn spawn_enemy(
-    entities: &mut EntitySystem,
-    movable: Movable,
-    size: Size,
-    texture: Texture<'static>,
-) {
-    entities
-        .spawn()
-        .add(movable)
-        .add(size)
-        .add(SpriteDrawable { texture })
-        .add(Health {
-            health: 100,
-            damaged_this_frame: false,
-        })
-        .add(Weapon {
-            weapon_type: WeaponType::Bullet,
-            last_shoot_time: 0,
-            direction: PI,
-        })
-        .add(WaypointAi {
-            waypoint: 0,
-            waypoint_step: 1.0,
-        })
-        .add(Enemy {})
-        .add(RemoveWhenBelow);
-}
-
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer) {
     let (enemy, movable, health, size, player, weapon) = world
         .components
