@@ -1,4 +1,5 @@
 pub mod box_drawable;
+pub mod diver_ai;
 pub mod enemy;
 pub mod health;
 pub mod keep_on_screen;

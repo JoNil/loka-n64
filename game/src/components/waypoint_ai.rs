@@ -1,7 +1,6 @@
+use super::movable::Movable;
 use crate::ecs::world::World;
 use n64_math::{const_vec2, Vec2};
-
-use super::movable::Movable;
 
 static ENEMY_WAYPOINT: [Vec2; 4] = [
     const_vec2!([0.4, 0.4]),

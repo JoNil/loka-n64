@@ -201,6 +201,7 @@ r##"    StaticObject {{
         x: {x}_f32,
         y: {y}_f32,
         texture: &{object_texture_ident},
+        spawner: crate::components::enemy::spawn_{spawner},
     }},
 "##
 }; }
@@ -240,6 +241,7 @@ fn parse_map_objects(
                     x = object.x - template_object.width / 2.0,
                     y = object.y - template_object.height / 2.0,
                     object_texture_ident = object_texture_ident,
+                    spawner = template_object.obj_type,
                 ));
 
                 if !emitted_object_texture.contains(&object_texture_ident) {
@@ -287,8 +289,8 @@ r##"static {tiles_name_ident}: &[&StaticTexture] = &[
 {map_tile_refs}];
 
 {object_textures}
-pub static {objects_name_ident}: &[&[StaticObject]] = &[&[
-{objects}]];
+pub static {objects_name_ident}: &[StaticObject] = &[
+{objects}];
 
 pub static {map_name_ident}: &StaticMapData = &StaticMapData {{
     width_in_tiles: {map_width},

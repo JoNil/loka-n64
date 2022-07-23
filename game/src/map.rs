@@ -1,8 +1,12 @@
-use crate::{camera::Camera, components::enemy::add_enemy, ecs::world::World};
+use crate::{
+    camera::Camera,
+    components::{enemy::add_enemy_spawner, movable::Movable, size::Size, spawner::SpawnerFunc},
+    ecs::{entity::EntitySystem, world::World},
+};
 use n64::{
     gfx::{
         color_combiner_mode::{ColorCombinerMode, DSrc},
-        CommandBuffer, Pipeline, StaticTexture,
+        CommandBuffer, Pipeline, StaticTexture, Texture,
     },
     VideoMode,
 };
@@ -12,6 +16,7 @@ pub struct StaticObject {
     pub x: f32,
     pub y: f32,
     pub texture: &'static StaticTexture,
+    pub spawner: SpawnerFunc,
 }
 
 pub struct StaticMapData {
@@ -21,7 +26,7 @@ pub struct StaticMapData {
     pub tile_height: i32,
     pub tiles: &'static [&'static StaticTexture],
     pub layers: &'static [u8],
-    pub objects: &'static [&'static [StaticObject]],
+    pub objects: &'static [StaticObject],
 }
 
 static MAP_PIPELINE: Pipeline = Pipeline {
@@ -40,17 +45,16 @@ impl Map {
     }
 
     pub fn spawn_enemies(&self, world: &mut World, video_mode: &VideoMode) {
-        for objects in self.data.objects {
-            for object in *objects {
-                add_enemy(
-                    &mut world.entities,
-                    Vec2::new(
-                        object.x / video_mode.width() as f32,
-                        object.y / video_mode.height() as f32,
-                    ),
-                    object.texture.as_texture(),
-                );
-            }
+        for object in self.data.objects {
+            add_enemy_spawner(
+                &mut world.entities,
+                Vec2::new(
+                    object.x / video_mode.width() as f32,
+                    object.y / video_mode.height() as f32,
+                ),
+                object.texture.as_texture(),
+                object.spawner,
+            );
         }
     }
 
