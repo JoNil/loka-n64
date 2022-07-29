@@ -14,7 +14,7 @@ use crate::components::{
     health::{self, Health},
     mesh_drawable, missile, movable,
     player::{self, spawn_player, Player},
-    print_position, projectile, sprite_drawable, waypoint_ai,
+    print_position, projectile, sprite_drawable, trap, waypoint_ai,
 };
 use camera::Camera;
 use components::{
@@ -115,6 +115,7 @@ fn main() {
 
             enemy::update(&mut world, &mut sound_mixer);
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
+            trap::update(&mut world);
 
             diver_ai::update(&mut world, dt);
             waypoint_ai::update(&mut world, dt);

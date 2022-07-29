@@ -7,6 +7,7 @@ use super::{
     size::Size,
     spawner::{Spawner, SpawnerFunc},
     sprite_drawable::SpriteDrawable,
+    trap::{Trap, TrapType},
     waypoint_ai::WaypointAi,
     weapon::{self, Weapon, WeaponTarget, WeaponType},
 };
@@ -48,8 +49,8 @@ pub fn spawn_enemy_aircraft(
     size: Size,
     texture: Texture<'static>,
 ) {
-    entities
-        .spawn()
+    let mut b = entities.spawn();
+    let mut b = b
         .add(movable)
         .add(size)
         .add(SpriteDrawable { texture })
@@ -68,6 +69,17 @@ pub fn spawn_enemy_aircraft(
         })
         .add(Enemy {})
         .add(RemoveWhenBelow);
+
+    if n64_math::random_f32() < 1.2 {
+        b.add(Trap {
+            trap_type: if n64_math::random_f32() < 1.2 {
+                TrapType::DualMissile
+            } else {
+                TrapType::BulletStorm
+            },
+            target_type: WeaponTarget::Player,
+        });
+    }
 }
 
 pub fn spawn_enemy_diver(
@@ -107,16 +119,18 @@ pub fn update(world: &mut World, sound_mixer: &mut SoundMixer) {
             world.entities.despawn(*entity);
         }
 
-        weapon::fire(
-            &mut world.entities,
-            *entity,
-            sound_mixer,
-            weapon,
-            movable,
-            size,
-            enemy,
-            player,
-            WeaponTarget::Player,
-        );
+        if false {
+            weapon::fire(
+                &mut world.entities,
+                *entity,
+                sound_mixer,
+                weapon,
+                movable,
+                size,
+                enemy,
+                player,
+                WeaponTarget::Player,
+            );
+        }
     }
 }

@@ -49,7 +49,7 @@ pub struct Weapon {
 
 const BULLET_DELAY_MS: i32 = 300;
 const MISSILE_DELAY_MS: i32 = 2000;
-const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
+//const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
 
 pub fn shoot_bullet(
     entities: &mut EntitySystem,
@@ -113,7 +113,7 @@ pub fn shoot_missile(
             pos: pos + offset,
             speed: speed + speed_offset,
         })
-        .add(Size { size: MISSILE_SIZE })
+        .add(Size { size: MISSILE.size })
         .add(Health {
             health: 15,
             damaged_this_frame: true,
