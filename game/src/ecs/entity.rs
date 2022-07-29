@@ -53,10 +53,8 @@ impl EntitySystem {
     }
 
     pub fn spawn(&mut self) -> EntityBuilder {
-        let entity = self.create();
-        n64::debugln!("Spawn entity {:?}", entity);
         EntityBuilder {
-            entity,
+            entity: self.create(),
             commands: &mut self.commands,
         }
     }
@@ -96,7 +94,6 @@ impl EntitySystem {
 
             for entity in self.remove_list.iter() {
                 if self.alive(*entity) {
-                    n64::debugln!("despawn entity {:?}", entity);
                     let index = entity.index();
                     self.generation[index as usize] += Wrapping(1);
                     self.free_indices.push_back(index);

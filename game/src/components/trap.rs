@@ -71,20 +71,19 @@ fn shoot_bullet(entities: &mut EntitySystem, target_type: WeaponTarget, pos: Vec
         })
         .add(MeshDrawable {
             model: BULLET.as_model_data(),
-            rot: Quat::from_axis_angle(Vec3::Z, angle),
+            rot: Quat::from_axis_angle(Vec3::Z, angle + PI / 2.0),
         })
         .add(Projectile {
             target_type,
             damage: 50 + (n64_math::random_f32() * 20.0) as i32,
             projectile_collision_grace_period_ms: 0,
         });
-    n64::debugln!("Shot {:?} {:?}", pos + offset, speed);
 }
 
 fn bullet_storm(entities: &mut EntitySystem, target_type: WeaponTarget, pos: Vec2) {
     let mut angle = 0.0;
-    for i in 0..8 {
-        angle += PI / 4.0;
+    for i in 0..9 {
+        angle += PI * 2.0 / 9.0;
         shoot_bullet(entities, target_type, pos, angle);
     }
     n64::debugflush();
@@ -110,7 +109,6 @@ pub fn shoot_missile(
     //let offset = rot.mul_vec2(offset);
     let speed_offset = rot.mul_vec2(vec2(speed_offset.x + spread, speed_offset.y));
 
-    n64::debugln!("Shot {:?} {:?}", direction, speed);
     entities
         .spawn()
         .add(Movable {

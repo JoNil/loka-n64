@@ -72,7 +72,7 @@ pub fn spawn_enemy_aircraft(
 
     if n64_math::random_f32() < 1.2 {
         b.add(Trap {
-            trap_type: if n64_math::random_f32() < 1.2 {
+            trap_type: if n64_math::random_f32() < 0.5 {
                 TrapType::DualMissile
             } else {
                 TrapType::BulletStorm
