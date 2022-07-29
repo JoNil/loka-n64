@@ -86,7 +86,6 @@ fn bullet_storm(entities: &mut EntitySystem, target_type: WeaponTarget, pos: Vec
         angle += PI * 2.0 / 9.0;
         shoot_bullet(entities, target_type, pos, angle);
     }
-    n64::debugflush();
 }
 
 pub fn shoot_missile(

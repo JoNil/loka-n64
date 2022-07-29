@@ -48,7 +48,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
             damaged_this_frame: true,
         })
         .add(Weapon {
-            weapon_type: WeaponType::Bullet, //WeaponType::Laser,
+            weapon_type: WeaponType::Flak, //WeaponType::Laser,
             last_shoot_time: i64::MIN / 2,
             direction: 0.0,
         })
