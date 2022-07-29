@@ -115,7 +115,6 @@ fn main() {
 
             enemy::update(&mut world, &mut sound_mixer);
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
-            trap::update(&mut world);
 
             diver_ai::update(&mut world, dt);
             waypoint_ai::update(&mut world, dt);
@@ -124,6 +123,7 @@ fn main() {
             movable::simulate(&mut world, dt);
 
             projectile::update(&mut world, &mut sound_mixer, &camera, dt);
+            trap::update(&mut world);
             pickup::update(&mut world, &mut sound_mixer, &camera);
             spawner::update(&mut world, &camera);
             keep_on_screen::update(&mut world, &camera);

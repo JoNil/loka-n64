@@ -125,6 +125,13 @@ impl<'a> EntityBuilder<'a> {
         self
     }
 
+    pub fn add_optional<T: 'static>(&'a mut self, component: Option<T>) -> &'a mut Self {
+        if let Some(c) = component {
+            return self.add::<T>(c);
+        }
+        self
+    }
+
     pub fn entity(&self) -> Entity {
         self.entity
     }

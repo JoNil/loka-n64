@@ -56,8 +56,8 @@ pub fn update(world: &mut World) {
 
 fn shoot_bullet(entities: &mut EntitySystem, target_type: WeaponTarget, pos: Vec2, angle: f32) {
     let dir = vec2(libm::cosf(angle), libm::sinf(angle));
-    let offset = dir * 0.10;
-    let speed = dir * 0.10;
+    let offset = dir * 0.1;
+    let speed = dir * 0.30;
     entities
         .spawn()
         .add(Movable {
@@ -141,11 +141,11 @@ fn dual_missile(
 ) {
     if target_type == WeaponTarget::Player {
         for player_entity in player.entities() {
-            if let (Some(m2)) = (movable.lookup(*player_entity)) {
+            if let Some(m2) = movable.lookup(*player_entity) {
                 shoot_missile(
                     entities,
                     pos,
-                    PI / 4.0, // * -3.0 / 4.0,
+                    PI * 1.0 / 4.0, // * -3.0 / 4.0,
                     Some(*player_entity),
                     target_type,
                 );

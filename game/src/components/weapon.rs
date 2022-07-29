@@ -12,8 +12,15 @@ use n64_math::{const_vec2, vec2, vec3, Mat2, Mat4, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
 use super::{
-    enemy::Enemy, health::Health, mesh_drawable::MeshDrawable, missile::Missile, movable::Movable,
-    player::Player, projectile::Projectile, size::Size,
+    enemy::Enemy,
+    health::Health,
+    mesh_drawable::MeshDrawable,
+    missile::Missile,
+    movable::Movable,
+    player::Player,
+    projectile::Projectile,
+    size::Size,
+    trap::{Trap, TrapType},
 };
 use crate::{
     camera::Camera,
@@ -86,6 +93,14 @@ pub fn shoot_bullet(
             target_type,
             damage: 50 + (n64_math::random_f32() * 20.0) as i32,
             projectile_collision_grace_period_ms: 0,
+        })
+        .add_optional(if n64_math::random_f32() < 0.1 {
+            Some(Trap {
+                trap_type: TrapType::BulletStorm,
+                target_type,
+            })
+        } else {
+            None
         });
 }
 
