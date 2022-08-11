@@ -87,6 +87,20 @@ pub struct Graphics {
     pub(crate) device_poll_thread: Option<thread::JoinHandle<()>>,
 }
 
+async fn wgpu_device_fallback(adapter: &wgpu::Adapter) -> (wgpu::Device, wgpu::Queue) {
+    adapter
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    label: None,
+                    features: wgpu::Features::default(),
+                    limits: wgpu::Limits::default(),
+                },
+                None,
+            )
+            .await
+            .unwrap()
+}
+
 impl Graphics {
     pub(crate) fn new(video_mode: VideoMode, _framebuffer: &mut Framebuffer) -> Self {
         let window = {
@@ -120,18 +134,35 @@ impl Graphics {
                 .await
                 .unwrap();
 
-            let (device, queue) = adapter
-                .request_device(
-                    &wgpu::DeviceDescriptor {
-                        label: None,
-                        features: wgpu::Features::DEPTH_CLIP_CONTROL,
-                        limits: wgpu::Limits::default(),
-                    },
-                    None,
-                )
-                .await
-                .unwrap();
-
+            let adapter_return = adapter
+            .request_device(
+                &wgpu::DeviceDescriptor {
+                    label: None,
+                    features: wgpu::Features::DEPTH_CLIP_CONTROL,
+                    limits: wgpu::Limits::default(),
+                },
+                None,
+            )
+            .await;
+            let (device, queue) = match adapter_return {
+                    Ok(v) => v,
+                    Err(e) => {
+                        println!("request_device returned {:?}, '{:}'", e, e);
+                        wgpu_device_fallback(&adapter).await},
+            };
+            
+            //let (device, queue) = adapter
+            //    .request_device(
+            //        &wgpu::DeviceDescriptor {
+            //            label: None,
+            //            features: wgpu::Features::DEPTH_CLIP_CONTROL,
+            //            limits: wgpu::Limits::default(),
+            //        },
+            //        None,
+            //    )
+            //    .await
+            //    .unwrap();
+//
             (adapter, Arc::new(device), queue)
         });
 
