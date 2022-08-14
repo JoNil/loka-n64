@@ -145,7 +145,7 @@ impl Mesh {
                 strip_index_format: None,
                 front_face: wgpu::FrontFace::Ccw,
                 cull_mode: None,
-                unclipped_depth: true,
+                unclipped_depth: false,//true,
                 polygon_mode: wgpu::PolygonMode::Fill,
                 conservative: false,
             },
