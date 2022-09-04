@@ -620,25 +620,9 @@ impl<'a> CommandBuffer<'a> {
                 }
             }
 
-            encoder.copy_texture_to_texture(
-                wgpu::ImageCopyTexture {
-                    texture: &dst.tex,
-                    mip_level: 0,
-                    origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
-                    aspect: wgpu::TextureAspect::All,
-                },
-                wgpu::ImageCopyTexture {
-                    texture: &dst.download_tex,
-                    mip_level: 0,
-                    origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
-                    aspect: wgpu::TextureAspect::All,
-                },
-                dst.tex_extent,
-            );
-
             encoder.copy_texture_to_buffer(
                 wgpu::ImageCopyTexture {
-                    texture: &dst.download_tex,
+                    texture: &dst.tex,
                     mip_level: 0,
                     origin: wgpu::Origin3d { x: 0, y: 0, z: 0 },
                     aspect: wgpu::TextureAspect::All,
