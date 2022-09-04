@@ -1,11 +1,6 @@
 # loka-n64
 
-Fixes
-- Project with less fov
-
 Ideas
-- Z buffer
-- Rsp triangle setup
 - Spawn Wave
 - 640x480
 

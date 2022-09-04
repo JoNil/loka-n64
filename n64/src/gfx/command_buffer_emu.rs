@@ -10,9 +10,15 @@ use crate::{
     },
 };
 use crate::{graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
+use alloc::sync::Arc;
 use assert_into::AssertInto;
-use core::slice;
+use core::{
+    slice,
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
 use n64_math::{Color, Vec2};
+use n64_profiler::scope;
 use n64_types::VideoMode;
 use std::mem;
 use std::num::NonZeroU32;
@@ -467,7 +473,7 @@ impl<'a> CommandBuffer<'a> {
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: None,
-                    color_attachments: &[wgpu::RenderPassColorAttachment {
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: &dst.tex_view,
                         resolve_target: None,
                         ops: wgpu::Operations {
@@ -483,7 +489,7 @@ impl<'a> CommandBuffer<'a> {
                             },
                             store: true,
                         },
-                    }],
+                    })],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                         view: &dst.depth_view,
                         depth_ops: Some(wgpu::Operations {
@@ -654,16 +660,27 @@ impl<'a> CommandBuffer<'a> {
         graphics.queue.submit(Some(command_buf));
 
         {
-            futures_executor::block_on(async {
-                dst.buffer
-                    .slice(
-                        0..((4 * self.cache.video_mode.width() * self.cache.video_mode.height())
-                            as u64),
-                    )
-                    .map_async(wgpu::MapMode::Read)
-                    .await
-            })
-            .unwrap();
+            let mapped = Arc::new(AtomicBool::new(false));
+
+            dst.buffer
+                .slice(
+                    0..((4 * self.cache.video_mode.width() * self.cache.video_mode.height())
+                        as u64),
+                )
+                .map_async(wgpu::MapMode::Read, {
+                    let mapped = mapped.clone();
+                    move |mapped_slice| {
+                        assert!(mapped_slice.is_ok());
+                        mapped.store(true, Ordering::SeqCst)
+                    }
+                });
+
+            {
+                scope!("Map Async");
+                while !mapped.load(Ordering::SeqCst) {
+                    std::thread::sleep(Duration::from_millis(1));
+                }
+            }
 
             let mapped_colored_rect_dst_buffer = dst
                 .buffer

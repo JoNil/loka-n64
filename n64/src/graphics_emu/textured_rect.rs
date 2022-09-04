@@ -4,7 +4,6 @@ use crate::{
 };
 use std::{collections::HashMap, mem, num::NonZeroU32};
 use wgpu::SamplerBindingType;
-use wgpu_mipmap::{MipmapGenerator, RenderMipmapGenerator};
 use zerocopy::{AsBytes, FromBytes};
 
 pub const MAX_TEXTURED_RECTS: u64 = 4096;
@@ -131,7 +130,7 @@ impl TexturedRect {
             fragment: Some(wgpu::FragmentState {
                 module: &fs_module,
                 entry_point: "main",
-                targets: &[wgpu::ColorTargetState {
+                targets: &[Some(wgpu::ColorTargetState {
                     format: dst_tex_format,
                     blend: Some(wgpu::BlendState {
                         color: wgpu::BlendComponent {
@@ -146,7 +145,7 @@ impl TexturedRect {
                         },
                     }),
                     write_mask: wgpu::ColorWrites::ALL,
-                }],
+                })],
             }),
             multiview: None,
         });
@@ -165,7 +164,7 @@ impl TexturedRect {
             address_mode_w: wgpu::AddressMode::ClampToEdge,
             mag_filter: wgpu::FilterMode::Linear,
             min_filter: wgpu::FilterMode::Linear,
-            mipmap_filter: wgpu::FilterMode::Linear,
+            mipmap_filter: wgpu::FilterMode::Nearest,
             lod_min_clamp: 0.0,
             lod_max_clamp: f32::MAX,
             compare: None,
@@ -199,8 +198,6 @@ impl TexturedRect {
 
         let tex_format = wgpu::TextureFormat::Rgba8Unorm;
 
-        let generator = RenderMipmapGenerator::new_with_format_hints(device, &[tex_format]);
-
         let tex_extent = wgpu::Extent3d {
             width: texture.width as u32,
             height: texture.height as u32,
@@ -209,13 +206,11 @@ impl TexturedRect {
         let tex_descriptor = wgpu::TextureDescriptor {
             label: None,
             size: tex_extent,
-            mip_level_count: 1 + f32::log2(texture.width.max(texture.height) as f32) as u32,
+            mip_level_count: 1,
             sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: tex_format,
-            usage: wgpu::TextureUsages::COPY_DST
-                | wgpu::TextureUsages::TEXTURE_BINDING
-                | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
         };
         let tex = device.create_texture(&tex_descriptor);
         let tex_view = tex.create_view(&Default::default());
@@ -268,12 +263,6 @@ impl TexturedRect {
             },
             tex_extent,
         );
-
-        let mut encoder = device.create_command_encoder(&Default::default());
-        generator
-            .generate(device, &mut encoder, &tex, &tex_descriptor)
-            .unwrap();
-        queue.submit(std::iter::once(encoder.finish()));
 
         self.texture_cache
             .insert(texture.data.as_ptr() as _, UploadedTexture { bind_group });
