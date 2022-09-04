@@ -467,7 +467,7 @@ impl<'a> CommandBuffer<'a> {
             {
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: None,
-                    color_attachments: &[wgpu::RenderPassColorAttachment {
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: &dst.tex_view,
                         resolve_target: None,
                         ops: wgpu::Operations {
@@ -483,7 +483,7 @@ impl<'a> CommandBuffer<'a> {
                             },
                             store: true,
                         },
-                    }],
+                    })],
                     depth_stencil_attachment: Some(wgpu::RenderPassDepthStencilAttachment {
                         view: &dst.depth_view,
                         depth_ops: Some(wgpu::Operations {

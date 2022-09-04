@@ -26,7 +26,7 @@ fn compile_stage(device: &wgpu::Device, src: &str, stage: ShaderStage) -> Shader
     )
     .unwrap();
 
-    device.create_shader_module(&wgpu::ShaderModuleDescriptor {
+    device.create_shader_module(wgpu::ShaderModuleDescriptor {
         label: None,
         source: wgpu::ShaderSource::SpirV(output.into()),
     })

@@ -94,7 +94,7 @@ impl Mesh {
             include_str!("shaders/mesh.frag"),
         );
 
-        let target_desc = &[wgpu::ColorTargetState {
+        let target_desc = &[Some(wgpu::ColorTargetState {
             format: dst_tex_format,
             blend: Some(wgpu::BlendState {
                 color: wgpu::BlendComponent {
@@ -110,7 +110,7 @@ impl Mesh {
                 },
             }),
             write_mask: wgpu::ColorWrites::ALL,
-        }];
+        })];
 
         let mut pipeline_desc = wgpu::RenderPipelineDescriptor {
             label: None,

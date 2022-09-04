@@ -19,14 +19,14 @@ strum_macros = { version = "0.24", default-features = false }
 zerocopy = "0.6"
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
-cpal = "0.13"
+cpal = "0.14"
 futures-executor = "0.3"
-naga = { version = "0.8", features = ["glsl-in", "spv-out"] }
+naga = { version = "0.9", features = ["glsl-in", "spv-out"] }
 once_cell = "1"
 rubato = { git = "https://github.com/JoNil/rubato.git" }
-wgpu = { version = "0.12", features = ["spirv"] }
-wgpu-mipmap = { git = "https://github.com/JoNil/wgpu-mipmap.git" }
-winit = "0.26"
+wgpu = { version = "0.13", features = ["spirv"] }
+#wgpu-mipmap = { git = "https://github.com/JoNil/wgpu-mipmap.git" }
+winit = "0.27"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-alloc = { path = "../n64-alloc" }

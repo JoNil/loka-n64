@@ -134,7 +134,7 @@ impl Graphics {
             (adapter, Arc::new(device), queue)
         });
 
-        let surface_format = surface.get_preferred_format(&adapter).unwrap();
+        let surface_format = surface.get_supported_formats(&adapter)[0];
 
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -334,7 +334,7 @@ impl Graphics {
 
                 let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
                     label: None,
-                    color_attachments: &[wgpu::RenderPassColorAttachment {
+                    color_attachments: &[Some(wgpu::RenderPassColorAttachment {
                         view: &view,
                         resolve_target: None,
                         ops: wgpu::Operations {
@@ -346,7 +346,7 @@ impl Graphics {
                             }),
                             store: true,
                         },
-                    }],
+                    })],
                     depth_stencil_attachment: None,
                 });
                 render_pass.set_pipeline(&self.copy_tex.pipeline);
