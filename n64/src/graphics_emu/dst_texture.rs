@@ -30,7 +30,7 @@ impl DstTexture {
             label: None,
             size: tex_extent,
             mip_level_count: 1,
-            sample_count: 4,
+            sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: TEXUTRE_FORMAT,
             usage: wgpu::TextureUsages::COPY_DST
@@ -43,7 +43,7 @@ impl DstTexture {
             label: None,
             size: tex_extent,
             mip_level_count: 1,
-            sample_count: 4,
+            sample_count: 1,
             dimension: wgpu::TextureDimension::D2,
             format: DEPTH_FORMAT,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
