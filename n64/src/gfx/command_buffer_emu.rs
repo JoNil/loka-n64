@@ -18,6 +18,7 @@ use core::{
     time::Duration,
 };
 use n64_math::{Color, Vec2};
+use n64_profiler::scope;
 use n64_types::VideoMode;
 use std::mem;
 use std::num::NonZeroU32;
@@ -674,8 +675,11 @@ impl<'a> CommandBuffer<'a> {
                     }
                 });
 
-            while !mapped.load(Ordering::SeqCst) {
-                std::thread::sleep(Duration::from_millis(1));
+            {
+                scope!("Map Async");
+                while !mapped.load(Ordering::SeqCst) {
+                    std::thread::sleep(Duration::from_millis(1));
+                }
             }
 
             let mapped_colored_rect_dst_buffer = dst
