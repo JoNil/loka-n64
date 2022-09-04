@@ -182,11 +182,10 @@ pub fn shoot_flak(
 ) {
     let bullet_count = 20;
     for i in 0..bullet_count {
-        //let spread = PI * 0.5 * n64_math::random_f32() - PI / 4.0;
         let spread = 0.15 * (n64_math::random_f32() - 0.5);
-        let rot = Mat2::from_angle(direction); // + spread);
+        let rot = Mat2::from_angle(direction);
         let offset_spread = -0.01 - 0.3 * n64_math::random_f32();
-        let offset = vec2(spread, offset_spread); //rot.mul_vec2(vec2(0.0, offset_spread));
+        let offset = vec2(spread, offset_spread);
         let speed_offset = Mat2::from_angle(direction).mul_vec2(vec2(0.0, -0.75));
 
         entities

@@ -1,16 +1,3 @@
-use core::f32::consts::PI;
-
-use n64_math::{vec2, Mat2, Quat, Vec2, Vec3};
-
-use crate::{
-    ecs::{
-        entity::{Entity, EntitySystem},
-        storage::Storage,
-        world::World,
-    },
-    models::{BULLET, MISSILE},
-};
-
 use super::{
     health::{self, Health},
     mesh_drawable::MeshDrawable,
@@ -21,6 +8,16 @@ use super::{
     size::Size,
     weapon::WeaponTarget,
 };
+use crate::{
+    ecs::{
+        entity::{Entity, EntitySystem},
+        storage::Storage,
+        world::World,
+    },
+    models::{BULLET, MISSILE},
+};
+use core::f32::consts::PI;
+use n64_math::{vec2, Mat2, Quat, Vec2, Vec3};
 
 #[derive(Copy, Clone, PartialEq, Eq)]
 pub enum TrapType {
@@ -101,12 +98,9 @@ pub fn shoot_missile(
 
     let speed_offset = vec2(0.0, 0.0);
 
-    let spread = 0.0; //(n64_math::random_f32() - 0.5) * 0.05;
-
     let rot = Mat2::from_angle(angle);
 
-    //let offset = rot.mul_vec2(offset);
-    let speed_offset = rot.mul_vec2(vec2(speed_offset.x + spread, speed_offset.y));
+    let speed_offset = rot.mul_vec2(vec2(speed_offset.x, speed_offset.y));
 
     entities
         .spawn()
@@ -144,14 +138,14 @@ fn dual_missile(
                 shoot_missile(
                     entities,
                     pos,
-                    PI * 1.0 / 4.0, // * -3.0 / 4.0,
+                    PI * 1.0 / 4.0,
                     Some(*player_entity),
                     target_type,
                 );
                 shoot_missile(
                     entities,
                     pos,
-                    PI * 3.0 / 4.0, // / 4.0,
+                    PI * 3.0 / 4.0,
                     Some(*player_entity),
                     target_type,
                 );
