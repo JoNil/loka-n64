@@ -10,8 +10,13 @@ use crate::{
     },
 };
 use crate::{graphics_emu::mesh::MeshUniforms, graphics_emu::mesh::MAX_MESHES};
+use alloc::sync::Arc;
 use assert_into::AssertInto;
-use core::slice;
+use core::{
+    slice,
+    sync::atomic::{AtomicBool, Ordering},
+    time::Duration,
+};
 use n64_math::{Color, Vec2};
 use n64_types::VideoMode;
 use std::mem;
@@ -654,16 +659,24 @@ impl<'a> CommandBuffer<'a> {
         graphics.queue.submit(Some(command_buf));
 
         {
-            futures_executor::block_on(async {
-                dst.buffer
-                    .slice(
-                        0..((4 * self.cache.video_mode.width() * self.cache.video_mode.height())
-                            as u64),
-                    )
-                    .map_async(wgpu::MapMode::Read)
-                    .await
-            })
-            .unwrap();
+            let mapped = Arc::new(AtomicBool::new(false));
+
+            dst.buffer
+                .slice(
+                    0..((4 * self.cache.video_mode.width() * self.cache.video_mode.height())
+                        as u64),
+                )
+                .map_async(wgpu::MapMode::Read, {
+                    let mapped = mapped.clone();
+                    move |mapped_slice| {
+                        assert!(mapped_slice.is_ok());
+                        mapped.store(true, Ordering::SeqCst)
+                    }
+                });
+
+            while !mapped.load(Ordering::SeqCst) {
+                std::thread::sleep(Duration::from_millis(1));
+            }
 
             let mapped_colored_rect_dst_buffer = dst
                 .buffer
