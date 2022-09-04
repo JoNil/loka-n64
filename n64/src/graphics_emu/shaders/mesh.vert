@@ -41,9 +41,15 @@ void main() {
     vec4 position = uniforms[gl_InstanceIndex].u_transform * vec4(a_pos, 1.0);
     position.xyz /= position.w;
     position.w = 1.0;
+    //gl_Position =
+    //    vec4(
+    //        -1.0 + 2.0 * position.x / uniforms[gl_InstanceIndex].u_screen_size_and_pad.x,
+    //        -1.0 + 2.0 * position.y / uniforms[gl_InstanceIndex].u_screen_size_and_pad.y,
+    //        position.zw);
     gl_Position =
         vec4(
             -1.0 + 2.0 * position.x / uniforms[gl_InstanceIndex].u_screen_size_and_pad.x,
             -1.0 + 2.0 * position.y / uniforms[gl_InstanceIndex].u_screen_size_and_pad.y,
-            position.zw);
+            0.5*(position.z + 1.0), // Opengl [-1, 1] -> Vulkan [0, 1]
+            position.w);
 }

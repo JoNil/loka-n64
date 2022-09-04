@@ -128,41 +128,42 @@ impl Graphics {
             let adapter = instance
                 .request_adapter(&wgpu::RequestAdapterOptions {
                     power_preference: wgpu::PowerPreference::HighPerformance,
-                    //power_preference: wgpu::PowerPreference::LowPower,
                     force_fallback_adapter: false,
                     compatible_surface: Some(&surface),
                 })
                 .await
                 .unwrap();
 
-            let adapter_return = adapter
-            .request_device(
-                &wgpu::DeviceDescriptor {
-                    label: None,
-                    features: wgpu::Features::DEPTH_CLIP_CONTROL,
-                    limits: wgpu::Limits::default(),
-                },
-                None,
-            )
-            .await;
-            let (device, queue) = match adapter_return {
-                    Ok(v) => v,
-                    Err(e) => {
-                        println!("request_device returned {:?}, '{:}'", e, e);
-                        wgpu_device_fallback(&adapter).await},
+            let (device, queue) = if true {
+                let adapter_return = adapter
+                .request_device(
+                    &wgpu::DeviceDescriptor {
+                        label: None,
+                        features: wgpu::Features::DEPTH_CLIP_CONTROL,
+                        limits: wgpu::Limits::default(),
+                    },
+                    None,
+                )
+                .await;
+                match adapter_return {
+                        Ok(v) => v,
+                        Err(e) => {
+                            println!("request_device returned {:?}, '{:}'", e, e);
+                            wgpu_device_fallback(&adapter).await},
+                }
+            } else {
+                adapter
+                    .request_device(
+                        &wgpu::DeviceDescriptor {
+                            label: None,
+                            features: wgpu::Features::DEPTH_CLIP_CONTROL,
+                            limits: wgpu::Limits::default(),
+                        },
+                        None,
+                    )
+                    .await
+                    .unwrap()
             };
-            
-            //let (device, queue) = adapter
-            //    .request_device(
-            //        &wgpu::DeviceDescriptor {
-            //            label: None,
-            //            features: wgpu::Features::DEPTH_CLIP_CONTROL,
-            //            limits: wgpu::Limits::default(),
-            //        },
-            //        None,
-            //    )
-            //    .await
-            //    .unwrap();
 //
             (adapter, Arc::new(device), queue)
         });
