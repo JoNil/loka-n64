@@ -12,8 +12,15 @@ use n64_math::{const_vec2, vec2, vec3, Mat2, Mat4, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
 use super::{
-    enemy::Enemy, health::Health, mesh_drawable::MeshDrawable, missile::Missile, movable::Movable,
-    player::Player, projectile::Projectile, size::Size,
+    enemy::Enemy,
+    health::Health,
+    mesh_drawable::MeshDrawable,
+    missile::Missile,
+    movable::Movable,
+    player::Player,
+    projectile::Projectile,
+    size::Size,
+    trap::{Trap, TrapType},
 };
 use crate::{
     camera::Camera,
@@ -33,6 +40,7 @@ pub enum WeaponType {
     Laser,
     Missile,
     TrippleMissile,
+    Flak,
 }
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -47,9 +55,9 @@ pub struct Weapon {
     pub direction: f32,
 }
 
+const FLAK_DELAY_MS: i32 = 900;
 const BULLET_DELAY_MS: i32 = 300;
 const MISSILE_DELAY_MS: i32 = 2000;
-const MISSILE_SIZE: Vec2 = const_vec2!([4.0 * 0.00825, 4.0 * 0.00825]);
 
 pub fn shoot_bullet(
     entities: &mut EntitySystem,
@@ -86,6 +94,14 @@ pub fn shoot_bullet(
             target_type,
             damage: 50 + (n64_math::random_f32() * 20.0) as i32,
             projectile_collision_grace_period_ms: 0,
+        })
+        .add_optional(if n64_math::random_f32() < 0.1 {
+            Some(Trap {
+                trap_type: TrapType::BulletStorm,
+                target_type,
+            })
+        } else {
+            None
         });
 }
 
@@ -113,7 +129,7 @@ pub fn shoot_missile(
             pos: pos + offset,
             speed: speed + speed_offset,
         })
-        .add(Size { size: MISSILE_SIZE })
+        .add(Size { size: MISSILE.size })
         .add(Health {
             health: 15,
             damaged_this_frame: true,
@@ -155,6 +171,47 @@ pub fn shoot_laser(
             damage: 2,
             projectile_collision_grace_period_ms: 0,
         });
+}
+
+pub fn shoot_flak(
+    entities: &mut EntitySystem,
+    pos: Vec2,
+    speed: Vec2,
+    direction: f32,
+    target_type: WeaponTarget,
+) {
+    let bullet_count = 20;
+    for i in 0..bullet_count {
+        //let spread = PI * 0.5 * n64_math::random_f32() - PI / 4.0;
+        let spread = 0.15 * (n64_math::random_f32() - 0.5);
+        let rot = Mat2::from_angle(direction); // + spread);
+        let offset_spread = -0.01 - 0.3 * n64_math::random_f32();
+        let offset = vec2(spread, offset_spread); //rot.mul_vec2(vec2(0.0, offset_spread));
+        let speed_offset = Mat2::from_angle(direction).mul_vec2(vec2(0.0, -0.75));
+
+        entities
+            .spawn()
+            .add(Movable {
+                pos: pos + offset,
+                speed: speed_offset,
+            })
+            .add(Size {
+                size: BULLET.size * 0.3,
+            })
+            .add(Health {
+                health: 5,
+                damaged_this_frame: true,
+            })
+            .add(MeshDrawable {
+                model: BULLET.as_model_data(),
+                rot: Quat::IDENTITY,
+            })
+            .add(Projectile {
+                target_type,
+                damage: 50 + (n64_math::random_f32() * 20.0) as i32,
+                projectile_collision_grace_period_ms: 0,
+            });
+    }
 }
 
 pub fn fire(
@@ -304,6 +361,12 @@ pub fn fire(
                         target_type,
                     );
 
+                    w.last_shoot_time = now;
+                }
+            }
+            WeaponType::Flak => {
+                if now - w.last_shoot_time > FLAK_DELAY_MS as i64 * 1000 {
+                    shoot_flak(entities, m.pos, m.speed, w.direction, target_type);
                     w.last_shoot_time = now;
                 }
             }

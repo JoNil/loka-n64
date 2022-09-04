@@ -7,6 +7,7 @@ use super::{
     size::Size,
     spawner::{Spawner, SpawnerFunc},
     sprite_drawable::SpriteDrawable,
+    trap::{Trap, TrapType},
     waypoint_ai::WaypointAi,
     weapon::{self, Weapon, WeaponTarget, WeaponType},
 };
@@ -67,7 +68,19 @@ pub fn spawn_enemy_aircraft(
             waypoint_step: 1.0,
         })
         .add(Enemy {})
-        .add(RemoveWhenBelow);
+        .add(RemoveWhenBelow)
+        .add_optional(if n64_math::random_f32() < 0.4 {
+            Some(Trap {
+                trap_type: if n64_math::random_f32() < 0.5 {
+                    TrapType::DualMissile
+                } else {
+                    TrapType::BulletStorm
+                },
+                target_type: WeaponTarget::Player,
+            })
+        } else {
+            None
+        });
 }
 
 pub fn spawn_enemy_diver(
