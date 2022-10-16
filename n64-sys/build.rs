@@ -1,4 +1,4 @@
-use std::{env, fs, path::Path, process::Command};
+use std::{fs, path::Path, process::Command};
 
 fn main() {
     println!("cargo:rerun-if-changed=rsp");
