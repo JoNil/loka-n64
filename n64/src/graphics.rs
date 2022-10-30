@@ -1,5 +1,5 @@
 use crate::{current_time_us, framebuffer::Framebuffer, VideoMode};
-use n64_sys::{rdp, vi};
+use n64_sys::{rdp, rsp, vi};
 
 pub struct Graphics {}
 
@@ -8,6 +8,7 @@ impl Graphics {
     pub(crate) fn new(video_mode: VideoMode, framebuffer: &mut Framebuffer) -> Self {
         vi::init(video_mode, &mut framebuffer.vi_buffer.0);
         rdp::init();
+        rsp::init();
         Self {}
     }
 

@@ -6,6 +6,3 @@ Ideas
 
 Optimizations
 - Font to 1 bit per pixel texture
-
-Crazy idea
-- Spirv till rsp?
