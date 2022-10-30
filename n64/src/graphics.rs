@@ -1,5 +1,7 @@
 use crate::include_bytes_align_as;
 use crate::{current_time_us, framebuffer::Framebuffer, VideoMode};
+use aligned::{Aligned, A8};
+use core::ops::{Deref, DerefMut};
 use n64_macros::debugln;
 use n64_sys::{rdp, rsp, vi};
 
@@ -32,11 +34,13 @@ impl Graphics {
     pub fn rsp_hello_world(&self) {
         let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/hello_world.bin");
 
-        rsp::run(code, None);
+        let data: Aligned<A8, [u8; 4096]> = Aligned([0xff; 4096]);
 
-        let mut dmem = [0u8; 4096];
+        rsp::run(code, Some(data.deref()));
 
-        rsp::read_dmem(&mut dmem);
+        let mut dmem: Aligned<A8, [u8; 4096]> = Aligned([0x00; 4096]);
+
+        rsp::read_dmem(dmem.deref_mut());
 
         for (i, word) in dmem.chunks_exact(4).enumerate() {
             let a = u32::from_be_bytes(word.try_into().unwrap());
