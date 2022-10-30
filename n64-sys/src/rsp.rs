@@ -66,9 +66,28 @@ pub struct RspProgram<'a> {
     pub data: Option<&'a [u8]>,
 }
 
-#[inline]
 fn dma_wait() {
     while unsafe { read_volatile(RSP_STATUS) } & (RSP_STATUS_DMA_BUSY | RSP_STATUS_IO_BUSY) > 0 {}
+}
+
+fn start() {
+    unsafe {
+        write_volatile(RSP_PC, 0);
+        write_volatile(RSP_STATUS, RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE);
+    }
+}
+
+fn wait() {
+    loop {
+        // Wait for the RSP to halt and the DMA engine to be idle.
+        let status = unsafe { read_volatile(RSP_STATUS) };
+
+        if (status & RSP_STATUS_HALTED) > 0
+            && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
+        {
+            break;
+        }
+    }
 }
 
 pub fn init() {
@@ -78,11 +97,14 @@ pub fn init() {
     }
 }
 
-pub fn submit(program: RspProgram) {
+pub fn run(program: RspProgram) {
     write_imem(program.code);
     if let Some(data) = program.data {
         write_dmem(data);
     }
+
+    start();
+    wait();
 }
 
 pub fn write_imem(data: &[u8]) {
