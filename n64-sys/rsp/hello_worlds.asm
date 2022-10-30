@@ -11,14 +11,17 @@ origin $0000
 align(8)
 start:
     xor t0, t0, t0
-    addi t2, t0, 42 // t0 = 42
+    addi t0, t0, 42 // t0 = 42
     xor t1, t1, t1 // t1 = 0
-    addi t1, t1, 1 // ++t1
+    xor t2, t2, t2
+    addi t2, t2, 4096 // t2 = 4096
 write_addr:
     sw  t0, 0(t1)
     addi t1, t1, 4 // t1 += 4
-    bne t1, 4096, write_addr // t1 != 0, loop
+    bne t1, t2, write_addr // t1 != 0, loop
+    nop
     j return
+    nop
 
 // Zero t0
 xor t0, t0, t0
@@ -32,10 +35,12 @@ poll:
     beq t0, 0, poll
     nop
     j handle_commands
+    nop
 
 start_2:
     xor t1, t1, t1 // Zero offset
     j loop
+    nop
 handle:
 
 loop:    
