@@ -1,7 +1,15 @@
 #![allow(dead_code)]
 
-use core::ptr::write_volatile;
+use core::ptr::{read_volatile, write_volatile};
 
+use crate::sys::{
+    data_cache_hit_writeback, data_cache_hit_writeback_invalidate, virtual_to_physical,
+};
+
+const RSP_RSP_ADDR: *mut usize = 0xA404_0000_usize as _; // RSP memory address (IMEM/DMEM)
+const RSP_DRAM_ADDR: *mut usize = 0xA404_0004_usize as _; // RSP RDRAM memory address
+const RSP_READ_LENGTH: *mut usize = 0xA404_0008_usize as _; // RDRAM->RSP DMA length
+const RSP_WRITE_LENGTH: *mut usize = 0xA404_000C_usize as _; // RSP->RDRAM DMA length
 const RSP_STATUS: *mut usize = 0xA404_0010_usize as _; // RSP status register
 const RSP_DMA_FULL: *mut usize = 0xA404_0014_usize as _; // RSP DMA full register
 const RSP_DMA_BUSY: *mut usize = 0xA404_0018_usize as _; // RSP DMA busy register
@@ -53,15 +61,92 @@ const RSP_WSTATUS_SET_SIG6: usize = 0x400000; // RSP_STATUS write mask: set SIG6
 const RSP_WSTATUS_CLEAR_SIG7: usize = 0x800000; // RSP_STATUS write mask: clear SIG7 bit
 const RSP_WSTATUS_SET_SIG7: usize = 0x1000000; // RSP_STATUS write mask: set SIG7 bit
 
-struct RspProgram<'a> {
-    code: &'a [u8],
-    data: &'a [u8],
-    pc: u32,
+pub struct RspProgram<'a> {
+    pub code: &'a [u8],
+    pub data: Option<&'a [u8]>,
+}
+
+#[inline]
+fn dma_wait() {
+    while unsafe { read_volatile(RSP_STATUS) } & (RSP_STATUS_DMA_BUSY | RSP_STATUS_IO_BUSY) > 0 {}
 }
 
 pub fn init() {
     unsafe {
         write_volatile(RSP_PC, 0x1000);
         write_volatile(RSP_STATUS, RSP_WSTATUS_SET_HALT);
+    }
+}
+
+pub fn submit(program: RspProgram) {
+    write_imem(program.code);
+    if let Some(data) = program.data {
+        write_dmem(data);
+    }
+}
+
+pub fn write_imem(data: &[u8]) {
+    unsafe {
+        assert!(data.len() <= 4096);
+        assert!(data.as_ptr() as usize % 8 == 0);
+
+        data_cache_hit_writeback(data);
+
+        dma_wait();
+
+        write_volatile(RSP_DRAM_ADDR, virtual_to_physical(data.as_ptr()));
+        write_volatile(RSP_RSP_ADDR, RSP_IMEM as usize);
+        write_volatile(RSP_READ_LENGTH, data.len() - 1);
+
+        dma_wait();
+    }
+}
+
+pub fn read_imem(data: &mut [u8; 4096]) {
+    unsafe {
+        assert!(data.as_ptr() as usize % 8 == 0);
+
+        data_cache_hit_writeback_invalidate(data.as_slice());
+
+        dma_wait();
+
+        write_volatile(RSP_DRAM_ADDR, virtual_to_physical(data.as_ptr()));
+        write_volatile(RSP_RSP_ADDR, RSP_IMEM as usize);
+        write_volatile(RSP_WRITE_LENGTH, data.len() - 1);
+
+        dma_wait();
+    }
+}
+
+pub fn write_dmem(data: &[u8]) {
+    unsafe {
+        assert!(data.len() <= 4096);
+        assert!(data.as_ptr() as usize % 8 == 0);
+
+        data_cache_hit_writeback(data);
+
+        dma_wait();
+
+        write_volatile(RSP_DRAM_ADDR, virtual_to_physical(data.as_ptr()));
+        write_volatile(RSP_RSP_ADDR, RSP_DMEM as usize);
+        write_volatile(RSP_READ_LENGTH, data.len() - 1);
+
+        dma_wait();
+    }
+}
+
+pub fn read_dmem(data: &mut [u8; 4096]) {
+    unsafe {
+        assert!(data.as_ptr() as usize % 8 == 0);
+
+        data_cache_hit_writeback_invalidate(data.as_slice());
+
+        dma_wait();
+
+        write_volatile(RSP_DRAM_ADDR, virtual_to_physical(data.as_ptr()));
+        write_volatile(RSP_RSP_ADDR, RSP_DMEM as usize);
+        write_volatile(RSP_WRITE_LENGTH, data.len() - 1);
+
+        dma_wait();
     }
 }
