@@ -11,10 +11,11 @@ origin $0000
 align(8)
 start:
     xor t0, t0, t0
+    xor t1, t1, t1 // t1 = 0
 write_addr:
     sw  t1, 0(t1)
-    xor t1, t1, t1 // Zero offset
-    bne t0, 4096, write_addr
+    addi t1, t1, 1 // ++t1
+    bne t0, 4096, write_addr // t1 != 0, loop
     j return
 
 // Zero t0
