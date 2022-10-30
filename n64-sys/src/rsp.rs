@@ -61,11 +61,6 @@ const RSP_WSTATUS_SET_SIG6: usize = 0x400000; // RSP_STATUS write mask: set SIG6
 const RSP_WSTATUS_CLEAR_SIG7: usize = 0x800000; // RSP_STATUS write mask: clear SIG7 bit
 const RSP_WSTATUS_SET_SIG7: usize = 0x1000000; // RSP_STATUS write mask: set SIG7 bit
 
-pub struct RspProgram<'a> {
-    pub code: &'a [u8],
-    pub data: Option<&'a [u8]>,
-}
-
 fn dma_wait() {
     while unsafe { read_volatile(RSP_STATUS) } & (RSP_STATUS_DMA_BUSY | RSP_STATUS_IO_BUSY) > 0 {}
 }
@@ -97,9 +92,9 @@ pub fn init() {
     }
 }
 
-pub fn run(program: RspProgram) {
-    write_imem(program.code);
-    if let Some(data) = program.data {
+pub fn run(code: &[u8], data: Option<&[u8]>) {
+    write_imem(code);
+    if let Some(data) = data {
         write_dmem(data);
     }
 
