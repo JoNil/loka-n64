@@ -37,7 +37,7 @@ poll:
     j handle_commands
     nop
 
-start_2:
+start_3:
     xor t1, t1, t1 // Zero offset
     j loop
     nop
