@@ -25,4 +25,11 @@ impl Graphics {
 
         swap_end - swap_start
     }
+
+    #[inline]
+    pub fn rsp_hello_world(&self) {
+        let code = include_bytes!("../../n64-sys/rsp/hello_world.bin");
+
+        rsp::run(code, None);
+    }
 }

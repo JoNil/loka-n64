@@ -105,6 +105,11 @@ fn main() {
         }
 
         {
+            n64::scope!("Rsp Hello World");
+            n64.graphics.rsp_hello_world();
+        }
+
+        {
             n64::scope!("Update");
 
             n64.controllers.update(&n64.graphics);
