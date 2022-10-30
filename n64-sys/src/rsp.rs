@@ -1,13 +1,15 @@
 #![allow(dead_code)]
 
-const RSP_STATUS: *mut usize = 0xA404_0010 as _; // RSP status register
-const RSP_DMA_FULL: *mut usize = 0xA404_0014 as _; // RSP DMA full register
-const RSP_DMA_BUSY: *mut usize = 0xA404_0018 as _; // RSP DMA busy register
-const RSP_SEMAPHORE: *mut usize = 0xA404_001C as _; // RSP semaphore register
+use core::ptr::write_volatile;
 
-const RSP_DMEM: *mut usize = 0xA400_0000 as _; // RSP DMEM: 4K of data memory
-const RSP_IMEM: *mut usize = 0xA400_1000 as _; // RSP IMEM: 4K of instruction memory
-const RSP_PC: *mut usize = 0xA408_0000 as _; // Current RSP program counter
+const RSP_STATUS: *mut usize = 0xA404_0010_usize as _; // RSP status register
+const RSP_DMA_FULL: *mut usize = 0xA404_0014_usize as _; // RSP DMA full register
+const RSP_DMA_BUSY: *mut usize = 0xA404_0018_usize as _; // RSP DMA busy register
+const RSP_SEMAPHORE: *mut usize = 0xA404_001C_usize as _; // RSP semaphore register
+
+const RSP_DMEM: *mut usize = 0xA400_0000_usize as _; // RSP DMEM: 4K of data memory
+const RSP_IMEM: *mut usize = 0xA400_1000_usize as _; // RSP IMEM: 4K of instruction memory
+const RSP_PC: *mut usize = 0xA408_0000_usize as _; // Current RSP program counter
 
 const RSP_STATUS_HALTED: usize = 1 << 0; // RSP halted
 const RSP_STATUS_BROKE: usize = 1 << 1; // RSP executed a break instruction
@@ -57,7 +59,9 @@ struct RspProgram<'a> {
     pc: u32,
 }
 
-pub fn rsp_init() {
-    write_volatile(RSP_PC, 0x1000);
-    write_volatile(RSP_STATUS, RSP_WSTATUS_SET_HALT);
+pub fn init() {
+    unsafe {
+        write_volatile(RSP_PC, 0x1000);
+        write_volatile(RSP_STATUS, RSP_WSTATUS_SET_HALT);
+    }
 }
