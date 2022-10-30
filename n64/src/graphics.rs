@@ -38,12 +38,12 @@ impl Graphics {
 
         rsp::read_dmem(&mut dmem);
 
-        for (i, word) in dmem.windows(4).enumerate() {
+        for (i, word) in dmem.chunks_exact(4).enumerate() {
             let a = u32::from_be_bytes(word.try_into().unwrap());
 
             debugln!("{} == {}", a, i);
 
-            assert!(a == i as u32);
+            //assert!(a == i as u32);
         }
 
         panic!("DONE");
