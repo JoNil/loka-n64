@@ -16,8 +16,8 @@ start:
     addi t1, t1, 1 // ++t1
 write_addr:
     sw  t0, 0(t1)
-    addi t1, t1, 1 // ++t1
-    bne t0, 4096, write_addr // t1 != 0, loop
+    addi t1, t1, 4 // t1 += 4
+    bne t1, 4096, write_addr // t1 != 0, loop
     j return
 
 // Zero t0
