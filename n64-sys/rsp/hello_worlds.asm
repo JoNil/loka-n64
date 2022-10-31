@@ -10,8 +10,7 @@ origin $0000
 
 align(8)
 start:
-    xor t0, t0, t0
-    addi t0, t0, 42   // t0 = 42
+    xor t0, t0, t0    // t0 = 0
     xor t1, t1, t1    // t1 = 0
     xor t2, t2, t2    // t2 = 0
     addi t2, t2, 4096 // t2 = 4096
@@ -20,6 +19,15 @@ write_addr:
     addi t1, t1, 4         // t1 += 4
     bne t1, t2, write_addr // t1 != 0, loop
     nop
+    xor t0, t0, t0    // t0 = 0
+    lqv v0[e0],  0(t0)  // Load 128 bits from MEM[t0] into V0
+    lqv v1[e0], 16(t0)  // Load 128 bits from MEM[t0 + 16] into V1
+    
+    //vnxor v2, v0, v1[e0]  // v2 = V0 NXOR V1 This hangs
+
+    sqv v0[e0], 32(t0)  // Store 128 bits from V0 into MEM[t0 + 32]
+    sqv v1[e0], 48(t0)  // Store 128 bits from V0 into MEM[t0 + 48]
+    sqv v2[e0], 64(t0)  // Store 128 bits from V0 into MEM[t0 + 64]
     j return
     nop
 
