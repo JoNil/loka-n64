@@ -11,13 +11,13 @@ origin $0000
 align(8)
 start:
     xor t0, t0, t0
-    addi t0, t0, 42 // t0 = 42
-    xor t1, t1, t1 // t1 = 0
-    xor t2, t2, t2
+    addi t0, t0, 42   // t0 = 42
+    xor t1, t1, t1    // t1 = 0
+    xor t2, t2, t2    // t2 = 0
     addi t2, t2, 4096 // t2 = 4096
 write_addr:
-    sw  t0, 0(t1)
-    addi t1, t1, 4 // t1 += 4
+    sw  t1, 0(t1)          // MEM[t1] = t1
+    addi t1, t1, 4         // t1 += 4
     bne t1, t2, write_addr // t1 != 0, loop
     nop
     j return
