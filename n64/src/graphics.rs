@@ -42,10 +42,11 @@ impl Graphics {
 
         rsp::read_dmem(dmem.deref_mut());
 
+        debugln!("ADDR      : BINARY                           : HEX      : DECIMAL");
         for (i, word) in dmem.chunks_exact(4).enumerate() {
             let a = u32::from_be_bytes(word.try_into().unwrap());
 
-            debugln!("{} == {}", a, i);
+            debugln!("ADDR {:<4} : {:032b} : {:08x} : {:10}", i*4, a, a, a);
 
             //assert!(a == i as u32);
         }
