@@ -104,6 +104,7 @@ fn main() {
             last_frame_begin_time = frame_begin_time;
         }
 
+        #[cfg(target_vendor = "nintendo64")]
         {
             n64::scope!("Rsp Hello World");
             n64.graphics.rsp_hello_world();
