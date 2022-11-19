@@ -17,7 +17,7 @@ fn main() {
                 let path = path.to_string_lossy();
                 let path = path.trim_start_matches("\\\\?\\");
 
-                assert!(Command::new(&bass).arg(path).status().is_ok());
+                assert!(Command::new(bass).arg(path).status().is_ok());
             }
         }
     }

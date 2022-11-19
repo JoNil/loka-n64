@@ -47,7 +47,7 @@ pub unsafe fn data_cache_hit_writeback_single(addr: usize) {
 #[inline]
 pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
     let addr = (block.as_ptr() as usize) & 0xffff_fff0;
-    let len = block.len() * size_of::<T>() + (block.as_ptr() as usize - addr as usize);
+    let len = block.len() * size_of::<T>() + (block.as_ptr() as usize - addr);
     let mut i = 0;
 
     while i < len {
