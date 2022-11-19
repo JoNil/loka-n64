@@ -121,7 +121,7 @@ fn main() {
             enemy::update(&mut world, &mut sound_mixer);
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
 
-            diver_ai::update(&mut world, dt);
+            diver_ai::update(&mut world);
             waypoint_ai::update(&mut world, dt);
             missile::update(&mut world, dt);
 

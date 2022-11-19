@@ -168,7 +168,7 @@ fn parse_map_tiles(
             false,
         )?;
 
-        write_binary_file_if_changed(&tile_path, &tile_image)?;
+        write_binary_file_if_changed(tile_path, &tile_image)?;
 
         let tile_ident = format!("{}_TILE_{}", uppercase_name, id);
 

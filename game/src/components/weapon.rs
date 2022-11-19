@@ -8,7 +8,7 @@ use n64::{
     },
     VideoMode,
 };
-use n64_math::{const_vec2, vec2, vec3, Mat2, Mat4, Quat, Vec2};
+use n64_math::{vec2, vec3, Mat2, Mat4, Quat, Vec2};
 use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
 use super::{
@@ -39,7 +39,7 @@ pub enum WeaponType {
     Bullet,
     Laser,
     Missile,
-    TrippleMissile,
+    TripleMissile,
     Flak,
 }
 
@@ -176,14 +176,11 @@ pub fn shoot_laser(
 pub fn shoot_flak(
     entities: &mut EntitySystem,
     pos: Vec2,
-    speed: Vec2,
     direction: f32,
     target_type: WeaponTarget,
 ) {
-    let bullet_count = 20;
-    for i in 0..bullet_count {
+    for _ in 0..20 {
         let spread = 0.15 * (n64_math::random_f32() - 0.5);
-        let rot = Mat2::from_angle(direction);
         let offset_spread = -0.01 - 0.3 * n64_math::random_f32();
         let offset = vec2(spread, offset_spread);
         let speed_offset = Mat2::from_angle(direction).mul_vec2(vec2(0.0, -0.75));
@@ -295,7 +292,7 @@ pub fn fire(
                     w.last_shoot_time = now;
                 }
             }
-            WeaponType::TrippleMissile => {
+            WeaponType::TripleMissile => {
                 if now - w.last_shoot_time > MISSILE_DELAY_MS as i64 * 1000 {
                     if target_type == WeaponTarget::Enemy {
                         sound_mixer.play_sound(MISSILE_1.as_sound_data());
@@ -365,7 +362,7 @@ pub fn fire(
             }
             WeaponType::Flak => {
                 if now - w.last_shoot_time > FLAK_DELAY_MS as i64 * 1000 {
-                    shoot_flak(entities, m.pos, m.speed, w.direction, target_type);
+                    shoot_flak(entities, m.pos, w.direction, target_type);
                     w.last_shoot_time = now;
                 }
             }
@@ -456,7 +453,7 @@ pub fn draw_missile_target(
                         &transform.to_cols_array_2d(),
                     );
                 }
-            } else if w.weapon_type == WeaponType::TrippleMissile {
+            } else if w.weapon_type == WeaponType::TripleMissile {
                 let shooter_pos = m.pos;
 
                 let mut distances = enemy

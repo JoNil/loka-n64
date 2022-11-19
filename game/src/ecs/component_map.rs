@@ -52,9 +52,7 @@ impl ComponentMap {
         unsafe { &mut *(t as *mut Storage<T>) }
     }
 
-    pub fn get2<'a, T1: 'static, T2: 'static>(
-        &'a mut self,
-    ) -> (&'a mut Storage<T1>, &'a mut Storage<T2>) {
+    pub fn get2<T1: 'static, T2: 'static>(&mut self) -> (&mut Storage<T1>, &mut Storage<T2>) {
         let t1 = self.get_ptr::<T1>();
         let t2 = self.get_ptr::<T2>();
 
@@ -68,13 +66,9 @@ impl ComponentMap {
         }
     }
 
-    pub fn get3<'a, T1: 'static, T2: 'static, T3: 'static>(
-        &'a mut self,
-    ) -> (
-        &'a mut Storage<T1>,
-        &'a mut Storage<T2>,
-        &'a mut Storage<T3>,
-    ) {
+    pub fn get3<T1: 'static, T2: 'static, T3: 'static>(
+        &mut self,
+    ) -> (&mut Storage<T1>, &mut Storage<T2>, &mut Storage<T3>) {
         let t1 = self.get_ptr::<T1>();
         let t2 = self.get_ptr::<T2>();
         let t3 = self.get_ptr::<T3>();
@@ -92,13 +86,13 @@ impl ComponentMap {
         }
     }
 
-    pub fn get4<'a, T1: 'static, T2: 'static, T3: 'static, T4: 'static>(
-        &'a mut self,
+    pub fn get4<T1: 'static, T2: 'static, T3: 'static, T4: 'static>(
+        &mut self,
     ) -> (
-        &'a mut Storage<T1>,
-        &'a mut Storage<T2>,
-        &'a mut Storage<T3>,
-        &'a mut Storage<T4>,
+        &mut Storage<T1>,
+        &mut Storage<T2>,
+        &mut Storage<T3>,
+        &mut Storage<T4>,
     ) {
         let t1 = self.get_ptr::<T1>();
         let t2 = self.get_ptr::<T2>();
@@ -122,14 +116,14 @@ impl ComponentMap {
         }
     }
 
-    pub fn get5<'a, T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static>(
-        &'a mut self,
+    pub fn get5<T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static>(
+        &mut self,
     ) -> (
-        &'a mut Storage<T1>,
-        &'a mut Storage<T2>,
-        &'a mut Storage<T3>,
-        &'a mut Storage<T4>,
-        &'a mut Storage<T5>,
+        &mut Storage<T1>,
+        &mut Storage<T2>,
+        &mut Storage<T3>,
+        &mut Storage<T4>,
+        &mut Storage<T5>,
     ) {
         let t1 = self.get_ptr::<T1>();
         let t2 = self.get_ptr::<T2>();
@@ -159,23 +153,15 @@ impl ComponentMap {
         }
     }
 
-    pub fn get6<
-        'a,
-        T1: 'static,
-        T2: 'static,
-        T3: 'static,
-        T4: 'static,
-        T5: 'static,
-        T6: 'static,
-    >(
-        &'a mut self,
+    pub fn get6<T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static, T6: 'static>(
+        &mut self,
     ) -> (
-        &'a mut Storage<T1>,
-        &'a mut Storage<T2>,
-        &'a mut Storage<T3>,
-        &'a mut Storage<T4>,
-        &'a mut Storage<T5>,
-        &'a mut Storage<T6>,
+        &mut Storage<T1>,
+        &mut Storage<T2>,
+        &mut Storage<T3>,
+        &mut Storage<T4>,
+        &mut Storage<T5>,
+        &mut Storage<T6>,
     ) {
         let t1 = self.get_ptr::<T1>();
         let t2 = self.get_ptr::<T2>();

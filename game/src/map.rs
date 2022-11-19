@@ -1,12 +1,12 @@
 use crate::{
     camera::Camera,
-    components::{enemy::add_enemy_spawner, movable::Movable, size::Size, spawner::SpawnerFunc},
-    ecs::{entity::EntitySystem, world::World},
+    components::{enemy::add_enemy_spawner, spawner::SpawnerFunc},
+    ecs::world::World,
 };
 use n64::{
     gfx::{
         color_combiner_mode::{ColorCombinerMode, DSrc},
-        CommandBuffer, Pipeline, StaticTexture, Texture,
+        CommandBuffer, Pipeline, StaticTexture,
     },
     VideoMode,
 };

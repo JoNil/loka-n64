@@ -57,7 +57,7 @@ impl SoundMixer {
                 }
             }
 
-            let accumulator = accumulator.min(i16::MAX as i32).max(i16::MIN as i32) as i16;
+            let accumulator = accumulator.clamp(i16::MIN as i32, i16::MAX as i32) as i16;
 
             out_sample[0] = accumulator;
             out_sample[1] = accumulator;

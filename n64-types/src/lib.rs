@@ -17,7 +17,6 @@ macro_rules! static_assert {
         $crate::static_assert!($cond, concat!("assertion failed: ", stringify!($cond)));
     };
     ($cond:expr, $($t:tt)+) => {
-        #[forbid(const_err)]
         const _: () = {
             if !$cond {
                 core::panic!($($t)+)

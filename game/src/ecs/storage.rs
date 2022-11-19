@@ -72,7 +72,7 @@ impl<T> Storage<T> {
                 self.components.remove(index);
                 self.entities.remove(index);
             } else {
-                self.components[index as usize] = self.components.remove(last);
+                self.components[index] = self.components.remove(last);
                 self.entities[index as usize] = self.entities.remove(last);
             }
 

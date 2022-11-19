@@ -28,7 +28,7 @@ impl Color {
             value: ((((bytes[0] as f32 * 31.0 / 255.0) as u16) & 0b11111) << 11)
                 | ((((bytes[1] as f32 * 31.0 / 255.0) as u16) & 0b11111) << 6)
                 | ((((bytes[2] as f32 * 31.0 / 255.0) as u16) & 0b11111) << 1)
-                | if bytes[3] > 0 { 0b1 } else { 0b0 },
+                | (bytes[3] > 0) as u16,
         }
     }
 

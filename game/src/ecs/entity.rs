@@ -39,7 +39,7 @@ pub struct EntitySystem {
     generation: Vec<Wrapping<u8>>,
     free_indices: VecDeque<u32>,
     remove_list: Vec<Entity>,
-    commands: Vec<Box<dyn FnOnce(&mut ComponentMap)>>,
+    commands: Commands,
 }
 
 impl EntitySystem {
@@ -111,7 +111,7 @@ impl EntitySystem {
 
 pub struct EntityBuilder<'a> {
     entity: Entity,
-    commands: &'a mut Vec<Box<dyn FnOnce(&mut ComponentMap)>>,
+    commands: &'a mut Commands,
 }
 
 impl<'a> EntityBuilder<'a> {
@@ -136,3 +136,5 @@ impl<'a> EntityBuilder<'a> {
         self.entity
     }
 }
+
+type Commands = Vec<Box<dyn FnOnce(&mut ComponentMap)>>;

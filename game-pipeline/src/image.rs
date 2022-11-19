@@ -94,7 +94,7 @@ pub(crate) fn load_png(
 
     for pixel in buf.chunks_exact(4) {
         let color = Color::from_bytes(pixel.assert_into());
-        data.extend(&color.value().to_be_bytes());
+        data.extend(color.value().to_be_bytes());
     }
 
     Ok(Image {

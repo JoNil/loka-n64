@@ -37,7 +37,7 @@ pub fn update(world: &mut World) {
             if let (Some(t), Some(m)) = (trap.lookup(*entity), movable.lookup(*entity)) {
                 match t.trap_type {
                     TrapType::DualMissile => {
-                        dual_missile(player, movable, &mut world.entities, t.target_type, m.pos)
+                        dual_missile(player, &mut world.entities, t.target_type, m.pos)
                     }
                     TrapType::BulletStorm => {
                         bullet_storm(&mut world.entities, t.target_type, m.pos)
@@ -79,7 +79,7 @@ fn shoot_bullet(entities: &mut EntitySystem, target_type: WeaponTarget, pos: Vec
 
 fn bullet_storm(entities: &mut EntitySystem, target_type: WeaponTarget, pos: Vec2) {
     let mut angle = 0.0;
-    for i in 0..9 {
+    for _ in 0..9 {
         angle += PI * 2.0 / 9.0;
         shoot_bullet(entities, target_type, pos, angle);
     }
@@ -127,30 +127,26 @@ pub fn shoot_missile(
 
 fn dual_missile(
     player: &mut Storage<Player>,
-    movable: &mut Storage<Movable>,
     entities: &mut EntitySystem,
     target_type: WeaponTarget,
     pos: Vec2,
 ) {
     if target_type == WeaponTarget::Player {
         for player_entity in player.entities() {
-            if let Some(m2) = movable.lookup(*player_entity) {
-                shoot_missile(
-                    entities,
-                    pos,
-                    PI * 1.0 / 4.0,
-                    Some(*player_entity),
-                    target_type,
-                );
-                shoot_missile(
-                    entities,
-                    pos,
-                    PI * 3.0 / 4.0,
-                    Some(*player_entity),
-                    target_type,
-                );
-            }
+            shoot_missile(
+                entities,
+                pos,
+                PI * 1.0 / 4.0,
+                Some(*player_entity),
+                target_type,
+            );
+            shoot_missile(
+                entities,
+                pos,
+                PI * 3.0 / 4.0,
+                Some(*player_entity),
+                target_type,
+            );
         }
-    } else {
     }
 }
