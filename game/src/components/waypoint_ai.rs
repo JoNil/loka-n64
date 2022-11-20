@@ -1,5 +1,4 @@
-use super::movable::Movable;
-use crate::ecs::query::Query;
+use crate::ecs::{query::Query, world::World};
 use n64_math::{const_vec2, Vec2};
 
 static ENEMY_WAYPOINT: [Vec2; 4] = [
@@ -14,8 +13,8 @@ pub struct WaypointAi {
     pub waypoint_step: f32,
 }
 
-pub fn update(mut query: Query<(&mut WaypointAi, &mut Movable)>, dt: f32) {
-    for (_e, ai, movable) in query.iter_mut() {
+pub fn update(world: &mut World, dt: f32) {
+    for (_e, ai, movable) in Query::new(world) {
         if ai.waypoint_step >= 1.0 {
             ai.waypoint_step -= 1.0;
             ai.waypoint += 1;
@@ -33,3 +32,5 @@ pub fn update(mut query: Query<(&mut WaypointAi, &mut Movable)>, dt: f32) {
         ai.waypoint_step += dt;
     }
 }
+
+//(&mut WaypointAi, &mut Movable)

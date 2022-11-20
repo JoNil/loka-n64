@@ -1,8 +1,4 @@
-use super::{
-    component_map::ComponentMap,
-    entity::EntitySystem,
-    query::{Query, WorldQuery},
-};
+use super::{component_map::ComponentMap, entity::EntitySystem};
 
 pub struct World {
     pub entities: EntitySystem,
@@ -15,13 +11,6 @@ impl World {
             entities: EntitySystem::new(),
             components: ComponentMap::new(),
         }
-    }
-
-    pub fn as_query<'w, Q>(&'w mut self) -> Query<'w, Q>
-    where
-        Q: WorldQuery,
-    {
-        Query::new(self)
     }
 
     pub fn housekeep(&mut self) {
