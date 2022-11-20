@@ -46,7 +46,7 @@ impl Graphics {
             core::slice::from_raw_parts(commands.as_ptr() as _, commands_len)
         });
 
-        data[4094..].copy_from_slice((commands_len as u16).to_be_bytes().as_slice());
+        data[4094..].copy_from_slice((commands.len() as u16).to_be_bytes().as_slice());
 
         rsp::run(code, Some(data.deref()));
 
@@ -54,6 +54,7 @@ impl Graphics {
 
         rsp::read_dmem(dmem.deref_mut());
 
+        /*
         debugln!("ADDR      : BINARY                           : HEX      : DECIMAL");
         for (i, word) in dmem.chunks_exact(4).enumerate() {
             let a = u32::from_be_bytes(word.try_into().unwrap());
@@ -64,5 +65,6 @@ impl Graphics {
         }
 
         panic!("DONE");
+        */
     }
 }
