@@ -17,7 +17,7 @@ impl World {
         }
     }
 
-    pub fn as_query<'world, Q>(&'world mut self) -> Query<'world, Q>
+    pub fn as_query<'w, Q>(&'w mut self) -> Query<'w, Q>
     where
         Q: WorldQuery,
     {

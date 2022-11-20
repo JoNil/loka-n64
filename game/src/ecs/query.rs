@@ -26,6 +26,56 @@ pub enum WorldQueryResult<T> {
     Filtered,
 }
 
+pub trait ComponentRef {
+    type Component;
+}
+
+impl<T> ComponentRef for &T
+where
+    T: 'static,
+{
+    type Component = T;
+}
+
+impl<T> ComponentRef for &mut T
+where
+    T: 'static,
+{
+    type Component = T;
+}
+
+pub struct WorldQueryIterator<'w, Q>
+where
+    Q: WorldQuery,
+{
+    data: Q::WorldQueryIteratorData<'w>,
+    index: i32,
+}
+
+impl<'w, Q> Iterator for WorldQueryIterator<'w, Q>
+where
+    Q: WorldQuery,
+{
+    type Item = Q::Item;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let mut res = WorldQueryResult::Filtered;
+
+        while matches!(res, WorldQueryResult::Filtered) {
+            res = Q::get(&mut self.data, self.index);
+            self.index += 1;
+        }
+
+        match res {
+            WorldQueryResult::Some(item) => Some(item),
+            WorldQueryResult::End => None,
+            WorldQueryResult::Filtered => {
+                panic!("Internal iterator error");
+            }
+        }
+    }
+}
+
 pub trait WorldQuery {
     type Item;
     type WorldQueryIteratorData<'w>;
@@ -61,56 +111,13 @@ where
             return WorldQueryResult::End;
         }
 
-        WorldQueryResult::Filtered
+        let e = data.0[index as usize];
+        let c1 = &mut data.1[index as usize];
+
+        let Some(c2) = data.2.lookup_mut(e) else {
+            return WorldQueryResult::Filtered;
+        };
+
+        WorldQueryResult::Some((e, c1, c2))
     }
-}
-
-pub struct WorldQueryIterator<'w, Q>
-where
-    Q: WorldQuery,
-{
-    data: Q::WorldQueryIteratorData<'w>,
-    index: i32,
-}
-
-impl<'w, Q> Iterator for WorldQueryIterator<'w, Q>
-where
-    Q: WorldQuery,
-{
-    type Item = Q::Item;
-
-    fn next(&mut self) -> Option<Self::Item> {
-        let mut res = WorldQueryResult::Filtered;
-
-        while matches!(res, WorldQueryResult::Filtered) {
-            res = Q::get(&mut self.data, self.index);
-            self.index += 1;
-        }
-
-        match res {
-            WorldQueryResult::Some(item) => Some(item),
-            WorldQueryResult::End => None,
-            WorldQueryResult::Filtered => {
-                panic!("Internal iterator error");
-            }
-        }
-    }
-}
-
-pub trait ComponentRef {
-    type Component;
-}
-
-impl<T> ComponentRef for &T
-where
-    T: 'static,
-{
-    type Component = T;
-}
-
-impl<T> ComponentRef for &mut T
-where
-    T: 'static,
-{
-    type Component = T;
 }
