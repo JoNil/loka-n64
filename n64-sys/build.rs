@@ -1,4 +1,4 @@
-use std::{fs, path::Path, process::Command};
+use std::{fs, io::BufRead, path::Path, process::Command};
 
 fn main() {
     println!("cargo:rerun-if-changed=rsp");
@@ -17,7 +17,24 @@ fn main() {
                 let path = path.to_string_lossy();
                 let path = path.trim_start_matches("\\\\?\\");
 
-                assert!(Command::new(bass).arg(path).status().is_ok());
+                let output = Command::new(bass).arg(path).output().unwrap();
+
+                let mut has_error = false;
+
+                eprintln!("Bass output\n");
+
+                for line in output.stderr.lines().filter_map(|s| s.ok()) {
+                    if line.contains("error") {
+                        has_error = true;
+                    }
+                    eprintln!("{line}");
+                }
+
+                eprintln!("\nEnd of Bass output");
+
+                if has_error {
+                    panic!("Bass Failed");
+                }
             }
         }
     }
