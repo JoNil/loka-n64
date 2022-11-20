@@ -153,7 +153,7 @@ fn main() {
                     let x_scale = x_limit * 0.125;
                     let y_scale = y_limit * 0.125;
 
-                    let speed = 0.05; // 0.05
+                    let speed = 0.5; // 0.05
                     let t = speed * (frame_begin_time as f32) / 1e6;
                     let p = 2.0943951;
                     let v0 = vec3(
@@ -188,7 +188,8 @@ fn main() {
                 }
             }
 
-            /*{
+            /*
+            {
                 n64::scope!("HUD");
 
                 font::draw_number(
@@ -260,7 +261,8 @@ fn main() {
                 }
 
                 draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
-            }*/
+            }
+            */
 
             cb
         };
