@@ -59,6 +59,9 @@ where
     fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
         let storage = world.components.get2::<T1, T2>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
+
+        assert!(entities.len() == components.len());
+
         (entities, components, storage.1)
     }
 
@@ -73,8 +76,8 @@ where
             return WorldQueryResult::End;
         }
 
-        let e = data.0[i];
-        let c1 = &mut data.1[i];
+        let e = unsafe { *data.0.get_unchecked(i) };
+        let c1 = unsafe { data.1.get_unchecked_mut(i) };
 
         *index += 1;
 
