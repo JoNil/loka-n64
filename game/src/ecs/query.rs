@@ -1,9 +1,8 @@
+use super::{entity::Entity, storage::Storage, world::World};
 use core::marker::PhantomData;
 
-use super::{storage::Storage, world::World};
-
 pub struct Query<'w, Q: WorldQuery> {
-    world: &'w World,
+    world: &'w mut World,
     marker: PhantomData<Q>,
 }
 
@@ -15,38 +14,75 @@ impl<'w, Q: WorldQuery> Query<'w, Q> {
         }
     }
 
-    pub fn iter_mut(&mut self) -> impl Iterator<Item = Q::Item> {
-        let storage = Q::get_storage(&mut self.world);
+    pub fn iter_mut(&mut self) -> WorldQueryIterator<'_, Q> {
+        let storage = Q::get_storage(self.world);
+
+        WorldQueryIterator { storage, index: 0 }
     }
 }
 
 pub trait WorldQuery {
     type Item;
-    type Storage<'w>;
+    type StorageTuple<'w>;
 
-    fn get_storage<'w>(world: &'w mut World) -> Self::Storage<'w>;
+    fn get_storage<'w>(world: &'w mut World) -> Self::StorageTuple<'w>;
 }
 
-impl<T1: WorldRef, T2: WorldRef> WorldQuery for (T1, T2)
+impl<T1: ComponentRef, T2: ComponentRef> WorldQuery for (T1, T2)
 where
-    for<'w> <T1 as WorldRef>::T: 'w,
-    for<'w> <T2 as WorldRef>::T: 'w,
+    <T1 as ComponentRef>::Component: 'static,
+    <T2 as ComponentRef>::Component: 'static,
 {
     type Item = (T1, T2);
-    type Storage<'w> = (&'w mut Storage<T1::T>, &'w mut Storage<T2::T>);
+    type StorageTuple<'w> = (
+        &'w mut Storage<T1::Component>,
+        &'w mut Storage<T2::Component>,
+    );
 
-    fn get_storage<'w>(world: &'w mut World) -> Self::Storage<'w> {
-        world.components.get2::<T1::T, T2::T>()
+    fn get_storage<'w>(world: &'w mut World) -> Self::StorageTuple<'w> {
+        world.components.get2::<T1::Component, T2::Component>()
     }
 }
 
-trait WorldRef {
-    type T;
+pub struct WorldQueryIterator<'w, Q>
+where
+    Q: WorldQuery,
+{
+    storage: Q::StorageTuple<'w>,
+    index: i32,
 }
 
-impl<T> WorldRef for &T {
-    type T = T;
+impl<'w, Q> Iterator for WorldQueryIterator<'w, Q>
+where
+    Q: WorldQuery,
+{
+    type Item = (Entity, Q::Item);
+
+    fn next(&mut self) -> Option<Self::Item> {
+        /*if self.index > self.entities.len() as i32 {
+            return None;
+        }
+        let entity = self.entities[self.index as usize];
+        self.index += 1;
+        Some((entity, (c1, c2)))*/
+        unimplemented!()
+    }
 }
-impl<T> WorldRef for &mut T {
-    type T = T;
+
+pub trait ComponentRef {
+    type Component;
+}
+
+impl<T> ComponentRef for &T
+where
+    T: 'static,
+{
+    type Component = T;
+}
+
+impl<T> ComponentRef for &mut T
+where
+    T: 'static,
+{
+    type Component = T;
 }
