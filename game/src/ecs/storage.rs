@@ -63,6 +63,10 @@ impl<T> Storage<T> {
             .zip(self.entities.iter().copied())
     }
 
+    pub fn components_and_entities_slice_mut(&mut self) -> (&[Entity], &mut [T]) {
+        (self.entities.as_slice(), self.components.as_mut_slice())
+    }
+
     pub fn remove(&mut self, entity: Entity) {
         if let Some(&index) = self.map.get(&entity) {
             let last = self.components.len() - 1;

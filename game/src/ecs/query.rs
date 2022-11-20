@@ -16,16 +16,19 @@ impl<'w, Q: WorldQuery> Query<'w, Q> {
 
     pub fn iter_mut(&mut self) -> WorldQueryIterator<'_, Q> {
         let storage = Q::storage(self.world);
-        WorldQueryIterator { storage, index: 0 }
+        let data = Q::iterator_data(storage);
+        WorldQueryIterator { data, index: 0 }
     }
 }
 
 pub trait WorldQuery {
     type Item;
     type StorageTuple<'w>;
+    type WorldQueryIteratorData<'w>;
 
     fn storage(world: &mut World) -> Self::StorageTuple<'_>;
-    fn entities_and_components(storage: Self::StorageTuple<'_>) -> (&[Entity]);
+    fn iterator_data(storage: Self::StorageTuple<'_>) -> Self::WorldQueryIteratorData<'_>;
+    fn get(data: &mut Self::WorldQueryIteratorData<'_>, index: i32) -> Self::Item;
 }
 
 impl<T1: ComponentRef, T2: ComponentRef> WorldQuery for (T1, T2)
@@ -33,9 +36,14 @@ where
     <T1 as ComponentRef>::Component: 'static,
     <T2 as ComponentRef>::Component: 'static,
 {
-    type Item = (T1, T2);
+    type Item = (Entity, T1, T2);
     type StorageTuple<'w> = (
         &'w mut Storage<T1::Component>,
+        &'w mut Storage<T2::Component>,
+    );
+    type WorldQueryIteratorData<'w> = (
+        &'w [Entity],
+        &'w mut [T1::Component],
         &'w mut Storage<T2::Component>,
     );
 
@@ -43,8 +51,13 @@ where
         world.components.get2::<T1::Component, T2::Component>()
     }
 
-    fn entities_and_components(storage: Self::StorageTuple<'_>) -> (&[Entity]) {
-        (storage.0.entities())
+    fn iterator_data(storage: Self::StorageTuple<'_>) -> Self::WorldQueryIteratorData<'_> {
+        let (entities, components) = storage.0.components_and_entities_slice_mut();
+        (entities, components, storage.1)
+    }
+
+    fn get(data: &mut Self::WorldQueryIteratorData<'_>, index: i32) -> Self::Item {
+        unimplemented!()
     }
 }
 
@@ -52,7 +65,7 @@ pub struct WorldQueryIterator<'w, Q>
 where
     Q: WorldQuery,
 {
-    storage: Q::StorageTuple<'w>,
+    data: Q::WorldQueryIteratorData<'w>,
     index: i32,
 }
 
@@ -60,7 +73,7 @@ impl<'w, Q> Iterator for WorldQueryIterator<'w, Q>
 where
     Q: WorldQuery,
 {
-    type Item = (Entity, Q::Item);
+    type Item = Q::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
         /*if self.index > self.entities.len() as i32 {
