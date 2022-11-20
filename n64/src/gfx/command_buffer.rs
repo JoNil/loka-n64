@@ -304,10 +304,18 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn submit(mut self, _graphics: &mut Graphics) -> (i32, i32, i32) {
+    pub fn submit(mut self, graphics: &mut Graphics) -> (i32, i32, i32) {
         self.cache.rdp.sync_full();
 
-        unsafe {
+        {
+            n64_profiler::scope!("Rsp Hello World");
+
+            if let Some(commands) = &self.cache.rdp.commands {
+                graphics.rsp_hello_world(commands);
+            }
+        }
+
+        /*unsafe {
             self.cache.rdp.commands =
                 Some(rdp::swap_commands(self.cache.rdp.commands.take().unwrap()));
 
@@ -315,7 +323,7 @@ impl<'a> CommandBuffer<'a> {
 
             // Uncomment this to see full gpu time
             //rdp::wait_for_done();
-        };
+        };*/
 
         (
             self.colored_rect_count as i32,

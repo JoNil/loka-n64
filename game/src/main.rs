@@ -46,7 +46,7 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
     height: 240,
 };
 
-const DEBUG_TRIANGLES: bool = false;
+const DEBUG_TRIANGLES: bool = true;
 
 fn main() {
     n64::init_profiler();
@@ -88,12 +88,6 @@ fn main() {
             frame_begin_time = current_time_us();
             dt = (frame_begin_time - last_frame_begin_time) as f32 / 1e6;
             last_frame_begin_time = frame_begin_time;
-        }
-
-        #[cfg(target_vendor = "nintendo64")]
-        {
-            n64::scope!("Rsp Hello World");
-            n64.graphics.rsp_hello_world();
         }
 
         {
@@ -139,15 +133,15 @@ fn main() {
 
             cb.clear();
 
-            map.render(&mut cb, VIDEO_MODE, &camera);
+            //map.render(&mut cb, VIDEO_MODE, &camera);
 
-            shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            //shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-            box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
-            sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
-            mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            //box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            //sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            //mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-            draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
+            //draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
 
             {
                 if DEBUG_TRIANGLES {
@@ -178,13 +172,6 @@ fn main() {
                         0.0,
                     );
 
-                    cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(RED));
-                    cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 10.0, v0.y + 10.0));
-                    cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(GREEN));
-                    cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 10.0, v1.y + 10.0));
-                    cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(BLUE));
-                    cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 10.0, v2.y + 10.0));
-
                     cb.set_pipeline(&Pipeline::default());
                     cb.add_mesh_indexed(
                         &[v0.into(), v1.into(), v2.into()],
@@ -198,15 +185,10 @@ fn main() {
                             [0.0, 0.0, 0.0, 1.0],
                         ],
                     );
-
-                    cb.set_fill_pipeline(&DEBUG_PIPELINE.with_fill_color(WHITE));
-                    cb.add_colored_rect(vec2(v0.x, v0.y), vec2(v0.x + 2.0, v0.y + 2.0));
-                    cb.add_colored_rect(vec2(v1.x, v1.y), vec2(v1.x + 2.0, v1.y + 2.0));
-                    cb.add_colored_rect(vec2(v2.x, v2.y), vec2(v2.x + 2.0, v2.y + 2.0));
                 }
             }
 
-            {
+            /*{
                 n64::scope!("HUD");
 
                 font::draw_number(
@@ -278,7 +260,7 @@ fn main() {
                 }
 
                 draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
-            }
+            }*/
 
             cb
         };
@@ -291,6 +273,7 @@ fn main() {
         let (colored_rect_count, textured_rect_count, mesh_count) = {
             n64::scope!("Submit Command Buffer");
             let cb = cb;
+
             cb.submit(&mut n64.graphics)
         };
 

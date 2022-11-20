@@ -4,6 +4,7 @@ use aligned::{Aligned, A8};
 use core::ops::{Deref, DerefMut};
 use n64_macros::debugln;
 use n64_sys::{rdp, rsp, vi};
+use n64_types::RdpCommand;
 
 pub struct Graphics {}
 
@@ -31,10 +32,21 @@ impl Graphics {
     }
 
     #[inline]
-    pub fn rsp_hello_world(&self) {
+    pub fn rsp_hello_world(&self, commands: &[RdpCommand]) {
         let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/hello_world.bin");
 
-        let data: Aligned<A8, [u8; 4096]> = Aligned([0xff; 4096]);
+        let commands_len = commands.len() * core::mem::size_of::<RdpCommand>();
+
+        debugln!("Commands: {}", commands.len());
+
+        assert!(commands_len < 4096);
+
+        let mut data: Aligned<A8, [u8; 4096]> = Aligned([0xff; 4096]);
+        data[..commands_len].copy_from_slice(unsafe {
+            core::slice::from_raw_parts(commands.as_ptr() as _, commands_len)
+        });
+
+        data[4094..].copy_from_slice((commands_len as u16).to_be_bytes().as_slice());
 
         rsp::run(code, Some(data.deref()));
 
@@ -46,7 +58,7 @@ impl Graphics {
         for (i, word) in dmem.chunks_exact(4).enumerate() {
             let a = u32::from_be_bytes(word.try_into().unwrap());
 
-            debugln!("ADDR {:<4} : {:032b} : {:08x} : {:10}", i*4, a, a, a);
+            debugln!("ADDR {:<4} : {:032b} : {:08x} : {:10}", i * 4, a, a, a);
 
             //assert!(a == i as u32);
         }
