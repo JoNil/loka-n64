@@ -123,7 +123,7 @@ fn main() {
             player::update(&mut world, &n64.controllers, &mut sound_mixer, &camera);
 
             diver_ai::update(&mut world);
-            waypoint_ai::update(&mut world, dt);
+            waypoint_ai::update(world.as_query(), dt);
             missile::update(&mut world, dt);
 
             movable::simulate(&mut world, dt);
