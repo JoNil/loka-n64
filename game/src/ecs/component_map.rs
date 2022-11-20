@@ -27,7 +27,7 @@ impl ComponentMap {
         self.removers.clone()
     }
 
-    fn get_ptr<T: 'static>(&mut self) -> *const Storage<T> {
+    pub fn get_ptr<T: 'static>(&mut self) -> *mut Storage<T> {
         let key = TypeId::of::<T>();
 
         if !self.map.contains_key(&key) {
@@ -37,13 +37,13 @@ impl ComponentMap {
             });
         }
 
-        let res: &Storage<T> = self
+        let res: &mut Storage<T> = self
             .map
-            .get(&key)
-            .and_then(|b| b.downcast_ref::<Storage<T>>())
+            .get_mut(&key)
+            .and_then(|b| b.downcast_mut::<Storage<T>>())
             .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
 
-        res as *const Storage<T>
+        res as *mut Storage<T>
     }
 
     pub fn get<T: 'static>(&mut self) -> &mut Storage<T> {

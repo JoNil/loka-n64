@@ -1,5 +1,5 @@
 use super::movable::Movable;
-use crate::ecs::{world::World, query::Query};
+use crate::ecs::query::Query;
 use n64_math::{const_vec2, Vec2};
 
 static ENEMY_WAYPOINT: [Vec2; 4] = [
