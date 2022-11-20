@@ -12,36 +12,59 @@ origin $0000
 align(8)
 
 start:
-    lhu t0, 4094(0) // Load 16bits as number of commands
-    xor t1, t1, t1 // t1 = 0
-    xor t2, t2, t2 // t2 = 0
-    xor c8, c8, c9 // CMD_START = 0
-    xor c9, c9, c9 // CMD_END = 0
-    xor t3, t3, t3 // t3 = 0
-    addi t3, t3, SET_XBS|CLR_FRZ|CLR_FLS // t3 = 00001001 (GCLK | XBUS_MEM)
-    sll t0, t0, 3     // Number of commands -> number of bytes (64bits / command)
-    mtc0 t1, c8       // CMD_START = 0
-    mtc0 t1, c9       // CMD_END = 0
-    mtc0 t3, c11      // CMD_STATUS = run
-    mtc0 t0, c9       // CMD_END = 8*nCommands
-    subi t4, t0, 8    // t4 = CMD_END-8
-    xor t5, t5, t5    // t5 = 0
-    addi t1, t1, 4092 // t1 = 4092
-    li   t6,    RDP_CMB // t6 = bit for RDP_BUSY
-    xor t7, t7, t7    // t7 = 0
+
+    xor t0, t0, t0                  // t0 = 0
+    li t1, SET_XBS|CLR_FRZ|CLR_FLS|CLR_CLK  // t1 = 00001001 (GCLK | XBUS_MEM)
+
+    lhu t2, 4094(0)   // Load 16bits as number of commands
+    sll t2, t2, 3     // Number of commands -> number of bytes (64bits / command)
+
+    li t4, 4092       // t4 = 4092
+    subi t4, t4, 8    // t4 -= 8
+    sw t0, 0(t4)
+    subi t4, t4, 8    // t4 -= 8
+    sw t1, 0(t4)
+    subi t4, t4, 8    // t4 -= 8
+    sw t2, 0(t4)
+    
+    mtc0 t1, c11      // CMD_STATUS = run
+    mtc0 t0, c8       // CMD_START = 0
+    mtc0 t2, c9       // CMD_END = 8*nCommands
+
+    mfc0 t8, c12  // Read RDP clock
+
+    mfc0 t3, c11   // t3 = CMD_STATUS
+    subi t4, t4, 8    // t4 -= 8
+    sw t3, 0(t4)
+
+    li t5, RDP_CMB    // t5 =  RDP_CMB (00100000)
+    
+    subi t4, t4, 8    // t4 -= 8
+    sw t5, 0(t4)
+
+    mfc0 t3, c8   // t3 = CMD_START
+    subi t4, t4, 8    // t4 -= 8
+    sw t3, 0(t4)
+
+    mfc0 t3, c9   // t3 = CMD_END
+    subi t4, t4, 8    // t4 -= 8
+    sw t3, 0(t4)
+
 wait_for_rdp:
-    addi t5, t5, 1 // ++t5
-    subi t1, t1, 4 // t1 -= 4
-    mfc0 c10, t2   // t2 = CMD_CURRENT
-    mfc0 c11, t3   // t3 = CMD_STATUS
-    ori t1, t1, 1024
-    sw t3, 0(t1)
-    //beq t5, t0, return // Timeout
-    //nop
-    and t3, t3, t6
-    bne t3, t7, wait_for_rdp // Loop while RDP busy
-    //bne t2, t4, wait_for_rdp // Compare CMD_CURRENT and CMD_END-8
+    subi t4, t4, 8 // t4 -= 8
+    ori t4, t4, 1024
+
+    mfc0 t3, c11   // t3 = CMD_STATUS
+    sw t3, 0(t4)
+    and t3, t5
+
+    beq t3, t5, wait_for_rdp // Loop while RDP busy
     nop
+
+    mfc0 t9, c12  // Read RDP clock
+    sub t9, t9, t8 // t9 = RDP clock end - clock start
+    subi t4, t4, 4
+    sw t9, 0(t4)
 
 if 0 {
 loop_commands:
