@@ -25,7 +25,7 @@ pub trait WorldQuery {
     type Item;
     type StorageTuple<'w>;
 
-    fn get_storage<'w>(world: &'w mut World) -> Self::StorageTuple<'w>;
+    fn get_storage(world: &mut World) -> Self::StorageTuple<'_>;
 }
 
 impl<T1: ComponentRef, T2: ComponentRef> WorldQuery for (T1, T2)
@@ -39,7 +39,7 @@ where
         &'w mut Storage<T2::Component>,
     );
 
-    fn get_storage<'w>(world: &'w mut World) -> Self::StorageTuple<'w> {
+    fn get_storage(world: &mut World) -> Self::StorageTuple<'_> {
         world.components.get2::<T1::Component, T2::Component>()
     }
 }
