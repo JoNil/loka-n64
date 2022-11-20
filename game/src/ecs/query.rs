@@ -67,13 +67,14 @@ where
         index: &mut i32,
     ) -> WorldQueryResult<Self::Item<'w>> {
         let data = unsafe { &mut *data };
+        let i = *index as usize;
 
-        if *index >= data.0.len() as i32 {
+        if i >= data.0.len() {
             return WorldQueryResult::End;
         }
 
-        let e = data.0[*index as usize];
-        let c1 = &mut data.1[*index as usize];
+        let e = data.0[i];
+        let c1 = &mut data.1[i];
 
         *index += 1;
 
