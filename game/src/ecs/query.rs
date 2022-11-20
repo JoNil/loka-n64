@@ -1,5 +1,13 @@
 use super::{entity::Entity, storage::Storage, world::World};
-use core::ops::{Deref, DerefMut};
+
+pub fn query<Q>(world: &mut World) -> Query<Q>
+where
+    Q: WorldQuery,
+{
+    let data = Q::iterator_data(world);
+
+    Query { data, index: 0 }
+}
 
 pub struct Query<'w, Q>
 where
@@ -7,17 +15,6 @@ where
 {
     data: Q::WorldQueryIteratorData<'w>,
     index: i32,
-}
-
-impl<'w, Q> Query<'w, Q>
-where
-    Q: WorldQuery,
-{
-    pub fn new(world: &'w mut World) -> Self {
-        let data = Q::iterator_data(world);
-
-        Self { data, index: 0 }
-    }
 }
 
 impl<'w, Q> Iterator for Query<'w, Q>
@@ -56,7 +53,7 @@ where
     T1: 'static,
     T2: 'static,
 {
-    type Item<'w> = (Entity, Mut<'w, T1>, Mut<'w, T2>);
+    type Item<'w> = (Entity, &'w mut T1, &'w mut T2);
     type WorldQueryIteratorData<'w> = (&'w [Entity], &'w mut [T1], &'w mut Storage<T2>);
 
     fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
@@ -84,7 +81,7 @@ where
             return WorldQueryResult::Filtered;
         };
 
-        WorldQueryResult::Some((e, Mut::new(c1), Mut::new(c2)))
+        WorldQueryResult::Some((e, c1, c2))
     }
 }
 
@@ -92,28 +89,4 @@ pub enum WorldQueryResult<T> {
     Some(T),
     End,
     Filtered,
-}
-
-pub struct Mut<'a, T> {
-    item: &'a mut T,
-}
-
-impl<'a, T> Mut<'a, T> {
-    fn new(item: &'a mut T) -> Self {
-        Self { item }
-    }
-}
-
-impl<'a, T> Deref for Mut<'a, T> {
-    type Target = T;
-
-    fn deref(&self) -> &Self::Target {
-        self.item
-    }
-}
-
-impl<'a, T> DerefMut for Mut<'a, T> {
-    fn deref_mut(&mut self) -> &mut Self::Target {
-        self.item
-    }
 }

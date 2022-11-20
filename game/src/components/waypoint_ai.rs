@@ -1,4 +1,7 @@
-use crate::ecs::{query::Query, world::World};
+use crate::ecs::{
+    query::{query, Query},
+    world::World,
+};
 use n64_math::{const_vec2, Vec2};
 
 use super::movable::Movable;
@@ -18,7 +21,7 @@ pub struct WaypointAi {
 pub fn update(world: &mut World, dt: f32) {
     let mut a = None;
 
-    for (_e, mut ai, mut movable) in Query::<(WaypointAi, Movable)>::new(world) {
+    for (_e, ai, movable) in query::<(WaypointAi, Movable)>(world) {
         if ai.waypoint_step >= 1.0 {
             ai.waypoint_step -= 1.0;
             ai.waypoint += 1;
@@ -38,5 +41,3 @@ pub fn update(world: &mut World, dt: f32) {
         a = Some(ai);
     }
 }
-
-//(&mut WaypointAi, &mut Movable)
