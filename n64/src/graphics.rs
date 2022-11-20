@@ -37,7 +37,7 @@ impl Graphics {
 
         let commands_len = commands.len() * core::mem::size_of::<RdpCommand>();
 
-        debugln!("Commands: {}", commands.len());
+        //debugln!("Commands: {}", commands.len());
 
         assert!(commands_len < 4096);
 
@@ -54,17 +54,27 @@ impl Graphics {
 
         rsp::read_dmem(dmem.deref_mut());
 
-        /*
-        debugln!("ADDR      : BINARY                           : HEX      : DECIMAL");
-        for (i, word) in dmem.chunks_exact(4).enumerate() {
-            let a = u32::from_be_bytes(word.try_into().unwrap());
+        if true {
+            debugln!(
+                "ADDR          : BINARY                                                           : HEX              : DECIMAL");
+            for (i, word) in dmem.chunks_exact(8).enumerate() {
+                let a = u64::from_be_bytes(word.try_into().unwrap());
 
-            debugln!("ADDR {:<4} : {:032b} : {:08x} : {:10}", i * 4, a, a, a);
+                debugln!("ADDR {:<8} : {:064b} : {:016x} : {:20}", i * 8, a, a, a);
 
-            //assert!(a == i as u32);
+                //assert!(a == i as u32);
+            }
+        } else {
+            debugln!("ADDR      : BINARY                           : HEX      : DECIMAL");
+            for (i, word) in dmem.chunks_exact(4).enumerate() {
+                let a = u32::from_be_bytes(word.try_into().unwrap());
+
+                debugln!("ADDR {:<4} : {:032b} : {:08x} : {:10}", i * 4, a, a, a);
+
+                //assert!(a == i as u32);
+            }
         }
 
         panic!("DONE");
-        */
     }
 }
