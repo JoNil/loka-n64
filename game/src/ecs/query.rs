@@ -15,13 +15,12 @@ impl<'w, Q: WorldQuery> Query<'w, Q> {
     }
 
     pub fn iter_mut(&mut self) -> WorldQueryIterator<'_, Q> {
-        let storage = Q::storage(self.world);
-        let data = Q::iterator_data(storage);
+        let data = Q::iterator_data(self.world);
         WorldQueryIterator { data, index: 0 }
     }
 }
 
-enum WorldQueryResult<T> {
+pub enum WorldQueryResult<T> {
     Some(T),
     End,
     Filtered,
@@ -29,11 +28,9 @@ enum WorldQueryResult<T> {
 
 pub trait WorldQuery {
     type Item;
-    type StorageTuple<'w>;
     type WorldQueryIteratorData<'w>;
 
-    fn storage(world: &mut World) -> Self::StorageTuple<'_>;
-    fn iterator_data(storage: Self::StorageTuple<'_>) -> Self::WorldQueryIteratorData<'_>;
+    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_>;
     fn get(data: &mut Self::WorldQueryIteratorData<'_>, index: i32)
         -> WorldQueryResult<Self::Item>;
 }
@@ -44,21 +41,14 @@ where
     <T2 as ComponentRef>::Component: 'static,
 {
     type Item = (Entity, T1, T2);
-    type StorageTuple<'w> = (
-        &'w mut Storage<T1::Component>,
-        &'w mut Storage<T2::Component>,
-    );
     type WorldQueryIteratorData<'w> = (
         &'w [Entity],
         &'w mut [T1::Component],
         &'w mut Storage<T2::Component>,
     );
 
-    fn storage(world: &mut World) -> Self::StorageTuple<'_> {
-        world.components.get2::<T1::Component, T2::Component>()
-    }
-
-    fn iterator_data(storage: Self::StorageTuple<'_>) -> Self::WorldQueryIteratorData<'_> {
+    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
+        let storage = world.components.get2::<T1::Component, T2::Component>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
         (entities, components, storage.1)
     }
@@ -67,7 +57,11 @@ where
         data: &mut Self::WorldQueryIteratorData<'_>,
         index: i32,
     ) -> WorldQueryResult<Self::Item> {
-        unimplemented!()
+        if index > data.0.len() as i32 {
+            return WorldQueryResult::End;
+        }
+
+        WorldQueryResult::Filtered
     }
 }
 
@@ -86,13 +80,20 @@ where
     type Item = Q::Item;
 
     fn next(&mut self) -> Option<Self::Item> {
-        /*if self.index > self.entities.len() as i32 {
-            return None;
+        let mut res = WorldQueryResult::Filtered;
+
+        while matches!(res, WorldQueryResult::Filtered) {
+            res = Q::get(&mut self.data, self.index);
+            self.index += 1;
         }
-        let entity = self.entities[self.index as usize];
-        self.index += 1;
-        Some((entity, (c1, c2)))*/
-        unimplemented!()
+
+        match res {
+            WorldQueryResult::Some(item) => Some(item),
+            WorldQueryResult::End => None,
+            WorldQueryResult::Filtered => {
+                panic!("Internal iterator error");
+            }
+        }
     }
 }
 
