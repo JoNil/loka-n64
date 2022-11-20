@@ -21,6 +21,12 @@ impl<'w, Q: WorldQuery> Query<'w, Q> {
     }
 }
 
+enum WorldQueryResult<T> {
+    Some(T),
+    End,
+    Filtered,
+}
+
 pub trait WorldQuery {
     type Item;
     type StorageTuple<'w>;
@@ -28,7 +34,8 @@ pub trait WorldQuery {
 
     fn storage(world: &mut World) -> Self::StorageTuple<'_>;
     fn iterator_data(storage: Self::StorageTuple<'_>) -> Self::WorldQueryIteratorData<'_>;
-    fn get(data: &mut Self::WorldQueryIteratorData<'_>, index: i32) -> Self::Item;
+    fn get(data: &mut Self::WorldQueryIteratorData<'_>, index: i32)
+        -> WorldQueryResult<Self::Item>;
 }
 
 impl<T1: ComponentRef, T2: ComponentRef> WorldQuery for (T1, T2)
@@ -56,7 +63,10 @@ where
         (entities, components, storage.1)
     }
 
-    fn get(data: &mut Self::WorldQueryIteratorData<'_>, index: i32) -> Self::Item {
+    fn get(
+        data: &mut Self::WorldQueryIteratorData<'_>,
+        index: i32,
+    ) -> WorldQueryResult<Self::Item> {
         unimplemented!()
     }
 }
