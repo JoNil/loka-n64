@@ -15,8 +15,7 @@ impl<'w, Q: WorldQuery> Query<'w, Q> {
     }
 
     pub fn iter_mut(&mut self) -> WorldQueryIterator<'_, Q> {
-        let storage = Q::get_storage(self.world);
-
+        let storage = Q::storage(self.world);
         WorldQueryIterator { storage, index: 0 }
     }
 }
@@ -25,7 +24,8 @@ pub trait WorldQuery {
     type Item;
     type StorageTuple<'w>;
 
-    fn get_storage(world: &mut World) -> Self::StorageTuple<'_>;
+    fn storage(world: &mut World) -> Self::StorageTuple<'_>;
+    fn entities_and_components(storage: Self::StorageTuple<'_>) -> (&[Entity]);
 }
 
 impl<T1: ComponentRef, T2: ComponentRef> WorldQuery for (T1, T2)
@@ -39,8 +39,12 @@ where
         &'w mut Storage<T2::Component>,
     );
 
-    fn get_storage(world: &mut World) -> Self::StorageTuple<'_> {
+    fn storage(world: &mut World) -> Self::StorageTuple<'_> {
         world.components.get2::<T1::Component, T2::Component>()
+    }
+
+    fn entities_and_components(storage: Self::StorageTuple<'_>) -> (&[Entity]) {
+        (storage.0.entities())
     }
 }
 
