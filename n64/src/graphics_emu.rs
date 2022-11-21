@@ -142,6 +142,7 @@ impl Graphics {
             width: size.width,
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
+            alpha_mode: wgpu::CompositeAlphaMode::Opaque,
         };
 
         surface.configure(&device, &surface_config);
