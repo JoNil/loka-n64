@@ -33,7 +33,7 @@ impl ComponentMap {
         if !self.map.contains_key(&key) {
             self.map.insert(key, Box::new(Storage::<T>::new()));
             self.removers.as_ref().borrow_mut().push(|map, entity| {
-                map.get::<T>().remove(entity);
+                map.get::<(T,)>().remove(entity);
             });
         }
 
@@ -46,15 +46,18 @@ impl ComponentMap {
         res as *mut Storage<T>
     }
 
-    pub fn get<'a, T: ComponentTuple>(&'a mut self) -> T::Item<'a> {
+    pub fn get<T: ComponentTuple>(&mut self) -> T::Item<'_> {
         T::get(self)
     }
 }
 
-unsafe trait ComponentTuple {
+/// # Safety
+///
+/// This is probably not safe 😅
+pub unsafe trait ComponentTuple {
     type Item<'a>;
 
-    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a>;
+    fn get(component_map: &mut ComponentMap) -> Self::Item<'_>;
 }
 
 unsafe impl<T> ComponentTuple for (T,)
@@ -63,7 +66,7 @@ where
 {
     type Item<'a> = &'a mut Storage<T>;
 
-    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+    fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
         let t = component_map.get_ptr::<T>();
 
         unsafe { &mut *(t as *mut Storage<T>) }
@@ -76,7 +79,7 @@ where
 {
     type Item<'a> = (&'a mut Storage<T1>, &'a mut Storage<T2>);
 
-    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+    fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
         let t1 = component_map.get_ptr::<T1>();
         let t2 = component_map.get_ptr::<T2>();
 
@@ -103,7 +106,7 @@ where
         &'a mut Storage<T3>,
     );
 
-    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+    fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
         let t1 = component_map.get_ptr::<T1>();
         let t2 = component_map.get_ptr::<T2>();
         let t3 = component_map.get_ptr::<T3>();
@@ -136,7 +139,7 @@ where
         &'a mut Storage<T4>,
     );
 
-    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+    fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
         let t1 = component_map.get_ptr::<T1>();
         let t2 = component_map.get_ptr::<T2>();
         let t3 = component_map.get_ptr::<T3>();
@@ -176,7 +179,7 @@ where
         &'a mut Storage<T5>,
     );
 
-    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+    fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
         let t1 = component_map.get_ptr::<T1>();
         let t2 = component_map.get_ptr::<T2>();
         let t3 = component_map.get_ptr::<T3>();
@@ -224,7 +227,7 @@ where
         &'a mut Storage<T6>,
     );
 
-    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+    fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
         let t1 = component_map.get_ptr::<T1>();
         let t2 = component_map.get_ptr::<T2>();
         let t3 = component_map.get_ptr::<T3>();
