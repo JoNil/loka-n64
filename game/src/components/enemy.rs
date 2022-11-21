@@ -111,7 +111,7 @@ pub fn spawn_enemy_diver(
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer) {
     let (enemy, movable, health, size, player, weapon) = world
         .components
-        .get6::<Enemy, Movable, Health, Size, Player, Weapon>();
+        .get::<(Enemy, Movable, Health, Size, Player, Weapon)>();
 
     for entity in enemy.entities() {
         if !health::is_alive(health, *entity) {

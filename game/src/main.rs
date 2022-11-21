@@ -227,7 +227,7 @@ fn main() {
                     &mut cb,
                     world
                         .components
-                        .get::<Player>()
+                        .get::<(Player,)>()
                         .lookup(player)
                         .map(|p| p.score)
                         .unwrap_or(0),
@@ -238,7 +238,7 @@ fn main() {
                     &mut cb,
                     world
                         .components
-                        .get::<Health>()
+                        .get::<(Health,)>()
                         .lookup(player)
                         .map(|hc| hc.health)
                         .unwrap_or(0),
@@ -325,7 +325,7 @@ fn main() {
             world.housekeep();
         }
 
-        if !health::is_alive(world.components.get::<Health>(), player) {
+        if !health::is_alive(world.components.get::<(Health,)>(), player) {
             break;
         }
     }

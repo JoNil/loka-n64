@@ -41,9 +41,10 @@ pub fn spawn_pickup(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
 }
 
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, camera: &Camera) {
-    let (pickup, movable, player, size, weapon) = world
-        .components
-        .get5::<Pickup, Movable, Player, Size, Weapon>();
+    let (pickup, movable, player, size, weapon) =
+        world
+            .components
+            .get::<(Pickup, Movable, Player, Size, Weapon)>();
 
     let camera_bb = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));
 

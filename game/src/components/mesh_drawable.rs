@@ -27,7 +27,8 @@ static MESH_PIPELINE: Pipeline = Pipeline {
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     n64::scope!("mesh_drawable::draw");
 
-    let (mesh_drawable, movable, health) = world.components.get3::<MeshDrawable, Movable, Health>();
+    let (mesh_drawable, movable, health) =
+        world.components.get::<(MeshDrawable, Movable, Health)>();
 
     let half_width = 0.5 * video_mode.width() as f32;
     let half_height = 0.5 * video_mode.height() as f32;

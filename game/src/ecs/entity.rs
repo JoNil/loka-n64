@@ -119,7 +119,7 @@ impl<'a> EntityBuilder<'a> {
         let entity = self.entity;
 
         self.commands.push(Box::new(move |components| {
-            components.get::<T>().add(entity, component);
+            components.get::<(T,)>().add(entity, component);
         }));
 
         self

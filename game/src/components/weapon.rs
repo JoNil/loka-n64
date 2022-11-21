@@ -389,7 +389,7 @@ pub fn draw_missile_target(
     n64::scope!("draw_missile_target");
 
     let (player, enemy, weapon, movable) =
-        world.components.get4::<Player, Enemy, Weapon, Movable>();
+        world.components.get::<(Player, Enemy, Weapon, Movable)>();
 
     let target_indicator = TARGET_INDICATOR.as_model_data();
 

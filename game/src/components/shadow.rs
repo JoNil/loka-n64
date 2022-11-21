@@ -24,7 +24,8 @@ static SHADOW_PIPELINE: Pipeline = Pipeline {
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     n64::scope!("shadow::draw");
 
-    let (mesh_drawable, shadow, movable) = world.components.get3::<MeshDrawable, Shadow, Movable>();
+    let (mesh_drawable, shadow, movable) =
+        world.components.get::<(MeshDrawable, Shadow, Movable)>();
 
     let half_width = 0.5 * video_mode.width() as f32;
     let half_height = 0.5 * video_mode.height() as f32;

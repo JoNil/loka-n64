@@ -13,7 +13,7 @@ pub fn pos(storage: &Storage<Movable>, entity: Entity) -> Option<Vec2> {
 }
 
 pub fn simulate(world: &mut World, dt: f32) {
-    let movable = world.components.get::<Movable>();
+    let movable = world.components.get::<(Movable,)>();
 
     for component in movable.components_mut() {
         component.pos += dt * component.speed;

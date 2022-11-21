@@ -46,15 +46,39 @@ impl ComponentMap {
         res as *mut Storage<T>
     }
 
-    pub fn get<T: 'static>(&mut self) -> &mut Storage<T> {
-        let t = self.get_ptr::<T>();
+    pub fn get<'a, T: ComponentTuple>(&'a mut self) -> T::Item<'a> {
+        T::get(self)
+    }
+}
+
+unsafe trait ComponentTuple {
+    type Item<'a>;
+
+    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a>;
+}
+
+unsafe impl<T> ComponentTuple for (T,)
+where
+    T: 'static,
+{
+    type Item<'a> = &'a mut Storage<T>;
+
+    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+        let t = component_map.get_ptr::<T>();
 
         unsafe { &mut *(t as *mut Storage<T>) }
     }
+}
+unsafe impl<T1, T2> ComponentTuple for (T1, T2)
+where
+    T1: 'static,
+    T2: 'static,
+{
+    type Item<'a> = (&'a mut Storage<T1>, &'a mut Storage<T2>);
 
-    pub fn get2<T1: 'static, T2: 'static>(&mut self) -> (&mut Storage<T1>, &mut Storage<T2>) {
-        let t1 = self.get_ptr::<T1>();
-        let t2 = self.get_ptr::<T2>();
+    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+        let t1 = component_map.get_ptr::<T1>();
+        let t2 = component_map.get_ptr::<T2>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
 
@@ -65,13 +89,24 @@ impl ComponentMap {
             )
         }
     }
+}
 
-    pub fn get3<T1: 'static, T2: 'static, T3: 'static>(
-        &mut self,
-    ) -> (&mut Storage<T1>, &mut Storage<T2>, &mut Storage<T3>) {
-        let t1 = self.get_ptr::<T1>();
-        let t2 = self.get_ptr::<T2>();
-        let t3 = self.get_ptr::<T3>();
+unsafe impl<T1, T2, T3> ComponentTuple for (T1, T2, T3)
+where
+    T1: 'static,
+    T2: 'static,
+    T3: 'static,
+{
+    type Item<'a> = (
+        &'a mut Storage<T1>,
+        &'a mut Storage<T2>,
+        &'a mut Storage<T3>,
+    );
+
+    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+        let t1 = component_map.get_ptr::<T1>();
+        let t2 = component_map.get_ptr::<T2>();
+        let t3 = component_map.get_ptr::<T3>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -85,19 +120,27 @@ impl ComponentMap {
             )
         }
     }
+}
 
-    pub fn get4<T1: 'static, T2: 'static, T3: 'static, T4: 'static>(
-        &mut self,
-    ) -> (
-        &mut Storage<T1>,
-        &mut Storage<T2>,
-        &mut Storage<T3>,
-        &mut Storage<T4>,
-    ) {
-        let t1 = self.get_ptr::<T1>();
-        let t2 = self.get_ptr::<T2>();
-        let t3 = self.get_ptr::<T3>();
-        let t4 = self.get_ptr::<T4>();
+unsafe impl<T1, T2, T3, T4> ComponentTuple for (T1, T2, T3, T4)
+where
+    T1: 'static,
+    T2: 'static,
+    T3: 'static,
+    T4: 'static,
+{
+    type Item<'a> = (
+        &'a mut Storage<T1>,
+        &'a mut Storage<T2>,
+        &'a mut Storage<T3>,
+        &'a mut Storage<T4>,
+    );
+
+    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+        let t1 = component_map.get_ptr::<T1>();
+        let t2 = component_map.get_ptr::<T2>();
+        let t3 = component_map.get_ptr::<T3>();
+        let t4 = component_map.get_ptr::<T4>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -115,21 +158,30 @@ impl ComponentMap {
             )
         }
     }
+}
 
-    pub fn get5<T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static>(
-        &mut self,
-    ) -> (
-        &mut Storage<T1>,
-        &mut Storage<T2>,
-        &mut Storage<T3>,
-        &mut Storage<T4>,
-        &mut Storage<T5>,
-    ) {
-        let t1 = self.get_ptr::<T1>();
-        let t2 = self.get_ptr::<T2>();
-        let t3 = self.get_ptr::<T3>();
-        let t4 = self.get_ptr::<T4>();
-        let t5 = self.get_ptr::<T5>();
+unsafe impl<T1, T2, T3, T4, T5> ComponentTuple for (T1, T2, T3, T4, T5)
+where
+    T1: 'static,
+    T2: 'static,
+    T3: 'static,
+    T4: 'static,
+    T5: 'static,
+{
+    type Item<'a> = (
+        &'a mut Storage<T1>,
+        &'a mut Storage<T2>,
+        &'a mut Storage<T3>,
+        &'a mut Storage<T4>,
+        &'a mut Storage<T5>,
+    );
+
+    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+        let t1 = component_map.get_ptr::<T1>();
+        let t2 = component_map.get_ptr::<T2>();
+        let t3 = component_map.get_ptr::<T3>();
+        let t4 = component_map.get_ptr::<T4>();
+        let t5 = component_map.get_ptr::<T5>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -152,23 +204,33 @@ impl ComponentMap {
             )
         }
     }
+}
 
-    pub fn get6<T1: 'static, T2: 'static, T3: 'static, T4: 'static, T5: 'static, T6: 'static>(
-        &mut self,
-    ) -> (
-        &mut Storage<T1>,
-        &mut Storage<T2>,
-        &mut Storage<T3>,
-        &mut Storage<T4>,
-        &mut Storage<T5>,
-        &mut Storage<T6>,
-    ) {
-        let t1 = self.get_ptr::<T1>();
-        let t2 = self.get_ptr::<T2>();
-        let t3 = self.get_ptr::<T3>();
-        let t4 = self.get_ptr::<T4>();
-        let t5 = self.get_ptr::<T5>();
-        let t6 = self.get_ptr::<T6>();
+unsafe impl<T1, T2, T3, T4, T5, T6> ComponentTuple for (T1, T2, T3, T4, T5, T6)
+where
+    T1: 'static,
+    T2: 'static,
+    T3: 'static,
+    T4: 'static,
+    T5: 'static,
+    T6: 'static,
+{
+    type Item<'a> = (
+        &'a mut Storage<T1>,
+        &'a mut Storage<T2>,
+        &'a mut Storage<T3>,
+        &'a mut Storage<T4>,
+        &'a mut Storage<T5>,
+        &'a mut Storage<T6>,
+    );
+
+    fn get<'a>(component_map: &'a mut ComponentMap) -> Self::Item<'a> {
+        let t1 = component_map.get_ptr::<T1>();
+        let t2 = component_map.get_ptr::<T2>();
+        let t3 = component_map.get_ptr::<T3>();
+        let t4 = component_map.get_ptr::<T4>();
+        let t5 = component_map.get_ptr::<T5>();
+        let t6 = component_map.get_ptr::<T6>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);

@@ -57,7 +57,7 @@ where
     type WorldQueryIteratorData<'w> = (&'w [Entity], &'w mut [T1], &'w mut Storage<T2>);
 
     fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
-        let storage = world.components.get2::<T1, T2>();
+        let storage = world.components.get::<(T1, T2)>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
         assert!(entities.len() == components.len());

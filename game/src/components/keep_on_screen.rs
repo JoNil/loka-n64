@@ -5,7 +5,7 @@ use n64_math::{vec2, Aabb2};
 pub struct KeepOnScreen;
 
 pub fn update(world: &mut World, camera: &Camera) {
-    let (keep_on_screen, movable, size) = world.components.get3::<KeepOnScreen, Movable, Size>();
+    let (keep_on_screen, movable, size) = world.components.get::<(KeepOnScreen, Movable, Size)>();
 
     let camera_bb = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));
 

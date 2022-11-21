@@ -30,7 +30,7 @@ pub struct Trap {
 }
 
 pub fn update(world: &mut World) {
-    let (trap, health, movable, player) = world.components.get4::<Trap, Health, Movable, Player>();
+    let (trap, health, movable, player) = world.components.get::<(Trap, Health, Movable, Player)>();
 
     for entity in trap.entities() {
         if !health::is_alive(health, *entity) {

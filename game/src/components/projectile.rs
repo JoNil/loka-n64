@@ -16,9 +16,10 @@ pub struct Projectile {
 }
 
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer, camera: &Camera, dt: f32) {
-    let (projectile, movable, enemy, player, size, health) = world
-        .components
-        .get6::<Projectile, Movable, Enemy, Player, Size, Health>();
+    let (projectile, movable, enemy, player, size, health) =
+        world
+            .components
+            .get::<(Projectile, Movable, Enemy, Player, Size, Health)>();
 
     let camera_bb = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));
 

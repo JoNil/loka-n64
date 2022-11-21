@@ -25,9 +25,10 @@ pub struct SpriteDrawable {
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     n64::scope!("sprite_drawable::draw");
 
-    let (sprite_drawable, movable, size, health) = world
-        .components
-        .get4::<SpriteDrawable, Movable, Size, Health>();
+    let (sprite_drawable, movable, size, health) =
+        world
+            .components
+            .get::<(SpriteDrawable, Movable, Size, Health)>();
 
     for (component, entity) in sprite_drawable.components_and_entities() {
         if let (Some(movable), Some(size)) = (movable.lookup(entity), size.lookup(entity)) {

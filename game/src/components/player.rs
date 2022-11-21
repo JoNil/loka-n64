@@ -64,7 +64,7 @@ pub fn add_score(player: &mut Storage<Player>, score: i32) {
 }
 
 pub fn draw_player_weapon(world: &mut World, cb: &mut CommandBuffer, video_mode: &VideoMode) {
-    let (player, weapon) = world.components.get2::<Player, Weapon>();
+    let (player, weapon) = world.components.get::<(Player, Weapon)>();
 
     for entity in player.entities() {
         if let Some(weapon) = weapon.lookup(*entity) {
@@ -85,9 +85,10 @@ pub fn update(
     sound_mixer: &mut SoundMixer,
     camera: &Camera,
 ) {
-    let (player, movable, size, mesh_drawable, weapon, enemy) = world
-        .components
-        .get6::<Player, Movable, Size, MeshDrawable, Weapon, Enemy>();
+    let (player, movable, size, mesh_drawable, weapon, enemy) =
+        world
+            .components
+            .get::<(Player, Movable, Size, MeshDrawable, Weapon, Enemy)>();
 
     for entity in player.entities() {
         let controller_x = controllers.x();

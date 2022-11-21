@@ -21,7 +21,7 @@ pub fn is_alive(health: &Storage<Health>, entity: Entity) -> bool {
 }
 
 pub fn clear_was_damaged(world: &mut World) {
-    let health = world.components.get::<Health>();
+    let health = world.components.get::<(Health,)>();
 
     for component in health.components_mut() {
         component.damaged_this_frame = false;
