@@ -12,6 +12,7 @@ use crate::{
     camera::Camera,
     ecs::{
         entity::{Entity, EntitySystem},
+        query::query,
         storage::Storage,
         world::World,
     },
@@ -64,18 +65,14 @@ pub fn add_score(player: &mut Storage<Player>, score: i32) {
 }
 
 pub fn draw_player_weapon(world: &mut World, cb: &mut CommandBuffer, video_mode: &VideoMode) {
-    let (player, weapon) = world.components.get::<(Player, Weapon)>();
+    for (_e, _player, weapon) in query::<(Player, Weapon)>(&mut world.components) {
+        let text = (&weapon.weapon_type).into();
+        let pos = vec2(
+            video_mode.width() as f32 * 0.5 - text_width(text) as f32 * 0.5,
+            video_mode.height() as f32 * 0.9,
+        );
 
-    for entity in player.entities() {
-        if let Some(weapon) = weapon.lookup(*entity) {
-            let text = (&weapon.weapon_type).into();
-            let pos = vec2(
-                video_mode.width() as f32 * 0.5 - text_width(text) as f32 * 0.5,
-                video_mode.height() as f32 * 0.9,
-            );
-
-            draw_text(cb, text, pos, 0x202020a0);
-        }
+        draw_text(cb, text, pos, 0x202020a0);
     }
 }
 

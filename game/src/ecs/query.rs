@@ -1,10 +1,10 @@
-use super::{entity::Entity, storage::Storage, world::World};
+use super::{component_map::ComponentMap, entity::Entity, storage::Storage};
 
-pub fn query<Q>(world: &mut World) -> Query<Q>
+pub fn query<Q>(component_map: &mut ComponentMap) -> Query<Q>
 where
     Q: WorldQuery,
 {
-    let data = Q::iterator_data(world);
+    let data = Q::iterator_data(component_map);
 
     Query { data, index: 0 }
 }
@@ -47,7 +47,7 @@ pub unsafe trait WorldQuery {
     type Item<'w>;
     type WorldQueryIteratorData<'w>;
 
-    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_>;
+    fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_>;
     fn get<'w>(
         data: *mut Self::WorldQueryIteratorData<'w>,
         index: &mut i32,
@@ -61,8 +61,8 @@ where
     type Item<'w> = (Entity, &'w mut T1);
     type WorldQueryIteratorData<'w> = (&'w [Entity], &'w mut [T1]);
 
-    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
-        let storage = world.components.get::<(T1,)>();
+    fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
+        let storage = component_map.get::<(T1,)>();
         let (entities, components) = storage.components_and_entities_slice_mut();
 
         assert!(entities.len() == components.len());
@@ -98,8 +98,8 @@ where
     type Item<'w> = (Entity, &'w mut T1, &'w mut T2);
     type WorldQueryIteratorData<'w> = (&'w [Entity], &'w mut [T1], &'w mut Storage<T2>);
 
-    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
-        let storage = world.components.get::<(T1, T2)>();
+    fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
+        let storage = component_map.get::<(T1, T2)>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
         assert!(entities.len() == components.len());
@@ -145,8 +145,8 @@ where
         &'w mut Storage<T3>,
     );
 
-    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
-        let storage = world.components.get::<(T1, T2, T3)>();
+    fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
+        let storage = component_map.get::<(T1, T2, T3)>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
         assert!(entities.len() == components.len());
@@ -198,8 +198,8 @@ where
         &'w mut Storage<T4>,
     );
 
-    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
-        let storage = world.components.get::<(T1, T2, T3, T4)>();
+    fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
+        let storage = component_map.get::<(T1, T2, T3, T4)>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
         assert!(entities.len() == components.len());
@@ -264,8 +264,8 @@ where
         &'w mut Storage<T5>,
     );
 
-    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
-        let storage = world.components.get::<(T1, T2, T3, T4, T5)>();
+    fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
+        let storage = component_map.get::<(T1, T2, T3, T4, T5)>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
         assert!(entities.len() == components.len());
@@ -339,8 +339,8 @@ where
         &'w mut Storage<T6>,
     );
 
-    fn iterator_data(world: &mut World) -> Self::WorldQueryIteratorData<'_> {
-        let storage = world.components.get::<(T1, T2, T3, T4, T5, T6)>();
+    fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
+        let storage = component_map.get::<(T1, T2, T3, T4, T5, T6)>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
         assert!(entities.len() == components.len());

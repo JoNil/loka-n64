@@ -16,7 +16,9 @@ pub struct BoxDrawable {
 }
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
-    for (_e, box_drawable, movable, size) in query::<(BoxDrawable, Movable, Size)>(world) {
+    for (_e, box_drawable, movable, size) in
+        query::<(BoxDrawable, Movable, Size)>(&mut world.components)
+    {
         let half_size = size.size / 2.0;
 
         let upper_left = movable.pos - half_size;

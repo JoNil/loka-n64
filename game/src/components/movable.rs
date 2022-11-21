@@ -1,6 +1,6 @@
 use n64_math::Vec2;
 
-use crate::ecs::{entity::Entity, storage::Storage, world::World};
+use crate::ecs::{entity::Entity, query::query, storage::Storage, world::World};
 
 #[derive(Copy, Clone)]
 pub struct Movable {
@@ -13,9 +13,7 @@ pub fn pos(storage: &Storage<Movable>, entity: Entity) -> Option<Vec2> {
 }
 
 pub fn simulate(world: &mut World, dt: f32) {
-    let movable = world.components.get::<(Movable,)>();
-
-    for component in movable.components_mut() {
-        component.pos += dt * component.speed;
+    for (_e, movable) in query::<(Movable,)>(&mut world.components) {
+        movable.pos += dt * movable.speed;
     }
 }

@@ -16,7 +16,7 @@ pub struct WaypointAi {
 }
 
 pub fn update(world: &mut World, dt: f32) {
-    for (_e, ai, movable) in query::<(WaypointAi, Movable)>(world) {
+    for (_e, ai, movable) in query::<(WaypointAi, Movable)>(&mut world.components) {
         if ai.waypoint_step >= 1.0 {
             ai.waypoint_step -= 1.0;
             ai.waypoint += 1;

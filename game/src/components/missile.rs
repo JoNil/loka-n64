@@ -24,9 +24,9 @@ pub fn update(world: &mut World, dt: f32) {
 
         if let (Some(m), Some(d)) = (movable.lookup_mut(entity), mesh_drawable.lookup_mut(entity)) {
             if let Some(target_pos) = target_pos {
-                let towards_target = (target_pos - m.pos).normalize();
+                let towords_target = (target_pos - m.pos).normalize();
                 let speed_dir = m.speed.normalize();
-                let new_speed_dir = (0.02 * towards_target + 0.98 * speed_dir).normalize();
+                let new_speed_dir = (0.02 * towords_target + 0.98 * speed_dir).normalize();
                 let new_speed = new_speed_dir
                     * libm::fminf(
                         MISSILE_MAX_SPEED,
