@@ -40,8 +40,11 @@ pub enum WorldQueryResult<T> {
     Filtered,
 }
 
-unsafe trait Optional {}
-unsafe impl<T> Optional for Option<T> {}
+pub enum ComponentLookupResult<T> {
+    Some(T),
+    Ignore,
+    Filter,
+}
 
 pub trait Component {
     type Inner;
@@ -49,17 +52,25 @@ pub trait Component {
     fn get_from_storage(
         storage: &mut Storage<Self::Inner>,
         entity: Entity,
-    ) -> Option<&mut Self::Inner>;
+    ) -> ComponentLookupResult<&mut Self> {
+        match storage.lookup_mut(entity) {
+            Some(v) => ComponentLookupResult::Some(v),
+            None => ComponentLookupResult::Filter,
+        }
+    }
 }
 
-impl<T> Component for T {
+impl<T> Component for Option<T> {
     type Inner = T;
 
     fn get_from_storage(
         storage: &mut Storage<Self::Inner>,
         entity: Entity,
-    ) -> Option<&mut Self::Inner> {
-        storage.lookup_mut(entity)
+    ) -> ComponentLookupResult<&mut Self> {
+        match storage.lookup_mut(entity) {
+            Some(v) => ComponentLookupResult::Some(v),
+            None => ComponentLookupResult::Ignore,
+        }
     }
 }
 
@@ -115,14 +126,18 @@ where
 
 unsafe impl<T1, T2> WorldQuery for (T1, T2)
 where
-    T1: 'static,
-    T2: 'static,
+    T1: 'static + Component,
+    T2: 'static + Component,
 {
-    type Item<'w> = (Entity, &'w mut T1, &'w mut T2);
-    type WorldQueryIteratorData<'w> = (&'w [Entity], &'w mut [T1], &'w mut Storage<T2>);
+    type Item<'w> = (Entity, &'w mut T1::Inner, &'w mut T2);
+    type WorldQueryIteratorData<'w> = (
+        &'w [Entity],
+        &'w mut [T1::Inner],
+        &'w mut Storage<T2::Inner>,
+    );
 
     fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
-        let storage = component_map.get::<(T1, T2)>();
+        let storage = component_map.get::<(T1::Inner, T2::Inner)>();
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
         assert!(entities.len() == components.len());
@@ -146,8 +161,12 @@ where
 
         *index += 1;
 
-        let Some(c2) = data.2.lookup_mut(e) else {
-            return WorldQueryResult::Filtered;
+        let c2 = match T2::get_from_storage(data.2, e) {
+            ComponentLookupResult::Some(v) => Some(v),
+            ComponentLookupResult::Ignore => None,
+            ComponentLookupResult::Filter => {
+                return WorldQueryResult::Filtered;
+            }
         };
 
         WorldQueryResult::Some((e, c1, c2))

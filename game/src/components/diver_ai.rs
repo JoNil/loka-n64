@@ -1,7 +1,14 @@
 use super::movable::Movable;
-use crate::ecs::{query::query, world::World};
+use crate::ecs::{
+    query::{query, Component},
+    world::World,
+};
 
 pub struct DiverAi;
+
+impl Component for DiverAi {
+    type Inner = DiverAi;
+}
 
 pub fn update(world: &mut World) {
     for (_e, _diver_ai, movable) in query::<(DiverAi, Movable)>(&mut world.components) {

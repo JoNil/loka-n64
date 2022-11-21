@@ -12,7 +12,7 @@ use crate::{
     camera::Camera,
     ecs::{
         entity::{Entity, EntitySystem},
-        query::query,
+        query::{query, Component},
         storage::Storage,
         world::World,
     },
@@ -29,6 +29,10 @@ const SHIP_SPEED: f32 = 0.35;
 
 pub struct Player {
     pub score: i32,
+}
+
+impl Component for Player {
+    type Inner = Player;
 }
 
 pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {

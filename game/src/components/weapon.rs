@@ -27,7 +27,7 @@ use crate::{
     ecs::{
         entity::{Entity, EntitySystem},
         storage::Storage,
-        world::World,
+        world::World, query::Component,
     },
     models::{BULLET, LASER, MISSILE, TARGET_INDICATOR},
     sound_mixer::SoundMixer,
@@ -53,6 +53,10 @@ pub struct Weapon {
     pub weapon_type: WeaponType,
     pub last_shoot_time: i64,
     pub direction: f32,
+}
+
+impl Component for Weapon {
+    type Inner = Weapon;
 }
 
 const FLAK_DELAY_MS: i32 = 900;

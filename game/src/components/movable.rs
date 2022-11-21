@@ -1,11 +1,20 @@
 use n64_math::Vec2;
 
-use crate::ecs::{entity::Entity, query::query, storage::Storage, world::World};
+use crate::ecs::{
+    entity::Entity,
+    query::{query, Component},
+    storage::Storage,
+    world::World,
+};
 
 #[derive(Copy, Clone)]
 pub struct Movable {
     pub pos: Vec2,
     pub speed: Vec2,
+}
+
+impl Component for Movable {
+    type Inner = Movable;
 }
 
 pub fn pos(storage: &Storage<Movable>, entity: Entity) -> Option<Vec2> {
