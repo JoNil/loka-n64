@@ -23,7 +23,7 @@ use core::f32::consts::PI;
 use n64::{gfx::CommandBuffer, Controllers, VideoMode};
 use n64_math::{const_vec2, vec2, Quat, Vec2, Vec3};
 
-const PLAYTER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
+const PLAYER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
 
 pub struct Player {
@@ -34,7 +34,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
     entities
         .spawn()
         .add(Movable {
-            pos: start_pos + PLAYTER_START_POS,
+            pos: start_pos + PLAYER_START_POS,
             speed: Vec2::new(0.0, 0.0),
         })
         .add(Size { size: SHIP_3.size })
