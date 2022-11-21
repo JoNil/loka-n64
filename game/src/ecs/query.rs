@@ -40,6 +40,29 @@ pub enum WorldQueryResult<T> {
     Filtered,
 }
 
+unsafe trait Optional {}
+unsafe impl<T> Optional for Option<T> {}
+
+pub trait Component {
+    type Inner;
+
+    fn get_from_storage(
+        storage: &mut Storage<Self::Inner>,
+        entity: Entity,
+    ) -> Option<&mut Self::Inner>;
+}
+
+impl<T> Component for T {
+    type Inner = T;
+
+    fn get_from_storage(
+        storage: &mut Storage<Self::Inner>,
+        entity: Entity,
+    ) -> Option<&mut Self::Inner> {
+        storage.lookup_mut(entity)
+    }
+}
+
 /// # Safety
 ///
 /// This is probably not safe 😅
