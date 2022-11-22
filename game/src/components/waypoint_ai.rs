@@ -22,7 +22,7 @@ impl Component for WaypointAi {
     type Inner = WaypointAi;
     type RefInner<'w> = &'w mut WaypointAi;
 
-    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
         v
     }
 

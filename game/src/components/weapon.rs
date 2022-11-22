@@ -60,7 +60,7 @@ impl Component for Weapon {
     type Inner = Weapon;
     type RefInner<'w> = &'w mut Weapon;
 
-    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
         v
     }
 

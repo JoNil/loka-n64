@@ -10,7 +10,7 @@ impl Component for PrintPosition {
     type Inner = PrintPosition;
     type RefInner<'w> = &'w mut PrintPosition;
 
-    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
         v
     }
 

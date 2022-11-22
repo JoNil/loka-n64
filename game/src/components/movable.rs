@@ -17,7 +17,7 @@ impl Component for Movable {
     type Inner = Movable;
     type RefInner<'w> = &'w mut Movable;
 
-    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
         v
     }
 

@@ -35,7 +35,7 @@ impl Component for Player {
     type Inner = Player;
     type RefInner<'w> = &'w mut Player;
 
-    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
         v
     }
 

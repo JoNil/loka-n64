@@ -44,17 +44,14 @@ pub trait Component {
     type Inner;
     type RefInner<'w>;
 
-    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w>;
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_>;
     fn empty<'w>() -> Self::RefInner<'w>;
 
     fn get_from_storage(
         storage: &mut Storage<Self::Inner>,
         entity: Entity,
     ) -> Option<Self::RefInner<'_>> {
-        match storage.lookup_mut(entity) {
-            Some(v) => Some(Self::convert(v)),
-            None => None,
-        }
+        storage.lookup_mut(entity).map(|v| Self::convert(v))
     }
 }
 
@@ -65,7 +62,7 @@ where
     type Inner = T;
     type RefInner<'w> = Option<&'w mut T>;
 
-    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
         Some(v)
     }
 
