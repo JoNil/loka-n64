@@ -27,7 +27,11 @@ impl ComponentMap {
         self.removers.clone()
     }
 
-    pub fn get_ptr<T: Component + 'static>(&mut self) -> *mut Storage<T> {
+    pub fn get<T: ComponentTuple>(&mut self) -> T::Item<'_> {
+        T::get(self)
+    }
+
+    fn get_ptr<T: Component + 'static>(&mut self) -> *mut Storage<T> {
         let key = TypeId::of::<T>();
 
         if !self.map.contains_key(&key) {
@@ -44,10 +48,6 @@ impl ComponentMap {
             .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
 
         res as *mut Storage<T>
-    }
-
-    pub fn get<T: ComponentTuple>(&mut self) -> T::Item<'_> {
-        T::get(self)
     }
 }
 
