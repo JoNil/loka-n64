@@ -40,25 +40,20 @@ pub enum WorldQueryResult<T> {
     Filtered,
 }
 
-pub enum ComponentLookupResult<T> {
-    Some(T),
-    Ignore,
-    Filter,
-}
-
 pub trait Component {
     type Inner;
     type RefInner<'w>;
 
     fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w>;
+    fn empty<'w>() -> Self::RefInner<'w>;
 
     fn get_from_storage(
         storage: &mut Storage<Self::Inner>,
         entity: Entity,
-    ) -> ComponentLookupResult<Self::RefInner<'_>> {
+    ) -> Option<Self::RefInner<'_>> {
         match storage.lookup_mut(entity) {
-            Some(v) => ComponentLookupResult::Some(Self::convert(v)),
-            None => ComponentLookupResult::Filter,
+            Some(v) => Some(Self::convert(v)),
+            None => None,
         }
     }
 }
@@ -74,13 +69,17 @@ where
         Some(v)
     }
 
+    fn empty<'w>() -> Self::RefInner<'w> {
+        None
+    }
+
     fn get_from_storage(
         storage: &mut Storage<Self::Inner>,
         entity: Entity,
-    ) -> ComponentLookupResult<Self::RefInner<'_>> {
+    ) -> Option<Self::RefInner<'_>> {
         match storage.lookup_mut(entity) {
-            Some(v) => ComponentLookupResult::Some(Self::convert(v)),
-            None => ComponentLookupResult::Ignore,
+            Some(v) => Some(Self::convert(v)),
+            None => Some(Self::empty()),
         }
     }
 }
@@ -172,12 +171,8 @@ where
 
         *index += 1;
 
-        let c2 = match T2::get_from_storage(data.2, e) {
-            ComponentLookupResult::Some(v) => v,
-            ComponentLookupResult::Ignore => None,
-            ComponentLookupResult::Filter => {
-                return WorldQueryResult::Filtered;
-            }
+        let Some(c2) = data.2.lookup_mut(e) else {
+            return WorldQueryResult::Filtered;
         };
 
         WorldQueryResult::Some((e, c1, c2))

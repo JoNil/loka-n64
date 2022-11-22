@@ -13,6 +13,10 @@ impl Component for PrintPosition {
     fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
         v
     }
+
+    fn empty<'w>() -> Self::RefInner<'w> {
+        unreachable!()
+    }
 }
 
 pub fn print(world: &mut World) {

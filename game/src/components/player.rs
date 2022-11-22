@@ -38,6 +38,10 @@ impl Component for Player {
     fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
         v
     }
+
+    fn empty<'w>() -> Self::RefInner<'w> {
+        unreachable!()
+    }
 }
 
 pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {

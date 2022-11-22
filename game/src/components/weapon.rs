@@ -63,6 +63,10 @@ impl Component for Weapon {
     fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
         v
     }
+
+    fn empty<'w>() -> Self::RefInner<'w> {
+        unreachable!()
+    }
 }
 
 const FLAK_DELAY_MS: i32 = 900;
