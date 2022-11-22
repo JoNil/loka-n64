@@ -1,34 +1,19 @@
 use super::{movable::Movable, size::Size};
 use crate::{
     camera::Camera,
-    ecs::{
-        entity::EntitySystem,
-        query::{query, Component},
-        world::World,
-    },
+    ecs::{entity::EntitySystem, query::query, world::World},
 };
+use game_derive::Component;
 use n64::gfx::Texture;
 use n64_math::{vec2, Aabb2};
 
 pub type SpawnerFunc =
     fn(entities: &mut EntitySystem, movable: Movable, size: Size, texture: Texture<'static>);
 
+#[derive(Component)]
 pub struct Spawner {
     pub texture: Texture<'static>,
     pub spawner_func: SpawnerFunc,
-}
-
-impl Component for Spawner {
-    type Inner = Spawner;
-    type RefInner<'w> = &'w mut Spawner;
-
-    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
-        v
-    }
-
-    fn empty<'w>() -> Self::RefInner<'w> {
-        unreachable!()
-    }
 }
 
 pub fn update(world: &mut World, camera: &Camera) {

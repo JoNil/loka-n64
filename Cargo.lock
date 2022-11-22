@@ -843,6 +843,7 @@ dependencies = [
 name = "game"
 version = "0.1.0"
 dependencies = [
+ "game-derive",
  "game-pipeline",
  "hashbrown 0.13.1",
  "libm",
@@ -851,6 +852,15 @@ dependencies = [
  "strum",
  "strum_macros",
  "zerocopy",
+]
+
+[[package]]
+name = "game-derive"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
 ]
 
 [[package]]

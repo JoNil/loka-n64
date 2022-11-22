@@ -1,26 +1,10 @@
-use crate::ecs::{
-    entity::Entity,
-    query::{query, Component},
-    storage::Storage,
-    world::World,
-};
+use crate::ecs::{entity::Entity, query::query, storage::Storage, world::World};
+use game_derive::Component;
 
+#[derive(Component)]
 pub struct Health {
     pub health: i32,
     pub damaged_this_frame: bool,
-}
-
-impl Component for Health {
-    type Inner = Health;
-    type RefInner<'w> = &'w mut Health;
-
-    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
-        v
-    }
-
-    fn empty<'w>() -> Self::RefInner<'w> {
-        unreachable!()
-    }
 }
 
 impl Health {

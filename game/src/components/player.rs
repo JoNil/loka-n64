@@ -12,7 +12,7 @@ use crate::{
     camera::Camera,
     ecs::{
         entity::{Entity, EntitySystem},
-        query::{query, Component},
+        query::query,
         storage::Storage,
         world::World,
     },
@@ -21,27 +21,16 @@ use crate::{
     sound_mixer::SoundMixer,
 };
 use core::f32::consts::PI;
+use game_derive::Component;
 use n64::{gfx::CommandBuffer, Controllers, VideoMode};
 use n64_math::{const_vec2, vec2, Quat, Vec2, Vec3};
 
 const PLAYER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
 
+#[derive(Component)]
 pub struct Player {
     pub score: i32,
-}
-
-impl Component for Player {
-    type Inner = Player;
-    type RefInner<'w> = &'w mut Player;
-
-    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
-        v
-    }
-
-    fn empty<'w>() -> Self::RefInner<'w> {
-        unreachable!()
-    }
 }
 
 pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {

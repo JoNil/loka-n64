@@ -1,27 +1,13 @@
 use super::{movable::Movable, size::Size};
 use crate::{
     camera::Camera,
-    ecs::{
-        query::{query, Component},
-        world::World,
-    },
+    ecs::{query::query, world::World},
 };
+use game_derive::Component;
 use n64_math::{vec2, Aabb2};
 
+#[derive(Component)]
 pub struct KeepOnScreen;
-
-impl Component for KeepOnScreen {
-    type Inner = KeepOnScreen;
-    type RefInner<'w> = &'w mut KeepOnScreen;
-
-    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
-        v
-    }
-
-    fn empty<'w>() -> Self::RefInner<'w> {
-        unreachable!()
-    }
-}
 
 pub fn update(world: &mut World, camera: &Camera) {
     let camera_bb = Aabb2::new(camera.pos, camera.pos + vec2(1.0, 1.0));

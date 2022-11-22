@@ -1,16 +1,3 @@
-use alloc::vec::Vec;
-use core::f32::consts::PI;
-use n64::{
-    current_time_us,
-    gfx::{
-        color_combiner_mode::{ASrc, BSrc, CSrc, ColorCombinerMode, DSrc},
-        CommandBuffer, Pipeline,
-    },
-    VideoMode,
-};
-use n64_math::{vec2, vec3, Mat2, Mat4, Quat, Vec2};
-use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
-
 use super::{
     enemy::Enemy,
     health::Health,
@@ -26,7 +13,6 @@ use crate::{
     camera::Camera,
     ecs::{
         entity::{Entity, EntitySystem},
-        query::Component,
         storage::Storage,
         world::World,
     },
@@ -34,6 +20,19 @@ use crate::{
     sound_mixer::SoundMixer,
     sounds::{LASER_1, MISSILE_1, SHOOT_3},
 };
+use alloc::vec::Vec;
+use core::f32::consts::PI;
+use game_derive::Component;
+use n64::{
+    current_time_us,
+    gfx::{
+        color_combiner_mode::{ASrc, BSrc, CSrc, ColorCombinerMode, DSrc},
+        CommandBuffer, Pipeline,
+    },
+    VideoMode,
+};
+use n64_math::{vec2, vec3, Mat2, Mat4, Quat, Vec2};
+use strum_macros::{EnumCount, EnumIter, IntoStaticStr};
 
 #[derive(EnumCount, EnumIter, IntoStaticStr, PartialEq, Eq, PartialOrd, Ord)]
 pub enum WeaponType {
@@ -50,23 +49,11 @@ pub enum WeaponTarget {
     Enemy,
 }
 
+#[derive(Component)]
 pub struct Weapon {
     pub weapon_type: WeaponType,
     pub last_shoot_time: i64,
     pub direction: f32,
-}
-
-impl Component for Weapon {
-    type Inner = Weapon;
-    type RefInner<'w> = &'w mut Weapon;
-
-    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
-        v
-    }
-
-    fn empty<'w>() -> Self::RefInner<'w> {
-        unreachable!()
-    }
 }
 
 const FLAK_DELAY_MS: i32 = 900;

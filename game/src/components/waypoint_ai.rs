@@ -1,7 +1,5 @@
-use crate::ecs::{
-    query::{query, Component},
-    world::World,
-};
+use crate::ecs::{query::query, world::World};
+use game_derive::Component;
 use n64_math::{const_vec2, Vec2};
 
 use super::movable::Movable;
@@ -13,22 +11,10 @@ static ENEMY_WAYPOINT: [Vec2; 4] = [
     const_vec2!([0.4, 0.6]),
 ];
 
+#[derive(Component)]
 pub struct WaypointAi {
     pub waypoint: usize,
     pub waypoint_step: f32,
-}
-
-impl Component for WaypointAi {
-    type Inner = WaypointAi;
-    type RefInner<'w> = &'w mut WaypointAi;
-
-    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
-        v
-    }
-
-    fn empty<'w>() -> Self::RefInner<'w> {
-        unreachable!()
-    }
 }
 
 pub fn update(world: &mut World, dt: f32) {

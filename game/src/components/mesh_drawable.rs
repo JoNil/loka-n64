@@ -5,6 +5,7 @@ use crate::{
     model::ModelData,
 };
 use core::f32::consts::PI;
+use game_derive::Component;
 use n64::{
     gfx::{
         color_combiner_mode::{
@@ -16,22 +17,10 @@ use n64::{
 };
 use n64_math::{vec3, Mat4, Quat};
 
+#[derive(Component)]
 pub struct MeshDrawable {
     pub model: ModelData<'static>,
     pub rot: Quat,
-}
-
-impl Component for MeshDrawable {
-    type Inner = MeshDrawable;
-    type RefInner<'w> = &'w mut MeshDrawable;
-
-    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
-        v
-    }
-
-    fn empty<'w>() -> Self::RefInner<'w> {
-        unreachable!()
-    }
 }
 
 static MESH_PIPELINE: Pipeline = Pipeline {

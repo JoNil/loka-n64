@@ -1,29 +1,11 @@
+use crate::ecs::{entity::Entity, query::query, storage::Storage, world::World};
+use game_derive::Component;
 use n64_math::Vec2;
 
-use crate::ecs::{
-    entity::Entity,
-    query::{query, Component},
-    storage::Storage,
-    world::World,
-};
-
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Component)]
 pub struct Movable {
     pub pos: Vec2,
     pub speed: Vec2,
-}
-
-impl Component for Movable {
-    type Inner = Movable;
-    type RefInner<'w> = &'w mut Movable;
-
-    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
-        v
-    }
-
-    fn empty<'w>() -> Self::RefInner<'w> {
-        unreachable!()
-    }
 }
 
 pub fn pos(storage: &Storage<Movable>, entity: Entity) -> Option<Vec2> {
