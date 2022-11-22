@@ -1,3 +1,4 @@
+pub mod component;
 mod component_map;
 pub mod entity;
 pub mod query;

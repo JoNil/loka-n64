@@ -7,7 +7,7 @@ pub fn derive(input: TokenStream) -> TokenStream {
     let DeriveInput { ident, .. } = parse_macro_input!(input);
 
     quote! {
-        impl crate::ecs::query::Component for #ident {
+        impl crate::ecs::component::Component for #ident {
             type Inner = #ident;
             type RefInner<'w> = &'w mut #ident;
 
