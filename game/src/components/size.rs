@@ -1,4 +1,3 @@
-use crate::ecs::query::Component;
 use game_derive::Component;
 use n64_math::Vec2;
 

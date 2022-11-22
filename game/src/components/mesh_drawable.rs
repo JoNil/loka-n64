@@ -1,9 +1,5 @@
 use super::{health::Health, movable::Movable};
-use crate::{
-    camera::Camera,
-    ecs::{query::Component, world::World},
-    model::ModelData,
-};
+use crate::{camera::Camera, ecs::world::World, model::ModelData};
 use core::f32::consts::PI;
 use game_derive::Component;
 use n64::{
