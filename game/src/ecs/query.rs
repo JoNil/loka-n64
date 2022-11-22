@@ -167,11 +167,11 @@ where
         }
 
         let e = unsafe { *data.0.get_unchecked(i) };
-        let c1 = unsafe { data.1.get_unchecked_mut(i) };
+        let c1 = T1::convert(unsafe { data.1.get_unchecked_mut(i) });
 
         *index += 1;
 
-        let Some(c2) = data.2.lookup_mut(e) else {
+        let Some(c2) = T2::get_from_storage(data.2, e) else {
             return WorldQueryResult::Filtered;
         };
 
