@@ -48,27 +48,38 @@ pub enum ComponentLookupResult<T> {
 
 pub trait Component {
     type Inner;
+    type RefInner<'w>;
+
+    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w>;
 
     fn get_from_storage(
         storage: &mut Storage<Self::Inner>,
         entity: Entity,
-    ) -> ComponentLookupResult<&mut Self> {
+    ) -> ComponentLookupResult<Self::RefInner<'_>> {
         match storage.lookup_mut(entity) {
-            Some(v) => ComponentLookupResult::Some(v),
+            Some(v) => ComponentLookupResult::Some(Self::convert(v)),
             None => ComponentLookupResult::Filter,
         }
     }
 }
 
-impl<T> Component for Option<T> {
+impl<T> Component for Option<T>
+where
+    T: 'static,
+{
     type Inner = T;
+    type RefInner<'w> = Option<&'w mut T>;
+
+    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+        Some(v)
+    }
 
     fn get_from_storage(
         storage: &mut Storage<Self::Inner>,
         entity: Entity,
-    ) -> ComponentLookupResult<&mut Self> {
+    ) -> ComponentLookupResult<Self::RefInner<'_>> {
         match storage.lookup_mut(entity) {
-            Some(v) => ComponentLookupResult::Some(v),
+            Some(v) => ComponentLookupResult::Some(Self::convert(v)),
             None => ComponentLookupResult::Ignore,
         }
     }
@@ -126,10 +137,10 @@ where
 
 unsafe impl<T1, T2> WorldQuery for (T1, T2)
 where
-    T1: 'static + Component,
-    T2: 'static + Component,
+    T1: Component + 'static,
+    T2: Component + 'static,
 {
-    type Item<'w> = (Entity, &'w mut T1::Inner, &'w mut T2);
+    type Item<'w> = (Entity, T1::RefInner<'w>, T2::RefInner<'w>);
     type WorldQueryIteratorData<'w> = (
         &'w [Entity],
         &'w mut [T1::Inner],
@@ -162,7 +173,7 @@ where
         *index += 1;
 
         let c2 = match T2::get_from_storage(data.2, e) {
-            ComponentLookupResult::Some(v) => Some(v),
+            ComponentLookupResult::Some(v) => v,
             ComponentLookupResult::Ignore => None,
             ComponentLookupResult::Filter => {
                 return WorldQueryResult::Filtered;

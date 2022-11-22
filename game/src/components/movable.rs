@@ -15,6 +15,11 @@ pub struct Movable {
 
 impl Component for Movable {
     type Inner = Movable;
+    type RefInner<'w> = &'w mut Movable;
+
+    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+        v
+    }
 }
 
 pub fn pos(storage: &Storage<Movable>, entity: Entity) -> Option<Vec2> {

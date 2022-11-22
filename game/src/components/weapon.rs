@@ -26,8 +26,9 @@ use crate::{
     camera::Camera,
     ecs::{
         entity::{Entity, EntitySystem},
+        query::Component,
         storage::Storage,
-        world::World, query::Component,
+        world::World,
     },
     models::{BULLET, LASER, MISSILE, TARGET_INDICATOR},
     sound_mixer::SoundMixer,
@@ -57,6 +58,11 @@ pub struct Weapon {
 
 impl Component for Weapon {
     type Inner = Weapon;
+    type RefInner<'w> = &'w mut Weapon;
+
+    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+        v
+    }
 }
 
 const FLAK_DELAY_MS: i32 = 900;

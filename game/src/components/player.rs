@@ -33,6 +33,11 @@ pub struct Player {
 
 impl Component for Player {
     type Inner = Player;
+    type RefInner<'w> = &'w mut Player;
+
+    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+        v
+    }
 }
 
 pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {

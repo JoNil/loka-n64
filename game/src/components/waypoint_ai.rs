@@ -20,10 +20,15 @@ pub struct WaypointAi {
 
 impl Component for WaypointAi {
     type Inner = WaypointAi;
+    type RefInner<'w> = &'w mut WaypointAi;
+
+    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+        v
+    }
 }
 
 pub fn update(world: &mut World, dt: f32) {
-    for (_e, ai, movable) in query::<(WaypointAi, Option<Movable>)>(&mut world.components) {
+    for (_e, ai, movable) in query::<(WaypointAi, Movable)>(&mut world.components) {
         if ai.waypoint_step >= 1.0 {
             ai.waypoint_step -= 1.0;
             ai.waypoint += 1;

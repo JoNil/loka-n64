@@ -8,6 +8,11 @@ pub struct DiverAi;
 
 impl Component for DiverAi {
     type Inner = DiverAi;
+    type RefInner<'w> = &'w mut DiverAi;
+
+    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+        v
+    }
 }
 
 pub fn update(world: &mut World) {

@@ -1,10 +1,18 @@
 use super::movable::Movable;
-use crate::ecs::{query::{query, Component}, world::World};
+use crate::ecs::{
+    query::{query, Component},
+    world::World,
+};
 
 pub struct PrintPosition;
 
 impl Component for PrintPosition {
     type Inner = PrintPosition;
+    type RefInner<'w> = &'w mut PrintPosition;
+
+    fn convert<'w>(v: &'w mut Self::Inner) -> Self::RefInner<'w> {
+        v
+    }
 }
 
 pub fn print(world: &mut World) {
