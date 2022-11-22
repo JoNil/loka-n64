@@ -1,7 +1,7 @@
 use super::{entity::Entity, storage::Storage};
 
 pub trait Component {
-    type Inner;
+    type Inner: Component;
     type RefInner<'w>;
 
     fn convert(v: &mut Self::Inner) -> Self::RefInner<'_>;
@@ -17,7 +17,7 @@ pub trait Component {
 
 impl<T> Component for Option<T>
 where
-    T: 'static,
+    T: Component + 'static,
 {
     type Inner = T;
     type RefInner<'w> = Option<&'w mut T>;

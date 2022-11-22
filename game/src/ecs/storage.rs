@@ -1,16 +1,22 @@
 #![allow(dead_code)]
 
-use super::entity::Entity;
+use super::{component::Component, entity::Entity};
 use alloc::vec::Vec;
 use hashbrown::HashMap;
 
-pub struct Storage<T> {
+pub struct Storage<T>
+where
+    T: Component,
+{
     components: Vec<T>,
     entities: Vec<Entity>,
     map: HashMap<Entity, usize, n64_math::BuildFnvHasher>,
 }
 
-impl<T> Storage<T> {
+impl<T> Storage<T>
+where
+    T: Component,
+{
     pub fn new() -> Self {
         Self {
             components: Vec::with_capacity(256),

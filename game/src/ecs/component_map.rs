@@ -1,7 +1,7 @@
 #![allow(dead_code)]
 #![allow(clippy::type_complexity)]
 
-use super::{entity::Entity, storage::Storage};
+use super::{component::Component, entity::Entity, storage::Storage};
 use alloc::{boxed::Box, rc::Rc, vec::Vec};
 use core::{
     any::{type_name, Any, TypeId},
@@ -27,7 +27,7 @@ impl ComponentMap {
         self.removers.clone()
     }
 
-    pub fn get_ptr<T: 'static>(&mut self) -> *mut Storage<T> {
+    pub fn get_ptr<T: Component + 'static>(&mut self) -> *mut Storage<T> {
         let key = TypeId::of::<T>();
 
         if !self.map.contains_key(&key) {
@@ -62,7 +62,7 @@ pub unsafe trait ComponentTuple {
 
 unsafe impl<T> ComponentTuple for (T,)
 where
-    T: 'static,
+    T: Component + 'static,
 {
     type Item<'a> = &'a mut Storage<T>;
 
@@ -74,8 +74,8 @@ where
 }
 unsafe impl<T1, T2> ComponentTuple for (T1, T2)
 where
-    T1: 'static,
-    T2: 'static,
+    T1: Component + 'static,
+    T2: Component + 'static,
 {
     type Item<'a> = (&'a mut Storage<T1>, &'a mut Storage<T2>);
 
@@ -96,9 +96,9 @@ where
 
 unsafe impl<T1, T2, T3> ComponentTuple for (T1, T2, T3)
 where
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
+    T1: Component + 'static,
+    T2: Component + 'static,
+    T3: Component + 'static,
 {
     type Item<'a> = (
         &'a mut Storage<T1>,
@@ -127,10 +127,10 @@ where
 
 unsafe impl<T1, T2, T3, T4> ComponentTuple for (T1, T2, T3, T4)
 where
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
+    T1: Component + 'static,
+    T2: Component + 'static,
+    T3: Component + 'static,
+    T4: Component + 'static,
 {
     type Item<'a> = (
         &'a mut Storage<T1>,
@@ -165,11 +165,11 @@ where
 
 unsafe impl<T1, T2, T3, T4, T5> ComponentTuple for (T1, T2, T3, T4, T5)
 where
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
+    T1: Component + 'static,
+    T2: Component + 'static,
+    T3: Component + 'static,
+    T4: Component + 'static,
+    T5: Component + 'static,
 {
     type Item<'a> = (
         &'a mut Storage<T1>,
@@ -211,12 +211,12 @@ where
 
 unsafe impl<T1, T2, T3, T4, T5, T6> ComponentTuple for (T1, T2, T3, T4, T5, T6)
 where
-    T1: 'static,
-    T2: 'static,
-    T3: 'static,
-    T4: 'static,
-    T5: 'static,
-    T6: 'static,
+    T1: Component + 'static,
+    T2: Component + 'static,
+    T3: Component + 'static,
+    T4: Component + 'static,
+    T5: Component + 'static,
+    T6: Component + 'static,
 {
     type Item<'a> = (
         &'a mut Storage<T1>,

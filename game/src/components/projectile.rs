@@ -7,8 +7,10 @@ use super::{
     weapon::WeaponTarget,
 };
 use crate::{camera::Camera, ecs::world::World, sound_mixer::SoundMixer, sounds::HIT_1};
+use game_derive::Component;
 use n64_math::{vec2, Aabb2};
 
+#[derive(Component)]
 pub struct Projectile {
     pub target_type: WeaponTarget,
     pub damage: i32,

@@ -17,9 +17,11 @@ use crate::{
     sounds::EXPLOSION_0,
 };
 use core::f32::consts::PI;
+use game_derive::Component;
 use n64::gfx::Texture;
 use n64_math::{vec2, Vec2};
 
+#[derive(Component)]
 pub struct Enemy {}
 
 pub fn add_enemy_spawner(
@@ -109,9 +111,10 @@ pub fn spawn_enemy_diver(
 }
 
 pub fn update(world: &mut World, sound_mixer: &mut SoundMixer) {
-    let (enemy, movable, health, size, player, weapon) = world
-        .components
-        .get::<(Enemy, Movable, Health, Size, Player, Weapon)>();
+    let (enemy, movable, health, size, player, weapon) =
+        world
+            .components
+            .get::<(Enemy, Movable, Health, Size, Player, Weapon)>();
 
     for entity in enemy.entities() {
         if !health::is_alive(health, *entity) {

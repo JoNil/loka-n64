@@ -1,3 +1,4 @@
+use game_derive::Component;
 use n64_math::{Quat, Vec2};
 
 use super::{
@@ -9,6 +10,7 @@ use crate::ecs::{entity::Entity, world::World};
 const MISSILE_ACCELERATION: f32 = 0.6;
 const MISSILE_MAX_SPEED: f32 = 1.0;
 
+#[derive(Component)]
 pub struct Missile {
     pub target: Option<Entity>,
 }

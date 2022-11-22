@@ -17,6 +17,7 @@ use crate::{
     models::{BULLET, MISSILE},
 };
 use core::f32::consts::PI;
+use game_derive::Component;
 use n64_math::{vec2, Mat2, Quat, Vec2, Vec3};
 
 #[derive(Copy, Clone, PartialEq, Eq)]
@@ -24,6 +25,8 @@ pub enum TrapType {
     DualMissile,
     BulletStorm,
 }
+
+#[derive(Component)]
 pub struct Trap {
     pub trap_type: TrapType,
     pub target_type: WeaponTarget,
