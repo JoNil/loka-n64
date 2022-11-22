@@ -1,7 +1,10 @@
 use super::{mesh_drawable::MeshDrawable, movable::Movable};
 use crate::{
     camera::Camera,
-    ecs::{query::query, world::World},
+    ecs::{
+        query::{query, Component},
+        world::World,
+    },
 };
 use core::f32::consts::PI;
 use n64::{
@@ -14,6 +17,19 @@ use n64::{
 use n64_math::{vec3, Mat4};
 
 pub struct Shadow;
+
+impl Component for Shadow {
+    type Inner = Shadow;
+    type RefInner<'w> = &'w mut Shadow;
+
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
+        v
+    }
+
+    fn empty<'w>() -> Self::RefInner<'w> {
+        unreachable!()
+    }
+}
 
 static SHADOW_PIPELINE: Pipeline = Pipeline {
     color_combiner_mode: ColorCombinerMode::single(DSrc::Primitive),

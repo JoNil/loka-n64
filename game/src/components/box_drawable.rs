@@ -1,7 +1,10 @@
 use super::{movable::Movable, size::Size};
 use crate::{
     camera::Camera,
-    ecs::{query::query, world::World},
+    ecs::{
+        query::{query, Component},
+        world::World,
+    },
 };
 use n64::{
     gfx::{CommandBuffer, FillPipeline},
@@ -13,6 +16,19 @@ static BOX_PIPELINE: FillPipeline = FillPipeline::default();
 
 pub struct BoxDrawable {
     pub color: Color,
+}
+
+impl Component for BoxDrawable {
+    type Inner = BoxDrawable;
+    type RefInner<'w> = &'w mut BoxDrawable;
+
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
+        v
+    }
+
+    fn empty<'w>() -> Self::RefInner<'w> {
+        unreachable!()
+    }
 }
 
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {

@@ -1,5 +1,9 @@
 use super::{health::Health, movable::Movable};
-use crate::{camera::Camera, ecs::world::World, model::ModelData};
+use crate::{
+    camera::Camera,
+    ecs::{query::Component, world::World},
+    model::ModelData,
+};
 use core::f32::consts::PI;
 use n64::{
     gfx::{
@@ -15,6 +19,19 @@ use n64_math::{vec3, Mat4, Quat};
 pub struct MeshDrawable {
     pub model: ModelData<'static>,
     pub rot: Quat,
+}
+
+impl Component for MeshDrawable {
+    type Inner = MeshDrawable;
+    type RefInner<'w> = &'w mut MeshDrawable;
+
+    fn convert(v: &mut Self::Inner) -> Self::RefInner<'_> {
+        v
+    }
+
+    fn empty<'w>() -> Self::RefInner<'w> {
+        unreachable!()
+    }
 }
 
 static MESH_PIPELINE: Pipeline = Pipeline {
