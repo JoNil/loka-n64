@@ -1,5 +1,9 @@
 use super::{health::Health, movable::Movable};
-use crate::{camera::Camera, ecs::world::World, model::ModelData};
+use crate::{
+    camera::Camera,
+    ecs::{query::query, world::World},
+    model::ModelData,
+};
 use core::f32::consts::PI;
 use game_derive::Component;
 use n64::{
@@ -29,9 +33,6 @@ static MESH_PIPELINE: Pipeline = Pipeline {
 pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, camera: &Camera) {
     n64::scope!("mesh_drawable::draw");
 
-    let (mesh_drawable, movable, health) =
-        world.components.get::<(MeshDrawable, Movable, Health)>();
-
     let half_width = 0.5 * video_mode.width() as f32;
     let half_height = 0.5 * video_mode.height() as f32;
 
@@ -53,45 +54,45 @@ pub fn draw(world: &mut World, cb: &mut CommandBuffer, video_mode: VideoMode, ca
 
     let proj = post_transform * proj * pre_transform;
 
-    for (component, entity) in mesh_drawable.components_and_entities() {
-        if let Some(movable) = movable.lookup(entity) {
-            let mut pipeline = MESH_PIPELINE;
+    for (_e, mesh_drawable, movable, health) in
+        query::<(MeshDrawable, Movable, Option<Health>)>(&mut world.components)
+    {
+        let mut pipeline = MESH_PIPELINE;
 
-            if let Some(health) = health.lookup(entity) {
-                if health.damaged_this_frame {
-                    pipeline.color_combiner_mode = ColorCombinerMode::one(
-                        ASrc::One,
-                        BSrc::Zero,
-                        CSrc::Shade,
-                        DSrc::Primitive,
-                        AAlphaSrc::Zero,
-                        BAlphaSrc::Zero,
-                        CAlphaSrc::Zero,
-                        DAlphaSrc::TexelAlpha,
-                    );
-                    pipeline.prim_color = Some(0xa0a0a0ff);
-                }
-            }
-
-            cb.set_pipeline(&pipeline);
-
-            let transform = proj
-                * Mat4::from_rotation_translation(
-                    component.rot,
-                    vec3(
-                        movable.pos.x - camera.pos.x,
-                        movable.pos.y - camera.pos.y,
-                        -1.0,
-                    ),
+        if let Some(health) = health {
+            if health.damaged_this_frame {
+                pipeline.color_combiner_mode = ColorCombinerMode::one(
+                    ASrc::One,
+                    BSrc::Zero,
+                    CSrc::Shade,
+                    DSrc::Primitive,
+                    AAlphaSrc::Zero,
+                    BAlphaSrc::Zero,
+                    CAlphaSrc::Zero,
+                    DAlphaSrc::TexelAlpha,
                 );
-
-            cb.add_mesh_indexed(
-                &component.model.verts,
-                &component.model.uvs,
-                &component.model.colors,
-                &component.model.indices,
-                &transform.to_cols_array_2d(),
-            );
+                pipeline.prim_color = Some(0xa0a0a0ff);
+            }
         }
+
+        cb.set_pipeline(&pipeline);
+
+        let transform = proj
+            * Mat4::from_rotation_translation(
+                mesh_drawable.rot,
+                vec3(
+                    movable.pos.x - camera.pos.x,
+                    movable.pos.y - camera.pos.y,
+                    -1.0,
+                ),
+            );
+
+        cb.add_mesh_indexed(
+            &mesh_drawable.model.verts,
+            &mesh_drawable.model.uvs,
+            &mesh_drawable.model.colors,
+            &mesh_drawable.model.indices,
+            &transform.to_cols_array_2d(),
+        );
     }
 }
