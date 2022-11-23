@@ -1,5 +1,6 @@
 use super::{component::Component, component_map::ComponentMap, entity::Entity, storage::Storage};
 
+#[inline(always)]
 pub fn query<Q>(component_map: &mut ComponentMap) -> Query<Q>
 where
     Q: WorldQuery,
@@ -23,6 +24,7 @@ where
 {
     type Item = Q::Item<'w>;
 
+    #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> {
         loop {
             match unsafe { Q::get(&mut self.data as _, &mut self.index) } {
