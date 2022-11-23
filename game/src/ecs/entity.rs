@@ -108,6 +108,12 @@ impl EntitySystem {
     }
 }
 
+impl Default for EntitySystem {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 pub struct EntityBuilder<'a> {
     entity: Entity,
     commands: &'a mut Commands,

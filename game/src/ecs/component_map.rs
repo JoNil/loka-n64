@@ -51,6 +51,12 @@ impl ComponentMap {
     }
 }
 
+impl Default for ComponentMap {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
 /// # Safety
 ///
 /// This is probably not safe 😅

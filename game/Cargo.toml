@@ -18,3 +18,10 @@ zerocopy = "0.6"
 
 [build-dependencies]
 game-pipeline = { path = "../game-pipeline" }
+
+[dev-dependencies]
+criterion = "0.4"
+
+[[bench]]
+name = "main_benchmark"
+harness = false

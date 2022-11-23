@@ -91,3 +91,12 @@ where
         }
     }
 }
+
+impl<T> Default for Storage<T>
+where
+    T: Component,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}

@@ -76,3 +76,9 @@ impl SoundMixer {
         self.done.clear();
     }
 }
+
+impl Default for SoundMixer {
+    fn default() -> Self {
+        Self::new()
+    }
+}

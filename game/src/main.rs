@@ -9,44 +9,30 @@
 
 extern crate alloc;
 
-use crate::components::{
-    box_drawable, diver_ai, enemy,
-    health::{self, Health},
-    mesh_drawable, missile, movable,
-    player::{self, spawn_player, Player},
-    print_position, projectile, sprite_drawable, trap, waypoint_ai,
+use game::{
+    camera::Camera,
+    components::{
+        box_drawable, diver_ai, enemy,
+        health::{self, Health},
+        keep_on_screen, mesh_drawable, missile, movable,
+        pickup::{self, spawn_pickup},
+        player::{self, draw_player_weapon, spawn_player, Player},
+        print_position, projectile, remove_when_below, shadow, spawner, sprite_drawable, trap,
+        waypoint_ai,
+        weapon::draw_missile_target,
+    },
+    ecs::world::World,
+    font,
+    map::Map,
+    maps::MAP_1,
+    sound_mixer::SoundMixer,
 };
-use camera::Camera;
-use components::{
-    keep_on_screen,
-    pickup::{self, spawn_pickup},
-    player::draw_player_weapon,
-    remove_when_below, shadow, spawner,
-    weapon::draw_missile_target,
-};
-use ecs::world::World;
-use map::Map;
-use maps::MAP_1;
 use n64::{
     self, current_time_us,
     gfx::{CommandBuffer, CommandBufferCache, FillPipeline, Pipeline},
     ipl3font, slow_cpu_clear, VideoMode, N64,
 };
 use n64_math::{random_u32, vec2, vec3, Color};
-use sound_mixer::SoundMixer;
-
-mod camera;
-mod components;
-mod ecs;
-mod font;
-mod map;
-mod maps;
-mod model;
-mod models;
-mod sound;
-mod sound_mixer;
-mod sounds;
-mod textures;
 
 const RED: Color = Color::new(0b10000_00011_00011_1);
 const GREEN: Color = Color::new(0b00011_10000_00011_1);

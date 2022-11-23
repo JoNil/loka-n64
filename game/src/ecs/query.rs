@@ -25,7 +25,7 @@ where
 
     fn next(&mut self) -> Option<Self::Item> {
         loop {
-            match Q::get(&mut self.data as _, &mut self.index) {
+            match unsafe { Q::get(&mut self.data as _, &mut self.index) } {
                 WorldQueryResult::Some(val) => return Some(val),
                 WorldQueryResult::End => return None,
                 WorldQueryResult::Filtered => continue,
@@ -48,7 +48,11 @@ pub unsafe trait WorldQuery {
     type WorldQueryIteratorData<'w>;
 
     fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_>;
-    fn get<'w>(
+
+    /// # Safety
+    ///
+    /// WorldQueryIteratorData must be valid
+    unsafe fn get<'w>(
         data: *mut Self::WorldQueryIteratorData<'w>,
         index: &mut i32,
     ) -> WorldQueryResult<Self::Item<'w>>;
@@ -71,7 +75,7 @@ where
         (entities, components)
     }
 
-    fn get<'w>(
+    unsafe fn get<'w>(
         data: *mut Self::WorldQueryIteratorData<'w>,
         index: &mut i32,
     ) -> WorldQueryResult<Self::Item<'w>> {
@@ -113,7 +117,7 @@ where
         (entities, components, storage.1)
     }
 
-    fn get<'w>(
+    unsafe fn get<'w>(
         data: *mut Self::WorldQueryIteratorData<'w>,
         index: &mut i32,
     ) -> WorldQueryResult<Self::Item<'w>> {
@@ -161,7 +165,7 @@ where
         (entities, components, storage.1, storage.2)
     }
 
-    fn get<'w>(
+    unsafe fn get<'w>(
         data: *mut Self::WorldQueryIteratorData<'w>,
         index: &mut i32,
     ) -> WorldQueryResult<Self::Item<'w>> {
@@ -221,7 +225,7 @@ where
         (entities, components, storage.1, storage.2, storage.3)
     }
 
-    fn get<'w>(
+    unsafe fn get<'w>(
         data: *mut Self::WorldQueryIteratorData<'w>,
         index: &mut i32,
     ) -> WorldQueryResult<Self::Item<'w>> {
@@ -291,7 +295,7 @@ where
         )
     }
 
-    fn get<'w>(
+    unsafe fn get<'w>(
         data: *mut Self::WorldQueryIteratorData<'w>,
         index: &mut i32,
     ) -> WorldQueryResult<Self::Item<'w>> {
@@ -374,7 +378,7 @@ where
         )
     }
 
-    fn get<'w>(
+    unsafe fn get<'w>(
         data: *mut Self::WorldQueryIteratorData<'w>,
         index: &mut i32,
     ) -> WorldQueryResult<Self::Item<'w>> {

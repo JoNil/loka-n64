@@ -17,3 +17,9 @@ impl World {
         self.entities.housekeep(&mut self.components);
     }
 }
+
+impl Default for World {
+    fn default() -> Self {
+        Self::new()
+    }
+}
