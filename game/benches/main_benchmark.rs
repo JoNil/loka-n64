@@ -31,7 +31,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     let controllers = Controllers::new();
     let mut sound_mixer = SoundMixer::new();
-    let camera = Camera::new(start_pos);
+    let mut camera = Camera::new(start_pos);
     let _test_pickup = spawn_pickup(&mut world.entities, start_pos + vec2(0.5, 0.2));
     let _player = spawn_player(&mut world.entities, start_pos);
     map.spawn_enemies(&mut world, &VIDEO_MODE);
@@ -40,6 +40,7 @@ fn criterion_benchmark(c: &mut Criterion) {
 
     c.bench_function("game", |b| {
         b.iter(|| {
+            camera.update(&controllers, dt, &VIDEO_MODE);
             health::clear_was_damaged(&mut world);
             enemy::update(&mut world, &mut sound_mixer);
             player::update(&mut world, &controllers, &mut sound_mixer, &camera);
