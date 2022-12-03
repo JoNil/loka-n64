@@ -54,9 +54,11 @@ impl Graphics {
 
         rsp::read_dmem(dmem.deref_mut());
 
+        let print_64bit = true;
+        let print_32bit = true;
         let should_panic = true;
         if should_panic {
-            if true {
+            if print_64bit {
                 debugln!(
                     "ADDR          : BINARY                                                           : HEX              : DECIMAL");
                 for (i, word) in dmem.chunks_exact(8).enumerate() {
@@ -66,7 +68,8 @@ impl Graphics {
 
                     //assert!(a == i as u32);
                 }
-            } else {
+            }
+            if print_32bit {
                 debugln!("ADDR      : BINARY                           : HEX      : DECIMAL");
                 for (i, word) in dmem.chunks_exact(4).enumerate() {
                     let a = u32::from_be_bytes(word.try_into().unwrap());
