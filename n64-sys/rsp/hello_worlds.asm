@@ -54,29 +54,18 @@ wait_for_rdp:
     subi t4, t4, 8 // t4 -= 8
     ori t4, t4, 1024
 
-    mfc0 t3, c11   // t3 = CMD_STATUS
+    mfc0 t3, c11    // t3 = CMD_STATUS
     sw t3, 0(t4)
-    and t3, t5
+    and t3, t3, t5  // t3 &= t5
 
     beq t3, t5, wait_for_rdp // Loop while RDP busy
     nop
 
-    mfc0 t9, c12  // Read RDP clock
+    mfc0 t9, c12   // Read RDP clock
     sub t9, t9, t8 // t9 = RDP clock end - clock start
     subi t4, t4, 4
     sw t9, 0(t4)
 
-if 0 {
-loop_commands:
-    sw t1, 0(t2)    // Store word t1 at mem[t2]
-    // Process command[t1]
-
-
-    addi t1, t1, 1 // ++t1,
-    addi t2, t2, 4 // t2 += 4
-    bne t0, t1, loop_commands // loop until t1 is t0
-    nop
-}
 return:
  break
 
