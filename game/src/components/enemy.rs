@@ -17,11 +17,11 @@ use crate::{
     sounds::EXPLOSION_0,
 };
 use core::f32::consts::PI;
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64::gfx::Texture;
 use n64_math::{vec2, Vec2};
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct Enemy {}
 
 pub fn add_enemy_spawner(

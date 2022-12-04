@@ -1,9 +1,9 @@
 use crate::ecs::{
     component::Component, entity::Entity, query::query, storage::Storage, world::World,
 };
-use game_derive::Component;
+use game_derive::SparseComponent;
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct Health {
     pub health: i32,
     pub damaged_this_frame: bool,

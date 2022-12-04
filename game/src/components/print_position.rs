@@ -1,8 +1,8 @@
 use super::movable::Movable;
 use crate::ecs::{query::query, world::World};
-use game_derive::Component;
+use game_derive::SparseComponent;
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct PrintPosition;
 
 pub fn print(world: &mut World) {

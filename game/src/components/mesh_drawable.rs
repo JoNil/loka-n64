@@ -5,7 +5,7 @@ use crate::{
     model::ModelData,
 };
 use core::f32::consts::PI;
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64::{
     gfx::{
         color_combiner_mode::{
@@ -17,7 +17,7 @@ use n64::{
 };
 use n64_math::{vec3, Mat4, Quat};
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct MeshDrawable {
     pub model: ModelData<'static>,
     pub rot: Quat,

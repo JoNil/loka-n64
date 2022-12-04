@@ -3,7 +3,7 @@ use crate::{
     camera::Camera,
     ecs::{query::query, world::World},
 };
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64::{
     gfx::{CommandBuffer, FillPipeline},
     VideoMode,
@@ -12,7 +12,7 @@ use n64_math::{Color, Vec2};
 
 static BOX_PIPELINE: FillPipeline = FillPipeline::default();
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct BoxDrawable {
     pub color: Color,
 }

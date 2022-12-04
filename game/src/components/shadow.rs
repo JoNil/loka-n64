@@ -4,7 +4,7 @@ use crate::{
     ecs::{query::query, world::World},
 };
 use core::f32::consts::PI;
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64::{
     gfx::{
         color_combiner_mode::{ColorCombinerMode, DSrc},
@@ -14,7 +14,7 @@ use n64::{
 };
 use n64_math::{vec3, Mat4};
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct Shadow;
 
 static SHADOW_PIPELINE: Pipeline = Pipeline {

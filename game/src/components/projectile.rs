@@ -12,10 +12,10 @@ use crate::{
     sound_mixer::SoundMixer,
     sounds::HIT_1,
 };
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64_math::{vec2, Aabb2};
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct Projectile {
     pub target_type: WeaponTarget,
     pub damage: i32,

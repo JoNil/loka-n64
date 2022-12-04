@@ -17,11 +17,11 @@ use crate::{
     sound_mixer::SoundMixer,
     sounds::PICKUP_1,
 };
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64_math::{random_u32, vec2, Aabb2, Quat, Vec2};
 use strum::{EnumCount, IntoEnumIterator};
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct Pickup;
 
 pub fn spawn_pickup(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {

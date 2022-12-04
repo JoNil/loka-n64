@@ -3,10 +3,10 @@ use crate::{
     camera::Camera,
     ecs::{query::query, world::World},
 };
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64_math::{vec2, Aabb2};
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct RemoveWhenBelow;
 
 pub fn update(world: &mut World, camera: &Camera) {

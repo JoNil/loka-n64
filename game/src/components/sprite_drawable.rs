@@ -3,7 +3,7 @@ use crate::{
     camera::Camera,
     ecs::{query::query, world::World},
 };
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64::{
     gfx::{
         color_combiner_mode::{
@@ -21,7 +21,7 @@ static SPRITE_PIPELINE: Pipeline = Pipeline {
     ..Pipeline::default()
 };
 
-#[derive(Copy, Clone, Component)]
+#[derive(Copy, Clone, SparseComponent)]
 pub struct SpriteDrawable {
     pub texture: Texture<'static>,
 }

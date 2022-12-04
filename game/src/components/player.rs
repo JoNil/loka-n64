@@ -22,14 +22,14 @@ use crate::{
     sound_mixer::SoundMixer,
 };
 use core::f32::consts::PI;
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64::{gfx::CommandBuffer, Controllers, VideoMode};
 use n64_math::{const_vec2, vec2, Quat, Vec2, Vec3};
 
 const PLAYER_START_POS: Vec2 = const_vec2!([0.5, 0.8]);
 const SHIP_SPEED: f32 = 0.35;
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct Player {
     pub score: i32,
 }

@@ -23,7 +23,7 @@ use crate::{
 };
 use alloc::vec::Vec;
 use core::f32::consts::PI;
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64::{
     current_time_us,
     gfx::{
@@ -50,7 +50,7 @@ pub enum WeaponTarget {
     Enemy,
 }
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct Weapon {
     pub weapon_type: WeaponType,
     pub last_shoot_time: i64,

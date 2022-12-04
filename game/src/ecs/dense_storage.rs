@@ -55,7 +55,7 @@ where
             return None;
         }
 
-        if *entity_stored == entity {
+        if *entity_stored != entity {
             return None;
         }
 
@@ -71,7 +71,7 @@ where
             return None;
         }
 
-        if *entity_stored == entity {
+        if *entity_stored != entity {
             return None;
         }
 

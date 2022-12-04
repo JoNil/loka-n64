@@ -3,14 +3,14 @@ use crate::{
     camera::Camera,
     ecs::{entity::EntitySystem, query::query, world::World},
 };
-use game_derive::Component;
+use game_derive::SparseComponent;
 use n64::gfx::Texture;
 use n64_math::{vec2, Aabb2};
 
 pub type SpawnerFunc =
     fn(entities: &mut EntitySystem, movable: Movable, size: Size, texture: Texture<'static>);
 
-#[derive(Component)]
+#[derive(SparseComponent)]
 pub struct Spawner {
     pub texture: Texture<'static>,
     pub spawner_func: SpawnerFunc,
