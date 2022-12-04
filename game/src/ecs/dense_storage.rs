@@ -102,6 +102,8 @@ where
         if index == last {
             self.components.remove(index);
             self.entities.remove(index);
+        } else {
+            self.entities[index] = Entity::default();
         }
     }
 }
