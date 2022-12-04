@@ -5,7 +5,7 @@ use super::{
     mesh_drawable::MeshDrawable,
     movable::{self, Movable},
 };
-use crate::ecs::{entity::Entity, world::World};
+use crate::ecs::{entity::Entity, storage::Storage, world::World};
 
 const MISSILE_ACCELERATION: f32 = 0.6;
 const MISSILE_MAX_SPEED: f32 = 1.0;
@@ -19,12 +19,17 @@ pub fn update(world: &mut World, dt: f32) {
     let (missile, movable, mesh_drawable) =
         world.components.get::<(Missile, Movable, MeshDrawable)>();
 
-    for (missile, entity) in missile.components_and_entities() {
+    let (entities, missile) = missile.components_and_entities_slice_mut();
+
+    for (missile, entity) in missile.iter().zip(entities.iter()) {
         let target_pos = missile
             .target
             .and_then(|target| movable::pos(movable, target));
 
-        if let (Some(m), Some(d)) = (movable.lookup_mut(entity), mesh_drawable.lookup_mut(entity)) {
+        if let (Some(m), Some(d)) = (
+            movable.lookup_mut(*entity),
+            mesh_drawable.lookup_mut(*entity),
+        ) {
             if let Some(target_pos) = target_pos {
                 let towords_target = (target_pos - m.pos).normalize();
                 let speed_dir = m.speed.normalize();

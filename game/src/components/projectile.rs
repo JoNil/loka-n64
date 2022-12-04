@@ -6,7 +6,12 @@ use super::{
     size::Size,
     weapon::WeaponTarget,
 };
-use crate::{camera::Camera, ecs::world::World, sound_mixer::SoundMixer, sounds::HIT_1};
+use crate::{
+    camera::Camera,
+    ecs::{storage::Storage, world::World},
+    sound_mixer::SoundMixer,
+    sounds::HIT_1,
+};
 use game_derive::Component;
 use n64_math::{vec2, Aabb2};
 

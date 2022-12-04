@@ -10,6 +10,7 @@ use super::{
 };
 use crate::{
     ecs::{
+        component::Component,
         entity::{Entity, EntitySystem},
         storage::Storage,
         world::World,
@@ -129,7 +130,7 @@ pub fn shoot_missile(
 }
 
 fn dual_missile(
-    player: &mut Storage<Player>,
+    player: &mut <Player as Component>::Storage,
     entities: &mut EntitySystem,
     target_type: WeaponTarget,
     pos: Vec2,

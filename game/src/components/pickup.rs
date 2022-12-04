@@ -10,6 +10,7 @@ use crate::{
     camera::Camera,
     ecs::{
         entity::{Entity, EntitySystem},
+        storage::Storage,
         world::World,
     },
     models::WEAPON_PICKUP,

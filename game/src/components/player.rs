@@ -11,6 +11,7 @@ use super::{
 use crate::{
     camera::Camera,
     ecs::{
+        component::Component,
         entity::{Entity, EntitySystem},
         query::query,
         storage::Storage,
@@ -60,7 +61,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
         .entity()
 }
 
-pub fn add_score(player: &mut Storage<Player>, score: i32) {
+pub fn add_score(player: &mut <Player as Component>::Storage, score: i32) {
     for mut player in player.components_mut() {
         player.score += score;
     }

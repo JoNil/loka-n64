@@ -1,4 +1,6 @@
-use crate::ecs::{entity::Entity, query::query, storage::Storage, world::World};
+use crate::ecs::{
+    component::Component, entity::Entity, query::query, storage::Storage, world::World,
+};
 use game_derive::Component;
 use n64_math::Vec2;
 
@@ -8,7 +10,7 @@ pub struct Movable {
     pub speed: Vec2,
 }
 
-pub fn pos(storage: &Storage<Movable>, entity: Entity) -> Option<Vec2> {
+pub fn pos(storage: &<Movable as Component>::Storage, entity: Entity) -> Option<Vec2> {
     storage.lookup(entity).map(|c| c.pos)
 }
 

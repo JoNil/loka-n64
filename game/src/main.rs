@@ -21,7 +21,7 @@ use game::{
         waypoint_ai,
         weapon::draw_missile_target,
     },
-    ecs::world::World,
+    ecs::{storage::Storage, world::World},
     font,
     map::Map,
     maps::MAP_1,

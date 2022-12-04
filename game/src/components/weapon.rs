@@ -12,6 +12,7 @@ use super::{
 use crate::{
     camera::Camera,
     ecs::{
+        component::Component,
         entity::{Entity, EntitySystem},
         storage::Storage,
         world::World,
@@ -215,11 +216,11 @@ pub fn fire(
     entities: &mut EntitySystem,
     entity: Entity,
     sound_mixer: &mut SoundMixer,
-    weapon: &mut Storage<Weapon>,
-    movable: &Storage<Movable>,
-    size: &Storage<Size>,
-    enemy: &Storage<Enemy>,
-    player: &Storage<Player>,
+    weapon: &mut <Weapon as Component>::Storage,
+    movable: &<Movable as Component>::Storage,
+    size: &<Size as Component>::Storage,
+    enemy: &<Enemy as Component>::Storage,
+    player: &<Player as Component>::Storage,
     target_type: WeaponTarget,
 ) {
     let now = current_time_us();

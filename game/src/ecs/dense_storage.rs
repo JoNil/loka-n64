@@ -1,11 +1,9 @@
-#![allow(dead_code)]
-
-use super::{component::Component, entity::Entity};
+use super::{entity::Entity, storage::Storage};
 use alloc::vec::Vec;
 
 pub struct DenseStorage<T>
 where
-    T: Component + Clone + Default,
+    T: Default + Clone,
 {
     components: Vec<T>,
     entities: Vec<Entity>,
@@ -13,7 +11,7 @@ where
 
 impl<T> DenseStorage<T>
 where
-    T: Component + Clone + Default,
+    T: Default + Clone,
 {
     pub fn new() -> Self {
         Self {
@@ -21,8 +19,22 @@ where
             entities: Vec::with_capacity(256),
         }
     }
+}
 
-    pub fn add(&mut self, entity: Entity, component: T) {
+impl<T> Default for DenseStorage<T>
+where
+    T: Default + Clone,
+{
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl<T> Storage<T> for DenseStorage<T>
+where
+    T: Default + Clone,
+{
+    fn add(&mut self, entity: Entity, component: T) {
         let index = entity.index();
 
         self.components
@@ -34,7 +46,7 @@ where
         self.entities[index as usize] = entity;
     }
 
-    pub fn lookup(&self, entity: Entity) -> Option<&T> {
+    fn lookup(&self, entity: Entity) -> Option<&T> {
         let index = entity.index();
 
         let entity_stored = self.entities.get(index as usize)?;
@@ -50,7 +62,7 @@ where
         self.components.get(index as usize)
     }
 
-    pub fn lookup_mut(&mut self, entity: Entity) -> Option<&mut T> {
+    fn lookup_mut(&mut self, entity: Entity) -> Option<&mut T> {
         let index = entity.index();
 
         let entity_stored = self.entities.get(index as usize)?;
@@ -66,33 +78,23 @@ where
         self.components.get_mut(index as usize)
     }
 
-    pub fn components(&self) -> &[T] {
+    fn components(&self) -> &[T] {
         &self.components
     }
 
-    pub fn components_mut(&mut self) -> &mut [T] {
+    fn components_mut(&mut self) -> &mut [T] {
         &mut self.components
     }
 
-    pub fn entities(&self) -> &[Entity] {
+    fn entities(&self) -> &[Entity] {
         &self.entities
     }
 
-    pub fn components_and_entities(&self) -> impl Iterator<Item = (&T, Entity)> {
-        self.components.iter().zip(self.entities.iter().copied())
-    }
-
-    pub fn components_and_entities_mut(&mut self) -> impl Iterator<Item = (&mut T, Entity)> {
-        self.components
-            .iter_mut()
-            .zip(self.entities.iter().copied())
-    }
-
-    pub fn components_and_entities_slice_mut(&mut self) -> (&[Entity], &mut [T]) {
+    fn components_and_entities_slice_mut(&mut self) -> (&[Entity], &mut [T]) {
         (self.entities.as_slice(), self.components.as_mut_slice())
     }
 
-    pub fn remove(&mut self, entity: Entity) {
+    fn remove(&mut self, entity: Entity) {
         let index = entity.index() as usize;
 
         let last = self.components.len() - 1;
@@ -101,14 +103,5 @@ where
             self.components.remove(index);
             self.entities.remove(index);
         }
-    }
-}
-
-impl<T> Default for DenseStorage<T>
-where
-    T: Component + Clone + Default,
-{
-    fn default() -> Self {
-        Self::new()
     }
 }

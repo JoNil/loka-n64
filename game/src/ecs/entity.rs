@@ -1,4 +1,4 @@
-use super::{component::Component, component_map::ComponentMap};
+use super::{component::Component, component_map::ComponentMap, storage::Storage};
 use alloc::{boxed::Box, collections::VecDeque, vec::Vec};
 use core::{mem, num::Wrapping};
 
@@ -126,7 +126,10 @@ pub struct EntityBuilder<'a> {
 }
 
 impl<'a> EntityBuilder<'a> {
-    pub fn add<T: Component + 'static>(&'a mut self, component: T) -> &'a mut Self {
+    pub fn add<T>(&'a mut self, component: T) -> &'a mut Self
+    where
+        T: Component<Inner = T> + 'static,
+    {
         let entity = self.entity;
 
         self.commands.push(Box::new(move |components| {
@@ -136,10 +139,10 @@ impl<'a> EntityBuilder<'a> {
         self
     }
 
-    pub fn add_optional<T: Component + 'static>(
-        &'a mut self,
-        component: Option<T>,
-    ) -> &'a mut Self {
+    pub fn add_optional<T>(&'a mut self, component: Option<T>) -> &'a mut Self
+    where
+        T: Component<Inner = T> + 'static,
+    {
         if let Some(c) = component {
             return self.add::<T>(c);
         }

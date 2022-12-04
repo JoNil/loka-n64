@@ -31,23 +31,24 @@ impl ComponentMap {
         T::get(self)
     }
 
-    fn get_ptr<T: Component + 'static>(&mut self) -> *mut Storage<T> {
+    fn get_ptr<T: Component + 'static>(&mut self) -> *mut T::Storage {
         let key = TypeId::of::<T>();
 
         if !self.map.contains_key(&key) {
-            self.map.insert(key, Box::new(Storage::<T>::new()));
+            self.map
+                .insert(key, Box::new(<T::Storage as Default>::default()));
             self.removers.as_ref().borrow_mut().push(|map, entity| {
                 map.get::<(T,)>().remove(entity);
             });
         }
 
-        let res: &mut Storage<T> = self
+        let res: &mut T::Storage = self
             .map
             .get_mut(&key)
-            .and_then(|b| b.downcast_mut::<Storage<T>>())
+            .and_then(|b| b.downcast_mut::<T::Storage>())
             .unwrap_or_else(|| panic!("Could not find component: {}", type_name::<T>()));
 
-        res as *mut Storage<T>
+        res as *mut T::Storage
     }
 }
 
@@ -70,12 +71,12 @@ unsafe impl<T> ComponentTuple for (T,)
 where
     T: Component + 'static,
 {
-    type Item<'a> = &'a mut Storage<T>;
+    type Item<'a> = &'a mut T::Storage;
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
         let t = component_map.get_ptr::<T>();
 
-        unsafe { &mut *(t as *mut Storage<T>) }
+        unsafe { &mut *(t as *mut T::Storage) }
     }
 }
 unsafe impl<T1, T2> ComponentTuple for (T1, T2)
@@ -83,7 +84,7 @@ where
     T1: Component + 'static,
     T2: Component + 'static,
 {
-    type Item<'a> = (&'a mut Storage<T1>, &'a mut Storage<T2>);
+    type Item<'a> = (&'a mut T1::Storage, &'a mut T2::Storage);
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
         let t1 = component_map.get_ptr::<T1>();
@@ -93,8 +94,8 @@ where
 
         unsafe {
             (
-                &mut *(t1 as *mut Storage<T1>),
-                &mut *(t2 as *mut Storage<T2>),
+                &mut *(t1 as *mut T1::Storage),
+                &mut *(t2 as *mut T2::Storage),
             )
         }
     }
@@ -107,9 +108,9 @@ where
     T3: Component + 'static,
 {
     type Item<'a> = (
-        &'a mut Storage<T1>,
-        &'a mut Storage<T2>,
-        &'a mut Storage<T3>,
+        &'a mut T1::Storage,
+        &'a mut T2::Storage,
+        &'a mut T3::Storage,
     );
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
@@ -123,9 +124,9 @@ where
 
         unsafe {
             (
-                &mut *(t1 as *mut Storage<T1>),
-                &mut *(t2 as *mut Storage<T2>),
-                &mut *(t3 as *mut Storage<T3>),
+                &mut *(t1 as *mut T1::Storage),
+                &mut *(t2 as *mut T2::Storage),
+                &mut *(t3 as *mut T3::Storage),
             )
         }
     }
@@ -139,10 +140,10 @@ where
     T4: Component + 'static,
 {
     type Item<'a> = (
-        &'a mut Storage<T1>,
-        &'a mut Storage<T2>,
-        &'a mut Storage<T3>,
-        &'a mut Storage<T4>,
+        &'a mut T1::Storage,
+        &'a mut T2::Storage,
+        &'a mut T3::Storage,
+        &'a mut T4::Storage,
     );
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
@@ -160,10 +161,10 @@ where
 
         unsafe {
             (
-                &mut *(t1 as *mut Storage<T1>),
-                &mut *(t2 as *mut Storage<T2>),
-                &mut *(t3 as *mut Storage<T3>),
-                &mut *(t4 as *mut Storage<T4>),
+                &mut *(t1 as *mut T1::Storage),
+                &mut *(t2 as *mut T2::Storage),
+                &mut *(t3 as *mut T3::Storage),
+                &mut *(t4 as *mut T4::Storage),
             )
         }
     }
@@ -178,11 +179,11 @@ where
     T5: Component + 'static,
 {
     type Item<'a> = (
-        &'a mut Storage<T1>,
-        &'a mut Storage<T2>,
-        &'a mut Storage<T3>,
-        &'a mut Storage<T4>,
-        &'a mut Storage<T5>,
+        &'a mut T1::Storage,
+        &'a mut T2::Storage,
+        &'a mut T3::Storage,
+        &'a mut T4::Storage,
+        &'a mut T5::Storage,
     );
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
@@ -205,11 +206,11 @@ where
 
         unsafe {
             (
-                &mut *(t1 as *mut Storage<T1>),
-                &mut *(t2 as *mut Storage<T2>),
-                &mut *(t3 as *mut Storage<T3>),
-                &mut *(t4 as *mut Storage<T4>),
-                &mut *(t5 as *mut Storage<T5>),
+                &mut *(t1 as *mut T1::Storage),
+                &mut *(t2 as *mut T2::Storage),
+                &mut *(t3 as *mut T3::Storage),
+                &mut *(t4 as *mut T4::Storage),
+                &mut *(t5 as *mut T5::Storage),
             )
         }
     }
@@ -225,12 +226,12 @@ where
     T6: Component + 'static,
 {
     type Item<'a> = (
-        &'a mut Storage<T1>,
-        &'a mut Storage<T2>,
-        &'a mut Storage<T3>,
-        &'a mut Storage<T4>,
-        &'a mut Storage<T5>,
-        &'a mut Storage<T6>,
+        &'a mut T1::Storage,
+        &'a mut T2::Storage,
+        &'a mut T3::Storage,
+        &'a mut T4::Storage,
+        &'a mut T5::Storage,
+        &'a mut T6::Storage,
     );
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
@@ -259,12 +260,12 @@ where
 
         unsafe {
             (
-                &mut *(t1 as *mut Storage<T1>),
-                &mut *(t2 as *mut Storage<T2>),
-                &mut *(t3 as *mut Storage<T3>),
-                &mut *(t4 as *mut Storage<T4>),
-                &mut *(t5 as *mut Storage<T5>),
-                &mut *(t6 as *mut Storage<T6>),
+                &mut *(t1 as *mut T1::Storage),
+                &mut *(t2 as *mut T2::Storage),
+                &mut *(t3 as *mut T3::Storage),
+                &mut *(t4 as *mut T4::Storage),
+                &mut *(t5 as *mut T5::Storage),
+                &mut *(t6 as *mut T6::Storage),
             )
         }
     }

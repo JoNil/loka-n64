@@ -68,7 +68,7 @@ where
     type WorldQueryIteratorData<'w> = (&'w [Entity], &'w mut [T1::Inner]);
 
     fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
-        let storage = component_map.get::<(T1::Inner,)>();
+        let storage = component_map.get::<(T1,)>();
 
         let (entities, components) = storage.components_and_entities_slice_mut();
 
@@ -103,14 +103,10 @@ where
     T2: Component + 'static,
 {
     type Item<'w> = (Entity, T1::RefInner<'w>, T2::RefInner<'w>);
-    type WorldQueryIteratorData<'w> = (
-        &'w [Entity],
-        &'w mut [T1::Inner],
-        &'w mut Storage<T2::Inner>,
-    );
+    type WorldQueryIteratorData<'w> = (&'w [Entity], &'w mut [T1::Inner], &'w mut T2::Storage);
 
     fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
-        let storage = component_map.get::<(T1::Inner, T2::Inner)>();
+        let storage = component_map.get::<(T1, T2)>();
 
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
@@ -153,12 +149,12 @@ where
     type WorldQueryIteratorData<'w> = (
         &'w [Entity],
         &'w mut [T1::Inner],
-        &'w mut Storage<T2::Inner>,
-        &'w mut Storage<T3::Inner>,
+        &'w mut T2::Storage,
+        &'w mut T3::Storage,
     );
 
     fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
-        let storage = component_map.get::<(T1::Inner, T2::Inner, T3::Inner)>();
+        let storage = component_map.get::<(T1, T2, T3)>();
 
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
@@ -212,13 +208,13 @@ where
     type WorldQueryIteratorData<'w> = (
         &'w [Entity],
         &'w mut [T1::Inner],
-        &'w mut Storage<T2::Inner>,
-        &'w mut Storage<T3::Inner>,
-        &'w mut Storage<T4::Inner>,
+        &'w mut T2::Storage,
+        &'w mut T3::Storage,
+        &'w mut T4::Storage,
     );
 
     fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
-        let storage = component_map.get::<(T1::Inner, T2::Inner, T3::Inner, T4::Inner)>();
+        let storage = component_map.get::<(T1, T2, T3, T4)>();
 
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
@@ -278,15 +274,14 @@ where
     type WorldQueryIteratorData<'w> = (
         &'w [Entity],
         &'w mut [T1::Inner],
-        &'w mut Storage<T2::Inner>,
-        &'w mut Storage<T3::Inner>,
-        &'w mut Storage<T4::Inner>,
-        &'w mut Storage<T5::Inner>,
+        &'w mut T2::Storage,
+        &'w mut T3::Storage,
+        &'w mut T4::Storage,
+        &'w mut T5::Storage,
     );
 
     fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
-        let storage =
-            component_map.get::<(T1::Inner, T2::Inner, T3::Inner, T4::Inner, T5::Inner)>();
+        let storage = component_map.get::<(T1, T2, T3, T4, T5)>();
 
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 
@@ -354,22 +349,15 @@ where
     type WorldQueryIteratorData<'w> = (
         &'w [Entity],
         &'w mut [T1::Inner],
-        &'w mut Storage<T2::Inner>,
-        &'w mut Storage<T3::Inner>,
-        &'w mut Storage<T4::Inner>,
-        &'w mut Storage<T5::Inner>,
-        &'w mut Storage<T6::Inner>,
+        &'w mut T2::Storage,
+        &'w mut T3::Storage,
+        &'w mut T4::Storage,
+        &'w mut T5::Storage,
+        &'w mut T6::Storage,
     );
 
     fn iterator_data(component_map: &mut ComponentMap) -> Self::WorldQueryIteratorData<'_> {
-        let storage = component_map.get::<(
-            T1::Inner,
-            T2::Inner,
-            T3::Inner,
-            T4::Inner,
-            T5::Inner,
-            T6::Inner,
-        )>();
+        let storage = component_map.get::<(T1, T2, T3, T4, T5, T6)>();
 
         let (entities, components) = storage.0.components_and_entities_slice_mut();
 

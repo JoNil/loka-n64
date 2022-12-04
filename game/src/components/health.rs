@@ -1,4 +1,6 @@
-use crate::ecs::{entity::Entity, query::query, storage::Storage, world::World};
+use crate::ecs::{
+    component::Component, entity::Entity, query::query, storage::Storage, world::World,
+};
 use game_derive::Component;
 
 #[derive(Component)]
@@ -13,14 +15,14 @@ impl Health {
     }
 }
 
-pub fn damage(health: &mut Storage<Health>, entity: Entity, damage: i32) {
+pub fn damage(health: &mut <Health as Component>::Storage, entity: Entity, damage: i32) {
     if let Some(component) = health.lookup_mut(entity) {
         component.health = i32::max(0, component.health - damage);
         component.damaged_this_frame = true;
     }
 }
 
-pub fn is_alive(health: &Storage<Health>, entity: Entity) -> bool {
+pub fn is_alive(health: &<Health as Component>::Storage, entity: Entity) -> bool {
     if let Some(component) = health.lookup(entity) {
         component.is_alive()
     } else {
