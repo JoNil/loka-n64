@@ -8,7 +8,7 @@ const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
 const GENERATION_BITS: u32 = 8;
 const GENERATION_MASK: u32 = (1 << GENERATION_BITS) - 1;
 
-const MINIMUM_FREE_INDICES: u32 = 1024;
+const MINIMUM_FREE_INDICES: u32 = 128;
 
 #[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Entity {
@@ -46,7 +46,7 @@ impl EntitySystem {
         EntitySystem {
             generation: Vec::with_capacity(256),
             free_indices: VecDeque::with_capacity((2 * MINIMUM_FREE_INDICES) as usize),
-            remove_list: Vec::with_capacity(8),
+            remove_list: Vec::with_capacity(16),
             commands: Vec::new(),
         }
     }
