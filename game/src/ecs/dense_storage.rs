@@ -3,13 +3,12 @@
 use super::{component::Component, entity::Entity};
 use alloc::vec::Vec;
 
-pub struct Storage<T>
+pub struct DenseStorage<T>
 where
-    T: Component,
+    T: Component + Default,
 {
     components: Vec<T>,
     entities: Vec<Entity>,
-    map: Vec<i32>,
 }
 
 impl<T> Storage<T>
@@ -20,25 +19,22 @@ where
         Self {
             components: Vec::with_capacity(256),
             entities: Vec::with_capacity(256),
-            map: Vec::with_capacity(256),
         }
     }
 
     pub fn add(&mut self, entity: Entity, component: T) {
-        self.components.push(component);
-        self.entities.push(entity);
-
         let index = entity.index();
-        self.map.resize(self.map.len().max(index as usize + 1), -1);
-        self.map[index as usize] = self.components.len() as i32 - 1;
+        self.components
+            .resize(self.components.len().max(index as usize + 1), -1);
+        self.entities
+            .resize(self.entities.len().max(index as usize + 1), -1);
+
+        self.components[index] = component;
+        self.entities[index] = entity;
     }
 
     pub fn lookup(&self, entity: Entity) -> Option<&T> {
-        let index = self.map.get(entity.index() as usize)?;
-
-        if *index < 0 {
-            return None;
-        }
+        let index = entity.index();
 
         if *self.entities.get(*index as usize)? == entity {
             return self.components.get(*index as usize);
@@ -49,10 +45,6 @@ where
 
     pub fn lookup_mut(&mut self, entity: Entity) -> Option<&mut T> {
         let index = self.map.get(entity.index() as usize)?;
-
-        if *index < 0 {
-            return None;
-        }
 
         if *self.entities.get(*index as usize)? == entity {
             return self.components.get_mut(*index as usize);
@@ -90,28 +82,12 @@ where
     pub fn remove(&mut self, entity: Entity) {
         let entity_index = entity.index();
 
-        let Some(&index) = self.map.get(entity_index as  usize) else {
-            return;
-        };
-
-        if index < 0 {
-            return;
-        }
-
-        self.map[entity_index as usize] = -1;
-
         let index = index as usize;
         let last = self.components.len() - 1;
 
         if index == last {
             self.components.remove(index);
             self.entities.remove(index);
-        } else {
-            self.components.swap_remove(index);
-            self.entities.swap_remove(index);
-
-            let moved_entity = self.entities[index];
-            self.map[moved_entity.index() as usize] = index as i32;
         }
     }
 }
