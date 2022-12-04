@@ -35,8 +35,7 @@ impl ComponentMap {
         let key = TypeId::of::<T>();
 
         if !self.map.contains_key(&key) {
-            self.map
-                .insert(key, Box::new(<T::Storage as Default>::default()));
+            self.map.insert(key, Box::<T::Storage>::default());
             self.removers.as_ref().borrow_mut().push(|map, entity| {
                 map.get::<(T,)>().remove(entity);
             });
