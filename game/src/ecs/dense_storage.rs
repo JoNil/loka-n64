@@ -5,15 +5,15 @@ use alloc::vec::Vec;
 
 pub struct DenseStorage<T>
 where
-    T: Component + Default,
+    T: Component + Clone + Default,
 {
     components: Vec<T>,
     entities: Vec<Entity>,
 }
 
-impl<T> Storage<T>
+impl<T> DenseStorage<T>
 where
-    T: Component,
+    T: Component + Clone + Default,
 {
     pub fn new() -> Self {
         Self {
@@ -24,33 +24,46 @@ where
 
     pub fn add(&mut self, entity: Entity, component: T) {
         let index = entity.index();
-        self.components
-            .resize(self.components.len().max(index as usize + 1), -1);
-        self.entities
-            .resize(self.entities.len().max(index as usize + 1), -1);
 
-        self.components[index] = component;
-        self.entities[index] = entity;
+        self.components
+            .resize_with(self.components.len().max(index as usize + 1), T::default);
+        self.entities
+            .resize_with(self.entities.len().max(index as usize + 1), Entity::default);
+
+        self.components[index as usize] = component;
+        self.entities[index as usize] = entity;
     }
 
     pub fn lookup(&self, entity: Entity) -> Option<&T> {
         let index = entity.index();
 
-        if *self.entities.get(*index as usize)? == entity {
-            return self.components.get(*index as usize);
+        let entity_stored = self.entities.get(index as usize)?;
+
+        if !entity_stored.valid() {
+            return None;
         }
 
-        None
+        if *entity_stored == entity {
+            return None;
+        }
+
+        self.components.get(index as usize)
     }
 
     pub fn lookup_mut(&mut self, entity: Entity) -> Option<&mut T> {
-        let index = self.map.get(entity.index() as usize)?;
+        let index = entity.index();
 
-        if *self.entities.get(*index as usize)? == entity {
-            return self.components.get_mut(*index as usize);
+        let entity_stored = self.entities.get(index as usize)?;
+
+        if !entity_stored.valid() {
+            return None;
         }
 
-        None
+        if *entity_stored == entity {
+            return None;
+        }
+
+        self.components.get_mut(index as usize)
     }
 
     pub fn components(&self) -> &[T] {
@@ -80,9 +93,8 @@ where
     }
 
     pub fn remove(&mut self, entity: Entity) {
-        let entity_index = entity.index();
+        let index = entity.index() as usize;
 
-        let index = index as usize;
         let last = self.components.len() - 1;
 
         if index == last {
@@ -92,9 +104,9 @@ where
     }
 }
 
-impl<T> Default for Storage<T>
+impl<T> Default for DenseStorage<T>
 where
-    T: Component,
+    T: Component + Clone + Default,
 {
     fn default() -> Self {
         Self::new()

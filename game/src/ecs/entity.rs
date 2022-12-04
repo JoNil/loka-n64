@@ -2,15 +2,17 @@ use super::{component::Component, component_map::ComponentMap};
 use alloc::{boxed::Box, collections::VecDeque, vec::Vec};
 use core::{mem, num::Wrapping};
 
-const INDEX_BITS: u32 = 24;
+const INDEX_BITS: u32 = 23;
 const INDEX_MASK: u32 = (1 << INDEX_BITS) - 1;
 
 const GENERATION_BITS: u32 = 8;
 const GENERATION_MASK: u32 = (1 << GENERATION_BITS) - 1;
 
+const VALID_MASK: u32 = 1 << 31;
+
 const MINIMUM_FREE_INDICES: u32 = 128;
 
-#[derive(Copy, Clone, Debug, Hash, Eq, PartialEq, Ord, PartialOrd)]
+#[derive(Copy, Clone, Debug, Default, Hash, Eq, PartialEq, Ord, PartialOrd)]
 pub struct Entity {
     id: u32,
 }
@@ -21,7 +23,7 @@ impl Entity {
         assert!((generation.0 as u32) & !GENERATION_MASK == 0);
 
         Entity {
-            id: ((generation.0 as u32) << INDEX_BITS) | index,
+            id: VALID_MASK | ((generation.0 as u32) << INDEX_BITS) | index,
         }
     }
 
@@ -31,6 +33,10 @@ impl Entity {
 
     pub fn generation(&self) -> Wrapping<u8> {
         Wrapping(((self.id >> INDEX_BITS) & GENERATION_MASK) as u8)
+    }
+
+    pub fn valid(&self) -> bool {
+        self.id & VALID_MASK > 0
     }
 }
 
@@ -76,7 +82,7 @@ impl EntitySystem {
     }
 
     pub fn alive(&self, entity: Entity) -> bool {
-        self.generation[entity.index() as usize] == entity.generation()
+        entity.valid() && self.generation[entity.index() as usize] == entity.generation()
     }
 
     pub fn housekeep(&mut self, components: &mut ComponentMap) {
