@@ -33,7 +33,7 @@ impl Graphics {
 
     #[inline]
     pub fn rsp_hello_world(&self, commands: &[RdpCommand]) {
-        let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/hello_world.bin");
+        let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/sandbox.bin");
 
         let commands_len = commands.len() * core::mem::size_of::<RdpCommand>();
 
