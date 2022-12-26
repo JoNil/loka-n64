@@ -1,6 +1,6 @@
 arch n64.rsp
 endian msb
-output "hello_world.bin", create
+output "rsp.bin", create
 
 include "lib/n64.inc"
 include "lib/n64_rsp.inc"
