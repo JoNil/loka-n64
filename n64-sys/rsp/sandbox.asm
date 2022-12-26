@@ -12,59 +12,102 @@ origin $0000
 align(8)
 
 start:
-
     xor t0, t0, t0                  // t0 = 0
-    li t1, SET_XBS|CLR_FRZ|CLR_FLS|CLR_CLK  // t1 = 00001001 (GCLK | XBUS_MEM)
+    li t1, 65536        // t1 = 1.0 in fix_16_16
 
-    lhu t2, 4094(0)   // Load 16bits as number of commands
-    sll t2, t2, 3     // Number of commands -> number of bytes (64bits / command)
+    li t2, 3            // t2 = 3
+    sll t2, t2, 15      // t2 *= 2^15 (1.5 in 16.16)
+    sw t2, 0(t0)
 
-    li t4, 4092       // t4 = 4092
-    subi t4, t4, 8    // t4 -= 8
-    sw t0, 0(t4)
-    subi t4, t4, 8    // t4 -= 8
-    sw t1, 0(t4)
-    subi t4, t4, 8    // t4 -= 8
-    sw t2, 0(t4)
+    li t2, 5            // t2 = 3
+    sll t2, t2, 15      // t2 *= 2^15 (1.5 in 16.16)
+    sw t2, 4(t0)
     
-    mtc0 t1, c11      // CMD_STATUS = run
-    mtc0 t0, c8       // CMD_START = 0
-    mtc0 t2, c9       // CMD_END = 8*nCommands
-
-    mfc0 t8, c12      // Read RDP clock
-
-    mfc0 t3, c11      // t3 = CMD_STATUS
-    subi t4, t4, 8    // t4 -= 8
-    sw t3, 0(t4)
-
-    li t5, RDP_CMB    // t5 =  RDP_CMB (00100000)
+    li t2, 7            // t2 = 3
+    sll t2, t2, 15      // t2 *= 2^15 (1.5 in 16.16)
+    sw t2, 8(t0)
     
-    subi t4, t4, 8    // t4 -= 8
-    sw t5, 0(t4)
+    li t2, 9            // t2 = 3
+    sll t2, t2, 15      // t2 *= 2^15 (1.5 in 16.16)
+    sw t2, 12(t0)
 
-    mfc0 t3, c8       // t3 = CMD_START
-    subi t4, t4, 8    // t4 -= 8
-    sw t3, 0(t4)
+    lsv v2[e0],  0(t0)
+    lsv v1[e0],  2(t0)
+    lsv v2[e2],  4(t0)
+    lsv v1[e2],  6(t0)
+    lsv v2[e4],  8(t0)
+    lsv v1[e4], 10(t0)
+    lsv v2[e6], 12(t0)
+    lsv v1[e6], 14(t0)
 
-    mfc0 t3, c9       // t3 = CMD_END
-    subi t4, t4, 8    // t4 -= 8
-    sw t3, 0(t4)
+    // V2 dst
+    li t2, 3            // t2 = 3
+    sll t2, t2, 16      // t2 *= 2^16
+    sw t2, 16(t0)
+    
+    li t2, 4            // t2 = 3
+    sll t2, t2, 16      // t2 *= 2^16
+    sw t2, 20(t0)
+    
+    li t2, 5            // t2 = 3
+    sll t2, t2, 16      // t2 *= 2^16
+    sw t2, 24(t0)
+    
+    li t2, 6            // t2 = 3
+    sll t2, t2, 16      // t2 *= 2^16
+    sw t2, 28(t0)
 
-wait_for_rdp:
-    subi t4, t4, 8 // t4 -= 8
-    ori t4, t4, 1024
 
-    mfc0 t3, c11    // t3 = CMD_STATUS
-    sw t3, 0(t4)
-    and t3, t3, t5  // t3 &= t5
+    lsv v3[e0], 18(t0)
+    lsv v3[e2], 22(t0)
+    lsv v3[e4], 26(t0)
+    lsv v3[e6], 30(t0)
+    lsv v4[e0], 16(t0)
+    lsv v4[e2], 20(t0)
+    lsv v4[e4], 24(t0)
+    lsv v4[e6], 28(t0)
 
-    beq t3, t5, wait_for_rdp // Loop while RDP busy
+    vmudl v5,v1,v3
+    vmadm v6,v2,v3
+    vmadn v7,v1,v4
+    vmadh v8,v2,v4
+    
+    //sqv v0[e0],  48(t0)   // Store 128 bits from V0 into MEM[t0 + 0]
+    sqv v1[e0],  64(t0)  // Store 128 bits from V1 into MEM[t0 + 16]
+    sqv v2[e0],  80(t0)  // Store 128 bits from V2 into MEM[t0 + 32]
+    sqv v3[e0],  96(t0)  // Store 128 bits from V2 into MEM[t0 + 32]
+    sqv v4[e0], 112(t0)  // Store 128 bits from V2 into MEM[t0 + 32]
+    sqv v5[e0], 128(t0)  // Store 128 bits from V2 into MEM[t0 + 32]
+    sqv v6[e0], 144(t0)  // Store 128 bits from V2 into MEM[t0 + 32]
+    sqv v7[e0], 160(t0)  // Store 128 bits from V2 into MEM[t0 + 32]
+    sqv v8[e0], 176(t0)  // Store 128 bits from V2 into MEM[t0 + 32]
+
+    lh t2,176(t0)
+    sh t2,192(t0)
+    lh t2,178(t0)
+    sh t2,196(t0)
+    lh t2,180(t0)
+    sh t2,200(t0)
+    lh t2,180(t0)
+    sh t2,204(t0)
+    
+    lh t2,160(t0)
+    sh t2,194(t0)
+    lh t2,162(t0)
+    sh t2,198(t0)
+    lh t2,164(t0)
+    sh t2,202(t0)
+    lh t2,166(t0)
+    sh t2,206(t0)
+
+    vnop
     nop
-
-    mfc0 t9, c12   // Read RDP clock
-    sub t9, t9, t8 // t9 = RDP clock end - clock start
-    subi t4, t4, 4
-    sw t9, 0(t4)
+    vnop
+    nop
+    vnop
+    nop
+    vnop
+    nop
 
 return:
  break

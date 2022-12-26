@@ -42,11 +42,11 @@ impl Graphics {
         assert!(commands_len < 4096);
 
         let mut data: Aligned<A8, [u8; 4096]> = Aligned([0xff; 4096]);
-        data[..commands_len].copy_from_slice(unsafe {
-            core::slice::from_raw_parts(commands.as_ptr() as _, commands_len)
-        });
-
-        data[4094..].copy_from_slice((commands.len() as u16).to_be_bytes().as_slice());
+        //data[..commands_len].copy_from_slice(unsafe {
+        //    core::slice::from_raw_parts(commands.as_ptr() as _, commands_len)
+        //});
+//
+        //data[4094..].copy_from_slice((commands.len() as u16).to_be_bytes().as_slice());
 
         rsp::run(code, Some(data.deref()));
 
@@ -65,7 +65,7 @@ impl Graphics {
                     let a = u64::from_be_bytes(word.try_into().unwrap());
 
                     debugln!(
-                        "ADDR {:<8} : {:064b} : {:016x} : {:20} : {:23.8}",
+                        "ADDR {:<8} : {:064b} : {:016x} : {:20} : {:24.8}",
                         i * 8,
                         a,
                         a,
@@ -82,7 +82,7 @@ impl Graphics {
                     let a = u32::from_be_bytes(word.try_into().unwrap());
 
                     debugln!(
-                        "ADDR {:<4} : {:032b} : {:08x} : {:10} : {:13.8}",
+                        "ADDR {:<4} : {:032b} : {:08x} : {:10} : {:14.8}",
                         i * 4,
                         a,
                         a,
