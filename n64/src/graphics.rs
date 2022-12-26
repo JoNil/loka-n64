@@ -65,7 +65,7 @@ impl Graphics {
                     let a = u64::from_be_bytes(word.try_into().unwrap());
 
                     debugln!(
-                        "ADDR {:<8} : {:064b} : {:016x} : {:20} : {:}",
+                        "ADDR {:<8} : {:064b} : {:016x} : {:20} : {:23.8}",
                         i * 8,
                         a,
                         a,
@@ -82,7 +82,7 @@ impl Graphics {
                     let a = u32::from_be_bytes(word.try_into().unwrap());
 
                     debugln!(
-                        "ADDR {:<4} : {:032b} : {:08x} : {:10} : {:}",
+                        "ADDR {:<4} : {:032b} : {:08x} : {:10} : {:13.8}",
                         i * 4,
                         a,
                         a,
