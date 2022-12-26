@@ -64,7 +64,14 @@ impl Graphics {
                 for (i, word) in dmem.chunks_exact(8).enumerate() {
                     let a = u64::from_be_bytes(word.try_into().unwrap());
 
-                    debugln!("ADDR {:<8} : {:064b} : {:016x} : {:20} : {:}", i * 8, a, a, a, float_from_fix_16_16(a));
+                    debugln!(
+                        "ADDR {:<8} : {:064b} : {:016x} : {:20} : {:}",
+                        i * 8,
+                        a,
+                        a,
+                        a,
+                        float_from_fix_16_16_u64(a)
+                    );
 
                     //assert!(a == i as u32);
                 }
@@ -74,7 +81,14 @@ impl Graphics {
                 for (i, word) in dmem.chunks_exact(4).enumerate() {
                     let a = u32::from_be_bytes(word.try_into().unwrap());
 
-                    debugln!("ADDR {:<4} : {:032b} : {:08x} : {:10} : {:}", i * 4, a, a, a, float_from_fix_16_16(a));
+                    debugln!(
+                        "ADDR {:<4} : {:032b} : {:08x} : {:10} : {:}",
+                        i * 4,
+                        a,
+                        a,
+                        a,
+                        float_from_fix_16_16_u32(a)
+                    );
 
                     //assert!(a == i as u32);
                 }
@@ -85,6 +99,10 @@ impl Graphics {
     }
 }
 
-fn float_from_fix_16_16<T:TryInto<f64>>(a: T) -> f64 {
-    (a.try_into().unwrap()) / ((1<<16) as f64)
+fn float_from_fix_16_16_u32(a: u32) -> f64 {
+    (a as f64) / ((1 << 16) as f64)
+}
+
+fn float_from_fix_16_16_u64(a: u64) -> f64 {
+    (a as f64) / ((1 << 16) as f64)
 }
