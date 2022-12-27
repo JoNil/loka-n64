@@ -42,6 +42,12 @@ impl Vu {
             );
 
             let product = vs_data as u32 * vt_data as u32;
+
+            let acc = (product >> 16) as i16 as u32;
+            self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
+
+            self.registers[vd.0][(i * 2)..(i * 2 + 1)]
+                .copy_from_slice(&(acc & 0xffff).to_be_bytes());
         }
     }
 }
