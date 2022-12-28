@@ -47,7 +47,48 @@ impl Vu {
             self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
 
             self.registers[vd.0][(i * 2)..(i * 2 + 1)]
-                .copy_from_slice(&(acc & 0xffff).to_be_bytes());
+                .copy_from_slice(&((acc & 0xffff) as u16).to_be_bytes());
+        }
+    }
+
+    pub fn vmadm(&mut self, vd: Reg, vs: Reg, vt: Reg) {
+        for i in 0..7 {
+            let j = match vt.1 {
+                None => i,
+                Some(e) => {
+                    if e == 0b000 {
+                        i
+                    } else if (e & 0b1110) == 0b0010 {
+                        (e & 0b0001) + (i & 0b1110)
+                    } else if (e & 0b1100) == 0b0100 {
+                        (e & 0b0011) + (i & 0b1100)
+                    } else if (e & 0b1000) == 0b1000 {
+                        e & 0b0111
+                    } else {
+                        panic!("Invalid e");
+                    }
+                }
+            };
+
+            let vs_data = u16::from_be_bytes(
+                self.registers[vs.0][(i * 2)..(i * 2 + 1)]
+                    .try_into()
+                    .unwrap(),
+            );
+            let vt_data = u16::from_be_bytes(
+                self.registers[vt.0][(j * 2)..(j * 2 + 1)]
+                    .try_into()
+                    .unwrap(),
+            );
+
+            let product = vs_data as u32 * vt_data as u32;
+            let acc = u32::from_be_bytes(self.acc[i][2..6].try_into().unwrap());
+
+            let acc = acc + product;
+            self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
+
+            self.registers[vd.0][(i * 2)..(i * 2 + 1)]
+                .copy_from_slice(&((acc >> 16) as u16).to_be_bytes());
         }
     }
 }
