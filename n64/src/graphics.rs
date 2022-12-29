@@ -7,8 +7,6 @@ use n64_sys::{rdp, rsp, vi};
 use n64_types::RdpCommand;
 use vu_emu::{Vu, V1, V2, V3, V5, V6};
 
-mod vu_emu;
-
 pub struct Graphics {}
 
 impl Graphics {

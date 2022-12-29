@@ -1,6 +1,13 @@
+#![cfg_attr(not(feature = "record_asm"), no_std)]
+
+#[cfg(feature = "record_asm")]
+mod macros;
+
 pub struct Vu {
     registers: [[u8; 16]; 32],
     acc: [[u8; 6]; 8],
+    #[cfg(feature = "record_asm")]
+    asm: String,
 }
 
 impl Vu {
@@ -8,10 +15,17 @@ impl Vu {
         Self {
             registers: [[0; 16]; 32],
             acc: [[0; 6]; 8],
+            #[cfg(feature = "record_asm")]
+            asm: String::new(),
         }
     }
 
     pub fn vmudl(&mut self, vd: Reg, vs: Reg, vt: Reg) {
+        #[cfg(feature = "record_asm")]
+        {
+            self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
+        }
+
         for i in 0..7 {
             let j = match vt.1 {
                 None => i,
@@ -31,12 +45,12 @@ impl Vu {
             };
 
             let vs_data = u16::from_be_bytes(
-                self.registers[vs.0][(i * 2)..(i * 2 + 1)]
+                self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
                     .try_into()
                     .unwrap(),
             );
             let vt_data = u16::from_be_bytes(
-                self.registers[vt.0][(j * 2)..(j * 2 + 1)]
+                self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
                     .try_into()
                     .unwrap(),
             );
@@ -46,12 +60,17 @@ impl Vu {
             let acc = (product >> 16) as i16 as u32;
             self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
 
-            self.registers[vd.0][(i * 2)..(i * 2 + 1)]
+            self.registers[vd.0][(i * 2)..=(i * 2 + 1)]
                 .copy_from_slice(&((acc & 0xffff) as u16).to_be_bytes());
         }
     }
 
     pub fn vmadm(&mut self, vd: Reg, vs: Reg, vt: Reg) {
+        #[cfg(feature = "record_asm")]
+        {
+            self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
+        }
+
         for i in 0..7 {
             let j = match vt.1 {
                 None => i,
@@ -71,12 +90,12 @@ impl Vu {
             };
 
             let vs_data = u16::from_be_bytes(
-                self.registers[vs.0][(i * 2)..(i * 2 + 1)]
+                self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
                     .try_into()
                     .unwrap(),
             );
             let vt_data = u16::from_be_bytes(
-                self.registers[vt.0][(j * 2)..(j * 2 + 1)]
+                self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
                     .try_into()
                     .unwrap(),
             );
@@ -87,9 +106,14 @@ impl Vu {
             let acc = acc + product;
             self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
 
-            self.registers[vd.0][(i * 2)..(i * 2 + 1)]
+            self.registers[vd.0][(i * 2)..=(i * 2 + 1)]
                 .copy_from_slice(&((acc >> 16) as u16).to_be_bytes());
         }
+    }
+
+    #[cfg(feature = "record_asm")]
+    pub fn asm(&self) -> &str {
+        &self.asm
     }
 }
 
@@ -165,6 +189,15 @@ impl Reg {
 
     pub fn e15(self) -> Self {
         Reg(self.0, Some(15))
+    }
+}
+
+impl core::fmt::Display for Reg {
+    fn fmt(&self, f: &mut core::fmt::Formatter<'_>) -> core::fmt::Result {
+        match self {
+            Reg(reg, None) => write!(f, "v{reg}"),
+            Reg(reg, Some(e)) => write!(f, "v{reg}[e{e}]"),
+        }
     }
 }
 
