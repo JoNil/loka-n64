@@ -1507,7 +1507,6 @@ dependencies = [
  "spin",
  "strum",
  "strum_macros",
- "vu-emu",
  "wgpu",
  "winit",
  "zerocopy",
@@ -2703,6 +2702,18 @@ checksum = "49874b5167b65d7193b8aba1567f5c7d93d001cafc34600cee003eda787e483f"
 [[package]]
 name = "vu-emu"
 version = "0.1.0"
+dependencies = [
+ "vu_emu_macro",
+]
+
+[[package]]
+name = "vu_emu_macro"
+version = "0.1.0"
+dependencies = [
+ "proc-macro2",
+ "quote",
+ "syn",
+]
 
 [[package]]
 name = "walkdir"
