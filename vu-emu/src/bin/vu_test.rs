@@ -1,5 +1,8 @@
-use eframe::egui::{self, RichText, Separator};
-use vu_emu::{regs::*, Vu};
+use eframe::{
+    egui::{self, RichText, Separator},
+    epaint::Vec2,
+};
+use vu_emu::{instruction, regs::*, Vu};
 
 fn main() {
     let options = eframe::NativeOptions {
@@ -21,16 +24,6 @@ fn main() {
             vu.load_fix_point(v3.e2(), v4.e2(), 4 << 16);
             vu.load_fix_point(v3.e4(), v4.e4(), 5 << 16);
             vu.load_fix_point(v3.e6(), v4.e6(), 6 << 16);
-
-            println!("{vu}");
-
-            vu.vmudl(v5, v1, v3);
-            vu.vmadm(v6, v2, v3);
-            vu.vmadn(v7, v1, v4);
-            vu.vmadh(v8, v2, v4);
-
-            println!("{vu}");
-            println!("{}", vu.asm());
 
             Box::new(VuEmuGui::new(vu))
         }),
@@ -54,6 +47,7 @@ impl Default for RegisterDisplay {
 struct VuEmuGui {
     vu: Vu,
     display_type: [RegisterDisplay; 32],
+    code: String,
 }
 
 impl VuEmuGui {
@@ -61,6 +55,11 @@ impl VuEmuGui {
         Self {
             vu,
             display_type: [RegisterDisplay::default(); 32],
+            code: "vmudl v5,v1,v3
+vmadm v6,v2,v3
+vmadn v7,v1,v4
+vmadh v8,v2,v4"
+                .to_string(),
         }
     }
 }
@@ -70,74 +69,99 @@ impl eframe::App for VuEmuGui {
         egui::CentralPanel::default().show(ctx, |ui| {
             egui::ScrollArea::vertical().show(ui, |ui| {
                 ui.expand_to_include_x(frame.info().window_info.size.x);
-                egui::Grid::new("registers")
-                    .striped(true)
-                    .min_col_width(0.0)
-                    .show(ui, |ui| {
-                        for (i, reg) in self.vu.registers.iter().enumerate() {
-                            ui.label(RichText::new(format!("v{i}")).monospace());
 
-                            for j in 0..8 {
-                                let v = &reg[(2 * j)..=(2 * j + 1)];
-                                let v = u16::from_be_bytes(v.try_into().unwrap());
+                ui.horizontal_top(|ui| {
+                    egui::Grid::new("registers")
+                        .striped(true)
+                        .min_col_width(0.0)
+                        .show(ui, |ui| {
+                            let vu = run(&self.vu, &self.code);
+
+                            for (i, reg) in vu.registers.iter().enumerate() {
+                                ui.label(RichText::new(format!("v{i}")).monospace());
+
+                                for j in 0..8 {
+                                    let v = &reg[(2 * j)..=(2 * j + 1)];
+                                    let v = u16::from_be_bytes(v.try_into().unwrap());
+
+                                    ui.add(Separator::default().vertical());
+
+                                    match self.display_type[i] {
+                                        RegisterDisplay::Dec => {
+                                            if v == 0 {
+                                                ui.label(RichText::new("     ").monospace());
+                                            } else {
+                                                ui.label(
+                                                    RichText::new(format!("{:5}", v)).monospace(),
+                                                );
+                                            }
+                                        }
+                                        RegisterDisplay::Hex => {
+                                            if v == 0 {
+                                                ui.label(RichText::new("     ").monospace());
+                                            } else {
+                                                ui.label(
+                                                    RichText::new(format!("{:5x}", v)).monospace(),
+                                                );
+                                            }
+                                        }
+                                        RegisterDisplay::Fix => {
+                                            if v == 0 {
+                                                ui.label(RichText::new("     ").monospace());
+                                            } else {
+                                                ui.label(
+                                                    RichText::new(format!(
+                                                        "{:.3}",
+                                                        v as f64 / (1 << 16) as f64
+                                                    ))
+                                                    .monospace(),
+                                                );
+                                            }
+                                        }
+                                    }
+                                }
 
                                 ui.add(Separator::default().vertical());
 
-                                match self.display_type[i] {
-                                    RegisterDisplay::Dec => {
-                                        if v == 0 {
-                                            ui.label(RichText::new("     ").monospace());
-                                        } else {
-                                            ui.label(RichText::new(format!("{:5}", v)).monospace());
-                                        }
-                                    }
-                                    RegisterDisplay::Hex => {
-                                        if v == 0 {
-                                            ui.label(RichText::new("     ").monospace());
-                                        } else {
-                                            ui.label(
-                                                RichText::new(format!("{:5x}", v)).monospace(),
-                                            );
-                                        }
-                                    }
-                                    RegisterDisplay::Fix => {
-                                        if v == 0 {
-                                            ui.label(RichText::new("     ").monospace());
-                                        } else {
-                                            ui.label(
-                                                RichText::new(format!(
-                                                    "{:.3}",
-                                                    v as f64 / (1 << 16) as f64
-                                                ))
-                                                .monospace(),
-                                            );
-                                        }
+                                if ui
+                                    .button(
+                                        RichText::new(format!("{:?}", self.display_type[i]))
+                                            .monospace(),
+                                    )
+                                    .clicked()
+                                {
+                                    self.display_type[i] = match self.display_type[i] {
+                                        RegisterDisplay::Dec => RegisterDisplay::Hex,
+                                        RegisterDisplay::Hex => RegisterDisplay::Fix,
+                                        RegisterDisplay::Fix => RegisterDisplay::Dec,
                                     }
                                 }
+
+                                ui.end_row();
                             }
+                        });
 
-                            ui.add(Separator::default().vertical());
-
-                            if ui
-                                .button(
-                                    RichText::new(format!("{:?}", self.display_type[i]))
-                                        .monospace(),
-                                )
-                                .clicked()
-                            {
-                                self.display_type[i] = match self.display_type[i] {
-                                    RegisterDisplay::Dec => RegisterDisplay::Hex,
-                                    RegisterDisplay::Hex => RegisterDisplay::Fix,
-                                    RegisterDisplay::Fix => RegisterDisplay::Dec,
-                                }
-                            }
-
-                            ui.end_row();
-                        }
-                    });
-
-                // });
+                    ui.add_sized(
+                        ui.available_size() - Vec2::new(7.0, 0.0),
+                        egui::TextEdit::multiline(&mut self.code)
+                            .code_editor()
+                            .frame(false),
+                    );
+                });
             });
         });
     }
+}
+
+fn run(vu: &Vu, code: &str) -> Vu {
+    let mut vu = vu.clone();
+
+    for line in code.lines() {
+        let line = line.trim();
+        if let Some(instruction) = instruction::parse(line) {
+            instruction::execute(&mut vu, instruction);
+        }
+    }
+
+    vu
 }

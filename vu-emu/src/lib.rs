@@ -1,8 +1,15 @@
 #![cfg_attr(not(feature = "record_asm"), no_std)]
 
-use core::fmt::{self, Display};
+use core::{
+    fmt::{self, Display},
+    str::FromStr,
+};
+use parse_display::FromStr;
 use vu_emu_macro::emit_asm;
 
+pub mod instruction;
+
+#[derive(Clone)]
 pub struct Vu {
     pub registers: [[u8; 16]; 32],
     pub acc: [[u8; 6]; 8],
@@ -227,8 +234,9 @@ impl Default for Vu {
     }
 }
 
-#[derive(Copy, Clone)]
-pub struct Reg(usize, Option<usize>);
+#[derive(Copy, Clone, FromStr)]
+#[display("v{0}")]
+pub struct Reg(usize, #[from_str(default)] Option<usize>);
 
 impl Reg {
     pub fn e0(self) -> Self {

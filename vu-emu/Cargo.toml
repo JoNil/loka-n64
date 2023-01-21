@@ -9,4 +9,5 @@ record_asm = []
 
 [dependencies]
 eframe = "0.20"
+parse-display = "0.8"
 vu_emu_macro = { path = "../vu_emu_macro" }
