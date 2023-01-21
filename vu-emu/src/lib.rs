@@ -1,9 +1,6 @@
 #![cfg_attr(not(feature = "record_asm"), no_std)]
 
-use core::{
-    fmt::{self, Display},
-    str::FromStr,
-};
+use core::fmt::{self, Display};
 use parse_display::FromStr;
 use vu_emu_macro::emit_asm;
 
