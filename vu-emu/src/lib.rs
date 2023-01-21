@@ -4,10 +4,10 @@ use core::fmt::{self, Display};
 use vu_emu_macro::emit_asm;
 
 pub struct Vu {
-    registers: [[u8; 16]; 32],
-    acc: [[u8; 6]; 8],
+    pub registers: [[u8; 16]; 32],
+    pub acc: [[u8; 6]; 8],
     #[cfg(feature = "record_asm")]
-    asm: String,
+    pub asm: String,
 }
 
 impl Display for Vu {
