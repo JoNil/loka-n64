@@ -21,5 +21,5 @@ fn main() {
     vu.vmadh(v8, v2, v4);
 
     println!("{vu}");
-    //println!("{}", vu.asm());
+    println!("{}", vu.asm());
 }

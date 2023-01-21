@@ -4,11 +4,11 @@ version = "0.1.0"
 edition = "2021"
 
 [workspace]
-members = []
+members = ["vu_emu_macro"]
 
 [features]
-default = []
+default = ["record_asm"]
 record_asm = []
 
 [dependencies]
-
+vu_emu_macro = { path = "vu_emu_macro" }

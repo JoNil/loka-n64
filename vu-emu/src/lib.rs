@@ -1,9 +1,7 @@
 #![cfg_attr(not(feature = "record_asm"), no_std)]
 
 use core::fmt::{self, Display};
-
-#[cfg(feature = "record_asm")]
-mod macros;
+use vu_emu_macro::emit_asm;
 
 pub struct Vu {
     registers: [[u8; 16]; 32],
@@ -89,40 +87,44 @@ impl Vu {
         self.registers[r.0][i..=(i + 1)].copy_from_slice(&short.to_be_bytes());
     }
 
-    pub fn vmudl(&mut self, vd: Reg, vs: Reg, vt: Reg) {
-        #[cfg(feature = "record_asm")]
-        {
-            self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
-        }
+    fn read_vs_vt_element(&self, vs: Reg, vt: Reg, i: usize) -> (u16, u16) {
+        assert!(vs.1.is_none());
 
-        for i in 0..8 {
-            let j = match vt.1 {
-                None => i,
-                Some(e) => {
-                    if e == 0b000 {
-                        i
-                    } else if (e & 0b1110) == 0b0010 {
-                        (e & 0b0001) + (i & 0b1110)
-                    } else if (e & 0b1100) == 0b0100 {
-                        (e & 0b0011) + (i & 0b1100)
-                    } else if (e & 0b1000) == 0b1000 {
-                        e & 0b0111
-                    } else {
-                        panic!("Invalid e");
-                    }
+        let j = match vt.1 {
+            None => i,
+            Some(e) => {
+                if e == 0b000 {
+                    i
+                } else if (e & 0b1110) == 0b0010 {
+                    (e & 0b0001) + (i & 0b1110)
+                } else if (e & 0b1100) == 0b0100 {
+                    (e & 0b0011) + (i & 0b1100)
+                } else if (e & 0b1000) == 0b1000 {
+                    e & 0b0111
+                } else {
+                    panic!("Invalid e");
                 }
-            };
+            }
+        };
 
-            let vs_data = u16::from_be_bytes(
-                self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
-                    .try_into()
-                    .unwrap(),
-            );
-            let vt_data = u16::from_be_bytes(
-                self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
-                    .try_into()
-                    .unwrap(),
-            );
+        let vs_data = u16::from_be_bytes(
+            self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
+                .try_into()
+                .unwrap(),
+        );
+        let vt_data = u16::from_be_bytes(
+            self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
+                .try_into()
+                .unwrap(),
+        );
+
+        (vs_data, vt_data)
+    }
+
+    #[emit_asm]
+    pub fn vmudl(&mut self, vd: Reg, vs: Reg, vt: Reg) {
+        for i in 0..8 {
+            let (vs_data, vt_data) = self.read_vs_vt_element(vs, vt, i);
 
             let product = vs_data as u32 * vt_data as u32;
 
@@ -134,40 +136,10 @@ impl Vu {
         }
     }
 
+    #[emit_asm]
     pub fn vmadm(&mut self, vd: Reg, vs: Reg, vt: Reg) {
-        #[cfg(feature = "record_asm")]
-        {
-            self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
-        }
-
         for i in 0..8 {
-            let j = match vt.1 {
-                None => i,
-                Some(e) => {
-                    if e == 0b000 {
-                        i
-                    } else if (e & 0b1110) == 0b0010 {
-                        (e & 0b0001) + (i & 0b1110)
-                    } else if (e & 0b1100) == 0b0100 {
-                        (e & 0b0011) + (i & 0b1100)
-                    } else if (e & 0b1000) == 0b1000 {
-                        e & 0b0111
-                    } else {
-                        panic!("Invalid e");
-                    }
-                }
-            };
-
-            let vs_data = u16::from_be_bytes(
-                self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
-                    .try_into()
-                    .unwrap(),
-            );
-            let vt_data = u16::from_be_bytes(
-                self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
-                    .try_into()
-                    .unwrap(),
-            );
+            let (vs_data, vt_data) = self.read_vs_vt_element(vs, vt, i);
 
             let product = vs_data as u32 * vt_data as u32;
             let acc = u32::from_be_bytes(self.acc[i][2..6].try_into().unwrap());
@@ -180,40 +152,10 @@ impl Vu {
         }
     }
 
+    #[emit_asm]
     pub fn vmadn(&mut self, vd: Reg, vs: Reg, vt: Reg) {
-        #[cfg(feature = "record_asm")]
-        {
-            self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
-        }
-
         for i in 0..8 {
-            let j = match vt.1 {
-                None => i,
-                Some(e) => {
-                    if e == 0b000 {
-                        i
-                    } else if (e & 0b1110) == 0b0010 {
-                        (e & 0b0001) + (i & 0b1110)
-                    } else if (e & 0b1100) == 0b0100 {
-                        (e & 0b0011) + (i & 0b1100)
-                    } else if (e & 0b1000) == 0b1000 {
-                        e & 0b0111
-                    } else {
-                        panic!("Invalid e");
-                    }
-                }
-            };
-
-            let vs_data = u16::from_be_bytes(
-                self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
-                    .try_into()
-                    .unwrap(),
-            );
-            let vt_data = u16::from_be_bytes(
-                self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
-                    .try_into()
-                    .unwrap(),
-            );
+            let (vs_data, vt_data) = self.read_vs_vt_element(vs, vt, i);
 
             let product = vs_data as u32 * vt_data as u32;
             let acc = u32::from_be_bytes(self.acc[i][2..6].try_into().unwrap());
@@ -226,40 +168,10 @@ impl Vu {
         }
     }
 
+    #[emit_asm]
     pub fn vmadh(&mut self, vd: Reg, vs: Reg, vt: Reg) {
-        #[cfg(feature = "record_asm")]
-        {
-            self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
-        }
-
         for i in 0..8 {
-            let j = match vt.1 {
-                None => i,
-                Some(e) => {
-                    if e == 0b000 {
-                        i
-                    } else if (e & 0b1110) == 0b0010 {
-                        (e & 0b0001) + (i & 0b1110)
-                    } else if (e & 0b1100) == 0b0100 {
-                        (e & 0b0011) + (i & 0b1100)
-                    } else if (e & 0b1000) == 0b1000 {
-                        e & 0b0111
-                    } else {
-                        panic!("Invalid e");
-                    }
-                }
-            };
-
-            let vs_data = u16::from_be_bytes(
-                self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
-                    .try_into()
-                    .unwrap(),
-            );
-            let vt_data = u16::from_be_bytes(
-                self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
-                    .try_into()
-                    .unwrap(),
-            );
+            let (vs_data, vt_data) = self.read_vs_vt_element(vs, vt, i);
 
             let product = vs_data as u32 * vt_data as u32;
             let acc = u32::from_be_bytes(self.acc[i][2..6].try_into().unwrap());
