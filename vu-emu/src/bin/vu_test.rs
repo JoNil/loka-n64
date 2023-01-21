@@ -3,7 +3,7 @@ use vu_emu::{regs::*, Vu};
 
 fn main() {
     let options = eframe::NativeOptions {
-        initial_window_size: Some(egui::vec2(1280.0, 960.0)),
+        initial_window_size: Some(egui::vec2(1280.0, 200.0)),
         ..Default::default()
     };
     eframe::run_native(
@@ -66,9 +66,38 @@ impl VuEmuGui {
 }
 
 impl eframe::App for VuEmuGui {
-    fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
+    fn update(&mut self, ctx: &egui::Context, frame: &mut eframe::Frame) {
         egui::CentralPanel::default().show(ctx, |ui| {
-            ui.label(RichText::new(format!("{}", self.vu)).monospace());
+            egui::ScrollArea::vertical()
+                .max_width(f32::INFINITY)
+                .stick_to_right(true)
+                .show(ui, |ui| {
+                    ui.expand_to_include_x(frame.info().window_info.size.x);
+                    egui::Grid::new("registers")
+                        .num_columns(9)
+                        .spacing([12.0, 4.0])
+                        .striped(true)
+                        .show(ui, |ui| {
+                            for (i, reg) in self.vu.registers.iter().enumerate() {
+                                ui.label(RichText::new(format!("v{i}")).monospace());
+
+                                for j in 0..8 {
+                                    let v = &reg[(2 * j)..=(2 * j + 1)];
+                                    let v = u16::from_be_bytes(v.try_into().unwrap());
+
+                                    if v == 0 {
+                                        ui.label(RichText::new("|").monospace());
+                                    } else {
+                                        ui.label(RichText::new(format!("| {:4x}", v)).monospace());
+                                    }
+                                }
+
+                                ui.end_row();
+                            }
+                        });
+
+                    // });
+                });
         });
     }
 }
