@@ -1,5 +1,7 @@
 #![cfg_attr(not(feature = "record_asm"), no_std)]
 
+use core::fmt::{self, Display};
+
 #[cfg(feature = "record_asm")]
 mod macros;
 
@@ -8,6 +10,27 @@ pub struct Vu {
     acc: [[u8; 6]; 8],
     #[cfg(feature = "record_asm")]
     asm: String,
+}
+
+impl Display for Vu {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        writeln!(f, "Registers: [")?;
+        for (i, reg) in self.registers.iter().enumerate() {
+            let value = u128::from_be_bytes(*reg);
+
+            write!(f, "    {:2}:", i)?;
+            for j in 0..8 {
+                let v = &value.to_be_bytes()[(2 * j)..=(2 * j + 1)];
+                let v = u16::from_be_bytes(v.try_into().unwrap());
+
+                write!(f, " {:04x}", v)?;
+            }
+            writeln!(f, "")?;
+        }
+        write!(f, "]",)?;
+
+        Ok(())
+    }
 }
 
 impl Vu {
@@ -20,13 +43,59 @@ impl Vu {
         }
     }
 
+    pub fn load_fix_point(&mut self, rh: Reg, rl: Reg, v: u32) {
+        assert!(rh.1.unwrap() == rl.1.unwrap());
+
+        let high = v >> 16;
+        let low = v & 0xffff;
+
+        self.lsv(rh, high as u16);
+        self.lsv(rl, low as u16);
+    }
+
+    pub fn set_reg(&mut self, r: Reg, value: [u8; 16]) {
+        for i in 0..8 {
+            let j = match r.1 {
+                None => i,
+                Some(e) => {
+                    if e == 0b000 {
+                        i
+                    } else if (e & 0b1110) == 0b0010 {
+                        (e & 0b0001) + (i & 0b1110)
+                    } else if (e & 0b1100) == 0b0100 {
+                        (e & 0b0011) + (i & 0b1100)
+                    } else if (e & 0b1000) == 0b1000 {
+                        e & 0b0111
+                    } else {
+                        panic!("Invalid e");
+                    }
+                }
+            };
+
+            self.registers[r.0][(i * 2)..=(i * 2 + 1)]
+                .copy_from_slice(&value[(j * 2)..=(j * 2 + 1)])
+        }
+    }
+
+    pub fn lbv(&mut self, r: Reg, byte: u8) {
+        let i = r.1.unwrap();
+        self.registers[r.0][i] = byte;
+    }
+
+    pub fn lsv(&mut self, r: Reg, short: u16) {
+        let i = r.1.unwrap();
+        assert!(i % 2 == 0);
+        assert!(i <= 14);
+        self.registers[r.0][i..=(i + 1)].copy_from_slice(&short.to_be_bytes());
+    }
+
     pub fn vmudl(&mut self, vd: Reg, vs: Reg, vt: Reg) {
         #[cfg(feature = "record_asm")]
         {
             self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
         }
 
-        for i in 0..7 {
+        for i in 0..8 {
             let j = match vt.1 {
                 None => i,
                 Some(e) => {
@@ -71,7 +140,7 @@ impl Vu {
             self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
         }
 
-        for i in 0..7 {
+        for i in 0..8 {
             let j = match vt.1 {
                 None => i,
                 Some(e) => {
@@ -104,6 +173,98 @@ impl Vu {
             let acc = u32::from_be_bytes(self.acc[i][2..6].try_into().unwrap());
 
             let acc = acc + product;
+            self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
+
+            self.registers[vd.0][(i * 2)..=(i * 2 + 1)]
+                .copy_from_slice(&((acc >> 16) as u16).to_be_bytes());
+        }
+    }
+
+    pub fn vmadn(&mut self, vd: Reg, vs: Reg, vt: Reg) {
+        #[cfg(feature = "record_asm")]
+        {
+            self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
+        }
+
+        for i in 0..8 {
+            let j = match vt.1 {
+                None => i,
+                Some(e) => {
+                    if e == 0b000 {
+                        i
+                    } else if (e & 0b1110) == 0b0010 {
+                        (e & 0b0001) + (i & 0b1110)
+                    } else if (e & 0b1100) == 0b0100 {
+                        (e & 0b0011) + (i & 0b1100)
+                    } else if (e & 0b1000) == 0b1000 {
+                        e & 0b0111
+                    } else {
+                        panic!("Invalid e");
+                    }
+                }
+            };
+
+            let vs_data = u16::from_be_bytes(
+                self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
+                    .try_into()
+                    .unwrap(),
+            );
+            let vt_data = u16::from_be_bytes(
+                self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
+                    .try_into()
+                    .unwrap(),
+            );
+
+            let product = vs_data as u32 * vt_data as u32;
+            let acc = u32::from_be_bytes(self.acc[i][2..6].try_into().unwrap());
+
+            let acc = acc + product;
+            self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
+
+            self.registers[vd.0][(i * 2)..=(i * 2 + 1)]
+                .copy_from_slice(&((acc & 0xffff) as u16).to_be_bytes());
+        }
+    }
+
+    pub fn vmadh(&mut self, vd: Reg, vs: Reg, vt: Reg) {
+        #[cfg(feature = "record_asm")]
+        {
+            self.asm += &format!("{} {vd},{vs},{vt}\n", macros::ins!());
+        }
+
+        for i in 0..8 {
+            let j = match vt.1 {
+                None => i,
+                Some(e) => {
+                    if e == 0b000 {
+                        i
+                    } else if (e & 0b1110) == 0b0010 {
+                        (e & 0b0001) + (i & 0b1110)
+                    } else if (e & 0b1100) == 0b0100 {
+                        (e & 0b0011) + (i & 0b1100)
+                    } else if (e & 0b1000) == 0b1000 {
+                        e & 0b0111
+                    } else {
+                        panic!("Invalid e");
+                    }
+                }
+            };
+
+            let vs_data = u16::from_be_bytes(
+                self.registers[vs.0][(i * 2)..=(i * 2 + 1)]
+                    .try_into()
+                    .unwrap(),
+            );
+            let vt_data = u16::from_be_bytes(
+                self.registers[vt.0][(j * 2)..=(j * 2 + 1)]
+                    .try_into()
+                    .unwrap(),
+            );
+
+            let product = vs_data as u32 * vt_data as u32;
+            let acc = u32::from_be_bytes(self.acc[i][2..6].try_into().unwrap());
+
+            let acc = acc + product & 0xffff0000;
             self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
 
             self.registers[vd.0][(i * 2)..=(i * 2 + 1)]
@@ -201,35 +362,41 @@ impl core::fmt::Display for Reg {
     }
 }
 
-pub const V0: Reg = Reg(0, None);
-pub const V1: Reg = Reg(1, None);
-pub const V2: Reg = Reg(2, None);
-pub const V3: Reg = Reg(3, None);
-pub const V4: Reg = Reg(4, None);
-pub const V5: Reg = Reg(5, None);
-pub const V6: Reg = Reg(6, None);
-pub const V7: Reg = Reg(7, None);
-pub const V8: Reg = Reg(8, None);
-pub const V9: Reg = Reg(9, None);
-pub const V10: Reg = Reg(10, None);
-pub const V11: Reg = Reg(11, None);
-pub const V12: Reg = Reg(12, None);
-pub const V13: Reg = Reg(13, None);
-pub const V14: Reg = Reg(14, None);
-pub const V15: Reg = Reg(15, None);
-pub const V16: Reg = Reg(16, None);
-pub const V17: Reg = Reg(17, None);
-pub const V18: Reg = Reg(18, None);
-pub const V19: Reg = Reg(19, None);
-pub const V20: Reg = Reg(20, None);
-pub const V21: Reg = Reg(21, None);
-pub const V22: Reg = Reg(22, None);
-pub const V23: Reg = Reg(23, None);
-pub const V24: Reg = Reg(24, None);
-pub const V25: Reg = Reg(25, None);
-pub const V26: Reg = Reg(26, None);
-pub const V27: Reg = Reg(27, None);
-pub const V28: Reg = Reg(28, None);
-pub const V29: Reg = Reg(29, None);
-pub const V30: Reg = Reg(30, None);
-pub const V31: Reg = Reg(31, None);
+pub mod regs {
+    #![allow(non_upper_case_globals)]
+
+    use crate::Reg;
+
+    pub const v0: Reg = Reg(0, None);
+    pub const v1: Reg = Reg(1, None);
+    pub const v2: Reg = Reg(2, None);
+    pub const v3: Reg = Reg(3, None);
+    pub const v4: Reg = Reg(4, None);
+    pub const v5: Reg = Reg(5, None);
+    pub const v6: Reg = Reg(6, None);
+    pub const v7: Reg = Reg(7, None);
+    pub const v8: Reg = Reg(8, None);
+    pub const v9: Reg = Reg(9, None);
+    pub const v10: Reg = Reg(10, None);
+    pub const v11: Reg = Reg(11, None);
+    pub const v12: Reg = Reg(12, None);
+    pub const v13: Reg = Reg(13, None);
+    pub const v14: Reg = Reg(14, None);
+    pub const v15: Reg = Reg(15, None);
+    pub const v16: Reg = Reg(16, None);
+    pub const v17: Reg = Reg(17, None);
+    pub const v18: Reg = Reg(18, None);
+    pub const v19: Reg = Reg(19, None);
+    pub const v20: Reg = Reg(20, None);
+    pub const v21: Reg = Reg(21, None);
+    pub const v22: Reg = Reg(22, None);
+    pub const v23: Reg = Reg(23, None);
+    pub const v24: Reg = Reg(24, None);
+    pub const v25: Reg = Reg(25, None);
+    pub const v26: Reg = Reg(26, None);
+    pub const v27: Reg = Reg(27, None);
+    pub const v28: Reg = Reg(28, None);
+    pub const v29: Reg = Reg(29, None);
+    pub const v30: Reg = Reg(30, None);
+    pub const v31: Reg = Reg(31, None);
+}
