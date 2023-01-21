@@ -5,7 +5,6 @@ use core::ops::{Deref, DerefMut};
 use n64_macros::debugln;
 use n64_sys::{rdp, rsp, vi};
 use n64_types::RdpCommand;
-use vu_emu::{Vu, V1, V2, V3, V5, V6};
 
 pub struct Graphics {}
 
@@ -34,11 +33,6 @@ impl Graphics {
 
     #[inline]
     pub fn rsp_hello_world(&self, commands: &[RdpCommand]) {
-        let mut vu = Vu::new();
-
-        vu.vmudl(V5, V1, V3);
-        vu.vmadm(V6, V2, V3);
-
         let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/sandbox.bin");
 
         let commands_len = commands.len() * core::mem::size_of::<RdpCommand>();

@@ -21,11 +21,42 @@ impl Display for Vu {
                 let v = &value.to_be_bytes()[(2 * j)..=(2 * j + 1)];
                 let v = u16::from_be_bytes(v.try_into().unwrap());
 
-                write!(f, " {:04x}", v)?;
+                if v == 0 {
+                    write!(f, "     ")?;
+                } else {
+                    write!(f, " {:4x}", v)?;
+                }
             }
+
+            write!(f, " |")?;
+
+            for j in 0..8 {
+                let v = &value.to_be_bytes()[(2 * j)..=(2 * j + 1)];
+                let v = u16::from_be_bytes(v.try_into().unwrap());
+
+                if v == 0 {
+                    write!(f, "      ")?;
+                } else {
+                    write!(f, " {:5}", v)?;
+                }
+            }
+
             writeln!(f, "")?;
         }
-        write!(f, "]",)?;
+        writeln!(f, "]",)?;
+
+        write!(f, "Acc: [")?;
+
+        for e in 0..8 {
+            let acc = u32::from_be_bytes(self.acc[e][2..6].try_into().unwrap());
+            if e != 7 {
+                write!(f, "{}, ", acc as f64 / (1 << 16) as f64)?;
+            } else {
+                write!(f, "{}", acc as f64 / (1 << 16) as f64)?;
+            }
+        }
+
+        writeln!(f, "]",)?;
 
         Ok(())
     }
@@ -41,14 +72,14 @@ impl Vu {
         }
     }
 
-    pub fn load_fix_point(&mut self, rh: Reg, rl: Reg, v: u32) {
+    pub fn load_fix_point(&mut self, rl: Reg, rh: Reg, v: u32) {
         assert!(rh.1.unwrap() == rl.1.unwrap());
 
-        let high = v >> 16;
         let low = v & 0xffff;
+        let high = v >> 16;
 
-        self.lsv(rh, high as u16);
         self.lsv(rl, low as u16);
+        self.lsv(rh, high as u16);
     }
 
     pub fn set_reg(&mut self, r: Reg, value: [u8; 16]) {
@@ -176,7 +207,7 @@ impl Vu {
             let product = vs_data as u32 * vt_data as u32;
             let acc = u32::from_be_bytes(self.acc[i][2..6].try_into().unwrap());
 
-            let acc = acc + product & 0xffff0000;
+            let acc = acc + (product << 16);
             self.acc[i][2..6].copy_from_slice(&acc.to_be_bytes());
 
             self.registers[vd.0][(i * 2)..=(i * 2 + 1)]

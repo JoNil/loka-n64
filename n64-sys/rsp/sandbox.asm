@@ -88,7 +88,7 @@ start:
     sh t2,196(t0)
     lh t2,180(t0)
     sh t2,200(t0)
-    lh t2,180(t0)
+    lh t2,182(t0)
     sh t2,204(t0)
     
     lh t2,160(t0)

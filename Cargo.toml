@@ -13,6 +13,8 @@ members = [
     "n64-sys",
     "n64-types",
     "n64",
+    "vu-emu",
+    "vu_emu_macro",
 ]
 
 default-members = ["deploy"]
