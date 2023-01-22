@@ -157,6 +157,32 @@ impl Vu {
     }
 
     #[emit_asm]
+    pub fn vadd(&mut self, vd: Reg, vs: Reg, vt: Reg) {
+        for i in 0..8 {
+            let (vs_data, vt_data) = self.read_vs_vt_element(vs, vt, i);
+
+            // TODO: Carry VCO
+            let sum = (vs_data as i32 + vt_data as i32) as i16;
+
+            self.registers[vd.0][(i * 2)..=(i * 2 + 1)]
+                .copy_from_slice(&(sum as u16).to_be_bytes());
+        }
+    }
+
+    #[emit_asm]
+    pub fn vsub(&mut self, vd: Reg, vs: Reg, vt: Reg) {
+        for i in 0..8 {
+            let (vs_data, vt_data) = self.read_vs_vt_element(vs, vt, i);
+
+            // TODO: Carry VCO
+            let diff = (vs_data as i32 - vt_data as i32) as i16;
+
+            self.registers[vd.0][(i * 2)..=(i * 2 + 1)]
+                .copy_from_slice(&(diff as u16).to_be_bytes());
+        }
+    }
+
+    #[emit_asm]
     pub fn vmudl(&mut self, vd: Reg, vs: Reg, vt: Reg) {
         for i in 0..8 {
             let (vs_data, vt_data) = self.read_vs_vt_element(vs, vt, i);
