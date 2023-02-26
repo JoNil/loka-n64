@@ -11,6 +11,64 @@ origin $0000
 
 align(8)
 
+constant rdp_start_cmd = 1024
+constant rdp_end_cmd = 2048
+constant rdp_start_flags = SET_XBS|CLR_FRZ|CLR_FLS|CLR_CLK
+
+start:
+
+    xor t0, t0, t0          // t0 = 0
+    li t1, rdp_start_flags  // t1 = 00001001 (GCLK | XBUS_MEM) (Start rdp)
+    li t6, RDP_CMB          // RDP Command busy
+    lw t2, 0(0)   // Load 32 bits as pointer count
+    li t3, 0 // Copy to t3
+process_chunk_pointer:
+    bne t2, t2, return
+    lw t4, 1(t3) // Load pointer
+
+    // DMEM
+    // Request semaphore in t5
+request_semaphore:
+    mtc0 t5, SP_SEMAPHORE
+    bne t5, 0, request_semaphore
+    
+    // Wait until spot available in DMEM
+wait_dmem_available:
+    mtc0 t5, SP_DMA_FULL
+    bne t5, 0, wait_dmem_available
+
+    // Setup DMA request
+    li t5, rdp_start_cmd // Rdp command destination
+    mtc0 t5, c0          // DMA destination
+    mtc0 t4, c1          // DMA source ptr
+    // Data size as "Number of bytes to read LESS ONE"
+    li t5, 1023          // 128 commands per request, 8 bytes per command (128*8 : << 7 + 3 : << 10) => 1<<10 - 1 : 1023
+    mtc0 t5, c2
+
+    // Release semaphore
+    mtc0 0, SP_SEMAPHORE 
+
+    // Send to RDP
+    li t5, rdp_start_flags // Load rdp start flags
+    mtc0 t5, c11           // Prepare rdp for commands.
+    li t5, rdp_start_cmd   // Rdp commands start
+    mtc0 t5, c8            // Rdp commands start
+    li t5, rdp_end_cmd     // End at start + 128*8
+    mtc0 t5, c9            // Rdp commands start
+
+    // Wait for rdp done TODO: Move to before emit for non-sync
+wait_rdp_busy:
+    mfc0 t5, c11
+    beq t5, t6, wait_rdp_busy // Loop while rdp busy.
+    nop
+
+    addiu t3, t3, 1   // Next chunk pointer
+    j process_chunk_pointer
+    
+return:
+    break
+
+if 0 {
 start:
 
     xor t0, t0, t0                  // t0 = 0
@@ -68,6 +126,7 @@ wait_for_rdp:
 
 return:
  break
+}
 
 // Triangle data input as vertex index * 3
 // Vertex data as fixpoint vertex coordinates
