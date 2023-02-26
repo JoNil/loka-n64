@@ -10,7 +10,7 @@ origin $0000
 
 macro DbgPrint(reg) {    
     subi t7, t7, 4
-    sw reg, 0(t7)
+    sw {reg}, 0(t7)
 }
 
 align(8)
@@ -31,40 +31,59 @@ start:
     li t7, 1020
     DbgPrint(t2)
     DbgPrint(t3)
-    
+
 process_chunk_pointer:
     beq t2, t3, return // i == count => done
     nop
 
-    lw t4, 1(t3) // Load pointer
+    lw t4, 4(t3) // Load pointer
 
     DbgPrint(t4)
+
+    li t5, 42
+    DbgPrint(t5)
 
     // DMEM
     // Request semaphore in t5
 request_semaphore:
-    mtc0 t5, SP_SEMAPHORE
+    mfc0 t5, c7
     bne t5, 0, request_semaphore
     nop
 
     DbgPrint(t5)
     
+    li t5, 1
+    DbgPrint(t5)
+    
     // Wait until spot available in DMEM
-wait_dmem_available:
-    mtc0 t5, SP_DMA_FULL
-    bne t5, 0, wait_dmem_available
+wait_dma_available:
+    mfc0 t5, c5
+    bne t5, 0, wait_dma_available
     nop
     
+    li t5, 2
     DbgPrint(t5)
 
     // Setup DMA request
     li t5, rdp_start_cmd // Rdp command destination
     mtc0 t5, c0          // DMA destination
+    DbgPrint(t5)
+    li t5, 3
+    DbgPrint(t5)
     mtc0 t4, c1          // DMA source ptr
+    DbgPrint(t4)
+    li t5, 4
+    DbgPrint(t5)
     // Data size as "Number of bytes to read LESS ONE"
     li t5, 1023          // 128 commands per request, 8 bytes per command (128*8 : << 7 + 3 : << 10) => 1<<10 - 1 : 1023
     mtc0 t5, c2
 
+    li t5, 5
+    DbgPrint(t5)
+    
+    DbgPrint(t5)
+
+    li t5, 6
     DbgPrint(t5)
 
 wait_dma_busy:
@@ -73,7 +92,7 @@ wait_dma_busy:
     nop
 
     // Release semaphore
-    mtc0 0, SP_SEMAPHORE 
+    mtc0 0, c7 
 
     DbgPrint(t5)
 
@@ -83,7 +102,7 @@ wait_dma_busy:
     li t5, rdp_start_cmd   // Rdp commands start
     mtc0 t5, c8            // Rdp commands start
     li t5, rdp_end_cmd     // End at start + 128*8
-    mtc0 t5, c9            // Rdp commands start
+    mtc0 t5, c9            // Rdp commands end
 
     DbgPrint(t5)
 
