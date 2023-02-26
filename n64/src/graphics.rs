@@ -34,7 +34,7 @@ impl Graphics {
 
     #[inline]
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
-        rsp::wait();
+        //rsp::wait(500);
 
         framebuffer.swap();
 
@@ -67,9 +67,10 @@ impl Graphics {
             debugln!("RSP TIMEOUT!");
         }
 
+        debugln!("Hello");
         let print_64bit = true;
         let print_32bit = true;
-        let should_panic = true;
+        let should_panic = false;
         if should_panic {
             let mut dmem: Aligned<A8, [u8; 4096]> = Aligned([0x00; 4096]);
 
