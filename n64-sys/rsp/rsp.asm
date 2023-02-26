@@ -8,6 +8,10 @@ include "lib/n64_rsp.inc"
 base $0000
 origin $0000
 
+macro DbgPrint(reg) {    
+    subi t7, t7, 4
+    sw reg, 0(t7)
+}
 
 align(8)
 
@@ -22,20 +26,36 @@ start:
     li t6, RDP_CMB          // RDP Command busy
     lw t2, 0(0)   // Load 32 bits as pointer count
     li t3, 0 // Copy to t3
+
+    // Debug print base addres
+    li t7, 1020
+    DbgPrint(t2)
+    DbgPrint(t3)
+    
 process_chunk_pointer:
-    bne t2, t3, return
+    beq t2, t3, return // i == count => done
+    nop
+
     lw t4, 1(t3) // Load pointer
+
+    DbgPrint(t4)
 
     // DMEM
     // Request semaphore in t5
 request_semaphore:
     mtc0 t5, SP_SEMAPHORE
     bne t5, 0, request_semaphore
+    nop
+
+    DbgPrint(t5)
     
     // Wait until spot available in DMEM
 wait_dmem_available:
     mtc0 t5, SP_DMA_FULL
     bne t5, 0, wait_dmem_available
+    nop
+    
+    DbgPrint(t5)
 
     // Setup DMA request
     li t5, rdp_start_cmd // Rdp command destination
@@ -45,8 +65,17 @@ wait_dmem_available:
     li t5, 1023          // 128 commands per request, 8 bytes per command (128*8 : << 7 + 3 : << 10) => 1<<10 - 1 : 1023
     mtc0 t5, c2
 
+    DbgPrint(t5)
+
+wait_dma_busy:
+    mfc0 t5, c6
+    bne t5, 0, wait_dma_busy
+    nop
+
     // Release semaphore
     mtc0 0, SP_SEMAPHORE 
+
+    DbgPrint(t5)
 
     // Send to RDP
     li t5, rdp_start_flags // Load rdp start flags
@@ -56,6 +85,8 @@ wait_dmem_available:
     li t5, rdp_end_cmd     // End at start + 128*8
     mtc0 t5, c9            // Rdp commands start
 
+    DbgPrint(t5)
+
     // Wait for rdp done TODO: Move to before emit for non-sync
 wait_rdp_busy:
     mfc0 t5, c11
@@ -64,6 +95,7 @@ wait_rdp_busy:
 
     addiu t3, t3, 1   // Next chunk pointer
     j process_chunk_pointer
+    nop
     
 return:
     break
