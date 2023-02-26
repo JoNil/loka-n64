@@ -87,7 +87,9 @@ pub fn run(code: &[u8], data: Option<&[u8]>) {
     start();
 }
 
-pub fn wait() {
+pub fn wait(timeout: u32) -> bool {
+    let start = crate::sys::current_time_us();
+
     loop {
         // Wait for the RSP to halt and the DMA engine to be idle.
         let status = unsafe { read_volatile(RSP_STATUS) };
@@ -95,7 +97,11 @@ pub fn wait() {
         if (status & RSP_STATUS_HALTED) > 0
             && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
         {
-            break;
+            return true;
+        }
+
+        if crate::sys::current_time_us() > start + timeout as i64 {
+            return false;
         }
     }
 }

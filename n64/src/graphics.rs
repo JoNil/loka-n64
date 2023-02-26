@@ -63,7 +63,9 @@ impl Graphics {
         }
 
         rsp::run(code, Some(rsp_dmem.as_bytes()));
-        rsp::wait();
+        if !rsp::wait(500) {
+            debugln!("RSP TIMEOUT!");
+        }
 
         let print_64bit = true;
         let print_32bit = true;
