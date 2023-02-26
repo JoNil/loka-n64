@@ -23,7 +23,7 @@ start:
     lw t2, 0(0)   // Load 32 bits as pointer count
     li t3, 0 // Copy to t3
 process_chunk_pointer:
-    bne t2, t2, return
+    bne t2, t3, return
     lw t4, 1(t3) // Load pointer
 
     // DMEM
