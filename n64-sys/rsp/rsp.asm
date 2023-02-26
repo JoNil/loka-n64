@@ -18,6 +18,7 @@ align(8)
 constant rdp_start_cmd = 1024
 constant rdp_end_cmd = 2048
 constant rdp_start_flags = SET_XBS|CLR_FRZ|CLR_FLS|CLR_CLK
+constant rdp_command_count_offset = 512
 
 start:
 
@@ -309,3 +310,58 @@ loop:
 return:
     break
 }
+
+// Command sizes:
+// 00 1
+// 25 2
+// 24 2
+// 28 1
+// 27 1
+// 31 1
+// 29 1
+// 2a 1
+// 2b 1
+// 2c 1
+// 2d 1
+// 2e 1
+// 37 1
+// 38 1
+// 39 1
+// 3a 1
+// 3b 1
+// 2f 1
+// 3c 1
+// 36 1
+// 30 1
+// 32 1
+// 33 1
+// 34 1
+// 35 1
+// 3e 1
+// 3d 1
+// 3f 1
+
+// Edge coefficients
+// (E  4 : tc  8 : shade 8 : z 2 : )
+// 08 4
+// 09 4         + 2
+// 0a 4     + 8
+// 0b 4     + 8 + 2
+// 0c 4 + 8
+// 0d 4 + 8     + 2
+// 0e 4 + 8 + 8
+// 0f 4 + 8 + 8 + 2
+//
+//if  (0 == cmd & 0xf0) //(cmd < x10)
+//{
+//	count = (cmd&8)>>1
+//	+       (cmd&4)<<1
+//	+       (cmd&2)<<2
+//	+       (cmd&1)<<1
+//}
+//else if ((cmd >> 1)) == 18 // x24 or x25 (decimal 36 or 37)
+//{
+// count = 2
+//}
+//else
+//1
