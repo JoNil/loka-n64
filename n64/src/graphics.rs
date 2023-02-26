@@ -1,7 +1,7 @@
 use crate::{current_time_us, framebuffer::Framebuffer, include_bytes_align_as, VideoMode};
 use aligned::{Aligned, A8};
 use alloc::vec::Vec;
-use core::ops::{Deref, DerefMut};
+use core::ops::DerefMut;
 use n64_macros::debugln;
 use n64_sys::{
     rsp,
