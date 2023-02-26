@@ -46,7 +46,7 @@ const VIDEO_MODE: VideoMode = VideoMode::Pal {
     height: 240,
 };
 
-const DEBUG_TRIANGLES: bool = true;
+const DEBUG_TRIANGLES: bool = false;
 
 fn main() {
     n64::init_profiler();
@@ -133,15 +133,15 @@ fn main() {
 
             cb.clear();
 
-            //map.render(&mut cb, VIDEO_MODE, &camera);
+            map.render(&mut cb, VIDEO_MODE, &camera);
 
-            //shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-            //box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
-            //sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
-            //mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+            mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-            //draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
+            draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
 
             {
                 if DEBUG_TRIANGLES {
@@ -188,7 +188,7 @@ fn main() {
                 }
             }
 
-            /*
+            
             {
                 n64::scope!("HUD");
 
@@ -262,7 +262,7 @@ fn main() {
 
                 draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
             }
-            */
+            
 
             cb
         };

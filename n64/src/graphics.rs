@@ -67,7 +67,7 @@ impl Graphics {
             debugln!("RSP TIMEOUT!");
         }
 
-        debugln!("Hello");
+        //debugln!("Hello");
         let print_64bit = true;
         let print_32bit = true;
         let should_panic = false;

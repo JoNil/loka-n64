@@ -9,8 +9,8 @@ base $0000
 origin $0000
 
 macro DbgPrint(reg) {    
-    subi t7, t7, 4
-    sw {reg}, 0(t7)
+    //subi t7, t7, 4
+    //sw {reg}, 0(t7)
 }
 
 align(8)
