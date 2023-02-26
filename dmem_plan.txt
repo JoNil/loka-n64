@@ -1,15 +1,14 @@
-8 bytes input data from host, Pointer to host buffer of pointer to command buffer chunks
+Pointer to host buffer of pointer to command buffer chunks
+pointer count, 8 bytes
+pointer to chunk 1, 8 bytes
+pointer to chunk 2, 8 bytes
+pointer to chunk 3, 8 bytes
+0
 Scratch memory 1 kb
 Block of command buffer, 1 kb, 128 commands at a time
 Block of triangle data 1kb
 Output data to RDP 1: 512 bytes
 Output data to RDP 2: 512 bytes
-
-pointer to command buffer chunks:
-pointer to chunk 1
-pointer to chunk 2
-pointer to chunk 3
-0
 
 Command buffer chunk is same as rsp except adding this triangle commands:
 
