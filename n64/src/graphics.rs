@@ -1,25 +1,40 @@
-use crate::include_bytes_align_as;
-use crate::{current_time_us, framebuffer::Framebuffer, VideoMode};
+use crate::{current_time_us, framebuffer::Framebuffer, include_bytes_align_as, VideoMode};
 use aligned::{Aligned, A8};
+use alloc::vec::Vec;
 use core::ops::{Deref, DerefMut};
 use n64_macros::debugln;
-use n64_sys::{rdp, rsp, vi};
-use n64_types::RdpCommand;
+use n64_sys::{
+    rsp,
+    sys::{data_cache_hit_writeback, virtual_to_physical},
+    vi,
+};
+use n64_types::RdpBlock;
+use zerocopy::AsBytes;
 
-pub struct Graphics {}
+#[repr(C, align(8))]
+#[derive(AsBytes)]
+struct RspDmem {
+    pointer_count: u32,
+    chunk_pointer: [u32; 255],
+}
+
+pub struct Graphics {
+    gpu_commands: Vec<RdpBlock>,
+}
 
 impl Graphics {
     #[inline]
     pub(crate) fn new(video_mode: VideoMode, framebuffer: &mut Framebuffer) -> Self {
         vi::init(video_mode, &mut framebuffer.vi_buffer.0);
-        rdp::init();
         rsp::init();
-        Self {}
+        Self {
+            gpu_commands: Vec::with_capacity(32),
+        }
     }
 
     #[inline]
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
-        rdp::wait_for_done();
+        rsp::wait();
 
         framebuffer.swap();
 
@@ -32,32 +47,32 @@ impl Graphics {
     }
 
     #[inline]
-    pub fn rsp_hello_world(&self, commands: &[RdpCommand]) {
-        let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/sandbox.bin");
+    pub fn rsp_start(&mut self, commands: &mut Vec<RdpBlock>) {
+        let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/rsp.bin");
 
-        let commands_len = commands.len() * core::mem::size_of::<RdpCommand>();
+        core::mem::swap(&mut self.gpu_commands, commands);
 
-        //debugln!("Commands: {}", commands.len());
+        let mut rsp_dmem = RspDmem {
+            pointer_count: self.gpu_commands.len() as u32,
+            chunk_pointer: [0; 255],
+        };
 
-        assert!(commands_len < 4096);
+        for (index, chunk) in self.gpu_commands.iter().enumerate() {
+            unsafe { data_cache_hit_writeback(&chunk.rdp_data) };
+            rsp_dmem.chunk_pointer[index] = virtual_to_physical(chunk as *const RdpBlock) as u32
+        }
 
-        let mut data: Aligned<A8, [u8; 4096]> = Aligned([0xff; 4096]);
-        //data[..commands_len].copy_from_slice(unsafe {
-        //    core::slice::from_raw_parts(commands.as_ptr() as _, commands_len)
-        //});
-        //
-        //data[4094..].copy_from_slice((commands.len() as u16).to_be_bytes().as_slice());
-
-        rsp::run(code, Some(data.deref()));
-
-        let mut dmem: Aligned<A8, [u8; 4096]> = Aligned([0x00; 4096]);
-
-        rsp::read_dmem(dmem.deref_mut());
+        rsp::run(code, Some(rsp_dmem.as_bytes()));
+        rsp::wait();
 
         let print_64bit = true;
         let print_32bit = true;
         let should_panic = true;
         if should_panic {
+            let mut dmem: Aligned<A8, [u8; 4096]> = Aligned([0x00; 4096]);
+
+            rsp::read_dmem(dmem.deref_mut());
+
             if print_64bit {
                 debugln!(
                     "ADDR          : BINARY                                                           : HEX              : DECIMAL");

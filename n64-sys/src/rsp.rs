@@ -1,10 +1,9 @@
 #![allow(dead_code)]
 
-use core::ptr::{read_volatile, write_volatile};
-
 use crate::sys::{
     data_cache_hit_writeback, data_cache_hit_writeback_invalidate, virtual_to_physical,
 };
+use core::ptr::{read_volatile, write_volatile};
 
 const RSP_RSP_ADDR: *mut usize = 0xA404_0000_usize as _; // RSP memory address (IMEM/DMEM)
 const RSP_DRAM_ADDR: *mut usize = 0xA404_0004_usize as _; // RSP RDRAM memory address
@@ -72,19 +71,6 @@ fn start() {
     }
 }
 
-fn wait() {
-    loop {
-        // Wait for the RSP to halt and the DMA engine to be idle.
-        let status = unsafe { read_volatile(RSP_STATUS) };
-
-        if (status & RSP_STATUS_HALTED) > 0
-            && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
-        {
-            break;
-        }
-    }
-}
-
 pub fn init() {
     unsafe {
         write_volatile(RSP_PC, 0x1000);
@@ -99,7 +85,19 @@ pub fn run(code: &[u8], data: Option<&[u8]>) {
     }
 
     start();
-    wait();
+}
+
+pub fn wait() {
+    loop {
+        // Wait for the RSP to halt and the DMA engine to be idle.
+        let status = unsafe { read_volatile(RSP_STATUS) };
+
+        if (status & RSP_STATUS_HALTED) > 0
+            && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
+        {
+            break;
+        }
+    }
 }
 
 pub fn write_imem(data: &[u8]) {
