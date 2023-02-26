@@ -1,0 +1,18 @@
+8 bytes input data from host, Pointer to host buffer of pointer to command buffer chunks
+Scratch memory 1 kb
+Block of command buffer, 1 kb, 128 commands at a time
+Block of triangle data 1kb
+Output data to RDP 1: 512 bytes
+Output data to RDP 2: 512 bytes
+
+pointer to command buffer chunks:
+pointer to chunk 1
+pointer to chunk 2
+pointer to chunk 3
+0
+
+Command buffer chunk is same as rsp except adding this triangle commands:
+
+Custom commands:
+Draw Untextured Colored Triangle chunk with ZBuffer: 0x10
+command 1 byte | count 1 byte | empty 2 byte | ptr 4 byte

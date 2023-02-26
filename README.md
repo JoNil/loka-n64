@@ -48,6 +48,9 @@ RDP/RSP
 - http://ultra64.ca/files/documentation/silicon-graphics/SGI_Nintendo_64_RSP_Programmers_Guide.pdf
 - https://dragonminded.com/n64dev/Reality%20Coprocessor.pdf
 
+Fast3D
+- https://hack64.net/wiki/doku.php?id=super_mario_64:fast3d_display_list_commands
+
 Rdp Emulator
 - https://github.com/Themaister/parallel-rdp
 
