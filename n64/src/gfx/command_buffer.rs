@@ -1,12 +1,17 @@
 use super::{FillPipeline, Pipeline};
 use crate::{framebuffer::ViBufferToken, graphics::Graphics, VideoMode};
 use alloc::{boxed::Box, vec::Vec};
-use n64_math::{vec2, vec3, Color, Mat4, Vec2, Vec3};
-use n64_sys::rdp;
+use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use rdp_command_builder::*;
+use rdp_math::{
+    color_to_i32, edge_slope, is_triangle_right_major, shaded_triangle_coeff,
+    slope_y_next_subpixel_intersection, slope_y_prev_scanline_intersection, sorted_triangle,
+    sorted_triangle_indices, triangle_is_too_small, truncate_to_pixel, z_triangle_coeff,
+};
 use rdp_state::RdpState;
 
 mod rdp_command_builder;
+mod rdp_math;
 mod rdp_state;
 
 // Note: Primitive color, g*DPSetPrimColor( ), primitive depth, g*DPSetPrimDepth( ), and scissor, g*DPSetScissor( ), are attributes that do not require any syncs.
@@ -304,25 +309,12 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn submit(mut self, graphics: &mut Graphics) -> (i32, i32, i32) {
+    pub fn submit(self, graphics: &mut Graphics) -> (i32, i32, i32) {
         self.cache.rdp.sync_full();
 
-        if true {
-            n64_profiler::scope!("Rsp Hello World");
-
-            if let Some(commands) = &self.cache.rdp.commands {
-                graphics.rsp_hello_world(commands);
-            }
-        } else {
-            unsafe {
-                self.cache.rdp.commands =
-                    Some(rdp::swap_commands(self.cache.rdp.commands.take().unwrap()));
-
-                rdp::start_command_buffer();
-
-                // Uncomment this to see full gpu time
-                //rdp::wait_for_done();
-            }
+        {
+            n64_profiler::scope!("Rsp Job");
+            graphics.rsp_start(&mut self.cache.rdp.blocks);
         }
 
         (
@@ -330,216 +322,5 @@ impl<'a> CommandBuffer<'a> {
             self.textured_rect_count as i32,
             self.mesh_count as i32,
         )
-    }
-}
-
-fn float_to_unsigned_int_frac(val: f32) -> (u16, u16) {
-    if 0.0 >= val {
-        return (u16::MAX, u16::MAX);
-    }
-
-    let integer_part = libm::floorf(val);
-
-    if (u16::MAX as f32) < integer_part {
-        return (u16::MAX, u16::MAX);
-    }
-
-    let fractal_part = val - integer_part;
-
-    (
-        integer_part as u16,
-        libm::floorf(fractal_part * ((1 << 16) as f32)) as u16,
-    )
-}
-
-fn f32_to_fixed_16_16(val: f32) -> i32 {
-    if (i16::MAX as f32) < val {
-        return i32::MAX;
-    } else if (i16::MIN as f32) > val {
-        return i32::MIN;
-    }
-
-    (val * (1 << 16) as f32) as i32
-}
-
-// Dx/Dy of edge from p0 to p1.
-// Dx/Dy (kx + m = y)
-// x = (y-m)/k
-// dx : 1/k
-fn edge_slope(p0: Vec3, p1: Vec3) -> i32 {
-    // TODO: ZERO DIVISION  (old epsilon 0.01)
-    if 1.0 > libm::fabsf(p1.y - p0.y) {
-        return f32_to_fixed_16_16(p1.x - p0.x);
-    }
-    f32_to_fixed_16_16((p1.x - p0.x) / (p1.y - p0.y))
-}
-
-// kx + m = y
-// kx0 + m = y0
-// kx1 + m = y1
-// k(x1 - x0) = y1 - y0
-// k = (y1 - y0)/(x1-x0)
-// x0 * (y1 - y0)/(x1-x0) + m = y0
-// m = y0 - x0*k
-fn slope_x_from_y(p0: Vec3, p1: Vec3, y: f32) -> (u16, u16) {
-    // kx + m = y
-    // k = (p1y-p0y)/(p1x-p0x)
-    // m = y0 - x0*k
-    // x = (y-m)/k = (y- (y0 - x0*k))/k = y/k - y0/k + x0
-    // x =  x0 + (y - y0)/k
-    // x = p0x + (y - p0.y)*(p1x-p0x) / (p1y-p0y)
-
-    // ZERO DIVISION check
-    if 1.0 > libm::fabsf(p1.y - p0.y) {
-        return float_to_unsigned_int_frac(p0.x);
-    }
-
-    let x = p0.x + (y - p0.y) * (p1.x - p0.x) / (p1.y - p0.y);
-
-    float_to_unsigned_int_frac(x)
-}
-
-// X coordinate of the intersection of the edge from p0 to p1 and the sub-scanline at (or higher than) p0.y
-fn slope_y_next_subpixel_intersection(p0: Vec3, p1: Vec3) -> (u16, u16) {
-    let y = libm::ceilf(p0.y * 4.0) / 4.0;
-
-    slope_x_from_y(p0, p1, y)
-}
-
-fn slope_y_prev_scanline_intersection(p0: Vec3, p1: Vec3) -> (u16, u16) {
-    let y = libm::floorf(p0.y);
-
-    slope_x_from_y(p0, p1, y)
-}
-
-// p0  y postive down
-// p1
-// p2
-// p2 - p0 slope vs p1-p0 slope.
-// 2_0 slope > 1_0 slope => left major
-// 2_0 slope = (p2x-p0x)/(p2_y-p0_y)
-// 1_0 slope = (p1x-p0x)/(p1_y-p0_y)
-//   p2_y-p0_y > 0 && p1_y-p0_y > 0
-// (p2x-p0x)/(p2_y-p0_y) > (p1x-p0x)/(p1_y-p0_y)
-// if and only if (since denominators are positive)
-//   (p2x-p0x)*(p1_y-p0_y) > (p1x-p0x)*(p2_y-p0_y)
-fn is_triangle_right_major(p0: Vec3, p1: Vec3, p2: Vec3) -> bool {
-    // Counter clockwise order?
-    // (p0 - p1)x(p2 - p1) > 0 (area)
-    // (p0x - p1x)   (p2x - p1x)    0
-    // (p0y - p1y) x (p2y - p1y)  = 0
-    //      0             0         Z
-
-    // Z = (p0x - p1x)*(p2y - p1y) - (p2x - p1x)*(p0y - p1y);
-    // Z > 0 => (p0x - p1x)*(p2y - p1y) > (p2x - p1x)*(p0y - p1y)
-
-    (p0.x - p1.x) * (p2.y - p1.y) < (p2.x - p1.x) * (p0.y - p1.y)
-}
-
-// Sort so that v0.y <= v1.y <= v2.y
-fn sorted_triangle(v0: Vec3, v1: Vec3, v2: Vec3) -> (Vec3, Vec3, Vec3) {
-    if v0.y > v1.y {
-        sorted_triangle(v1, v0, v2)
-    } else if v0.y > v2.y {
-        sorted_triangle(v2, v0, v1)
-    } else if v1.y > v2.y {
-        sorted_triangle(v0, v2, v1)
-    } else {
-        (v0, v1, v2)
-    }
-}
-
-// Sort so that v0.y <= v1.y <= v2.y
-fn sorted_triangle_indices(v0: Vec3, v1: Vec3, v2: Vec3) -> (u8, u8, u8) {
-    if v0.y > v1.y {
-        if v1.y > v2.y {
-            // V0 > v1, V1 > V2
-            (2, 1, 0)
-        } else if v0.y > v2.y {
-            // V0 > V1, V2 > V1, V0 > V2
-            (1, 2, 0)
-        } else {
-            // V0 > V1, V2 > V1, V2 > V0
-            (1, 0, 2)
-        }
-    } else if v0.y > v2.y {
-        // V1 > V0, V0 > V2
-        (2, 0, 1)
-    } else if v1.y > v2.y {
-        // V1 > v0, V2 > v0, V1 > V2
-        (0, 2, 1)
-    } else {
-        //
-        (0, 1, 2)
-    }
-}
-
-fn triangle_is_too_small(v0: Vec3, v1: Vec3, v2: Vec3) -> bool {
-    // Check area == 0
-    (v0.x - v1.x) * (v2.y - v1.y) == (v0.y - v1.y) * (v2.x - v1.x)
-}
-
-// TODO: Take nz and va-vb & vc-vb instead
-fn shaded_triangle_coeff(
-    vb: Vec3,
-    va: Vec3,
-    vc: Vec3,
-    bi: f32,
-    ai: f32,
-    ci: f32,
-) -> (i32, i32, i32, i32) {
-    // Already checked for nz = 0
-    let nx = (va.y - vb.y) * (ci - bi) - (ai - bi) * (vc.y - vb.y);
-    let ny = (ai - bi) * (vc.x - vb.x) - (va.x - vb.x) * (ci - bi);
-    let nz = (va.x - vb.x) * (vc.y - vb.y) - (va.y - vb.y) * (vc.x - vb.x);
-    let ne = ny + nx * (vc.x - vb.x) / (libm::fmaxf(1.0, vc.y - vb.y));
-
-    let norm = -((1 << 16) as f32) / nz;
-
-    let dcdx = safe_cast_i32(nx * norm);
-    let dcdy = safe_cast_i32(ny * norm);
-    let dcde = safe_cast_i32(ne * norm);
-
-    let color = safe_cast_i32(bi * 65536.0);
-
-    (dcdx, dcdy, dcde, color)
-}
-
-fn color_to_i32(color: u32) -> [i32; 3] {
-    [
-        ((color >> 24) & 0xff) as i32,
-        ((color >> 16) & 0xff) as i32,
-        ((color >> 8) & 0xff) as i32,
-    ]
-}
-
-fn z_buff_val_transform(z: f32) -> f32 {
-    let scale = 0x3ff as f32;
-    32.0 * z * scale
-}
-
-fn z_triangle_coeff(vh: Vec3, vm: Vec3, vl: Vec3) -> (i32, i32, i32, i32) {
-    let (dx, dy, de, val) = shaded_triangle_coeff(
-        vh,
-        vm,
-        vl,
-        z_buff_val_transform(vh.z),
-        z_buff_val_transform(vm.z),
-        z_buff_val_transform(vl.z),
-    );
-    (val, dx, de, dy)
-}
-
-fn truncate_to_pixel(val: Vec3) -> Vec3 {
-    vec3(libm::floorf(val.x), libm::floorf(val.y), val.z)
-}
-
-fn safe_cast_i32(val: f32) -> i32 {
-    if (i32::MAX as f32) < val {
-        i32::MAX
-    } else if (i32::MIN as f32) > val {
-        i32::MIN
-    } else {
-        val as i32
     }
 }

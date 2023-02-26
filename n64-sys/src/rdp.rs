@@ -41,44 +41,22 @@ const RDP_STATUS_CLR_PLC: usize = 0x080; // RDP_STATUS: Clear PIPELINE COUNTER (
 const RDP_STATUS_CLR_CMC: usize = 0x100; // RDP_STATUS: Clear COMMAND COUNTER (Bit 8)
 const RDP_STATUS_CLR_CLK: usize = 0x200; // RDP_STATUS: Clear CLOCK COUNTER (Bit 9)
 
-static mut COMMANDS: Option<Vec<RdpCommand>> = None;
-
 #[inline]
-pub fn init() {
-    unsafe {
-        COMMANDS = Some(Vec::with_capacity(4096));
-    }
-}
+pub unsafe fn start_command_buffer(commands: &[RdpCommand]) {
+    data_cache_hit_writeback(commands);
 
-#[inline]
-pub unsafe fn swap_commands(commands: Vec<RdpCommand>) -> Vec<RdpCommand> {
-    let temp = COMMANDS.take().unwrap();
-    COMMANDS = Some(commands);
-    temp
-}
-
-#[inline]
-pub unsafe fn start_command_buffer() {
-    if let Some(commands) = &COMMANDS {
-        if commands.is_empty() {
-            return;
-        }
-
-        data_cache_hit_writeback(commands);
-
-        write_volatile(
-            RDP_STATUS,
-            RDP_STATUS_CLR_XBS | RDP_STATUS_CLR_FRZ | RDP_STATUS_CLR_FLS,
-        );
-        write_volatile(
-            RDP_COMMAND_BUFFER_START,
-            (commands.as_ptr() as usize) | 0xa000_0000,
-        );
-        write_volatile(
-            RDP_COMMAND_BUFFER_END,
-            (commands.as_ptr().add(commands.len()) as usize) | 0xa000_0000,
-        );
-    }
+    write_volatile(
+        RDP_STATUS,
+        RDP_STATUS_CLR_XBS | RDP_STATUS_CLR_FRZ | RDP_STATUS_CLR_FLS,
+    );
+    write_volatile(
+        RDP_COMMAND_BUFFER_START,
+        (commands.as_ptr() as usize) | 0xa000_0000,
+    );
+    write_volatile(
+        RDP_COMMAND_BUFFER_END,
+        (commands.as_ptr().add(commands.len()) as usize) | 0xa000_0000,
+    );
 }
 
 #[inline]

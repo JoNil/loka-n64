@@ -1,11 +1,11 @@
 #![allow(dead_code)]
 #![allow(clippy::too_many_arguments)]
 
+use super::rdp_math::{to_fixpoint_10_2_as_integer, to_fixpoint_s_10_5, to_fixpoint_s_11_2};
 use alloc::vec::Vec;
 use n64_math::{Color, Vec2};
-use n64_types::RdpCommand;
-
 use n64_sys::sys::{virtual_to_physical, virtual_to_physical_mut};
+use n64_types::{RdpBlock, RdpCommand};
 
 // RDP Command Docs: http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
 
@@ -116,35 +116,38 @@ pub const COMMAND_SYNC_PIPE: u64 = 0xe7;
 pub const COMMAND_TEXTURE_RECTANGLE: u64 = 0xe4;
 pub const COMMAND_EDGE_COEFFICIENTS: u64 = 0xc8;
 
-fn fixed_16_16_to_f32(fixed_point: i32) -> f32 {
-    let sign = fixed_point.signum();
-    let abs = fixed_point.abs();
-
-    let int = (abs as u32) >> 16;
-    let frac = (abs as u32) & 0xffff;
-
-    if sign >= 0 {
-        int as f32 + frac as f32 / (1 << 16) as f32
-    } else {
-        -(int as f32 + frac as f32 / (1 << 16) as f32)
-    }
-}
-
 pub struct RdpCommandBuilder {
-    pub(crate) commands: Option<Vec<RdpCommand>>,
+    pub(crate) blocks: Vec<RdpBlock>,
+    block_index: usize,
+    index: usize,
 }
 
 impl RdpCommandBuilder {
     #[inline]
     pub fn new() -> RdpCommandBuilder {
         RdpCommandBuilder {
-            commands: Some(Vec::with_capacity(4096)),
+            blocks: Vec::with_capacity(32),
+            block_index: 0,
+            index: 0,
         }
     }
 
     #[inline]
     pub fn clear(&mut self) {
-        self.commands.as_mut().unwrap().clear();
+        self.blocks.clear();
+        self.blocks.push(RdpBlock::default());
+        self.index = 0;
+    }
+
+    #[inline]
+    fn push(&mut self, command: RdpCommand) {
+        if self.index == 128 {
+            self.blocks.push(RdpBlock::default());
+            self.index = 0;
+        }
+
+        self.blocks.last_mut().unwrap().rdp_data[self.index] = command;
+        self.index += 1;
     }
 
     #[inline]
@@ -155,7 +158,7 @@ impl RdpCommandBuilder {
         width: u16,
         image: *mut u16,
     ) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_SET_COLOR_IMAGE << 56)
                 | (((format & 0b111) as u64) << 53)
                 | (((size & 0b11) as u64) << 51)
@@ -168,7 +171,7 @@ impl RdpCommandBuilder {
 
     #[inline]
     pub fn set_z_image(&mut self, image: *mut u16) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_SET_Z_IMAGE << 56) | virtual_to_physical_mut(image) as u64,
         ));
 
@@ -183,7 +186,7 @@ impl RdpCommandBuilder {
         width: u16,
         image: *const u16,
     ) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_SET_TEXTURE_IMAGE << 56)
                 | (((format & 0b111) as u64) << 53)
                 | (((size & 0b11) as u64) << 51)
@@ -195,52 +198,37 @@ impl RdpCommandBuilder {
 
     #[inline]
     pub fn set_combine_mode(&mut self, value: u64) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand((COMMAND_SET_COMBINE_MODE << 56) | value));
+        self.push(RdpCommand((COMMAND_SET_COMBINE_MODE << 56) | value));
         self
     }
 
     #[inline]
     pub fn set_env_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand((COMMAND_SET_ENV_COLOR << 56) | (color as u64)));
+        self.push(RdpCommand((COMMAND_SET_ENV_COLOR << 56) | (color as u64)));
         self
     }
 
     #[inline]
     pub fn set_prim_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand((COMMAND_SET_PRIM_COLOR << 56) | (color as u64)));
+        self.push(RdpCommand((COMMAND_SET_PRIM_COLOR << 56) | (color as u64)));
         self
     }
 
     #[inline]
     pub fn set_blend_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand((COMMAND_SET_BLEND_COLOR << 56) | (color as u64)));
+        self.push(RdpCommand((COMMAND_SET_BLEND_COLOR << 56) | (color as u64)));
         self
     }
 
     #[inline]
     pub fn set_fog_color(&mut self, color: u32) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand((COMMAND_SET_FOG_COLOR << 56) | (color as u64)));
+        self.push(RdpCommand((COMMAND_SET_FOG_COLOR << 56) | (color as u64)));
         self
     }
 
     #[inline]
     pub fn set_fill_color(&mut self, color: Color) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_SET_FILL_COLOR << 56)
                 | ((color.value() as u64) << 16)
                 | (color.value() as u64),
@@ -268,7 +256,7 @@ impl RdpCommandBuilder {
             t = 0.0;
         }
 
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_FILL_RECTANGLE << 56)
                 | (to_fixpoint_10_2_as_integer(r) << (32 + 12))
                 | (to_fixpoint_10_2_as_integer(b) << 32)
@@ -296,7 +284,7 @@ impl RdpCommandBuilder {
         mask_s: u8,
         shift_s: u8,
     ) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_SET_TILE << 56)
                 | (((format & 0b111) as u64) << 53)
                 | (((size & 0b11) as u64) << 51)
@@ -322,7 +310,7 @@ impl RdpCommandBuilder {
         bottom_right: Vec2,
         tile_index: u8,
     ) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_LOAD_TILE << 56)
                 | (to_fixpoint_10_2_as_integer(bottom_right.x) << (32 + 12))
                 | (to_fixpoint_10_2_as_integer(bottom_right.y) << 32)
@@ -335,7 +323,7 @@ impl RdpCommandBuilder {
 
     #[inline]
     pub fn set_other_modes(&mut self, flags: u64) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_SET_OTHER_MODE << 56) | (flags & ((1 << 56) - 1)) | 0x0000_000F_0000_0000,
         ));
         self
@@ -343,7 +331,7 @@ impl RdpCommandBuilder {
 
     #[inline]
     pub fn set_scissor(&mut self, top_left: Vec2, bottom_right: Vec2) -> &mut RdpCommandBuilder {
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_SET_SCISSOR << 56)
                 | (to_fixpoint_10_2_as_integer(top_left.x) << (32 + 12))
                 | (to_fixpoint_10_2_as_integer(top_left.y) << 32)
@@ -356,28 +344,19 @@ impl RdpCommandBuilder {
 
     #[inline]
     pub fn sync_full(&mut self) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand(COMMAND_SYNC_FULL << 56));
+        self.push(RdpCommand(COMMAND_SYNC_FULL << 56));
         self
     }
 
     #[inline]
     pub fn sync_tile(&mut self) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand(COMMAND_SYNC_TILE << 56));
+        self.push(RdpCommand(COMMAND_SYNC_TILE << 56));
         self
     }
 
     #[inline]
     pub fn sync_pipe(&mut self) -> &mut RdpCommandBuilder {
-        self.commands
-            .as_mut()
-            .unwrap()
-            .push(RdpCommand(COMMAND_SYNC_PIPE << 56));
+        self.push(RdpCommand(COMMAND_SYNC_PIPE << 56));
         self
     }
 
@@ -403,7 +382,6 @@ impl RdpCommandBuilder {
         inv_slope_mid: i32,
         inv_slope_high: i32,
     ) -> &mut RdpCommandBuilder {
-        let buffer = self.commands.as_mut().unwrap();
         let mut command = COMMAND_EDGE_COEFFICIENTS;
         if shade {
             command |= 0x4;
@@ -415,7 +393,7 @@ impl RdpCommandBuilder {
             command |= 0x1;
         }
 
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             (command << 56)
                 | if right_major { 0x1u64 << 55 } else { 0u64 }
                 | (to_fixpoint_s_11_2(y_low_minor)) << 32
@@ -424,13 +402,13 @@ impl RdpCommandBuilder {
         ));
 
         // SIC Should be L, H, M order
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             (x_low_int as u64) << 48 | (x_low_frac as u64) << 32 | (inv_slope_low as u32 as u64),
         ));
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             (x_high_int as u64) << 48 | (x_high_frac as u64) << 32 | (inv_slope_high as u32 as u64),
         ));
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             (x_mid_int as u64) << 48 | (x_mid_frac as u64) << 32 | (inv_slope_mid as u32 as u64),
         ));
 
@@ -457,30 +435,29 @@ impl RdpCommandBuilder {
         db_dy: i32,
         da_dy: i32,
     ) -> &mut RdpCommandBuilder {
-        let buffer = self.commands.as_mut().unwrap();
         // Color
         // Delta Color X
         // Color fraction
         // Delta Color X fraction
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             ((red >> 16) as u16 as u64) << 48
                 | ((green >> 16) as u16 as u64) << 32
                 | ((blue >> 16) as u16 as u64) << 16
                 | ((alpha >> 16) as u16 as u64),
         ));
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             ((dr_dx >> 16) as u16 as u64) << 48
                 | ((dg_dx >> 16) as u16 as u64) << 32
                 | ((db_dx >> 16) as u16 as u64) << 16
                 | ((da_dx >> 16) as u16 as u64),
         ));
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             ((red & 0x0000ffff) as u16 as u64) << 48
                 | ((green & 0x0000ffff) as u16 as u64) << 32
                 | ((blue & 0x0000ffff) as u16 as u64) << 16
                 | ((alpha & 0x0000ffff) as u16 as u64),
         ));
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             ((dr_dx & 0x0000ffff) as u16 as u64) << 48
                 | ((dg_dx & 0x0000ffff) as u16 as u64) << 32
                 | ((db_dx & 0x0000ffff) as u16 as u64) << 16
@@ -491,25 +468,25 @@ impl RdpCommandBuilder {
         // Delta Color Y
         // Delta Color Edge fraction
         // Delta Color Y fraction
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             ((dr_de >> 16) as u16 as u64) << 48
                 | ((dg_de >> 16) as u16 as u64) << 32
                 | ((db_de >> 16) as u16 as u64) << 16
                 | ((da_de >> 16) as u16 as u64),
         ));
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             ((dr_dy >> 16) as u16 as u64) << 48
                 | ((dg_dy >> 16) as u16 as u64) << 32
                 | ((db_dy >> 16) as u16 as u64) << 16
                 | ((da_dy >> 16) as u16 as u64),
         ));
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             ((dr_de & 0x0000ffff) as u16 as u64) << 48
                 | ((dg_de & 0x0000ffff) as u16 as u64) << 32
                 | ((db_de & 0x0000ffff) as u16 as u64) << 16
                 | ((da_de & 0x0000ffff) as u16 as u64),
         ));
-        buffer.push(RdpCommand(
+        self.push(RdpCommand(
             ((dr_dy & 0x0000ffff) as u16 as u64) << 48
                 | ((dg_dy & 0x0000ffff) as u16 as u64) << 32
                 | ((db_dy & 0x0000ffff) as u16 as u64) << 16
@@ -527,9 +504,8 @@ impl RdpCommandBuilder {
         de: i32,
         dy: i32,
     ) -> &mut RdpCommandBuilder {
-        let buffer = self.commands.as_mut().unwrap();
-        buffer.push(RdpCommand((z as u32 as u64) << 32 | (dx as u32 as u64)));
-        buffer.push(RdpCommand((de as u32 as u64) << 32 | (dy as u32 as u64)));
+        self.push(RdpCommand((z as u32 as u64) << 32 | (dx as u32 as u64)));
+        self.push(RdpCommand((de as u32 as u64) << 32 | (dy as u32 as u64)));
 
         self
     }
@@ -566,7 +542,7 @@ impl RdpCommandBuilder {
             t = 0.0;
         }
 
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (COMMAND_TEXTURE_RECTANGLE << 56)
                 | (to_fixpoint_10_2_as_integer(r) << (32 + 12))
                 | (to_fixpoint_10_2_as_integer(b) << 32)
@@ -575,7 +551,7 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_10_2_as_integer(t)),
         ));
 
-        self.commands.as_mut().unwrap().push(RdpCommand(
+        self.push(RdpCommand(
             (to_fixpoint_s_10_5(st_l) << 48)
                 | (to_fixpoint_s_10_5(st_t) << 32)
                 | (to_fixpoint_s_10_5(d_xy_d_st.x) << 16)
@@ -583,28 +559,4 @@ impl RdpCommandBuilder {
         ));
         self
     }
-}
-
-#[inline]
-fn to_fixpoint_10_2_as_integer(val: f32) -> u64 {
-    (((val as i16) * (1 << 2)) & 0xffc) as u64
-}
-
-#[inline]
-fn to_fixpoint_s_11_2(val: f32) -> u64 {
-    let val2 = val * (1 << 2) as f32;
-
-    #[allow(clippy::unnecessary_cast)]
-    if val2 < -0x8000 as f32 {
-        (-0x8000 as i16 & 0x3fff) as u64
-    } else if val2 > 0x7fff as f32 {
-        (0x7fff as i16 & 0x3fff) as u64
-    } else {
-        (val2 as i16 & 0x3fff) as u64
-    }
-}
-
-#[inline]
-fn to_fixpoint_s_10_5(val: f32) -> u64 {
-    ((val * (1 << 5) as f32) as i16) as u64
 }

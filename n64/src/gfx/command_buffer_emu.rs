@@ -95,6 +95,7 @@ pub struct CommandBuffer<'a> {
 
 impl<'a> CommandBuffer<'a> {
     pub fn new(out_tex: ViBufferToken, cache: &'a mut CommandBufferCache) -> Self {
+        self.cache.commands.clear();
         Self {
             out_tex,
             clear: false,
@@ -108,7 +109,6 @@ impl<'a> CommandBuffer<'a> {
 
     pub fn clear(&mut self) -> &mut Self {
         self.clear = true;
-        self.cache.commands.clear();
         self
     }
 

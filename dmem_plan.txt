@@ -1,9 +1,9 @@
 Pointer to host buffer of pointer to command buffer chunks
-pointer count, 8 bytes
-pointer to chunk 1, 8 bytes
-pointer to chunk 2, 8 bytes
-pointer to chunk 3, 8 bytes
-0
+pointer count, 4 bytes
+pointer to chunk 1, 4 bytes
+pointer to chunk 2, 4 bytes
+pointer to chunk 3, 4 bytes
+
 Scratch memory 1 kb
 Block of command buffer, 1 kb, 128 commands at a time
 Block of triangle data 1kb
