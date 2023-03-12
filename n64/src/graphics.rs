@@ -53,7 +53,7 @@ impl Graphics {
         core::mem::swap(&mut self.gpu_commands, commands);
 
         let mut rsp_dmem = RspDmem {
-            pointer_count: 2,
+            pointer_count: self.gpu_commands.len() as u32,//2,
             chunk_pointer: [0; 255],
         };
 
