@@ -9,4 +9,5 @@
 *.z64
 **/*.rs.bk
 /target
+/target_ra
 scope_names.txt

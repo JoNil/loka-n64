@@ -45,7 +45,7 @@ impl Display for Vu {
                 }
             }
 
-            writeln!(f, "")?;
+            writeln!(f)?;
         }
         writeln!(f, "]",)?;
 

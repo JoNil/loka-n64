@@ -1,3 +1,5 @@
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused))]
+
 use crate::{current_time_us, framebuffer::Framebuffer, include_bytes_align_as, VideoMode};
 use aligned::{Aligned, A8};
 use alloc::vec::Vec;

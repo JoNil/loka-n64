@@ -1,4 +1,4 @@
-{
+/*{
     "rust-analyzer.checkOnSave.overrideCommand": [
         "cargo",
         "+nightly",
@@ -14,7 +14,7 @@
         "--allow",
         "clippy::unusual_byte_groupings"
     ],
-}
+}*/
 /*{
     "rust-analyzer.checkOnSave.overrideCommand": [
         "cargo",

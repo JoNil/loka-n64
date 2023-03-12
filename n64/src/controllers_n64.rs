@@ -1,4 +1,6 @@
-use crate::graphics::Graphics;
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused))]
+
+use crate::graphics_n64::Graphics;
 use n64_sys::si;
 
 #[derive(Default)]
