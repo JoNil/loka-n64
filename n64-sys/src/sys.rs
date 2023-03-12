@@ -1,3 +1,7 @@
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(clippy::let_and_return))]
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused_imports))]
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused_variables))]
+
 use core::{arch::asm, mem::size_of};
 
 #[inline]
@@ -9,6 +13,7 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
     while i < len {
         let cur = addr + i;
 
+        #[cfg(target_vendor = "nintendo64")]
         asm!("cache 0x15, ({})", in(reg) cur);
 
         i += 16;
@@ -19,6 +24,7 @@ pub unsafe fn data_cache_hit_writeback_invalidate<T>(block: &[T]) {
 pub unsafe fn data_cache_hit_writeback_invalidate_single(addr: usize) {
     let addr = addr & 0xffff_fff0;
 
+    #[cfg(target_vendor = "nintendo64")]
     asm!("cache 0x15, ({})", in(reg) addr);
 }
 
@@ -31,6 +37,7 @@ pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
     while i < len {
         let cur = addr + i;
 
+        #[cfg(target_vendor = "nintendo64")]
         asm!("cache 0x19, ({})", in(reg) cur);
 
         i += 16;
@@ -41,6 +48,7 @@ pub unsafe fn data_cache_hit_writeback<T>(block: &[T]) {
 pub unsafe fn data_cache_hit_writeback_single(addr: usize) {
     let addr = addr & 0xffff_fff0;
 
+    #[cfg(target_vendor = "nintendo64")]
     asm!("cache 0x19, ({})", in(reg) addr);
 }
 
@@ -53,6 +61,7 @@ pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
     while i < len {
         let cur = addr + i;
 
+        #[cfg(target_vendor = "nintendo64")]
         asm!("cache 0x11, ({})", in(reg) cur);
 
         i += 16;
@@ -63,6 +72,7 @@ pub unsafe fn data_cache_hit_invalidate<T>(block: &[T]) {
 pub unsafe fn data_cache_hit_invalidate_single(addr: usize) {
     let addr = addr & 0xffff_fff0;
 
+    #[cfg(target_vendor = "nintendo64")]
     asm!("cache 0x11, ({})", in(reg) addr);
 }
 
@@ -93,17 +103,19 @@ fn get_tick_rate() -> f32 {
 
 #[inline]
 fn get_ticks() -> u32 {
-    let res;
-
+    #[cfg(target_vendor = "nintendo64")]
     unsafe {
+        let res;
         asm!(
             "mfc0 {}, $9
             nop",
             lateout(reg) res,
         );
+        res
     }
 
-    res
+    #[cfg(not(target_vendor = "nintendo64"))]
+    0
 }
 
 static mut LAST_TICKS: u32 = 0;

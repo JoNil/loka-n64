@@ -1,6 +1,6 @@
 #![no_std]
-#![feature(asm_experimental_arch)]
-#![feature(core_intrinsics)]
+#![cfg_attr(target_vendor = "nintendo64", feature(asm_experimental_arch))]
+#![cfg_attr(target_vendor = "nintendo64", feature(core_intrinsics))]
 #![allow(clippy::missing_safety_doc)]
 
 pub mod ai;

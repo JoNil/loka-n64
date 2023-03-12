@@ -1,9 +1,15 @@
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused_imports))]
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused_mut))]
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused_variables))]
+
 use crate::sys::{
     data_cache_hit_writeback_invalidate, uncached_addr, uncached_addr_mut, virtual_to_physical,
     virtual_to_physical_mut,
 };
-use core::intrinsics::volatile_copy_nonoverlapping_memory;
 use core::ptr::{read_volatile, write_volatile};
+
+#[cfg(target_vendor = "nintendo64")]
+use core::intrinsics::volatile_copy_nonoverlapping_memory;
 
 const SI_BASE: usize = 0xA480_0000;
 
@@ -29,6 +35,8 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
         let mut outblock_temp: [u64; 8] = [0; 8];
 
         data_cache_hit_writeback_invalidate(&inblock_temp);
+
+        #[cfg(target_vendor = "nintendo64")]
         volatile_copy_nonoverlapping_memory(
             uncached_addr_mut(inblock_temp.as_mut_ptr()),
             inblock.as_ptr(),
@@ -47,6 +55,7 @@ fn dma_pif_block(inblock: &[u64; 8], outblock: &mut [u64; 8]) {
 
         dma_wait();
 
+        #[cfg(target_vendor = "nintendo64")]
         volatile_copy_nonoverlapping_memory(
             outblock.as_mut_ptr(),
             uncached_addr(outblock_temp.as_ptr()),

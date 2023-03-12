@@ -18,7 +18,7 @@ pub struct N64Profiler {
 
 impl N64Profiler {
     pub fn submit_scope(&mut self, scope: ScopeData, scope_names: &HashMap<i16, String>) {
-        self.start_time_ns = Some(self.start_time_ns.unwrap_or(puffin::now_ns()));
+        self.start_time_ns = Some(self.start_time_ns.unwrap_or_else(puffin::now_ns));
         self.start_time_n64 = Some(self.start_time_n64.unwrap_or(scope.start));
 
         while self.current_depth >= scope.depth as i32 {
@@ -35,7 +35,7 @@ impl N64Profiler {
         let end_ns =
             self.start_time_ns.unwrap() + (scope.end - self.start_time_n64.unwrap()) as i64 * 1000;
         let id = scope.id;
-        let id = format!("{}", scope_names.get(&id).unwrap());
+        let id = scope_names.get(&id).unwrap().to_string();
 
         self.current_depth = scope.depth as i32;
         self.stream_info.range_ns.0 = self.stream_info.range_ns.0.min(start_ns);

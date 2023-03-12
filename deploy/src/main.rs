@@ -92,7 +92,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     }
 
     assert!(Command::new("cargo")
-        .args(&[
+        .args([
             "n64",
             "build",
             "--ipl3",

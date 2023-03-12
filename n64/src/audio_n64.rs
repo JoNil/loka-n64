@@ -1,3 +1,5 @@
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused))]
+
 use alloc::boxed::Box;
 use alloc::collections::VecDeque;
 use alloc::vec::Vec;

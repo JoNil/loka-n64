@@ -9,12 +9,11 @@ pub use graphics::Graphics;
 
 pub use n64_macros::*;
 pub use n64_profiler::*;
+pub use n64_sys::*;
 pub use n64_types::*;
 
 #[cfg(target_vendor = "nintendo64")]
 pub use n64_alloc::*;
-#[cfg(target_vendor = "nintendo64")]
-pub use n64_sys::*;
 
 pub mod gfx;
 pub mod ipl3font;
@@ -22,12 +21,9 @@ pub mod utils;
 
 mod framebuffer;
 
-#[cfg(target_vendor = "nintendo64")]
-mod audio;
-#[cfg(target_vendor = "nintendo64")]
-mod controllers;
-#[cfg(target_vendor = "nintendo64")]
-mod graphics;
+mod audio_n64;
+mod controllers_n64;
+mod graphics_n64;
 
 #[cfg(not(target_vendor = "nintendo64"))]
 pub mod audio_emu;
@@ -35,6 +31,13 @@ pub mod audio_emu;
 pub mod controllers_emu;
 #[cfg(not(target_vendor = "nintendo64"))]
 pub mod graphics_emu;
+
+#[cfg(target_vendor = "nintendo64")]
+use audio_n64 as audio;
+#[cfg(target_vendor = "nintendo64")]
+use controllers_n64 as controllers;
+#[cfg(target_vendor = "nintendo64")]
+use graphics_n64 as graphics;
 
 #[cfg(not(target_vendor = "nintendo64"))]
 use audio_emu as audio;

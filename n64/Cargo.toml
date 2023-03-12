@@ -18,6 +18,7 @@ spin = "0.9"
 strum = { version = "0.24", default-features = false }
 strum_macros = { version = "0.24", default-features = false }
 zerocopy = "0.6"
+n64-sys = { path = "../n64-sys" }
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
 cpal = "0.14"
@@ -30,4 +31,3 @@ winit = "0.27"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-alloc = { path = "../n64-alloc" }
-n64-sys = { path = "../n64-sys" }
