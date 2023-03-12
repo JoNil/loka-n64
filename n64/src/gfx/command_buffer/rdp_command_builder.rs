@@ -151,6 +151,14 @@ impl RdpCommandBuilder {
     }
 
     #[inline]
+    fn reserve(&mut self, size: usize) {
+        if (self.index + size) >= 128 {
+            self.blocks.push(RdpBlock::default());
+            self.index = 0;
+        }
+    }
+
+    #[inline]
     pub fn set_color_image(
         &mut self,
         format: u8,
@@ -383,15 +391,21 @@ impl RdpCommandBuilder {
         inv_slope_high: i32,
     ) -> &mut RdpCommandBuilder {
         let mut command = COMMAND_EDGE_COEFFICIENTS;
+        let mut command_count = 4;
         if shade {
             command |= 0x4;
+            command_count += 8;
         }
         if texture {
             command |= 0x2;
+            command_count += 8;
         }
         if z_buffer {
             command |= 0x1;
+            command_count += 2;
         }
+
+        self.reserve(command_count);
 
         self.push(RdpCommand(
             (command << 56)
@@ -519,6 +533,8 @@ impl RdpCommandBuilder {
         st_top_left: Vec2,
         d_xy_d_st: Vec2,
     ) -> &mut RdpCommandBuilder {
+        self.reserve(2);
+
         let mut l = top_left.x;
         let mut t = top_left.y;
         let r = bottom_right.x;
