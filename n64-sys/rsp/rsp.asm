@@ -17,6 +17,8 @@ macro DbgPrint(reg) {
 }
 
 macro DbgPrintStatusRegs (reg) {
+    mfc0 t5, c5
+    DbgPrint(t5)
     mfc0 t5, c6
     DbgPrint(t5)
     mfc0 t5, c7
@@ -43,6 +45,7 @@ constant command_block_count = command_block_start + 4
 constant rdp_start_cmd = command_block_start + 8
 //constant rdp_end_cmd = 2048
 constant rdp_start_flags = SET_XBS|CLR_FRZ|CLR_FLS|CLR_CLK
+constant rdp_dma_flags = CLR_XBS
 constant rdp_command_count_offset = 512
 constant rdp_busy_mask = RDP_CMB//RDP_PLB|RDP_CMB
 
@@ -83,6 +86,9 @@ request_semaphore:
     
     li   t5, 1
     DbgPrint(t5)
+
+    li t5, rdp_dma_flags // Load rdp DMA (Not XBUS) flags
+    mtc0 t5, c11         // Load rdp DMA (Not XBUS) flags
     
     // Wait until spot available in DMEM
 wait_dma_available:
@@ -92,7 +98,7 @@ wait_dma_available:
     
     li t5, 2
     DbgPrint(t5)
-
+    
     // Setup DMA request
     li   t5, command_block_start // Rdp command block destination
     mtc0 t5, c0          // DMA destination
