@@ -118,7 +118,6 @@ pub const COMMAND_EDGE_COEFFICIENTS: u64 = 0xc8;
 
 pub struct RdpCommandBuilder {
     pub(crate) blocks: Vec<RdpBlock>,
-    block_index: usize,
     index: usize,
 }
 
@@ -127,7 +126,6 @@ impl RdpCommandBuilder {
     pub fn new() -> RdpCommandBuilder {
         RdpCommandBuilder {
             blocks: Vec::with_capacity(32),
-            block_index: 0,
             index: 0,
         }
     }
@@ -141,18 +139,19 @@ impl RdpCommandBuilder {
 
     #[inline]
     fn push(&mut self, command: RdpCommand) {
-        if self.index == 128 {
+        if self.index == 127 {
             self.blocks.push(RdpBlock::default());
             self.index = 0;
         }
 
+        self.blocks.last_mut().unwrap().block_len += 1;
         self.blocks.last_mut().unwrap().rdp_data[self.index] = command;
         self.index += 1;
     }
 
     #[inline]
-    fn reserve(&mut self, size: usize) {
-        if (self.index + size) >= 128 {
+    fn reserve(&mut self, count: usize) {
+        if (self.index + count) >= 127 {
             self.blocks.push(RdpBlock::default());
             self.index = 0;
         }

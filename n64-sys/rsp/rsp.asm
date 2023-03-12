@@ -8,23 +8,26 @@ include "lib/n64_rsp.inc"
 base $0000
 origin $0000
 
-macro DbgPrint(reg) {    
-    //subi t7, t7, 4
-    //sw {reg}, 0(t7)
+macro DbgPrint(reg) {
+    subi t7, t7, 4
+    ori t7, t7, 512
+    sw {reg}, 0(t7)
 }
 
 align(8)
 
-constant rdp_start_cmd = 1024
-constant rdp_end_cmd = 2048
+constant command_block_start = 1024
+constant command_block_count = command_block_start + 4
+constant rdp_start_cmd = command_block_start + 8
+//constant rdp_end_cmd = 2048
 constant rdp_start_flags = SET_XBS|CLR_FRZ|CLR_FLS|CLR_CLK
 constant rdp_command_count_offset = 512
+constant rdp_busy_mask = RDP_CMB//RDP_PLB|RDP_CMB
 
 start:
 
     xor t0, t0, t0          // t0 = 0
-    li t1, rdp_start_flags  // t1 = 00001001 (GCLK | XBUS_MEM) (Start rdp)
-    li t6, RDP_CMB          // RDP Command busy
+    li t6, rdp_busy_mask    // RDP Command busy
     lw t2, 0(0)   // Load 32 bits as pointer count
     li t3, 0 // Copy to t3
 
@@ -34,10 +37,16 @@ start:
     DbgPrint(t3)
 
 process_chunk_pointer:
-    beq t2, t3, return // i == count => done
+
+    li t5, 41
+    DbgPrint(t5)
+    DbgPrint(t3)
+    DbgPrint(t2)
+
+    beq t3, t2, return // i == count => done
     nop
 
-    lw t4, 4(t3) // Load pointer
+    lw t4, 4(t3) // Command block start
 
     DbgPrint(t4)
 
@@ -48,7 +57,7 @@ process_chunk_pointer:
     // Request semaphore in t5
 request_semaphore:
     mfc0 t5, c7
-    bne t5, 0, request_semaphore
+    bnez t5, request_semaphore
     nop
 
     DbgPrint(t5)
@@ -59,14 +68,14 @@ request_semaphore:
     // Wait until spot available in DMEM
 wait_dma_available:
     mfc0 t5, c5
-    bne t5, 0, wait_dma_available
+    bnez t5, wait_dma_available
     nop
     
     li t5, 2
     DbgPrint(t5)
 
     // Setup DMA request
-    li t5, rdp_start_cmd // Rdp command destination
+    li t5, command_block_start // Rdp command block destination
     mtc0 t5, c0          // DMA destination
     DbgPrint(t5)
     li t5, 3
@@ -75,6 +84,7 @@ wait_dma_available:
     DbgPrint(t4)
     li t5, 4
     DbgPrint(t5)
+
     // Data size as "Number of bytes to read LESS ONE"
     li t5, 1023          // 128 commands per request, 8 bytes per command (128*8 : << 7 + 3 : << 10) => 1<<10 - 1 : 1023
     mtc0 t5, c2
@@ -89,12 +99,37 @@ wait_dma_available:
 
 wait_dma_busy:
     mfc0 t5, c6
-    bne t5, 0, wait_dma_busy
+    bnez t5, wait_dma_busy
     nop
+
+    li t5, 42
+    DbgPrint(t5)
+// TMP debugprint rdp status
+    mfc0 t5, c11
+    DbgPrint(t5)
 
     // Release semaphore
     mtc0 0, c7 
 
+    DbgPrint(t5)
+
+wait_rdp_ready:
+    mfc0 t5, c11
+    andi t5, t5, RDP_CMR
+    beq t5, t0, wait_rdp_ready // Loop while rdp busy.
+    nop
+
+    // Wait for rdp done TODO: Move to before emit for non-sync
+//wait_rdp_busy_pre:
+//    mfc0 t5, c11
+//    DbgPrint(t5)
+//    and t5, t5, t6
+//    bnez t5, wait_rdp_busy_pre // Loop while rdp busy.
+//    nop
+    
+    li t5, 43
+    DbgPrint(t5)
+    DbgPrint(t5)
     DbgPrint(t5)
 
     // Send to RDP
@@ -102,16 +137,56 @@ wait_dma_busy:
     mtc0 t5, c11           // Prepare rdp for commands.
     li t5, rdp_start_cmd   // Rdp commands start
     mtc0 t5, c8            // Rdp commands start
-    li t5, rdp_end_cmd     // End at start + 128*8
-    mtc0 t5, c9            // Rdp commands end
 
+    lw t8, command_block_count(0) // Lower 32 bits of the first 64.
+    DbgPrint(t8)
+    sll t8, t8, 3               // *8
+    DbgPrint(t8)
+    addi t8, t8, rdp_start_cmd  // End at start + commands*8
+    DbgPrint(t8)
+    mtc0 t8, c9                 // Rdp commands end
+    //li t5, rdp_end_cmd     // End at start + 128*8
+    //mtc0 t5, c9            // Rdp commands end
+
+    DbgPrint(t8)
+    li t5, 44
+    DbgPrint(t5)
+
+    DbgPrint(t5)
     DbgPrint(t5)
 
     // Wait for rdp done TODO: Move to before emit for non-sync
 wait_rdp_busy:
+    // -- Debug vals start
+    li t5, 45
+    DbgPrint(t5)
+    mfc0 t5, c6
+    DbgPrint(t5)
+    mfc0 t5, c8
+    DbgPrint(t5)
+    mfc0 t5, c9
+    DbgPrint(t5)
+    mfc0 t5, c10
+    DbgPrint(t5)
     mfc0 t5, c11
-    beq t5, t6, wait_rdp_busy // Loop while rdp busy.
+    DbgPrint(t5)
+    mfc0 t5, c12
+    DbgPrint(t5)
+    mfc0 t5, c13
+    DbgPrint(t5)
+    //-- debug vals end
+    mfc0 t5, c11
+    DbgPrint(t5)
+    DbgPrint(t6)
+    and t5, t5, t6
+    //bne t5, t0, wait_rdp_busy // Loop while rdp busy.
     nop
+
+//wait_rdp_busy:
+//    mfc0 t5,c13 // T5 = RDP Command Buffer BUSY Register ($A4100014)
+//    DbgPrint(t5)
+//    bnez t5,wait_rdp_busy // IF TRUE RDP Command Buffer Busy
+    nop // Delay Slot
 
     addiu t3, t3, 1   // Next chunk pointer
     j process_chunk_pointer
