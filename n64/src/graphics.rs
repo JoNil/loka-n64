@@ -1,7 +1,7 @@
 use crate::{current_time_us, framebuffer::Framebuffer, include_bytes_align_as, VideoMode};
 use aligned::{Aligned, A8};
 use alloc::vec::Vec;
-use core::ops::DerefMut;
+use core::{ops::DerefMut, slice};
 use n64_macros::debugln;
 use n64_sys::{
     rsp,
@@ -53,25 +53,54 @@ impl Graphics {
         core::mem::swap(&mut self.gpu_commands, commands);
 
         let mut rsp_dmem = RspDmem {
-            pointer_count: self.gpu_commands.len() as u32,
+            pointer_count: 2,
             chunk_pointer: [0; 255],
         };
 
-        for (index, chunk) in self.gpu_commands.iter().enumerate() {
-            unsafe { data_cache_hit_writeback(&chunk.rdp_data) };
-            rsp_dmem.chunk_pointer[index] = virtual_to_physical(chunk as *const RdpBlock) as u32
+        static mut FC: usize = 0;
+
+        unsafe {
+            debugln!("{}", FC);
         }
 
+        for (index, chunk) in self.gpu_commands.iter().enumerate() {
+            unsafe {
+                data_cache_hit_writeback(slice::from_raw_parts::<u64>(
+                    &chunk.block_len as *const u64,
+                    128,
+                ))
+            };
+            rsp_dmem.chunk_pointer[index] = virtual_to_physical(chunk as *const RdpBlock) as u32;
+        }
+
+        unsafe {
+            FC += 1;
+        }
+
+        let mut should_panic = false;
         rsp::run(code, Some(rsp_dmem.as_bytes()));
         if !rsp::wait(500) {
             debugln!("RSP TIMEOUT!");
+            should_panic = true;
         }
 
         //debugln!("Hello");
         let print_64bit = true;
         let print_32bit = true;
-        let should_panic = false;
         if should_panic {
+            for (block_index, block) in self.gpu_commands.iter().enumerate() {
+                debugln!("BLOCK {}: {}", block_index, block.block_len);
+                for (i, command) in block.rdp_data.iter().enumerate() {
+                    debugln!(
+                        "ADDR {:<8} : {:064b} : {:016x} : {:20}",
+                        i,
+                        command.0,
+                        command.0,
+                        command.0,
+                    );
+                }
+            }
+
             let mut dmem: Aligned<A8, [u8; 4096]> = Aligned([0x00; 4096]);
 
             rsp::read_dmem(dmem.deref_mut());

@@ -133,63 +133,62 @@ fn main() {
 
             cb.clear();
 
-            map.render(&mut cb, VIDEO_MODE, &camera);
+            if !DEBUG_TRIANGLES {
+                map.render(&mut cb, VIDEO_MODE, &camera);
 
-            shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+                shadow::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-            box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
-            sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
-            mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+                box_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+                sprite_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
+                mesh_drawable::draw(&mut world, &mut cb, VIDEO_MODE, &camera);
 
-            draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
-
-            {
-                if DEBUG_TRIANGLES {
-                    let x_limit = 320.0;
-                    let y_limit = 240.0;
-
-                    let x_off = x_limit * 0.5;
-                    let y_off = y_limit * 0.5;
-                    let x_scale = x_limit * 0.125;
-                    let y_scale = y_limit * 0.125;
-
-                    let speed = 0.5; // 0.05
-                    let t = speed * (frame_begin_time as f32) / 1e6;
-                    let p = 2.0943951;
-                    let v0 = vec3(
-                        x_off + x_scale * libm::cosf(t),
-                        y_off + y_scale * libm::sinf(t),
-                        0.0,
-                    );
-                    let v1 = vec3(
-                        x_off + x_scale * libm::cosf(t + p),
-                        y_off + y_scale * libm::sinf(t + p),
-                        0.0,
-                    );
-                    let v2 = vec3(
-                        x_off + x_scale * libm::cosf(t - p),
-                        y_off + y_scale * libm::sinf(t - p),
-                        0.0,
-                    );
-
-                    cb.set_pipeline(&Pipeline::default());
-                    cb.add_mesh_indexed(
-                        &[v0.into(), v1.into(), v2.into()],
-                        &[[0.5, 1.0], [0.0, 0.0], [1.0, 0.0]],
-                        &[0xff_00_00_ff, 0x00_ff_00_ff, 0x00_00_ff_ff],
-                        &[[0, 1, 2]],
-                        &[
-                            [1.0, 0.0, 0.0, 0.0],
-                            [0.0, 1.0, 0.0, 0.0],
-                            [0.0, 0.0, 1.0, 0.0],
-                            [0.0, 0.0, 0.0, 1.0],
-                        ],
-                    );
-                }
+                draw_missile_target(&mut world, &mut cb, VIDEO_MODE, &camera);
             }
 
-            
-            {
+            if DEBUG_TRIANGLES {
+                let x_limit = 320.0;
+                let y_limit = 240.0;
+
+                let x_off = x_limit * 0.5;
+                let y_off = y_limit * 0.5;
+                let x_scale = x_limit * 0.125;
+                let y_scale = y_limit * 0.125;
+
+                let speed = 0.5; // 0.05
+                let t = speed * (frame_begin_time as f32) / 1e6;
+                let p = 2.0943951;
+                let v0 = vec3(
+                    x_off + x_scale * libm::cosf(t),
+                    y_off + y_scale * libm::sinf(t),
+                    0.0,
+                );
+                let v1 = vec3(
+                    x_off + x_scale * libm::cosf(t + p),
+                    y_off + y_scale * libm::sinf(t + p),
+                    0.0,
+                );
+                let v2 = vec3(
+                    x_off + x_scale * libm::cosf(t - p),
+                    y_off + y_scale * libm::sinf(t - p),
+                    0.0,
+                );
+
+                cb.set_pipeline(&Pipeline::default());
+                cb.add_mesh_indexed(
+                    &[v0.into(), v1.into(), v2.into()],
+                    &[[0.5, 1.0], [0.0, 0.0], [1.0, 0.0]],
+                    &[0xff_00_00_ff, 0x00_ff_00_ff, 0x00_00_ff_ff],
+                    &[[0, 1, 2]],
+                    &[
+                        [1.0, 0.0, 0.0, 0.0],
+                        [0.0, 1.0, 0.0, 0.0],
+                        [0.0, 0.0, 1.0, 0.0],
+                        [0.0, 0.0, 0.0, 1.0],
+                    ],
+                );
+            }
+
+            if !DEBUG_TRIANGLES {
                 n64::scope!("HUD");
 
                 font::draw_number(
@@ -262,7 +261,6 @@ fn main() {
 
                 draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
             }
-            
 
             cb
         };

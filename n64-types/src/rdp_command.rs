@@ -4,13 +4,15 @@ pub struct RdpCommand(pub u64);
 
 #[repr(C, align(8))]
 pub struct RdpBlock {
-    pub rdp_data: [RdpCommand; 128],
+    pub block_len: u64,
+    pub rdp_data: [RdpCommand; 127],
 }
 
 impl Default for RdpBlock {
     fn default() -> Self {
         Self {
-            rdp_data: [RdpCommand(0); 128],
+            block_len: 0,
+            rdp_data: [RdpCommand(0); 127],
         }
     }
 }
