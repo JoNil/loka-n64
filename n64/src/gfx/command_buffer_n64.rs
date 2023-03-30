@@ -1,5 +1,7 @@
+#![cfg_attr(not(target_vendor = "nintendo64"), allow(unused))]
+
 use super::{FillPipeline, Pipeline};
-use crate::{framebuffer::ViBufferToken, graphics::Graphics, VideoMode};
+use crate::{framebuffer::ViBufferToken, graphics_n64::Graphics, VideoMode};
 use alloc::{boxed::Box, vec::Vec};
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use rdp_command_builder::*;
@@ -316,6 +318,8 @@ impl<'a> CommandBuffer<'a> {
             n64_profiler::scope!("Rsp Job");
             graphics.rsp_start(&mut self.cache.rdp.blocks);
         }
+
+        //self.vi_buffer_toke
 
         (
             self.colored_rect_count as i32,
