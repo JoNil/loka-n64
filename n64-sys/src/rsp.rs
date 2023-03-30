@@ -95,6 +95,12 @@ pub fn run(code: &[u8], data: Option<&[u8]>, single_step: bool) {
     start(single_step);
 }
 
+pub fn step() {
+    unsafe {
+        write_volatile(RSP_STATUS, RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE);
+    }
+}
+
 pub fn status() -> usize {
     unsafe { read_volatile(RSP_STATUS) }
 }

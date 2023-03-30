@@ -51,7 +51,11 @@ impl Graphics {
     }
 
     #[inline]
-    pub fn rsp_step(&mut self) -> (usize, usize) {
+    pub fn rsp_step(&mut self, step: bool) -> (usize, usize) {
+        if step {
+            rsp::step();
+        }
+
         (rsp::status(), rsp::pc())
     }
 

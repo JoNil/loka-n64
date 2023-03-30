@@ -1957,6 +1957,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "mipsasm"
+version = "2.0.1"
+source = "git+https://github.com/JoNil/mipsasm.git#a1a2566763a3f47202413e4104156b4b0c4517e5"
+dependencies = [
+ "num",
+ "strum",
+ "strum_macros",
+]
+
+[[package]]
 name = "n64"
 version = "0.1.0"
 dependencies = [
@@ -1965,6 +1975,7 @@ dependencies = [
  "cpal",
  "futures-executor",
  "libm",
+ "mipsasm",
  "n64-alloc",
  "n64-macros",
  "n64-math",
@@ -2212,6 +2223,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "num"
+version = "0.4.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "43db66d1170d347f9a065114077f7dccb00c1b9478c89384490a3425279a4606"
+dependencies = [
+ "num-complex",
+ "num-integer",
+ "num-iter",
+ "num-rational",
+ "num-traits",
+]
+
+[[package]]
 name = "num-complex"
 version = "0.4.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2238,6 +2262,17 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "225d3389fb3509a24c93f5c29eb6bde2586b98d9f016636dff58d7c6f7569cd9"
 dependencies = [
  "autocfg",
+ "num-traits",
+]
+
+[[package]]
+name = "num-iter"
+version = "0.1.43"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "7d03e6c028c5dc5cac6e2dec0efda81fc887605bb3d884578bb6d6bf7514e252"
+dependencies = [
+ "autocfg",
+ "num-integer",
  "num-traits",
 ]
 
