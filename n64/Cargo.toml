@@ -10,16 +10,16 @@ edition = "2021"
 aligned = "0.4"
 assert_into = "1"
 libm = "0.2"
+mipsasm = { git = "https://github.com/JoNil/mipsasm.git", default-features = false }
 n64-macros = { path = "../n64-macros" }
 n64-math = { path = "../n64-math" }
 n64-profiler = { path = "../n64-profiler" }
+n64-sys = { path = "../n64-sys" }
 n64-types = { path = "../n64-types" }
 spin = "0.9"
 strum = { version = "0.24", default-features = false }
 strum_macros = { version = "0.24", default-features = false }
 zerocopy = "0.6"
-n64-sys = { path = "../n64-sys" }
-mipsasm = { git = "https://github.com/JoNil/mipsasm.git", default-features = false }
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
 cpal = "0.15"

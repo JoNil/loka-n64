@@ -2,7 +2,7 @@
 
 use crate::{current_time_us, framebuffer::Framebuffer, include_bytes_align_as, VideoMode};
 use aligned::{Aligned, A8};
-use alloc::vec::Vec;
+use alloc::{string::String, vec::Vec};
 use core::{ops::DerefMut, slice};
 use n64_macros::debugln;
 use n64_sys::{
@@ -12,6 +12,8 @@ use n64_sys::{
 };
 use n64_types::RdpBlock;
 use zerocopy::AsBytes;
+
+pub static CODE: &[u8] = include_bytes_align_as!(u64, "../../n64-sys/rsp/rsp.bin");
 
 #[repr(C, align(8))]
 #[derive(AsBytes)]
@@ -23,6 +25,7 @@ struct RspDmem {
 pub struct Graphics {
     gpu_commands: Vec<RdpBlock>,
     pub buffer_started: bool,
+    pub code: Vec<String>,
 }
 
 impl Graphics {
@@ -30,10 +33,22 @@ impl Graphics {
     pub(crate) fn new(video_mode: VideoMode, framebuffer: &mut Framebuffer) -> Self {
         vi::init(video_mode, &mut framebuffer.vi_buffer.0);
         rsp::init();
+
+        let mut mips = mipsasm::Mipsasm::new();
+        mips.debug();
+        let code = mips.disassemble(unsafe {
+            slice::from_raw_parts(CODE.as_ptr() as *const u32, CODE.len() / 4)
+        });
+
         Self {
             gpu_commands: Vec::with_capacity(32),
             buffer_started: false,
+            code,
         }
+    }
+
+    pub fn code(&self) -> &[String] {
+        &self.code
     }
 
     #[inline]
@@ -61,8 +76,6 @@ impl Graphics {
 
     #[inline]
     pub fn rsp_start(&mut self, commands: &mut Vec<RdpBlock>, single_step: bool) {
-        let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/rsp.bin");
-
         core::mem::swap(&mut self.gpu_commands, commands);
 
         let mut rsp_dmem = RspDmem {
@@ -82,7 +95,7 @@ impl Graphics {
 
         let mut should_panic = false;
 
-        rsp::run(code, Some(rsp_dmem.as_bytes()), single_step);
+        rsp::run(CODE, Some(rsp_dmem.as_bytes()), single_step);
         if !single_step {
             if !rsp::wait(500) {
                 debugln!("RSP TIMEOUT! {:032b} pc {:08x}", rsp::status(), rsp::pc());
