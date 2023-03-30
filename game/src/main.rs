@@ -80,6 +80,8 @@ fn main() {
     let mut last_textured_rect_count = 0;
     let mut last_mesh_count = 0;
 
+    let mut last_step = false;
+
     loop {
         n64::frame!();
         n64::scope!("Frame");
@@ -274,7 +276,15 @@ fn main() {
             n64::scope!("Submit Command Buffer");
             let cb = cb;
 
-            cb.submit(&mut n64.graphics)
+            let step = if last_step {
+                false
+            } else {
+                n64.controllers.start()
+            };
+
+            last_step = n64.controllers.start();
+
+            cb.submit(&mut n64.graphics, step)
         };
 
         last_colored_rect_count = colored_rect_count;

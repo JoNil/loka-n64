@@ -313,7 +313,7 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn submit(self, graphics: &mut Graphics) -> (i32, i32, i32) {
+    pub fn submit(self, graphics: &mut Graphics, step: bool) -> (i32, i32, i32) {
         self.cache.rdp.sync_full();
 
         {
@@ -323,7 +323,7 @@ impl<'a> CommandBuffer<'a> {
                 graphics.buffer_started = true;
             }
 
-            let (status, pc) = graphics.rsp_step();
+            let (status, pc) = graphics.rsp_step(step);
 
             const GREEN: Color = Color::new(0b00011_10000_00011_1);
             const RED: Color = Color::new(0b10000_00011_00011_1);
