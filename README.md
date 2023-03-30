@@ -5,7 +5,7 @@
 ```bash
 rustup install nightly
 
-cargo +nightly install -f --git https://github.com/JoNil/cargo-n64.git --branch master cargo-n64
+cargo install -f --git https://github.com/JoNil/cargo-n64.git --branch master cargo-n64
 
 rustup default nightly
 rustup component add rust-src
@@ -23,7 +23,7 @@ cargo run --package extract_boot_code -- "roms/Super Mario 64 (U) [!].z64"
 ## Build for N64
 
 ```bash
-cargo +nightly n64 build --ipl3 bootcode.bin -- --package game
+cargo n64 build --ipl3 bootcode.bin -- --package game
 ```
 
 ## Run for PC
