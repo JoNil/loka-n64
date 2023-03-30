@@ -290,6 +290,7 @@ impl Mesh {
             dimension: wgpu::TextureDimension::D2,
             format: tex_format,
             usage: wgpu::TextureUsages::COPY_DST | wgpu::TextureUsages::TEXTURE_BINDING,
+            view_formats: &[tex_format],
         });
         let tex_view = tex.create_view(&Default::default());
 

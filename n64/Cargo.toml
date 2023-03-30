@@ -22,13 +22,13 @@ n64-sys = { path = "../n64-sys" }
 mipsasm = { git = "https://github.com/JoNil/mipsasm.git", default-features = false }
 
 [target.'cfg(not(target_vendor = "nintendo64"))'.dependencies]
-cpal = "0.14"
+cpal = "0.15"
 futures-executor = "0.3"
-naga = { version = "0.10", features = ["glsl-in", "spv-out"] }
+naga = { version = "0.11", features = ["glsl-in", "spv-out"] }
 once_cell = "1"
 rubato = { git = "https://github.com/JoNil/rubato.git" }
-wgpu = { version = "0.14", features = ["spirv"] }
-winit = "0.27"
+wgpu = { version = "0.15", features = ["spirv"] }
+winit = "0.28"
 
 [target.'cfg(target_vendor = "nintendo64")'.dependencies]
 n64-alloc = { path = "../n64-alloc" }

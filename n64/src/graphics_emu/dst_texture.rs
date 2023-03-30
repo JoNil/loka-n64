@@ -35,6 +35,7 @@ impl DstTexture {
             usage: wgpu::TextureUsages::COPY_DST
                 | wgpu::TextureUsages::COPY_SRC
                 | wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[TEXUTRE_FORMAT],
         });
         let tex_view = tex.create_view(&Default::default());
 
@@ -46,6 +47,7 @@ impl DstTexture {
             dimension: wgpu::TextureDimension::D2,
             format: DEPTH_FORMAT,
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
+            view_formats: &[DEPTH_FORMAT],
         });
         let depth_view = depth.create_view(&Default::default());
 
