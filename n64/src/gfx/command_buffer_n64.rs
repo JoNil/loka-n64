@@ -1,7 +1,9 @@
 #![cfg_attr(not(target_vendor = "nintendo64"), allow(unused))]
 
 use super::{FillPipeline, Pipeline};
-use crate::{framebuffer::ViBufferToken, graphics_n64::Graphics, VideoMode};
+use crate::{
+    framebuffer::ViBufferToken, graphics_n64::Graphics, ipl3font, slow_cpu_clear, VideoMode,
+};
 use alloc::{boxed::Box, vec::Vec};
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use rdp_command_builder::*;
@@ -316,10 +318,37 @@ impl<'a> CommandBuffer<'a> {
 
         {
             n64_profiler::scope!("Rsp Job");
-            graphics.rsp_start(&mut self.cache.rdp.blocks);
-        }
+            if !graphics.buffer_started {
+                graphics.rsp_start(&mut self.cache.rdp.blocks, true);
+                graphics.buffer_started = true;
+            }
 
-        //self.vi_buffer_toke
+            let (status, pc) = graphics.rsp_step();
+
+            const GREEN: Color = Color::new(0b00011_10000_00011_1);
+            const RED: Color = Color::new(0b10000_00011_00011_1);
+
+            let mut out_tex = crate::gfx::TextureMut::new(
+                self.cache.video_mode.width(),
+                self.cache.video_mode.height(),
+                unsafe {
+                    core::slice::from_raw_parts_mut(
+                        self.out_tex.0,
+                        self.cache.video_mode.size() as usize,
+                    )
+                },
+            );
+
+            slow_cpu_clear(out_tex.data);
+
+            ipl3font::draw_str(
+                &mut out_tex,
+                15,
+                15,
+                RED,
+                alloc::format!("PC: {:04x}, Status {:04x}", pc, status).as_bytes(),
+            );
+        }
 
         (
             self.colored_rect_count as i32,

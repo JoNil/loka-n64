@@ -64,10 +64,18 @@ fn dma_wait() {
     while unsafe { read_volatile(RSP_STATUS) } & (RSP_STATUS_DMA_BUSY | RSP_STATUS_IO_BUSY) > 0 {}
 }
 
-fn start() {
+fn start(single_step: bool) {
+    let mut status_cmd = RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE;
+
+    if single_step {
+        status_cmd |= RSP_WSTATUS_SET_SSTEP;
+    } else {
+        status_cmd |= RSP_WSTATUS_CLEAR_SSTEP;
+    }
+
     unsafe {
         write_volatile(RSP_PC, 0);
-        write_volatile(RSP_STATUS, RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE);
+        write_volatile(RSP_STATUS, status_cmd);
     }
 }
 
@@ -78,13 +86,13 @@ pub fn init() {
     }
 }
 
-pub fn run(code: &[u8], data: Option<&[u8]>) {
+pub fn run(code: &[u8], data: Option<&[u8]>, single_step: bool) {
     write_imem(code);
     if let Some(data) = data {
         write_dmem(data);
     }
 
-    start();
+    start(single_step);
 }
 
 pub fn status() -> usize {
