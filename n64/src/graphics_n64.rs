@@ -22,6 +22,7 @@ struct RspDmem {
 
 pub struct Graphics {
     gpu_commands: Vec<RdpBlock>,
+    pub buffer_started: bool,
 }
 
 impl Graphics {
@@ -31,6 +32,7 @@ impl Graphics {
         rsp::init();
         Self {
             gpu_commands: Vec::with_capacity(32),
+            buffer_started: false,
         }
     }
 
@@ -49,7 +51,12 @@ impl Graphics {
     }
 
     #[inline]
-    pub fn rsp_start(&mut self, commands: &mut Vec<RdpBlock>) {
+    pub fn rsp_step(&mut self) -> (usize, usize) {
+        (rsp::status(), rsp::pc())
+    }
+
+    #[inline]
+    pub fn rsp_start(&mut self, commands: &mut Vec<RdpBlock>, single_step: bool) {
         let code = include_bytes_align_as!(u64, "../../n64-sys/rsp/rsp.bin");
 
         core::mem::swap(&mut self.gpu_commands, commands);
@@ -58,8 +65,6 @@ impl Graphics {
             pointer_count: self.gpu_commands.len() as u32, //2,
             chunk_pointer: [0; 255],
         };
-
-        static mut FC: usize = 0;
 
         for (index, chunk) in self.gpu_commands.iter().enumerate() {
             unsafe {
@@ -71,23 +76,16 @@ impl Graphics {
             rsp_dmem.chunk_pointer[index] = virtual_to_physical(chunk as *const RdpBlock) as u32;
         }
 
-        unsafe {
-            FC += 1;
-        }
-
         let mut should_panic = false;
 
-        rsp::run(code, Some(rsp_dmem.as_bytes()));
-        if !rsp::wait(5000) {
-            debugln!("RSP TIMEOUT! {:032b} pc {:08x}", rsp::status(), rsp::pc());
-            should_panic = true;
+        rsp::run(code, Some(rsp_dmem.as_bytes()), single_step);
+        if !single_step {
+            if !rsp::wait(500) {
+                debugln!("RSP TIMEOUT! {:032b} pc {:08x}", rsp::status(), rsp::pc());
+                should_panic = true;
+            }
         }
 
-        unsafe {
-            debugln!("{} status {:032b} pc {:08x}", FC, rsp::status(), rsp::pc());
-        }
-
-        //debugln!("Hello");
         let print_64bit = true;
         let print_32bit = true;
         if should_panic {
