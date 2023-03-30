@@ -17,6 +17,18 @@ macro DbgPrint(reg) {
 }
 
 macro DbgPrintStatusRegs (reg) {
+    li t5, 1122
+    DbgPrint(t5)
+    mfc0 t5, c0
+    DbgPrint(t5)
+    mfc0 t5, c1
+    DbgPrint(t5)
+    mfc0 t5, c2
+    DbgPrint(t5)
+    mfc0 t5, c3
+    DbgPrint(t5)
+    mfc0 t5, c4
+    DbgPrint(t5)
     mfc0 t5, c5
     DbgPrint(t5)
     mfc0 t5, c6
@@ -34,6 +46,8 @@ macro DbgPrintStatusRegs (reg) {
     mfc0 t5, c12
     DbgPrint(t5)
     mfc0 t5, c13
+    DbgPrint(t5)
+    li t5, 3344
     DbgPrint(t5)
 }
 
@@ -215,7 +229,11 @@ wait_rdp_busy_end:
     bne t5, t0, wait_rdp_busy_end // Loop while rdp busy.
     nop
 
+    li t5, 5678
+    DbgPrint(t5)
+
     break
+    nop
 
 if 0 {
 start:
