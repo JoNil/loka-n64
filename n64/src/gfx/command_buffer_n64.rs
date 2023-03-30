@@ -325,6 +325,8 @@ impl<'a> CommandBuffer<'a> {
 
             let (status, pc) = graphics.rsp_step(step);
 
+            let code = graphics.code();
+
             const GREEN: Color = Color::new(0b00011_10000_00011_1);
             const RED: Color = Color::new(0b10000_00011_00011_1);
 
@@ -348,6 +350,8 @@ impl<'a> CommandBuffer<'a> {
                 RED,
                 alloc::format!("PC: {:04x}, Status {:04x}", pc, status).as_bytes(),
             );
+
+            ipl3font::draw_str(&mut out_tex, 15, 15 + 20, RED, code[pc / 4].as_bytes());
         }
 
         (

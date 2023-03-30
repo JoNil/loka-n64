@@ -8,6 +8,7 @@
 *.nvert
 *.z64
 **/*.rs.bk
+/rsp
 /target
 /target_ra
 scope_names.txt
