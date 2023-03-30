@@ -120,6 +120,7 @@ fn audio_thread(
             move |err| {
                 println!("Audio Error: {}", err);
             },
+            None,
         ),
         SampleFormat::I16 => device.build_output_stream(
             &config,
@@ -138,6 +139,7 @@ fn audio_thread(
             move |err| {
                 println!("Audio Error: {}", err);
             },
+            None,
         ),
         SampleFormat::U16 => device.build_output_stream(
             &config,
@@ -156,7 +158,9 @@ fn audio_thread(
             move |err| {
                 println!("Audio Error: {}", err);
             },
+            None,
         ),
+        _ => panic!("Unsupported sample format"),
     }
     .unwrap();
 

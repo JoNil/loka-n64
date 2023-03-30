@@ -11,6 +11,7 @@ use std::thread;
 use std::thread_local;
 use textured_rect::TexturedRect;
 use wgpu::util::DeviceExt;
+use wgpu::InstanceDescriptor;
 use winit::{
     event::{self, VirtualKeyCode, WindowEvent},
     event_loop::{ControlFlow, EventLoop},
@@ -102,11 +103,14 @@ impl Graphics {
 
         let keys_down = HashSet::new();
 
-        let instance = wgpu::Instance::new(wgpu::Backends::PRIMARY);
+        let instance = wgpu::Instance::new(InstanceDescriptor {
+            backends: wgpu::Backends::PRIMARY,
+            ..Default::default()
+        });
 
         let (size, surface) = unsafe {
             let size = window.inner_size();
-            let surface = instance.create_surface(&window);
+            let surface = instance.create_surface(&window).unwrap();
             (size, surface)
         };
 
@@ -134,7 +138,7 @@ impl Graphics {
             (adapter, Arc::new(device), queue)
         });
 
-        let surface_format = surface.get_supported_formats(&adapter)[0];
+        let surface_format = surface.get_capabilities(&adapter).formats[0];
 
         let surface_config = wgpu::SurfaceConfiguration {
             usage: wgpu::TextureUsages::RENDER_ATTACHMENT,
@@ -143,6 +147,7 @@ impl Graphics {
             height: size.height,
             present_mode: wgpu::PresentMode::Fifo,
             alpha_mode: wgpu::CompositeAlphaMode::Opaque,
+            view_formats: vec![surface_format],
         };
 
         surface.configure(&device, &surface_config);
