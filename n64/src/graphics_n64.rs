@@ -55,15 +55,11 @@ impl Graphics {
         core::mem::swap(&mut self.gpu_commands, commands);
 
         let mut rsp_dmem = RspDmem {
-            pointer_count: self.gpu_commands.len() as u32,//2,
+            pointer_count: self.gpu_commands.len() as u32, //2,
             chunk_pointer: [0; 255],
         };
 
         static mut FC: usize = 0;
-
-        unsafe {
-            debugln!("{}", FC);
-        }
 
         for (index, chunk) in self.gpu_commands.iter().enumerate() {
             unsafe {
@@ -80,10 +76,15 @@ impl Graphics {
         }
 
         let mut should_panic = false;
+
         rsp::run(code, Some(rsp_dmem.as_bytes()));
-        if !rsp::wait(500) {
-            debugln!("RSP TIMEOUT!");
+        if !rsp::wait(5000) {
+            debugln!("RSP TIMEOUT! {:032b} pc {:08x}", rsp::status(), rsp::pc());
             should_panic = true;
+        }
+
+        unsafe {
+            debugln!("{} status {:032b} pc {:08x}", FC, rsp::status(), rsp::pc());
         }
 
         //debugln!("Hello");

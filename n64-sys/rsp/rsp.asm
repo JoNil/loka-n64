@@ -41,6 +41,10 @@ macro DbgPrintStatusRegs (reg) {
     DbgPrint(t5)
     mfc0 t5, c10
     DbgPrint(t5)
+
+    li t5, 4321
+    DbgPrint(t5)
+
     mfc0 t5, c11
     DbgPrint(t5)
     mfc0 t5, c12

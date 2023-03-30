@@ -87,6 +87,14 @@ pub fn run(code: &[u8], data: Option<&[u8]>) {
     start();
 }
 
+pub fn status() -> usize {
+    unsafe { read_volatile(RSP_STATUS) }
+}
+
+pub fn pc() -> usize {
+    unsafe { read_volatile(RSP_PC) }
+}
+
 pub fn wait(timeout: u32) -> bool {
     let start = crate::sys::current_time_us();
 
