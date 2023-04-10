@@ -304,7 +304,7 @@ fn main() {
             world.housekeep();
         }
 
-        if !health::is_alive(world.components.get::<(Health,)>(), player) {
+        if false { // !health::is_alive(world.components.get::<(Health,)>(), player) {
             break;
         }
     }

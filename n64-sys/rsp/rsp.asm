@@ -95,6 +95,7 @@ process_chunk_pointer:
 
     // DMEM
     // Request semaphore in t5
+
 request_semaphore:
     mfc0 t5, c7
     bnez t5, request_semaphore
