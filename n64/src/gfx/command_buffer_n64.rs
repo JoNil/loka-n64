@@ -7,6 +7,7 @@ use crate::{
 use alloc::{boxed::Box, vec::Vec};
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use rdp_command_builder::*;
+use n64_macros::debugln;
 use rdp_math::{
     color_to_i32, edge_slope, is_triangle_right_major, shaded_triangle_coeff,
     slope_y_next_subpixel_intersection, slope_y_prev_scanline_intersection, sorted_triangle,
@@ -323,35 +324,52 @@ impl<'a> CommandBuffer<'a> {
                 graphics.buffer_started = true;
             }
 
-            let (status, pc) = graphics.rsp_step(step);
+            if true {
+                let mut i = 0;
+                loop {
+                    let (status, pc) = graphics.rsp_step(true);
+                    let code = graphics.code();
+                    
+                    debugln!("Step {:032b} pc {:08x} {}", status, pc, code[pc / 4]);
 
-            let code = graphics.code();
+                    if i > 1024 {
+                        panic!("To many steps in rsp");
+                    }
+                    i = i + 1;
+                }
+            }
+            else {
 
-            const GREEN: Color = Color::new(0b00011_10000_00011_1);
-            const RED: Color = Color::new(0b10000_00011_00011_1);
+                let (status, pc) = graphics.rsp_step(step);
 
-            let mut out_tex = crate::gfx::TextureMut::new(
-                self.cache.video_mode.width(),
-                self.cache.video_mode.height(),
-                unsafe {
-                    core::slice::from_raw_parts_mut(
-                        self.out_tex.0,
-                        self.cache.video_mode.size() as usize,
-                    )
-                },
-            );
+                let code = graphics.code();
 
-            slow_cpu_clear(out_tex.data);
+                const GREEN: Color = Color::new(0b00011_10000_00011_1);
+                const RED: Color = Color::new(0b10000_00011_00011_1);
 
-            ipl3font::draw_str(
-                &mut out_tex,
-                15,
-                15,
-                RED,
-                alloc::format!("PC: {:04x}, Status {:04x}", pc, status).as_bytes(),
-            );
+                let mut out_tex = crate::gfx::TextureMut::new(
+                    self.cache.video_mode.width(),
+                    self.cache.video_mode.height(),
+                    unsafe {
+                        core::slice::from_raw_parts_mut(
+                            self.out_tex.0,
+                            self.cache.video_mode.size() as usize,
+                        )
+                    },
+                );
 
-            ipl3font::draw_str(&mut out_tex, 15, 15 + 20, RED, code[pc / 4].as_bytes());
+                slow_cpu_clear(out_tex.data);
+
+                ipl3font::draw_str(
+                    &mut out_tex,
+                    15,
+                    15,
+                    RED,
+                    alloc::format!("PC: {:04x}, Status {:04x}", pc, status).as_bytes(),
+                );
+
+                ipl3font::draw_str(&mut out_tex, 15, 15 + 20, RED, code[pc / 4].as_bytes());
+            }
         }
 
         (
