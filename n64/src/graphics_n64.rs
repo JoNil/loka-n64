@@ -74,6 +74,54 @@ impl Graphics {
         (rsp::status(), rsp::pc())
     }
 
+    pub fn rsp_panic_dump_mem(&mut self) {
+        let print_64bit = true;
+        let print_32bit = true;
+
+        let mut dmem: Aligned<A8, [u8; 4096]> = Aligned([0x00; 4096]);
+
+        rsp::read_dmem(dmem.deref_mut());
+
+        if print_64bit {
+            debugln!(
+                "ADDR          : BINARY                                                           : HEX              : DECIMAL");
+            for (i, word) in dmem.chunks_exact(8).enumerate() {
+                let a = u64::from_be_bytes(word.try_into().unwrap());
+
+                debugln!(
+                    "ADDR {:<8} : {:064b} : {:016x} : {:20} : {:24.8}",
+                    i * 8,
+                    a,
+                    a,
+                    a,
+                    float_from_fix_16_16_u64(a)
+                );
+
+                //assert!(a == i as u32);
+            }
+        }
+        if print_32bit {
+            debugln!("ADDR      : BINARY                           : HEX      : DECIMAL");
+            for (i, word) in dmem.chunks_exact(4).enumerate() {
+                let a = u32::from_be_bytes(word.try_into().unwrap());
+
+                debugln!(
+                    "ADDR {:<4} : {:032b} : {:08x} : {:10} : {:14.8}",
+                    i * 4,
+                    a,
+                    a,
+                    a,
+                    float_from_fix_16_16_u32(a)
+                );
+
+                //assert!(a == i as u32);
+            }
+        }
+
+        panic!("DONE");
+
+    }
+
     #[inline]
     pub fn rsp_start(&mut self, commands: &mut Vec<RdpBlock>, single_step: bool) {
         core::mem::swap(&mut self.gpu_commands, commands);
@@ -103,8 +151,6 @@ impl Graphics {
             }
         }
 
-        let print_64bit = true;
-        let print_32bit = true;
         if should_panic {
             for (block_index, block) in self.gpu_commands.iter().enumerate() {
                 debugln!("BLOCK {}: {}", block_index, block.block_len);
@@ -118,48 +164,7 @@ impl Graphics {
                     );
                 }
             }
-
-            let mut dmem: Aligned<A8, [u8; 4096]> = Aligned([0x00; 4096]);
-
-            rsp::read_dmem(dmem.deref_mut());
-
-            if print_64bit {
-                debugln!(
-                    "ADDR          : BINARY                                                           : HEX              : DECIMAL");
-                for (i, word) in dmem.chunks_exact(8).enumerate() {
-                    let a = u64::from_be_bytes(word.try_into().unwrap());
-
-                    debugln!(
-                        "ADDR {:<8} : {:064b} : {:016x} : {:20} : {:24.8}",
-                        i * 8,
-                        a,
-                        a,
-                        a,
-                        float_from_fix_16_16_u64(a)
-                    );
-
-                    //assert!(a == i as u32);
-                }
-            }
-            if print_32bit {
-                debugln!("ADDR      : BINARY                           : HEX      : DECIMAL");
-                for (i, word) in dmem.chunks_exact(4).enumerate() {
-                    let a = u32::from_be_bytes(word.try_into().unwrap());
-
-                    debugln!(
-                        "ADDR {:<4} : {:032b} : {:08x} : {:10} : {:14.8}",
-                        i * 4,
-                        a,
-                        a,
-                        a,
-                        float_from_fix_16_16_u32(a)
-                    );
-
-                    //assert!(a == i as u32);
-                }
-            }
-
-            panic!("DONE");
+            self.rsp_panic_dump_mem();
         }
     }
 }

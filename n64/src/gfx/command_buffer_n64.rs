@@ -317,58 +317,67 @@ impl<'a> CommandBuffer<'a> {
     pub fn submit(self, graphics: &mut Graphics, step: bool) -> (i32, i32, i32) {
         self.cache.rdp.sync_full();
 
+        let use_single_step = false;
+
         {
             n64_profiler::scope!("Rsp Job");
-            if !graphics.buffer_started {
-                graphics.rsp_start(&mut self.cache.rdp.blocks, true);
-                graphics.buffer_started = true;
-            }
-
-            if true {
-                let mut i = 0;
-                loop {
-                    let (status, pc) = graphics.rsp_step(true);
-                    let code = graphics.code();
-                    
-                    debugln!("Step {:032b} pc {:08x} {}", status, pc, code[pc / 4]);
-
-                    if i > 1024 {
-                        panic!("To many steps in rsp");
-                    }
-                    i = i + 1;
-                }
+            if !use_single_step {
+                graphics.rsp_start(&mut self.cache.rdp.blocks, false);
             }
             else {
+                if !graphics.buffer_started {
+                    graphics.rsp_start(&mut self.cache.rdp.blocks, true);
+                    graphics.buffer_started = true;
+                }
 
-                let (status, pc) = graphics.rsp_step(step);
+                if true {
+                    let mut i = 0;
+                    debugln!("Status          PC");
+                    loop {
+                        let (status, pc) = graphics.rsp_step(true);
+                        let code = graphics.code();
+                        
+                        debugln!("{:015b} {:08x} : {}", status, pc, code[pc / 4]);
 
-                let code = graphics.code();
+                        if i > 1024 {
+                            graphics.rsp_panic_dump_mem();
+                            panic!("To many steps in rsp");
+                        }
+                        i = i + 1;
+                    }
+                }
+                else {
 
-                const GREEN: Color = Color::new(0b00011_10000_00011_1);
-                const RED: Color = Color::new(0b10000_00011_00011_1);
+                    let (status, pc) = graphics.rsp_step(step);
 
-                let mut out_tex = crate::gfx::TextureMut::new(
-                    self.cache.video_mode.width(),
-                    self.cache.video_mode.height(),
-                    unsafe {
-                        core::slice::from_raw_parts_mut(
-                            self.out_tex.0,
-                            self.cache.video_mode.size() as usize,
-                        )
-                    },
-                );
+                    let code = graphics.code();
 
-                slow_cpu_clear(out_tex.data);
+                    const GREEN: Color = Color::new(0b00011_10000_00011_1);
+                    const RED: Color = Color::new(0b10000_00011_00011_1);
 
-                ipl3font::draw_str(
-                    &mut out_tex,
-                    15,
-                    15,
-                    RED,
-                    alloc::format!("PC: {:04x}, Status {:04x}", pc, status).as_bytes(),
-                );
+                    let mut out_tex = crate::gfx::TextureMut::new(
+                        self.cache.video_mode.width(),
+                        self.cache.video_mode.height(),
+                        unsafe {
+                            core::slice::from_raw_parts_mut(
+                                self.out_tex.0,
+                                self.cache.video_mode.size() as usize,
+                            )
+                        },
+                    );
 
-                ipl3font::draw_str(&mut out_tex, 15, 15 + 20, RED, code[pc / 4].as_bytes());
+                    slow_cpu_clear(out_tex.data);
+
+                    ipl3font::draw_str(
+                        &mut out_tex,
+                        15,
+                        15,
+                        RED,
+                        alloc::format!("PC: {:04x}, Status {:04x}", pc, status).as_bytes(),
+                    );
+
+                    ipl3font::draw_str(&mut out_tex, 15, 15 + 20, RED, code[pc / 4].as_bytes());
+                }
             }
         }
 
