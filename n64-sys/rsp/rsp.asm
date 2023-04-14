@@ -9,6 +9,7 @@ base $0000
 origin $0000
 
 macro DbgPrint(reg) {
+    sw 0, 4(t7) // Write 0 AFTER current value, to mark last print
     sw {reg}, 0(t7)
     addi t7, t7, 4
     // Loop between 2048 - 4195
@@ -16,14 +17,19 @@ macro DbgPrint(reg) {
     ori t7, t7, 2048
 }
 
-macro DbgDisableSingleStep (tmp_reg) {
-    li {tmp_reg}, 0x20
+macro DbgDisableSingleStep (tmp_reg, ss_reg) {
+    // Read if in Single step
+    mfc0 {ss_reg}, c4
+    andi {ss_reg}, {ss_reg}, RSP_STP
+    li {tmp_reg}, CLR_STP
     mtc0 {tmp_reg}, c4
 }
 
-macro DbgEnableSingleStep (tmp_reg) {    
+macro DbgEnableSingleStep (tmp_reg, ss_reg) {    
     //li {tmp_reg}, 0x40
-    //mtc0 {tmp_reg}, c4
+    // If was in single step before disable, ss_reg will contain 0x20
+    sll {tmp_reg}, {ss_reg}, 1
+    mtc0 {tmp_reg}, c4
 }
 
 macro DbgPrintStatusRegs (reg) {
@@ -108,12 +114,12 @@ process_chunk_pointer:
     // DMEM
     // Request semaphore in t5
 
-    DbgDisableSingleStep(t5)
+    DbgDisableSingleStep(t5, t8)
 request_semaphore:
     mfc0 t5, c7
     bnez t5, request_semaphore
     nop
-    DbgEnableSingleStep(t5)
+    DbgEnableSingleStep(t5, t8)
 
     DbgPrint(t5)
     
@@ -124,12 +130,12 @@ request_semaphore:
     mtc0 t5, c11         // Load rdp DMA (Not XBUS) flags
     
     // Wait until spot available in DMEM
-    DbgDisableSingleStep(t5)
+    DbgDisableSingleStep(t5, t8)
 wait_dma_available:
     mfc0 t5, c5
     bnez t5, wait_dma_available
     nop
-    DbgEnableSingleStep(t5)
+    DbgEnableSingleStep(t5, t8)
     
     li t5, 2
     DbgPrint(t5)
@@ -157,7 +163,7 @@ wait_dma_available:
     li   t5, 6
     DbgPrint(t5)
 
-    DbgDisableSingleStep(t5)
+    DbgDisableSingleStep(t5, t8)
 wait_dma_busy:
     if 1 {
         mfc0 t5, c4
@@ -169,7 +175,7 @@ wait_dma_busy:
         bnez t5, wait_dma_busy
         nop
     }
-    DbgEnableSingleStep(t5)
+    DbgEnableSingleStep(t5, t8)
 
     li   t5, 42
     DbgPrint(t5)
@@ -188,17 +194,17 @@ wait_dma_busy:
 //    beq  t5, t0, wait_rdp_ready // Loop while rdp busy.
 //    nop
 
-    DbgDisableSingleStep(t5)
     // Wait for rdp done TODO: Move to before emit for non-sync
+    DbgDisableSingleStep(t5, t8)
 wait_rdp_busy_pre:
-    // DbgPrintStatusRegs(t5)
+    // DbgPrintStatusRegs(t5, t8)
 
     mfc0 t5, c11
     DbgPrint(t5)
     and t5, t5, t6
     bnez t5, wait_rdp_busy_pre // Loop while rdp busy.
     nop
-    DbgEnableSingleStep(t5)
+    DbgEnableSingleStep(t5, t8)
     
     li t5, 43
     DbgPrint(t5)
@@ -227,7 +233,7 @@ wait_rdp_busy_pre:
 
     // Wait for rdp done TODO: Move to before emit for non-sync
 
-    DbgDisableSingleStep(t5)
+    DbgDisableSingleStep(t5, t8)
 wait_rdp_busy:
     if 1 {
         mfc0 t5, c4
@@ -242,7 +248,7 @@ wait_rdp_busy:
         bne t5, t0, wait_rdp_busy // Loop while rdp busy.
         nop
     }
-    DbgEnableSingleStep(t5)
+    DbgEnableSingleStep(t5, t8)
 
 //wait_rdp_busy:
 //    mfc0 t5,c13 // T5 = RDP Command Buffer BUSY Register ($A4100014)
@@ -259,7 +265,7 @@ return:
     DbgPrint(t5)
 
     // Wait for rdp done TODO: Move to before emit for non-sync
-    DbgDisableSingleStep(t5)
+    DbgDisableSingleStep(t5, t8)
 wait_rdp_busy_end:
     if 1 {
         mfc0 t5, c4
@@ -275,13 +281,17 @@ wait_rdp_busy_end:
         bne t5, t0, wait_rdp_busy_end // Loop while rdp busy.
         nop
     }
-    DbgEnableSingleStep(t5)
+    DbgEnableSingleStep(t5, t8)
 
     mfc0 t5, c4
     DbgPrint(t5)
 
     li t5, 5678
     DbgPrint(t5)
+
+    // Disable single step for break
+    li t8, CLR_STP
+    mtc0 t8, c4
 
     break
     nop

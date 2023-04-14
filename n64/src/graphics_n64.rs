@@ -74,6 +74,35 @@ impl Graphics {
         (rsp::status(), rsp::pc())
     }
 
+    pub fn rsp_single_step_print(&mut self) {
+        rsp::activate_single_step();
+
+        let mut i = 0;
+        debugln!("Status          PC");
+        loop {
+            // Some steps does not work in single_step mode, use halt to ensure valid status/pc read.
+            rsp::set_halt();
+            let status = rsp::status();
+            let pc = rsp::pc();
+            rsp::clear_halt();
+
+            self.rsp_step(true);
+            let code = self.code();
+            
+            if pc / 4 > code.len() {
+                debugln!("{:015b} {:08x} : OUTSIDE CODE RANGE", status, pc);
+                break;
+            }
+
+            debugln!("{:015b} {:08x} : {}", status, pc, code[pc / 4]);
+
+            if i > 1024 {
+                break;
+            }
+            i = i + 1;
+        }
+    }
+
     pub fn rsp_panic_dump_mem(&mut self) {
         let print_64bit = true;
         let print_32bit = true;
@@ -145,13 +174,16 @@ impl Graphics {
 
         rsp::run(CODE, Some(rsp_dmem.as_bytes()), single_step);
         if !single_step {
-            if !rsp::wait(500) {
-                debugln!("RSP TIMEOUT! {:032b} pc {:08x}", rsp::status(), rsp::pc());
+            let (wait_ok, rsp_status) = rsp::wait(500);
+            if !wait_ok {
+                debugln!("RSP TIMEOUT! {:032b} pc {:08x}", rsp_status, rsp::pc());
                 should_panic = true;
             }
         }
 
         if should_panic {
+            self.rsp_single_step_print();
+
             for (block_index, block) in self.gpu_commands.iter().enumerate() {
                 debugln!("BLOCK {}: {}", block_index, block.block_len);
                 for (i, command) in block.rdp_data.iter().enumerate() {

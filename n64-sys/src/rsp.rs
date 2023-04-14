@@ -74,7 +74,32 @@ fn start(single_step: bool) {
     }
 
     unsafe {
+        write_volatile(RSP_STATUS, RSP_WSTATUS_SET_HALT); // Make sure rsp is halted before pc is set.
         write_volatile(RSP_PC, 0);
+        write_volatile(RSP_STATUS, status_cmd);
+    }
+}
+
+pub fn activate_single_step() {
+    let status_cmd = RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE | RSP_WSTATUS_SET_SSTEP;
+
+    unsafe {
+        write_volatile(RSP_STATUS, status_cmd);
+    }
+}
+
+pub fn set_halt() {
+    let status_cmd = RSP_WSTATUS_SET_HALT;
+
+    unsafe {
+        write_volatile(RSP_STATUS, status_cmd);
+    }
+}
+
+pub fn clear_halt() {
+    let status_cmd = RSP_WSTATUS_CLEAR_HALT;
+
+    unsafe {
         write_volatile(RSP_STATUS, status_cmd);
     }
 }
@@ -97,7 +122,7 @@ pub fn run(code: &[u8], data: Option<&[u8]>, single_step: bool) {
 
 pub fn step() {
     unsafe {
-        write_volatile(RSP_STATUS, RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE);
+        write_volatile(RSP_STATUS, RSP_WSTATUS_CLEAR_HALT);// | RSP_WSTATUS_CLEAR_BROKE);
     }
 }
 
@@ -109,7 +134,7 @@ pub fn pc() -> usize {
     unsafe { read_volatile(RSP_PC) }
 }
 
-pub fn wait(timeout: u32) -> bool {
+pub fn wait(timeout: u32) -> (bool, usize) {
     let start = crate::sys::current_time_us();
 
     loop {
@@ -119,11 +144,11 @@ pub fn wait(timeout: u32) -> bool {
         if (status & RSP_STATUS_HALTED) > 0
             && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
         {
-            return true;
+            return (true, status);
         }
 
         if crate::sys::current_time_us() > start + timeout as i64 {
-            return false;
+            return (true, status);
         }
     }
 }
