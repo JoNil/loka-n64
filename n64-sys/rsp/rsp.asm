@@ -235,7 +235,7 @@ wait_rdp_busy_pre:
 
     DbgDisableSingleStep(t5, t8)
 wait_rdp_busy:
-    if 1 {
+    if 0 {
         mfc0 t5, c4
         andi t5, t5, RSP_BSY // dma_busy_bit
         bnez t5, wait_dma_busy
@@ -250,12 +250,6 @@ wait_rdp_busy:
     }
     DbgEnableSingleStep(t5, t8)
 
-//wait_rdp_busy:
-//    mfc0 t5,c13 // T5 = RDP Command Buffer BUSY Register ($A4100014)
-//    DbgPrint(t5)
-//    bnez t5,wait_rdp_busy // IF TRUE RDP Command Buffer Busy
-    nop // Delay Slot
-
     addiu t3, t3, 1   // Next chunk pointer
     j process_chunk_pointer
     nop
@@ -266,21 +260,13 @@ return:
 
     // Wait for rdp done TODO: Move to before emit for non-sync
     DbgDisableSingleStep(t5, t8)
+
 wait_rdp_busy_end:
-    if 1 {
-        mfc0 t5, c4
-        andi t5, t5, RSP_BSY // dma_busy_bit
-        bnez t5, wait_dma_busy
-        nop
-    } else {
-        DbgPrintStatusRegs(t5)
-        mfc0 t5, c11
-        DbgPrint(t5)
-        DbgPrint(t6)
-        and t5, t5, t6
-        bne t5, t0, wait_rdp_busy_end // Loop while rdp busy.
-        nop
-    }
+    mfc0 t5, c4
+    andi t5, t5, RSP_BSY // dma_busy_bit
+    bnez t5, wait_dma_busy
+    nop
+
     DbgEnableSingleStep(t5, t8)
 
     mfc0 t5, c4
