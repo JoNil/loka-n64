@@ -79,6 +79,7 @@ fn main() {
     let mut last_colored_rect_count = 0;
     let mut last_textured_rect_count = 0;
     let mut last_mesh_count = 0;
+    let mut last_rsp_clock = 0;
 
     let mut last_step = false;
 
@@ -259,6 +260,7 @@ fn main() {
                         0x00af00ff,
                     );
                     font::draw_number(&mut cb, last_mesh_count, vec2(300.0, 30.0), 0xaf0000ff);
+                    font::draw_number(&mut cb, last_rsp_clock, vec2(100.0, 50.0), 0xafaf00ff);
                 }
 
                 draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);
@@ -272,7 +274,7 @@ fn main() {
             n64.graphics.swap_buffers(&mut n64.framebuffer)
         };
 
-        let (colored_rect_count, textured_rect_count, mesh_count) = {
+        let (colored_rect_count, textured_rect_count, mesh_count, rsp_clock) = {
             n64::scope!("Submit Command Buffer");
             let cb = cb;
 
@@ -290,6 +292,7 @@ fn main() {
         last_colored_rect_count = colored_rect_count;
         last_textured_rect_count = textured_rect_count;
         last_mesh_count = mesh_count;
+        last_rsp_clock = rsp_clock;
 
         {
             // Cycle the random number generator

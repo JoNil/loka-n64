@@ -134,13 +134,17 @@ pub fn pc() -> usize {
     unsafe { read_volatile(RSP_PC) }
 }
 
+pub fn clock_from_signals() -> usize{
+    status()
+}
+
 pub fn wait(timeout: u32) -> (bool, usize) {
     let start = crate::sys::current_time_us();
 
     loop {
         // Wait for the RSP to halt and the DMA engine to be idle.
         let status = unsafe { read_volatile(RSP_STATUS) };
-
+        
         if (status & RSP_STATUS_HALTED) > 0
             && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
         {

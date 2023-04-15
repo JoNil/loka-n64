@@ -14,6 +14,7 @@ use rdp_math::{
     sorted_triangle_indices, triangle_is_too_small, truncate_to_pixel, z_triangle_coeff,
 };
 use rdp_state::RdpState;
+use n64_sys::rsp;
 
 mod rdp_command_builder;
 mod rdp_math;
@@ -314,7 +315,7 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn submit(self, graphics: &mut Graphics, step: bool) -> (i32, i32, i32) {
+    pub fn submit(self, graphics: &mut Graphics, step: bool) -> (i32, i32, i32, i32) {
         self.cache.rdp.sync_full();
 
         let use_single_step = false;
@@ -340,7 +341,7 @@ impl<'a> CommandBuffer<'a> {
                         debugln!("{:015b} {:08x} : {}", status, pc, code[pc / 4]);
 
                         if i > 1024 {
-                            graphics.rsp_panic_dump_mem();
+                            graphics.rsp_dump_mem();
                             panic!("To many steps in rsp");
                         }
                         i = i + 1;
@@ -381,10 +382,12 @@ impl<'a> CommandBuffer<'a> {
             }
         }
 
+        debugln!("clk {}", rsp::clock_from_signals());
         (
             self.colored_rect_count as i32,
             self.textured_rect_count as i32,
             self.mesh_count as i32,
+            rsp::clock_from_signals() as i32,
         )
     }
 }
