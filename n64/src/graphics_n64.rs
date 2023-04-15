@@ -103,7 +103,7 @@ impl Graphics {
         }
     }
 
-    pub fn rsp_panic_dump_mem(&mut self) {
+    pub fn rsp_dump_mem(&mut self) {
         let print_64bit = true;
         let print_32bit = true;
 
@@ -147,8 +147,6 @@ impl Graphics {
             }
         }
 
-        panic!("DONE");
-
     }
 
     #[inline]
@@ -175,6 +173,7 @@ impl Graphics {
         rsp::run(CODE, Some(rsp_dmem.as_bytes()), single_step);
         if !single_step {
             let (wait_ok, rsp_status) = rsp::wait(500);
+            debugln!("rsp_status {:032b}", rsp_status);
             if !wait_ok {
                 debugln!("RSP TIMEOUT! {:032b} pc {:08x}", rsp_status, rsp::pc());
                 should_panic = true;
@@ -182,7 +181,6 @@ impl Graphics {
         }
 
         if should_panic {
-            self.rsp_single_step_print();
 
             for (block_index, block) in self.gpu_commands.iter().enumerate() {
                 debugln!("BLOCK {}: {}", block_index, block.block_len);
@@ -196,7 +194,11 @@ impl Graphics {
                     );
                 }
             }
-            self.rsp_panic_dump_mem();
+            self.rsp_dump_mem();
+
+            self.rsp_single_step_print();
+
+            panic!("RSP TIMEOUT PANIC");
         }
     }
 }
