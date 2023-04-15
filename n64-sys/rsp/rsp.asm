@@ -165,16 +165,9 @@ wait_dma_available:
 
     DbgDisableSingleStep(t5, t8)
 wait_dma_busy:
-    if 1 {
-        mfc0 t5, c4
-        andi t5, t5, RSP_BSY // dma_busy_bit
-        bnez t5, wait_dma_busy
-        nop
-    } else {
-        mfc0 t5, c6
-        bnez t5, wait_dma_busy
-        nop
-    }
+    mfc0 t5, c6
+    bnez t5, wait_dma_busy
+    nop
     DbgEnableSingleStep(t5, t8)
 
     li   t5, 42
@@ -188,17 +181,9 @@ wait_dma_busy:
 
     DbgPrint(t5)
 
-//wait_rdp_ready:
-//    mfc0 t5, c11
-//    andi t5, t5, RDP_CMR
-//    beq  t5, t0, wait_rdp_ready // Loop while rdp busy.
-//    nop
-
     // Wait for rdp done TODO: Move to before emit for non-sync
     DbgDisableSingleStep(t5, t8)
 wait_rdp_busy_pre:
-    // DbgPrintStatusRegs(t5, t8)
-
     mfc0 t5, c11
     DbgPrint(t5)
     and t5, t5, t6
@@ -224,8 +209,6 @@ wait_rdp_busy_pre:
     addi t8, t8, rdp_start_cmd  // End at start + commands*8
     DbgPrint(t8)
     mtc0 t8, c9                 // Rdp commands end
-    //li t5, rdp_end_cmd     // End at start + 128*8
-    //mtc0 t5, c9            // Rdp commands end
 
     DbgPrint(t8)
     li t5, 44
@@ -235,19 +218,11 @@ wait_rdp_busy_pre:
 
     DbgDisableSingleStep(t5, t8)
 wait_rdp_busy:
-    if 0 {
-        mfc0 t5, c4
-        andi t5, t5, RSP_BSY // dma_busy_bit
-        bnez t5, wait_dma_busy
-        nop
-    } else {
-        // DbgPrintStatusRegs(t5)
-        mfc0 t5, c11
-        DbgPrint(t5)
-        and t5, t5, t6
-        bne t5, t0, wait_rdp_busy // Loop while rdp busy.
-        nop
-    }
+    mfc0 t5, c11
+    DbgPrint(t5)
+    and t5, t5, t6
+    bne t5, t0, wait_rdp_busy // Loop while rdp busy.
+    nop
     DbgEnableSingleStep(t5, t8)
 
     addiu t3, t3, 1   // Next chunk pointer
