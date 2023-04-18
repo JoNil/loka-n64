@@ -81,7 +81,7 @@ fn start(single_step: bool) {
 }
 
 pub fn activate_single_step() {
-    let status_cmd = RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE | RSP_WSTATUS_SET_SSTEP;
+    let status_cmd = RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_SET_SSTEP;//RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE | RSP_WSTATUS_SET_SSTEP;
 
     unsafe {
         write_volatile(RSP_STATUS, status_cmd);
@@ -135,24 +135,67 @@ pub fn pc() -> usize {
 }
 
 pub fn clock_from_signals() -> usize{
-    status()
+    set_halt();
+    let status = status();
+    clear_halt();
+
+    if (status & RSP_STATUS_SIG7) == 0 {
+        // Signals does NOT contain clock value
+        return 0
+    }
+
+    let signals = status>>7;
+    // Lower 7 bits are the upper 7 bits of the clock
+    (signals & 0x7F) << 17
 }
 
 pub fn wait(timeout: u32) -> (bool, usize) {
     let start = crate::sys::current_time_us();
+    let check_interval = 1;
 
-    loop {
-        // Wait for the RSP to halt and the DMA engine to be idle.
-        let status = unsafe { read_volatile(RSP_STATUS) };
-        
-        if (status & RSP_STATUS_HALTED) > 0
-            && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
-        {
-            return (true, status);
+    if false {
+        let mut last_check_time = start;
+        loop {
+            let current_time = crate::sys::current_time_us();
+    
+            if  current_time > last_check_time + check_interval as i64 {
+                set_halt();
+                // Wait for the RSP to halt and the DMA engine to be idle.
+                let status = unsafe { read_volatile(RSP_STATUS) };
+                clear_halt();
+                
+                if (status & RSP_STATUS_SIG7) > 0//(status & RSP_STATUS_HALTED) > 0
+                    && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
+                {
+                    return (true, status);
+                }
+    
+                last_check_time = current_time;
+            }
+
+            if current_time > start + timeout as i64 {
+                set_halt();
+                // Wait for the RSP to halt and the DMA engine to be idle.
+                let status = unsafe { read_volatile(RSP_STATUS) };
+                clear_halt();
+                return (true, status);
+            }
         }
+    } else {
 
-        if crate::sys::current_time_us() > start + timeout as i64 {
-            return (true, status);
+        loop {
+            // Wait for the RSP to halt and the DMA engine to be idle.
+            let status = unsafe { read_volatile(RSP_STATUS) };
+            
+            if (status & RSP_STATUS_SIG7) > 0//(status & RSP_STATUS_HALTED) > 0
+                && (status & (RSP_STATUS_DMA_BUSY | RSP_STATUS_DMA_FULL)) == 0
+            {
+                return (true, status);
+            }
+
+            if crate::sys::current_time_us() > start + timeout as i64 {
+                return (true, status);
+            }
         }
     }
 }

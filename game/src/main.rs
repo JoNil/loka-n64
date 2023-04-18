@@ -260,7 +260,11 @@ fn main() {
                         0x00af00ff,
                     );
                     font::draw_number(&mut cb, last_mesh_count, vec2(300.0, 30.0), 0xaf0000ff);
-                    font::draw_number(&mut cb, last_rsp_clock, vec2(100.0, 50.0), 0xafaf00ff);
+
+                    // RSP clock is 62.5Mhz => ticks / 62.5e6 = s, ticks / 62.5e3 = ms 
+                    let rsp_ms = last_rsp_clock / 62500;
+
+                    font::draw_number(&mut cb, rsp_ms, vec2(100.0, 50.0), 0xafaf00ff);
                 }
 
                 draw_player_weapon(&mut world, &mut cb, &VIDEO_MODE);

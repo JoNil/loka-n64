@@ -86,34 +86,61 @@ macro DbgPrintStatusRegs (reg) {
 }
 
 macro set_signals_from_upper_clock(reg, tmp0, tmp1) {
+        li {reg}, 1111
+        DbgPrint({reg})
+        
         li {tmp1}, clear_signals
+        DbgPrint({tmp1})
         mtc0 {tmp1}, c4
-    if 0 {
+
+        li {reg}, 2222
+        DbgPrint({reg})
+    if 1 {
         mfc0 {reg}, c12      // Read RDP clock
-        // CLock is 24 bits, will only fit 8, shift 16
-        srl {reg}, {reg}, 16
+
+        DbgPrint({reg})
+        // CLock is 24 bits, will only fit 7 (since sig_7 is used to signal "clear") shift 17
+        srl {reg}, {reg}, 17
         // Need to move bits to fit "set_signal_x"
+        DbgPrint({reg})
 
         // Clear tmp1
         xor {tmp1}, {tmp1}, {tmp1}
 
 // Read bit 0, and shift left to "set" signal bit 0 part of status
-        andi {tmp0}, {reg}, 0x1
-        sll {tmp0}, {tmp0}, SET_SG0
-        or {tmp1}, {tmp1}, {tmp0}
-        andi {tmp0}, {reg}, 0x2
-        sll {tmp0}, {tmp0}, SET_SG1-1
-        or {tmp1}, {tmp1}, {tmp0}
-        andi {tmp0}, {reg}, 0x4
-        sll {tmp0}, {tmp0}, SET_SG2-2
-        or {tmp1}, {tmp1}, {tmp0}
-        andi {tmp0}, {reg}, 0x8
-        sll {tmp0}, {tmp0}, SET_SG3-3
-        or {tmp1}, {tmp1}, {tmp0}
-        andi {tmp0}, {reg}, 0xA
-        sll {tmp0}, {tmp0}, SET_SG4-4
+        andi {tmp0}, {reg}, 0x01 // reg = clock bits: 24_23_22_21_20_19_18
+        sll {tmp1}, {tmp0}, SET_SG0 // tmp1 = (SET_SIG0 & bit_18)
+
+        srl {reg}, {reg}, 1  // reg = clock bits: 24_23_22_21_20_19
+        andi {tmp0}, {reg}, 0x01
+        sll {tmp0}, {tmp0}, SET_SG1
+        or {tmp1}, {tmp1}, {tmp0}  // tmp1 = tmp1 | (SET_SIG1 & bit_19)
+
+        srl {reg}, {reg}, 1  // reg = clock bits: 24_23_22_21_20
+        andi {tmp0}, {reg}, 0x01
+        sll {tmp0}, {tmp0}, SET_SG2
+        or {tmp1}, {tmp1}, {tmp0}  // tmp1 = tmp1 | (SET_SIG2 & bit_20)
+
+        srl {reg}, {reg}, 1  // reg = clock bits: 24_23_22_21
+        andi {tmp0}, {reg}, 0x01
+        sll {tmp0}, {tmp0}, SET_SG3
         or {tmp1}, {tmp1}, {tmp0}
 
+        srl {reg}, {reg}, 1  // reg = clock bits: 24_23_22
+        andi {tmp0}, {reg}, 0x01
+        sll {tmp0}, {tmp0}, SET_SG4
+        
+        srl {reg}, {reg}, 1  // reg = clock bits: 24_23
+        andi {tmp0}, {reg}, 0x01
+        sll {tmp0}, {tmp0}, SET_SG5
+        or {tmp1}, {tmp1}, {tmp0}
+
+        srl {reg}, {reg}, 1  // reg = clock bits: 24
+        andi {tmp0}, {reg}, 0x01
+        sll {tmp0}, {tmp0}, SET_SG6
+        or {tmp1}, {tmp1}, {tmp0}
+
+        DbgPrint({tmp1})
         mtc0 {tmp1}, c4 // Set the signals corresponding to the upper 8 bits of the clock.
         sw {reg}, 0(0)       // Store clock at adress 0 in dmem when done.
     } else {
@@ -125,16 +152,20 @@ macro set_signals_from_upper_clock(reg, tmp0, tmp1) {
 align(8)
 
 start:
-
+    xor 30, 30, 30        // reg 30 = 0
     xor t0, t0, t0        // t0 = 0
     li t6, rdp_busy_mask  // RDP Command busy
     lw t2, 0(0)           // Load 32 bits as pointer count
     li t3, 0              // t3 = 0
 
-process_chunk_pointer:
+    // Reset rdp clock counter
+    ori t5, 0, CLR_CLK
+    mtc0 t5, c11
 
-    //li t5, clear_signals
-    //mtc0 t5, c4
+process_chunk_pointer:
+    li t5, clear_signals
+    mtc0 t5, c4
+
     li t5, SET_SG0
     mtc0 t5, c4
 
@@ -155,12 +186,23 @@ process_chunk_pointer:
     li  t5, 42
     DbgPrint(t5)
 
-    // DMEM
-    // Request semaphore in t5
-
     li t5, SET_SG1
     mtc0 t5, c4
 
+    // Make sure rdp is not using command buffer which will be overwritten by dma
+    DbgDisableSingleStep(t5, 30)
+wait_rdp_busy_pre_cpu_to_dmem:
+    mfc0 t5, c11
+    andi t5, t5, RDP_CMB
+    bne t5, 0, wait_rdp_busy_pre_cpu_to_dmem // Loop while rdp busy.
+    nop
+    DbgEnableSingleStep(t5, 30)
+
+    li t5, SET_SG2|CLR_SG0
+    mtc0 t5, c4
+    
+    // DMEM
+    // Request semaphore
     DbgDisableSingleStep(t5, 30)
 request_semaphore:
     mfc0 t5, c7
@@ -168,7 +210,7 @@ request_semaphore:
     nop
     DbgEnableSingleStep(t5, 30)
 
-    li t5, CLR_SG0
+    li t5, CLR_SG1
     mtc0 t5, c4
 
     DbgPrint(t5)
@@ -176,22 +218,29 @@ request_semaphore:
     li   t5, 1
     DbgPrint(t5)
 
+if 0 {
     li t5, rdp_dma_flags // Load rdp DMA (Not XBUS) flags
     mtc0 t5, c11         // Load rdp DMA (Not XBUS) flags
-    
+}
 
-    li t5, SET_SG2
+    li t5, SET_SG3
     mtc0 t5, c4
 
-    // Wait until spot available in DMEM
+    // Wait until spot available in DMA
     DbgDisableSingleStep(t5, 30)
 wait_dma_available:
-    mfc0 t5, c5
-    bnez t5, wait_dma_available
+    if 0 {
+        mfc0 t5, c4
+        DbgPrint(t5)
+        andi t5, RSP_BSY|RSP_FUL
+    } else {
+        mfc0 t5, c5
+    }
+    bne t5, 0, wait_dma_available
     nop
     DbgEnableSingleStep(t5, 30)
 
-    li t5, CLR_SG1
+    li t5, CLR_SG2
     mtc0 t5, c4
     
     li t5, 2
@@ -220,17 +269,26 @@ wait_dma_available:
     li   t5, 6
     DbgPrint(t5)
 
-    li t5, SET_SG3
+    li t5, SET_SG4
     mtc0 t5, c4
 
+    mfc0 t5, c4
+    DbgPrint(t5)
+    mfc0 t5, c11
+    DbgPrint(t5)
     DbgDisableSingleStep(t5, 30)
 wait_dma_busy:
-    mfc0 t5, c6
-    bnez t5, wait_dma_busy
+    if 1 {
+        mfc0 t5, c11
+        andi t5, t5, RDP_DMA
+    } else {
+        mfc0 t5, c6
+    }
+    bne t5, 0, wait_dma_busy
     nop
     DbgEnableSingleStep(t5, 30)
 
-    li t5, CLR_SG2
+    li t5, CLR_SG3
     mtc0 t5, c4
 
     li   t5, 42
@@ -244,20 +302,7 @@ wait_dma_busy:
 
     DbgPrint(t5)
 
-    li t5, SET_SG4
-    mtc0 t5, c4
-
-    // Wait for rdp done TODO: Move to before emit for non-sync
-    DbgDisableSingleStep(t5, 30)
-wait_rdp_busy_pre:
-    mfc0 t5, c11
-    DbgPrint(t5)
-    and t5, t5, t6
-    bnez t5, wait_rdp_busy_pre // Loop while rdp busy.
-    nop
-    DbgEnableSingleStep(t5, 30)
-
-    li t5, CLR_SG3
+    li t5, CLR_SG4|SET_SG5
     mtc0 t5, c4
     
     li t5, 43
@@ -285,19 +330,35 @@ wait_rdp_busy_pre:
 
     // Wait for rdp done TODO: Move to before emit for non-sync
 
-    li t5, SET_SG5
+    li t5, SET_SG6
     mtc0 t5, c4
 
     DbgDisableSingleStep(t5, 30)
 wait_rdp_busy:
-    mfc0 t5, c11
-    DbgPrint(t5)
-    and t5, t5, t6
-    bne t5, t0, wait_rdp_busy // Loop while rdp busy.
+    if 0 {
+        ori t5, 0, 45
+        DbgPrint(t5)
+        mfc0 t5, c9
+        DbgPrint(t5)
+        mfc0 t5, c10
+        DbgPrint(t5)
+        mfc0 t5, c11
+        DbgPrint(t5)
+        mfc0 t5, c12
+        DbgPrint(t5)
+
+        mfc0 t5, c13                
+        DbgPrint(t5)
+
+    } else {
+        mfc0 t5, c11
+        andi t5, t5, RDP_CMB
+    }
+    bne t5, 0, wait_rdp_busy // Loop while rdp busy.
     nop
     DbgEnableSingleStep(t5, 30)
 
-    li t5, CLR_SG4
+    li t5, CLR_SG5
     mtc0 t5, c4
 
     addiu t3, t3, 1   // Next chunk pointer
@@ -306,25 +367,29 @@ wait_rdp_busy:
     
 return:
 
-    li t5, SET_SG6
+    li t5, SET_SG0|SET_SG1|SET_SG2
     mtc0 t5, c4
 
     li t5, 1234
     DbgPrint(t5)
 
     // Wait for rdp done TODO: Move to before emit for non-sync
+if 1 {
     DbgDisableSingleStep(t5, 30)
 
 wait_rdp_busy_end:
-    mfc0 t5, c4
-    andi t5, t5, RSP_BSY // dma_busy_bit
-    bnez t5, wait_dma_busy
+    if 1 {
+        mfc0 t5, c11
+        andi t5, t5, RDP_CMB
+    } else {
+        mfc0 t5, c4
+        andi t5, t5, RSP_BSY // dma_busy_bit
+    }
+    bnez t5, wait_rdp_busy_end
     nop
 
     DbgEnableSingleStep(t5, 30)
-
-    li t5, SET_SG7
-    mtc0 t5, c4
+}
 
     mfc0 t5, c4
     DbgPrint(t5)
@@ -341,9 +406,24 @@ wait_rdp_busy_end:
     li t8, CLR_STP
     mtc0 t8, c4
 
-    // Store upper bits of clock in signal bits.
-    set_signals_from_upper_clock(t5, t6, t7)
+    li t5, 9101
+    DbgPrint(t5)
 
+    // Store upper bits of clock in signal bits.
+    set_signals_from_upper_clock(t2, t3, t4)
+
+    li t5, 1213
+    DbgPrint(t5)
+
+    li t5, SET_SG7
+    mtc0 t5, c4
+
+    mfc0 t5, c4
+    DbgPrint(t5)
+
+    li t5, SET_HLT
+    mtc0 t5, c4
+    
     break
     nop
 
