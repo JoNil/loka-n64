@@ -9,3 +9,6 @@ edition = "2021"
 [dependencies]
 n64-math = { path = "../n64-math" }
 n64-types = { path = "../n64-types" }
+
+[build-dependencies]
+mipsasm-rsp = "1.2"

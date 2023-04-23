@@ -2074,9 +2074,9 @@ dependencies = [
 
 [[package]]
 name = "mipsasm-rsp"
-version = "1.1.1"
+version = "1.2.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "487cc482af1eb1cff0c91b9e8407397b5ea1bf9e899c7b89184a9af4e124dff4"
+checksum = "0c4c22857c49105445a83b6e48bee4df1ecb8c11d20d01952f4c561a6f812dd7"
 dependencies = [
  "num",
  "strum",
@@ -2161,6 +2161,7 @@ dependencies = [
 name = "n64-sys"
 version = "0.1.0"
 dependencies = [
+ "mipsasm-rsp",
  "n64-math",
  "n64-types",
 ]

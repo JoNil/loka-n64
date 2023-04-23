@@ -1,3 +1,4 @@
+use core::slice;
 use std::{fs, io::BufRead, path::Path, process::Command};
 
 fn main() {
@@ -34,6 +35,24 @@ fn main() {
 
                 if has_error {
                     panic!("Bass Failed");
+                }
+
+                if path.ends_with("rsp.asm") {
+                    let path_with_txt = Path::new(path).with_extension("txt");
+                    let path_with_bin = Path::new(path).with_extension("bin");
+                    let bin = fs::read(path_with_bin).unwrap();
+                    let mut code = Vec::new();
+
+                    for ins in bin.chunks(4) {
+                        let ins = u32::from_be_bytes(ins.try_into().unwrap());
+                        code.push(ins);
+                    }
+
+                    let mips = mipsasm_rsp::Mipsasm::new();
+                    let code = mips.disassemble(&code);
+
+                    let code = code.join("\n");
+                    fs::write(path_with_txt, code).unwrap();
                 }
             }
         }
