@@ -73,7 +73,7 @@ where
     type Item<'a> = &'a mut T::Storage;
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
-        let t = component_map.get_ptr::<T>();
+        let t = component_map.get_ptr::<T::Inner>();
 
         unsafe { &mut *(t as *mut T::Storage) }
     }
@@ -86,8 +86,8 @@ where
     type Item<'a> = (&'a mut T1::Storage, &'a mut T2::Storage);
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
-        let t1 = component_map.get_ptr::<T1>();
-        let t2 = component_map.get_ptr::<T2>();
+        let t1 = component_map.get_ptr::<T1::Inner>();
+        let t2 = component_map.get_ptr::<T2::Inner>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
 
@@ -113,9 +113,9 @@ where
     );
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
-        let t1 = component_map.get_ptr::<T1>();
-        let t2 = component_map.get_ptr::<T2>();
-        let t3 = component_map.get_ptr::<T3>();
+        let t1 = component_map.get_ptr::<T1::Inner>();
+        let t2 = component_map.get_ptr::<T2::Inner>();
+        let t3 = component_map.get_ptr::<T3::Inner>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -146,10 +146,10 @@ where
     );
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
-        let t1 = component_map.get_ptr::<T1>();
-        let t2 = component_map.get_ptr::<T2>();
-        let t3 = component_map.get_ptr::<T3>();
-        let t4 = component_map.get_ptr::<T4>();
+        let t1 = component_map.get_ptr::<T1::Inner>();
+        let t2 = component_map.get_ptr::<T2::Inner>();
+        let t3 = component_map.get_ptr::<T3::Inner>();
+        let t4 = component_map.get_ptr::<T4::Inner>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -186,11 +186,11 @@ where
     );
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
-        let t1 = component_map.get_ptr::<T1>();
-        let t2 = component_map.get_ptr::<T2>();
-        let t3 = component_map.get_ptr::<T3>();
-        let t4 = component_map.get_ptr::<T4>();
-        let t5 = component_map.get_ptr::<T5>();
+        let t1 = component_map.get_ptr::<T1::Inner>();
+        let t2 = component_map.get_ptr::<T2::Inner>();
+        let t3 = component_map.get_ptr::<T3::Inner>();
+        let t4 = component_map.get_ptr::<T4::Inner>();
+        let t5 = component_map.get_ptr::<T5::Inner>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
@@ -234,12 +234,12 @@ where
     );
 
     fn get(component_map: &mut ComponentMap) -> Self::Item<'_> {
-        let t1 = component_map.get_ptr::<T1>();
-        let t2 = component_map.get_ptr::<T2>();
-        let t3 = component_map.get_ptr::<T3>();
-        let t4 = component_map.get_ptr::<T4>();
-        let t5 = component_map.get_ptr::<T5>();
-        let t6 = component_map.get_ptr::<T6>();
+        let t1 = component_map.get_ptr::<T1::Inner>();
+        let t2 = component_map.get_ptr::<T2::Inner>();
+        let t3 = component_map.get_ptr::<T3::Inner>();
+        let t4 = component_map.get_ptr::<T4::Inner>();
+        let t5 = component_map.get_ptr::<T5::Inner>();
+        let t6 = component_map.get_ptr::<T6::Inner>();
 
         assert!(t1 as *const u8 != t2 as *const u8);
         assert!(t1 as *const u8 != t3 as *const u8);
