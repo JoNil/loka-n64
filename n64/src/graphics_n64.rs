@@ -34,8 +34,7 @@ impl Graphics {
         vi::init(video_mode, &mut framebuffer.vi_buffer.0);
         rsp::init();
 
-        let mut mips = mipsasm::Mipsasm::new();
-        mips.debug();
+        let mut mips = mipsasm_rsp::Mipsasm::new();
         let code = mips.disassemble(unsafe {
             slice::from_raw_parts(CODE.as_ptr() as *const u32, CODE.len() / 4)
         });
@@ -53,7 +52,7 @@ impl Graphics {
 
     #[inline]
     pub fn swap_buffers(&mut self, framebuffer: &mut Framebuffer) -> i64 {
-        //rsp::wait(500);
+        //rsp::wait(5_000_000);
 
         framebuffer.swap();
 
@@ -88,7 +87,7 @@ impl Graphics {
 
             self.rsp_step(true);
             let code = self.code();
-            
+
             if pc / 4 > code.len() {
                 debugln!("{:015b} {:08x} : OUTSIDE CODE RANGE", status, pc);
                 break;
@@ -99,7 +98,7 @@ impl Graphics {
             if i > 1024 {
                 break;
             }
-            i = i + 1;
+            i += 1;
         }
     }
 
@@ -146,15 +145,16 @@ impl Graphics {
                 //assert!(a == i as u32);
             }
         }
-
     }
 
     #[inline]
     pub fn rsp_start(&mut self, commands: &mut Vec<RdpBlock>, single_step: bool) {
         core::mem::swap(&mut self.gpu_commands, commands);
 
+        static mut FRAME_COUNTER: usize = 0;
+
         let mut rsp_dmem = RspDmem {
-            pointer_count: self.gpu_commands.len() as u32, //2,
+            pointer_count: self.gpu_commands.len() as u32,
             chunk_pointer: [0; 255],
         };
 
@@ -172,16 +172,20 @@ impl Graphics {
 
         rsp::run(CODE, Some(rsp_dmem.as_bytes()), single_step);
         if !single_step {
-            let (wait_ok, rsp_status) = rsp::wait(500);
-            debugln!("rsp_status {:032b}", rsp_status);
+            let (wait_ok, rsp_status) = rsp::wait(5_000_000);
+            //debugln!("rsp_status {:032b}", rsp_status);
             if !wait_ok {
-                debugln!("RSP TIMEOUT! {:032b} pc {:08x}", rsp_status, rsp::pc());
+                debugln!(
+                    "RSP TIMEOUT! {:032b} pc {:08x}, fc {}",
+                    rsp_status,
+                    rsp::pc(),
+                    unsafe { FRAME_COUNTER }
+                );
                 should_panic = true;
             }
         }
 
         if should_panic {
-
             for (block_index, block) in self.gpu_commands.iter().enumerate() {
                 debugln!("BLOCK {}: {}", block_index, block.block_len);
                 for (i, command) in block.rdp_data.iter().enumerate() {
@@ -200,6 +204,8 @@ impl Graphics {
 
             panic!("RSP TIMEOUT PANIC");
         }
+
+        unsafe { FRAME_COUNTER += 1 };
     }
 }
 

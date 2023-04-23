@@ -5,16 +5,16 @@ use crate::{
     framebuffer::ViBufferToken, graphics_n64::Graphics, ipl3font, slow_cpu_clear, VideoMode,
 };
 use alloc::{boxed::Box, vec::Vec};
-use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
-use rdp_command_builder::*;
 use n64_macros::debugln;
+use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
+use n64_sys::rsp;
+use rdp_command_builder::*;
 use rdp_math::{
     color_to_i32, edge_slope, is_triangle_right_major, shaded_triangle_coeff,
     slope_y_next_subpixel_intersection, slope_y_prev_scanline_intersection, sorted_triangle,
     sorted_triangle_indices, triangle_is_too_small, truncate_to_pixel, z_triangle_coeff,
 };
 use rdp_state::RdpState;
-use n64_sys::rsp;
 
 mod rdp_command_builder;
 mod rdp_math;
@@ -324,8 +324,9 @@ impl<'a> CommandBuffer<'a> {
             n64_profiler::scope!("Rsp Job");
             if !use_single_step {
                 graphics.rsp_start(&mut self.cache.rdp.blocks, false);
-            }
-            else {
+
+                
+            } else {
                 if !graphics.buffer_started {
                     graphics.rsp_start(&mut self.cache.rdp.blocks, true);
                     graphics.buffer_started = true;
@@ -337,18 +338,16 @@ impl<'a> CommandBuffer<'a> {
                     loop {
                         let (status, pc) = graphics.rsp_step(true);
                         let code = graphics.code();
-                        
+
                         debugln!("{:015b} {:08x} : {}", status, pc, code[pc / 4]);
 
                         if i > 1024 {
                             graphics.rsp_dump_mem();
                             panic!("To many steps in rsp");
                         }
-                        i = i + 1;
+                        i += 1;
                     }
-                }
-                else {
-
+                } else {
                     let (status, pc) = graphics.rsp_step(step);
 
                     let code = graphics.code();
@@ -382,7 +381,7 @@ impl<'a> CommandBuffer<'a> {
             }
         }
 
-        debugln!("clk {}", rsp::clock_from_signals());
+        //debugln!("clk {}", rsp::clock_from_signals());
         (
             self.colored_rect_count as i32,
             self.textured_rect_count as i32,

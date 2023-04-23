@@ -10,7 +10,7 @@ edition = "2021"
 aligned = "0.4"
 assert_into = "1"
 libm = "0.2"
-mipsasm = { git = "https://github.com/JoNil/mipsasm.git", default-features = false }
+mipsasm-rsp = "1"
 n64-macros = { path = "../n64-macros" }
 n64-math = { path = "../n64-math" }
 n64-profiler = { path = "../n64-profiler" }
