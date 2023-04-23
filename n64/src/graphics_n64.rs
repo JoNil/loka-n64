@@ -7,7 +7,7 @@ use core::{ops::DerefMut, slice};
 use n64_macros::debugln;
 use n64_sys::{
     rsp,
-    sys::{data_cache_hit_writeback, virtual_to_physical},
+    sys::{data_cache_hit_invalidate, data_cache_hit_writeback, virtual_to_physical},
     vi,
 };
 use n64_types::RdpBlock;
@@ -20,10 +20,26 @@ pub static CODE: &[u8] = include_bytes_align_as!(u64, "../../n64-sys/rsp/rsp.bin
 struct RspDmem {
     pointer_count: u32,
     chunk_pointer: [u32; 255],
+    rsp_res_ptr: u32,
+    padding: u32,
+}
+
+#[repr(C, align(8))]
+#[derive(AsBytes, Default, Debug)]
+struct RspRes {
+    a: u32,
+    b: u32,
+    c: u32,
+    d: u32,
+    e: u32,
+    f: u32,
+    g: u32,
+    h: u32,
 }
 
 pub struct Graphics {
     gpu_commands: Vec<RdpBlock>,
+    gpu_res: RspRes,
     pub buffer_started: bool,
     pub code: Vec<String>,
     pub pc: usize,
@@ -44,6 +60,7 @@ impl Graphics {
 
         Self {
             gpu_commands: Vec::with_capacity(32),
+            gpu_res: RspRes::default(),
             buffer_started: false,
             code,
             pc: 0,
@@ -156,9 +173,12 @@ impl Graphics {
     pub fn rsp_start(&mut self, commands: &mut Vec<RdpBlock>, single_step: bool) {
         core::mem::swap(&mut self.gpu_commands, commands);
 
+        // TODO(JoNil): Rsp Res needs to be double buffered when the gpu is pipelined
         let mut rsp_dmem = RspDmem {
             pointer_count: self.gpu_commands.len() as u32,
             chunk_pointer: [0; 255],
+            rsp_res_ptr: virtual_to_physical(&self.gpu_res as *const RspRes) as u32,
+            padding: 0,
         };
 
         for (index, chunk) in self.gpu_commands.iter().enumerate() {
@@ -203,6 +223,15 @@ impl Graphics {
             self.rsp_dump_mem();
 
             self.rsp_single_step_print();
+
+            unsafe {
+                data_cache_hit_invalidate(slice::from_raw_parts::<u64>(
+                    &self.gpu_res as *const _ as *const u64,
+                    4,
+                ));
+            }
+
+            debugln!("RSP RES {:#?}: {}", self.gpu_res);
 
             panic!("RSP TIMEOUT PANIC");
         }
