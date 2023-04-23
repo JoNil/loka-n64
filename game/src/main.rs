@@ -261,9 +261,15 @@ fn main() {
                     );
                     font::draw_number(&mut cb, last_mesh_count, vec2(300.0, 30.0), 0xaf0000ff);
 
-                    // RSP clock is 62.5Mhz => ticks / 62.5e6 = s, ticks / 62.5e3 = ms 
-                    let rsp_ms = last_rsp_clock / 62500;
+                    font::draw_number(
+                        &mut cb,
+                        n64.graphics.frame_counter() as _,
+                        vec2(300.0, 50.0),
+                        0xafaf00ff,
+                    );
 
+                    // RSP clock is 62.5Mhz => ticks / 62.5e6 = s, ticks / 62.5e3 = ms
+                    let rsp_ms = last_rsp_clock / 62500;
                     font::draw_number(&mut cb, rsp_ms, vec2(100.0, 50.0), 0xafaf00ff);
                 }
 
@@ -311,7 +317,8 @@ fn main() {
             world.housekeep();
         }
 
-        if false { // !health::is_alive(world.components.get::<(Health,)>(), player) {
+        if false {
+            // !health::is_alive(world.components.get::<(Health,)>(), player) {
             break;
         }
     }

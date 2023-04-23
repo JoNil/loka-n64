@@ -28,6 +28,7 @@ pub struct Graphics {
     pub code: Vec<String>,
     pub pc: usize,
     pub last_pc: usize,
+    pub frame_counter: usize,
 }
 
 impl Graphics {
@@ -47,6 +48,7 @@ impl Graphics {
             code,
             pc: 0,
             last_pc: 0,
+            frame_counter: 0,
         }
     }
 
@@ -65,7 +67,14 @@ impl Graphics {
         let swap_end = current_time_us();
         unsafe { vi::set_vi_buffer(&mut framebuffer.vi_buffer.0) };
 
+        self.frame_counter += 1;
+
         swap_end - swap_start
+    }
+
+    #[inline]
+    pub fn frame_counter(&self) -> usize {
+        self.frame_counter
     }
 
     #[inline]
@@ -147,8 +156,6 @@ impl Graphics {
     pub fn rsp_start(&mut self, commands: &mut Vec<RdpBlock>, single_step: bool) {
         core::mem::swap(&mut self.gpu_commands, commands);
 
-        static mut FRAME_COUNTER: usize = 0;
-
         let mut rsp_dmem = RspDmem {
             pointer_count: self.gpu_commands.len() as u32,
             chunk_pointer: [0; 255],
@@ -174,7 +181,7 @@ impl Graphics {
                     "RSP TIMEOUT! {:032b} pc {:08x}, fc {}",
                     rsp_status,
                     rsp::pc(),
-                    unsafe { FRAME_COUNTER }
+                    self.frame_counter,
                 );
                 should_panic = true;
             }
@@ -199,8 +206,6 @@ impl Graphics {
 
             panic!("RSP TIMEOUT PANIC");
         }
-
-        unsafe { FRAME_COUNTER += 1 };
     }
 }
 

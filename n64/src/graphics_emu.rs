@@ -86,6 +86,8 @@ pub struct Graphics {
 
     pub(crate) device_poll_thread_run: Arc<AtomicBool>,
     pub(crate) device_poll_thread: Option<thread::JoinHandle<()>>,
+
+    frame_counter: usize,
 }
 
 impl Graphics {
@@ -220,6 +222,8 @@ impl Graphics {
 
             device_poll_thread_run,
             device_poll_thread,
+
+            frame_counter: 0,
         }
     }
 
@@ -379,7 +383,14 @@ impl Graphics {
         self.poll_events(framebuffer);
         let swap_time = self.render_cpu_buffer(framebuffer);
         framebuffer.swap();
+
+        self.frame_counter += 1;
+
         swap_time
+    }
+
+    pub fn frame_counter(&self) -> usize {
+        self.frame_counter
     }
 }
 
