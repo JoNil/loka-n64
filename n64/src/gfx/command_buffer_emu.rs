@@ -173,7 +173,7 @@ impl<'a> CommandBuffer<'a> {
         self
     }
 
-    pub fn submit(self, graphics: &mut Graphics, _step: bool) -> (i32, i32, i32) {
+    pub fn submit(self, graphics: &mut Graphics, _step: bool) -> (i32, i32, i32, i32) {
         let dst = DstTexture::new(
             &graphics.device,
             self.cache.video_mode.width(),
@@ -688,6 +688,7 @@ impl<'a> CommandBuffer<'a> {
             self.colored_rect_count as i32,
             self.textured_rect_count as i32,
             self.mesh_count as i32,
+            0,
         )
     }
 }

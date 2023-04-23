@@ -79,13 +79,7 @@ impl Graphics {
         let mut i = 0;
         debugln!("Status          PC");
         loop {
-            // Some steps does not work in single_step mode, use halt to ensure valid status/pc read.
-            rsp::set_halt();
-            let status = rsp::status();
-            let pc = rsp::pc();
-            rsp::clear_halt();
-
-            self.rsp_step(true);
+            let (status, pc) = self.rsp_step(true);
             let code = self.code();
 
             if pc / 4 > code.len() {
@@ -124,8 +118,6 @@ impl Graphics {
                     a,
                     float_from_fix_16_16_u64(a)
                 );
-
-                //assert!(a == i as u32);
             }
         }
         if print_32bit {
@@ -141,8 +133,6 @@ impl Graphics {
                     a,
                     float_from_fix_16_16_u32(a)
                 );
-
-                //assert!(a == i as u32);
             }
         }
     }
@@ -173,7 +163,6 @@ impl Graphics {
         rsp::run(CODE, Some(rsp_dmem.as_bytes()), single_step);
         if !single_step {
             let (wait_ok, rsp_status) = rsp::wait(5_000_000);
-            //debugln!("rsp_status {:032b}", rsp_status);
             if !wait_ok {
                 debugln!(
                     "RSP TIMEOUT! {:032b} pc {:08x}, fc {}",

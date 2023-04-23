@@ -1,4 +1,3 @@
-use core::slice;
 use std::{fs, io::BufRead, path::Path, process::Command};
 
 fn main() {

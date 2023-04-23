@@ -31,17 +31,21 @@ macro DbgPrint(reg) {
 
 macro DbgDisableSingleStep (tmp_reg, ss_reg) {
     // Read if in Single step
-    mfc0 {ss_reg}, c4
-    andi {ss_reg}, {ss_reg}, RSP_STP
-    li {tmp_reg}, CLR_STP
-    mtc0 {tmp_reg}, c4
+    if 0 {
+        mfc0 {ss_reg}, c4
+        andi {ss_reg}, {ss_reg}, RSP_STP
+        li {tmp_reg}, CLR_STP
+        mtc0 {tmp_reg}, c4
+    }
 }
 
 macro DbgEnableSingleStep (tmp_reg, ss_reg) {    
     //li {tmp_reg}, 0x40
     // If was in single step before disable, ss_reg will contain 0x20
-    sll {tmp_reg}, {ss_reg}, 1
-    mtc0 {tmp_reg}, c4
+    if 0 {
+        sll {tmp_reg}, {ss_reg}, 1
+        mtc0 {tmp_reg}, c4
+    }
 }
 
 macro DbgPrintStatusRegs (reg) {
