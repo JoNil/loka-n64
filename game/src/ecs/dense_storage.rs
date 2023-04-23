@@ -97,13 +97,15 @@ where
     fn remove(&mut self, entity: Entity) {
         let index = entity.index() as usize;
 
-        let last = self.components.len() - 1;
+        if !self.components.is_empty() {
+            let last = self.components.len() - 1;
 
-        if index == last {
-            self.components.remove(index);
-            self.entities.remove(index);
-        } else {
-            self.entities[index] = Entity::default();
+            if index == last {
+                self.components.remove(index);
+                self.entities.remove(index);
+            } else {
+                self.entities[index] = Entity::default();
+            }
         }
     }
 }
