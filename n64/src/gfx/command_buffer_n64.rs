@@ -359,6 +359,27 @@ impl<'a> CommandBuffer<'a> {
                 );
 
                 ipl3font::draw_str(&mut out_tex, 15, 15 + 20, RED, code[pc / 4].as_bytes());
+
+                ipl3font::draw_str(
+                    &mut out_tex,
+                    15,
+                    15 + 2 * 20,
+                    RED,
+                    alloc::format!("PC: {:04x}", graphics.last_pc).as_bytes(),
+                );
+
+                ipl3font::draw_str(
+                    &mut out_tex,
+                    15,
+                    15 + 3 * 20,
+                    RED,
+                    code[graphics.last_pc / 4].as_bytes(),
+                );
+
+                if step {
+                    graphics.last_pc = graphics.pc;
+                    graphics.pc = pc;
+                }
             }
         }
 

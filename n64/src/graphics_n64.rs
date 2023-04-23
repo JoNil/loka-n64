@@ -26,6 +26,8 @@ pub struct Graphics {
     gpu_commands: Vec<RdpBlock>,
     pub buffer_started: bool,
     pub code: Vec<String>,
+    pub pc: usize,
+    pub last_pc: usize,
 }
 
 impl Graphics {
@@ -43,6 +45,8 @@ impl Graphics {
             gpu_commands: Vec::with_capacity(32),
             buffer_started: false,
             code,
+            pc: 0,
+            last_pc: 0,
         }
     }
 

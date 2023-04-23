@@ -407,8 +407,8 @@ wait_rdp_busy_end:
     DbgPrint(t5)
 
     // Disable single step for break
-    li t8, CLR_STP
-    mtc0 t8, c4
+    //li t8, CLR_STP
+    //mtc0 t8, c4
 
     li t5, 9101
     DbgPrint(t5)
