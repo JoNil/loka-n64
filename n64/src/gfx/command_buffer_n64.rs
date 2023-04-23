@@ -318,7 +318,7 @@ impl<'a> CommandBuffer<'a> {
     pub fn submit(self, graphics: &mut Graphics, step: bool) -> (i32, i32, i32, i32) {
         self.cache.rdp.sync_full();
 
-        let use_single_step = true;
+        let use_single_step = false;
 
         {
             n64_profiler::scope!("Rsp Job");
@@ -367,8 +367,7 @@ impl<'a> CommandBuffer<'a> {
                     15,
                     15 + 2 * 20,
                     RED,
-                    alloc::format!("Mem 2048: {:08x}, {}", the_debug_value, the_debug_value)
-                        .as_bytes(),
+                    alloc::format!("2048: {:08x},{}", the_debug_value, the_debug_value).as_bytes(),
                 );
 
                 ipl3font::draw_str(

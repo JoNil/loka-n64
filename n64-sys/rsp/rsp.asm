@@ -229,7 +229,7 @@ request_semaphore:
 wait_dma_available:
     if 1 {
         mfc0 t5, c4
-        andi t5, RSP_BSY|RSP_FUL
+        andi t5, RSP_BSY
         DbgPrint(t5)
     } else {
         mfc0 t5, c5
