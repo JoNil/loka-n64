@@ -330,7 +330,7 @@ impl<'a> CommandBuffer<'a> {
                     graphics.buffer_started = true;
                 }
 
-                let (status, pc) = graphics.rsp_step(step);
+                let (status, pc, dmem) = graphics.rsp_step(step);
 
                 let code = graphics.code();
 
@@ -365,13 +365,25 @@ impl<'a> CommandBuffer<'a> {
                     15,
                     15 + 2 * 20,
                     RED,
-                    alloc::format!("PC: {:04x}", graphics.last_pc).as_bytes(),
+                    alloc::format!(
+                        "Mem 2048: {:04x}",
+                        u32::from_be_bytes(dmem[2048..2052].try_into().unwrap())
+                    )
+                    .as_bytes(),
                 );
 
                 ipl3font::draw_str(
                     &mut out_tex,
                     15,
                     15 + 3 * 20,
+                    RED,
+                    alloc::format!("PC: {:04x}", graphics.last_pc).as_bytes(),
+                );
+
+                ipl3font::draw_str(
+                    &mut out_tex,
+                    15,
+                    15 + 4 * 20,
                     RED,
                     code[graphics.last_pc / 4].as_bytes(),
                 );

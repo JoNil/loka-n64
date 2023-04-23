@@ -23,10 +23,10 @@ constant clear_signals = CLR_SG0|CLR_SG1|CLR_SG2|CLR_SG3|CLR_SG4|CLR_SG5|CLR_SG6
 macro DbgPrint(reg) {
     sw 0, 4(t7) // Write 0 AFTER current value, to mark last print
     sw {reg}, 0(t7)
-    addi t7, t7, 4
+    //addi t7, t7, 4
     // Loop between 2048 - 4195
-    andi t7, t7, 4095
-    ori t7, t7, 2048
+    //andi t7, t7, 4095
+    //ori t7, t7, 2048
 }
 
 macro DbgDisableSingleStep (tmp_reg, ss_reg) {
@@ -190,9 +190,6 @@ process_chunk_pointer:
     li  t5, 42
     DbgPrint(t5)
 
-    li t5, SET_SG1
-    mtc0 t5, c4
-
     // Make sure rdp is not using command buffer which will be overwritten by dma
     DbgDisableSingleStep(t5, 30)
 wait_rdp_busy_pre_cpu_to_dmem:
@@ -202,41 +199,38 @@ wait_rdp_busy_pre_cpu_to_dmem:
     nop
     DbgEnableSingleStep(t5, 30)
 
-    li t5, SET_SG2|CLR_SG0
-    mtc0 t5, c4
+    //li t5, SET_SG2|CLR_SG0
+    //mtc0 t5, c4
     
     // DMEM
     // Request semaphore
+if 0 {    
     DbgDisableSingleStep(t5, 30)
 request_semaphore:
     mfc0 t5, c7
     bnez t5, request_semaphore
     nop
     DbgEnableSingleStep(t5, 30)
+}
 
-    li t5, CLR_SG1
-    mtc0 t5, c4
+    //li t5, CLR_SG1
+    //mtc0 t5, c4
 
     DbgPrint(t5)
     
     li   t5, 1
     DbgPrint(t5)
 
-if 0 {
-    li t5, rdp_dma_flags // Load rdp DMA (Not XBUS) flags
-    mtc0 t5, c11         // Load rdp DMA (Not XBUS) flags
-}
-
-    li t5, SET_SG3
-    mtc0 t5, c4
+    //li t5, SET_SG3
+    //mtc0 t5, c4
 
     // Wait until spot available in DMA
     DbgDisableSingleStep(t5, 30)
 wait_dma_available:
-    if 0 {
+    if 1 {
         mfc0 t5, c4
-        DbgPrint(t5)
         andi t5, RSP_BSY|RSP_FUL
+        DbgPrint(t5)
     } else {
         mfc0 t5, c5
     }
@@ -244,8 +238,8 @@ wait_dma_available:
     nop
     DbgEnableSingleStep(t5, 30)
 
-    li t5, CLR_SG2
-    mtc0 t5, c4
+    //li t5, CLR_SG2
+    //mtc0 t5, c4
     
     li t5, 2
     DbgPrint(t5)
@@ -273,8 +267,8 @@ wait_dma_available:
     li   t5, 6
     DbgPrint(t5)
 
-    li t5, SET_SG4
-    mtc0 t5, c4
+    //li t5, SET_SG4
+    //mtc0 t5, c4
 
     mfc0 t5, c4
     DbgPrint(t5)
@@ -292,8 +286,8 @@ wait_dma_busy:
     nop
     DbgEnableSingleStep(t5, 30)
 
-    li t5, CLR_SG3
-    mtc0 t5, c4
+    //li t5, CLR_SG3
+    //mtc0 t5, c4
 
     li   t5, 42
     DbgPrint(t5)
@@ -302,12 +296,14 @@ wait_dma_busy:
     DbgPrint(t5)
 
     // Release semaphore
+if 0 {
     mtc0 0, c7 
+}
 
     DbgPrint(t5)
 
-    li t5, CLR_SG4|SET_SG5
-    mtc0 t5, c4
+    //li t5, CLR_SG4|SET_SG5
+    //mtc0 t5, c4
     
     li t5, 43
     DbgPrint(t5)
@@ -334,8 +330,8 @@ wait_dma_busy:
 
     // Wait for rdp done TODO: Move to before emit for non-sync
 
-    li t5, SET_SG6
-    mtc0 t5, c4
+    //li t5, SET_SG6
+    //mtc0 t5, c4
 
     DbgDisableSingleStep(t5, 30)
 wait_rdp_busy:
@@ -371,8 +367,8 @@ wait_rdp_busy:
     
 return:
 
-    li t5, SET_SG0|SET_SG1|SET_SG2
-    mtc0 t5, c4
+    //li t5, SET_SG0|SET_SG1|SET_SG2
+    //mtc0 t5, c4
 
     li t5, 1234
     DbgPrint(t5)
@@ -414,13 +410,13 @@ wait_rdp_busy_end:
     DbgPrint(t5)
 
     // Store upper bits of clock in signal bits.
-    set_signals_from_upper_clock(t2, t3, t4)
+    //set_signals_from_upper_clock(t2, t3, t4)
 
     li t5, 1213
     DbgPrint(t5)
 
-    li t5, SET_SG7
-    mtc0 t5, c4
+    //li t5, SET_SG7
+    //mtc0 t5, c4
 
     mfc0 t5, c4
     DbgPrint(t5)

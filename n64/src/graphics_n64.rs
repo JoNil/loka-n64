@@ -69,12 +69,14 @@ impl Graphics {
     }
 
     #[inline]
-    pub fn rsp_step(&mut self, step: bool) -> (usize, usize) {
+    pub fn rsp_step(&mut self, step: bool) -> (usize, usize, [u8; 4096]) {
         if step {
             rsp::step();
         }
 
-        (rsp::status(), rsp::pc())
+        let mut dmem: Aligned<A8, [u8; 4096]> = Aligned([0x00; 4096]);
+        rsp::read_dmem(dmem.deref_mut());
+        (rsp::status(), rsp::pc(), *dmem)
     }
 
     pub fn rsp_single_step_print(&mut self) {
@@ -83,7 +85,7 @@ impl Graphics {
         let mut i = 0;
         debugln!("Status          PC");
         loop {
-            let (status, pc) = self.rsp_step(true);
+            let (status, pc, dmem) = self.rsp_step(true);
             let code = self.code();
 
             if pc / 4 > code.len() {
