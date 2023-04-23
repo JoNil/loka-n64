@@ -53,7 +53,8 @@ impl Graphics {
         vi::init(video_mode, &mut framebuffer.vi_buffer.0);
         rsp::init();
 
-        let mut mips = mipsasm_rsp::Mipsasm::new();
+        // TODO(JoNil): This takes a lot of memory and should only be used in debug builds
+        let mips = mipsasm_rsp::Mipsasm::new();
         let code = mips.disassemble(unsafe {
             slice::from_raw_parts(CODE.as_ptr() as *const u32, CODE.len() / 4)
         });
@@ -111,7 +112,7 @@ impl Graphics {
         let mut i = 0;
         debugln!("Status          PC");
         loop {
-            let (status, pc, dmem) = self.rsp_step(true);
+            let (status, pc, _) = self.rsp_step(true);
             let code = self.code();
 
             if pc / 4 > code.len() {
@@ -231,7 +232,7 @@ impl Graphics {
                 ));
             }
 
-            debugln!("RSP RES {:#?}: {}", self.gpu_res);
+            debugln!("RSP RES {:#?}", self.gpu_res);
 
             panic!("RSP TIMEOUT PANIC");
         }

@@ -5,7 +5,6 @@ use crate::{
     framebuffer::ViBufferToken, graphics_n64::Graphics, ipl3font, slow_cpu_clear, VideoMode,
 };
 use alloc::{boxed::Box, vec::Vec};
-use n64_macros::debugln;
 use n64_math::{vec2, Color, Mat4, Vec2, Vec3};
 use n64_sys::rsp;
 use rdp_command_builder::*;
