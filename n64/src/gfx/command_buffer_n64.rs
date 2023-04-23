@@ -360,16 +360,15 @@ impl<'a> CommandBuffer<'a> {
 
                 ipl3font::draw_str(&mut out_tex, 15, 15 + 20, RED, code[pc / 4].as_bytes());
 
+                let the_debug_value = u32::from_be_bytes(dmem[2048..2052].try_into().unwrap());
+
                 ipl3font::draw_str(
                     &mut out_tex,
                     15,
                     15 + 2 * 20,
                     RED,
-                    alloc::format!(
-                        "Mem 2048: {:04x}",
-                        u32::from_be_bytes(dmem[2048..2052].try_into().unwrap())
-                    )
-                    .as_bytes(),
+                    alloc::format!("Mem 2048: {:08x}, {}", the_debug_value, the_debug_value)
+                        .as_bytes(),
                 );
 
                 ipl3font::draw_str(
