@@ -318,7 +318,7 @@ impl<'a> CommandBuffer<'a> {
     pub fn submit(self, graphics: &mut Graphics, step: bool) -> (i32, i32, i32, i32) {
         self.cache.rdp.sync_full();
 
-        let use_single_step = false;
+        let use_single_step = true;
 
         {
             n64_profiler::scope!("Rsp Job");

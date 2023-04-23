@@ -81,7 +81,7 @@ fn start(single_step: bool) {
 }
 
 pub fn activate_single_step() {
-    let status_cmd = RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_SET_SSTEP; //RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_CLEAR_BROKE | RSP_WSTATUS_SET_SSTEP;
+    let status_cmd = RSP_WSTATUS_CLEAR_HALT | RSP_WSTATUS_SET_SSTEP;
 
     unsafe {
         write_volatile(RSP_STATUS, status_cmd);
@@ -105,10 +105,7 @@ pub fn clear_halt() {
 }
 
 pub fn init() {
-    unsafe {
-        write_volatile(RSP_PC, 0x1000);
-        write_volatile(RSP_STATUS, RSP_WSTATUS_SET_HALT);
-    }
+    set_halt();
 }
 
 pub fn run(code: &[u8], data: Option<&[u8]>, single_step: bool) {
@@ -122,7 +119,7 @@ pub fn run(code: &[u8], data: Option<&[u8]>, single_step: bool) {
 
 pub fn step() {
     unsafe {
-        write_volatile(RSP_STATUS, RSP_WSTATUS_CLEAR_HALT); // | RSP_WSTATUS_CLEAR_BROKE);
+        write_volatile(RSP_STATUS, RSP_WSTATUS_CLEAR_HALT);
     }
 }
 
