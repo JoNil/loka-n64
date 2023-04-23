@@ -168,7 +168,7 @@ impl Graphics {
 
         rsp::run(CODE, Some(rsp_dmem.as_bytes()), single_step);
         if !single_step {
-            let (wait_ok, rsp_status) = rsp::wait(1_000_000);
+            let (wait_ok, rsp_status) = rsp::wait(5_000_000);
             if !wait_ok {
                 debugln!(
                     "RSP TIMEOUT! {:032b} pc {:08x}, fc {}",

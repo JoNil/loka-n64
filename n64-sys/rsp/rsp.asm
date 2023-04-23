@@ -227,12 +227,12 @@ request_semaphore:
     // Wait until spot available in DMA
     DbgDisableSingleStep(t5, 30)
 wait_dma_available:
-    if 1 {
+    if 0 {
         mfc0 t5, c4
         andi t5, RSP_BSY
         DbgPrint(t5)
     } else {
-        mfc0 t5, c5
+        mfc0 t5, c6
     }
     bne t5, 0, wait_dma_available
     nop
@@ -276,12 +276,7 @@ wait_dma_available:
     DbgPrint(t5)
     DbgDisableSingleStep(t5, 30)
 wait_dma_busy:
-    if 1 {
-        mfc0 t5, c11
-        andi t5, t5, RDP_DMA
-    } else {
-        mfc0 t5, c6
-    }
+    mfc0 t5, c6
     bne t5, 0, wait_dma_busy
     nop
     DbgEnableSingleStep(t5, 30)
