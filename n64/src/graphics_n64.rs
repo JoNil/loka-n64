@@ -19,8 +19,8 @@ pub static CODE: &[u8] = include_bytes_align_as!(u64, "../../n64-sys/rsp/rsp.bin
 #[derive(AsBytes)]
 struct RspDmem {
     pointer_count: u32,
-    chunk_pointer: [u32; 255],
     rsp_res_ptr: u32,
+    chunk_pointer: [u32; 255],
     padding: u32,
 }
 
@@ -177,11 +177,11 @@ impl Graphics {
         // TODO(JoNil): Rsp Res needs to be double buffered when the gpu is pipelined
         let mut rsp_dmem = RspDmem {
             pointer_count: self.gpu_commands.len() as u32,
-            chunk_pointer: [0; 255],
             rsp_res_ptr: virtual_to_physical(&self.gpu_res as *const RspRes) as u32,
+            chunk_pointer: [0; 255],
             padding: 0,
         };
-
+        
         for (index, chunk) in self.gpu_commands.iter().enumerate() {
             unsafe {
                 data_cache_hit_writeback(slice::from_raw_parts::<u64>(
@@ -236,6 +236,10 @@ impl Graphics {
 
             panic!("RSP TIMEOUT PANIC");
         }
+    }
+
+    pub fn rdp_clock_count(& self) -> u32 {
+        self.gpu_res.a
     }
 }
 

@@ -396,7 +396,7 @@ impl<'a> CommandBuffer<'a> {
             self.colored_rect_count as i32,
             self.textured_rect_count as i32,
             self.mesh_count as i32,
-            rsp::clock_from_signals() as i32,
+            graphics.rdp_clock_count() as i32,
         )
     }
 }

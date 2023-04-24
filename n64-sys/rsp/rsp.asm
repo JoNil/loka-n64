@@ -153,6 +153,49 @@ macro set_signals_from_upper_clock(reg, tmp0, tmp1) {
     }
 }
 
+macro write_back_dmem_fill(dma_dst, tmp0) {
+    if 0 {
+    // Dmem destination ptr after command buffer pointers
+    // u32 Pointer count
+    // u32 [Pointer count]
+    // u32 destination pointer (1 + Pointer count)*4
+    lw   {dma_dst}, 0(0)         // Pointer count
+    addi {dma_dst}, {dma_dst}, 1 // Pointer count + 1
+    sll  {dma_dst}, {dma_dst}, 2 // (Pointer count + 1) * 4
+    lw   {dma_dst}, 0({dma_dst}) // destination
+
+    } else {
+        lw  {dma_dst}, 4(0)     // DMA destination ptr at 4*256
+    }
+
+    // Setup memory (8*4 bytes)
+    // 0-3 RDP Clock
+    // 4-7
+    mfc0 {tmp0}, c12
+    sw {tmp0}, 2048(0)
+
+    // Setup DMA request
+    ori  {tmp0}, 0, 2048
+    mtc0 {tmp0}, c0      // DMEM DMA start
+    mtc0 {dma_dst}, c1   // DRAM DMA start
+
+    // Data size as "Number of bytes to read LESS ONE"
+    ori  {tmp0}, 0, 3
+    mtc0 {tmp0}, c3
+
+// Loop until dma done.
+write_back_dmem_fill_wait:
+    mfc0 {tmp0}, c6
+    bne {tmp0}, 0, write_back_dmem_fill_wait
+    nop
+
+if 0 {
+    inf_loop:
+    j inf_loop
+    nop
+}
+}
+
 align(8)
 
 start:
@@ -183,7 +226,7 @@ process_chunk_pointer:
     nop
 
     sll t4, t3, 2 // index -> bytes (*4)
-    lw  t4, 4(t4) // Command block start (Lower 4 bytes)
+    lw  t4, 8(t4) // Command block start (Lower 4 bytes)
 
     DbgPrint(t4)
 
@@ -416,8 +459,7 @@ wait_rdp_busy_end:
     mfc0 t5, c4
     DbgPrint(t5)
 
-    //li t5, SET_HLT
-    //mtc0 t5, c4
+    write_back_dmem_fill(t0, t1)
     
     break
     nop
