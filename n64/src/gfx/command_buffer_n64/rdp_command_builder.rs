@@ -1,11 +1,13 @@
 #![allow(dead_code)]
 #![allow(clippy::too_many_arguments)]
 
+use core::mem::size_of;
+
 use super::rdp_math::{to_fixpoint_10_2_as_integer, to_fixpoint_s_10_5, to_fixpoint_s_11_2};
 use alloc::vec::Vec;
 use n64_math::{Color, Vec2};
 use n64_sys::sys::{virtual_to_physical, virtual_to_physical_mut};
-use n64_types::{RdpBlock, RdpCommand};
+use n64_types::{static_assert, RdpBlock, RdpCommand};
 
 // RDP Command Docs: http://ultra64.ca/files/documentation/silicon-graphics/SGI_RDP_Command_Summary.pdf
 
@@ -115,6 +117,8 @@ pub const COMMAND_SYNC_TILE: u64 = 0xe8;
 pub const COMMAND_SYNC_PIPE: u64 = 0xe7;
 pub const COMMAND_TEXTURE_RECTANGLE: u64 = 0xe4;
 pub const COMMAND_EDGE_COEFFICIENTS: u64 = 0xc8;
+
+pub const COMMAND_TRIANGLE: u64 = 0x01;
 
 pub struct RdpCommandBuilder {
     pub(crate) blocks: Vec<RdpBlock>,
@@ -572,6 +576,35 @@ impl RdpCommandBuilder {
                 | (to_fixpoint_s_10_5(d_xy_d_st.x) << 16)
                 | to_fixpoint_s_10_5(d_xy_d_st.y),
         ));
+        self
+    }
+
+    #[inline]
+    pub fn triangle(&mut self) -> &mut RdpCommandBuilder {
+        // x, y and z are 0.16bit fixpoint from 0 to 1 representing from 0 to 512 in pixels
+
+        #[repr(C)]
+        struct TriangleCommand {
+            command: u8,
+            padding: [u8; 3],
+            x1: u16,
+            y1: u16,
+            z1: u16,
+            x2: u16,
+            y2: u16,
+            z2: u16,
+            x3: u16,
+            y3: u16,
+            z3: u16,
+            rgb1: [u8; 3],
+            rgb2: [u8; 3],
+            rgb3: [u8; 3],
+        }
+
+        static_assert!(size_of::<TriangleCommand>() == 4 * size_of::<u64>());
+
+        self.reserve(4);
+
         self
     }
 }

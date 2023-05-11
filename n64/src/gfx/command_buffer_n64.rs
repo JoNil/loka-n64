@@ -228,6 +228,8 @@ impl<'a> CommandBuffer<'a> {
             // Vl is the lowest point (largest y value)
             let (vh, vm, vl) = sorted_triangle(v0, v1, v2);
 
+            // TODO SEND TRIANGLE
+
             let (l_int, l_frac) = slope_y_next_subpixel_intersection(vm, vl);
             let (m_int, m_frac) = slope_y_prev_scanline_intersection(vh, vm);
             let (h_int, h_frac) = slope_y_prev_scanline_intersection(vh, vl);
