@@ -154,8 +154,8 @@ fn main() {
 
                 let x_off = x_limit * 0.5;
                 let y_off = y_limit * 0.5;
-                let x_scale = x_limit * 0.125;
-                let y_scale = y_limit * 0.125;
+                let x_scale = x_limit * 0.5;
+                let y_scale = y_limit * 0.5;
 
                 let speed = 0.5; // 0.05
                 let t = speed * (frame_begin_time as f32) / 1e6;
@@ -270,7 +270,7 @@ fn main() {
 
                     // RSP clock is 62.5Mhz => ticks / 62.5e6 = s, ticks / 62.5e3 = ms, ticks / 62.5 = us
                     // x/62.5 = 10x/625
-                    let rsp_us = (last_rsp_clock*10) / 625;
+                    let rsp_us = (last_rsp_clock * 10) / 625;
                     font::draw_number(&mut cb, rsp_us, vec2(100.0, 50.0), 0xafaf00ff);
                 }
 

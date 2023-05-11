@@ -1,9 +1,6 @@
 #![allow(dead_code)]
 
-use crate::sys::data_cache_hit_writeback;
-use alloc::vec::Vec;
-use core::ptr::{read_volatile, write_volatile};
-use n64_types::RdpCommand;
+use core::ptr::read_volatile;
 
 const RDP_BASE: usize = 0xA410_0000;
 
@@ -42,36 +39,6 @@ const RDP_STATUS_CLR_CMC: usize = 0x100; // RDP_STATUS: Clear COMMAND COUNTER (B
 const RDP_STATUS_CLR_CLK: usize = 0x200; // RDP_STATUS: Clear CLOCK COUNTER (Bit 9)
 
 #[inline]
-pub unsafe fn start_command_buffer(commands: &[RdpCommand]) {
-    data_cache_hit_writeback(commands);
-
-    write_volatile(
-        RDP_STATUS,
-        RDP_STATUS_CLR_XBS | RDP_STATUS_CLR_FRZ | RDP_STATUS_CLR_FLS,
-    );
-    write_volatile(
-        RDP_COMMAND_BUFFER_START,
-        (commands.as_ptr() as usize) | 0xa000_0000,
-    );
-    write_volatile(
-        RDP_COMMAND_BUFFER_END,
-        (commands.as_ptr().add(commands.len()) as usize) | 0xa000_0000,
-    );
-}
-
-#[inline]
-pub fn wait_for_done() {
-    let start = crate::sys::current_time_us();
-
-    loop {
-        let status = unsafe { read_volatile(RDP_STATUS) };
-
-        if status & RDP_STATUS_CMB == 0 && status & RDP_STATUS_PLB == 0 {
-            return;
-        }
-
-        if crate::sys::current_time_us() - start > 1_000_000 {
-            return;
-        }
-    }
+pub fn read_rdp_clock_counter() -> usize {
+    unsafe { read_volatile(RDP_CLOCK_COUNTER) }
 }

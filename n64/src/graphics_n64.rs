@@ -6,7 +6,7 @@ use alloc::{string::String, vec::Vec};
 use core::{ops::DerefMut, slice};
 use n64_macros::debugln;
 use n64_sys::{
-    rsp,
+    rdp, rsp,
     sys::{data_cache_hit_invalidate, data_cache_hit_writeback, virtual_to_physical},
     vi,
 };
@@ -181,7 +181,7 @@ impl Graphics {
             chunk_pointer: [0; 255],
             padding: 0,
         };
-        
+
         for (index, chunk) in self.gpu_commands.iter().enumerate() {
             unsafe {
                 data_cache_hit_writeback(slice::from_raw_parts::<u64>(
@@ -196,7 +196,10 @@ impl Graphics {
 
         rsp::run(CODE, Some(rsp_dmem.as_bytes()), single_step);
         if !single_step {
-            let (wait_ok, rsp_status) = rsp::wait(5_000_000);
+            let (wait_ok, rsp_status) = {
+                n64_profiler::scope!("Rsp Wait");
+                rsp::wait(5_000_000)
+            };
             if !wait_ok {
                 debugln!(
                     "RSP TIMEOUT! {:032b} pc {:08x}, fc {}",
@@ -238,7 +241,7 @@ impl Graphics {
         }
     }
 
-    pub fn rdp_clock_count(& self) -> u32 {
+    pub fn rdp_clock_count(&self) -> u32 {
         self.gpu_res.a
     }
 }

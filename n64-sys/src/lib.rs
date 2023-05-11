@@ -6,6 +6,7 @@
 pub mod ai;
 pub mod ed;
 pub mod pi;
+pub mod rdp;
 pub mod rsp;
 pub mod si;
 pub mod sys;
