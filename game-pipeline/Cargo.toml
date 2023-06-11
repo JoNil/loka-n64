@@ -9,6 +9,7 @@ edition = "2021"
 [dependencies]
 assert_into = "1"
 blend = "0.8"
+gltf = "1"
 hound = "3"
 image = { version = "0.24", default-features = false }
 itertools = "0.10"

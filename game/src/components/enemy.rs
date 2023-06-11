@@ -119,7 +119,7 @@ pub fn spawn_boss(
         })
         .add(Shadow)
         .add(Health {
-            health: 1000,
+            health: 10000,
             damaged_this_frame: false,
         })
         .add(Weapon {

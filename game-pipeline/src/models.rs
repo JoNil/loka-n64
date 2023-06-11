@@ -3,7 +3,7 @@ use assert_into::AssertInto;
 use blend::{Blend, Instance};
 use meshopt::{generate_vertex_remap, remap_index_buffer, remap_vertex_buffer};
 use n64_math::{vec2, Vec2};
-use std::{env, ffi::OsStr, fs};
+use std::{env, ffi::OsStr, fs, path::Path};
 use zerocopy::AsBytes;
 
 #[rustfmt::skip]
@@ -149,6 +149,52 @@ fn byteswap_u32_slice(data: &[u8]) -> Vec<u8> {
     res
 }
 
+fn parse_gltf_model(mesh: &gltf::Mesh, buffers: &[gltf::buffer::Data]) -> Option<Model> {
+    for primitive in mesh.primitives() {
+        let reader = primitive.reader(|buffer| Some(&buffers[buffer.index()]));
+
+        let verts = reader.read_positions().unwrap().collect::<Vec<_>>();
+        let uvs = reader
+            .read_tex_coords(0)
+            .unwrap()
+            .into_f32()
+            .collect::<Vec<_>>();
+        let colors = reader
+            .read_colors(0)
+            .unwrap()
+            .into_rgba_u8()
+            .map(|c| {
+                ((c[0] as u32) << 24) | ((c[1] as u32) << 16) | ((c[2] as u32) << 8) | (c[3] as u32)
+            })
+            .collect::<Vec<_>>();
+        let indices = reader
+            .read_indices()
+            .unwrap()
+            .into_u32()
+            .map(|i| {
+                if i > 255 {
+                    panic!("Bad model...");
+                }
+                i as u8
+            })
+            .collect::<Vec<_>>();
+
+        let size = primitive.bounding_box();
+
+        if true {
+            return Some(Model {
+                verts,
+                uvs,
+                colors,
+                indices,
+                size: Vec2::new(size.max[0] - size.min[0], size.max[2] - size.min[2]),
+            });
+        }
+    }
+
+    None
+}
+
 pub(crate) fn parse() {
     let mut models = String::new();
 
@@ -171,40 +217,32 @@ pub(crate) fn parse() {
                     let out_base_path = path.canonicalize().unwrap().with_file_name(&name);
 
                     if let Some(model) = parse_model(data) {
-                        let verts_path = out_base_path.with_extension("nvert");
-                        let uvs_path = out_base_path.with_extension("nuv");
-                        let colors_path = out_base_path.with_extension("ncol");
-                        let indices_path = out_base_path.with_extension("nind");
-
-                        write_binary_file_if_changed(
-                            &verts_path,
-                            byteswap_u32_slice(model.verts.as_bytes()),
-                        )
-                        .unwrap();
-                        write_binary_file_if_changed(
-                            &uvs_path,
-                            byteswap_u32_slice(model.uvs.as_bytes()),
-                        )
-                        .unwrap();
-                        write_binary_file_if_changed(
-                            &colors_path,
-                            byteswap_u32_slice(model.colors.as_bytes()),
-                        )
-                        .unwrap();
-                        write_binary_file_if_changed(&indices_path, model.indices.as_bytes())
-                            .unwrap();
-
-                        models.push_str(&format!(
-                            MODEL_TEMPLATE!(),
-                            name = name.to_uppercase(),
-                            verts_path = verts_path,
-                            uvs_path = uvs_path,
-                            colors_path = colors_path,
-                            indices_path = indices_path,
-                            model_width = model.size.x,
-                            model_height = model.size.y,
-                        ));
+                        output_model(&mut models, &name, &out_base_path, &model);
                     }
+                    break;
+                }
+            }
+        }
+    }
+
+    for path in fs::read_dir("models")
+        .unwrap()
+        .filter_map(|e| e.ok())
+        .map(|e| e.path())
+        .filter(|path| path.extension() == Some(OsStr::new("glb")))
+    {
+        println!("rerun-if-changed={:?}", &path);
+
+        if let Some(file_name) = path.file_stem().map(|n| n.to_string_lossy()) {
+            let name = format!("{}", file_name);
+            let out_base_path = path.canonicalize().unwrap().with_file_name(&name);
+
+            let (gltf, buffers, _) = gltf::import(&path).unwrap();
+
+            for mesh in gltf.meshes() {
+                if let Some(model) = parse_gltf_model(&mesh, &buffers) {
+                    output_model(&mut models, &name, &out_base_path, &model);
+                    break;
                 }
             }
         }
@@ -217,4 +255,28 @@ pub(crate) fn parse() {
         models,
     )
     .unwrap();
+}
+
+fn output_model(models: &mut String, name: &str, out_base_path: &Path, model: &Model) {
+    let verts_path = out_base_path.with_extension("nvert");
+    let uvs_path = out_base_path.with_extension("nuv");
+    let colors_path = out_base_path.with_extension("ncol");
+    let indices_path = out_base_path.with_extension("nind");
+
+    write_binary_file_if_changed(&verts_path, byteswap_u32_slice(model.verts.as_bytes())).unwrap();
+    write_binary_file_if_changed(&uvs_path, byteswap_u32_slice(model.uvs.as_bytes())).unwrap();
+    write_binary_file_if_changed(&colors_path, byteswap_u32_slice(model.colors.as_bytes()))
+        .unwrap();
+    write_binary_file_if_changed(&indices_path, model.indices.as_bytes()).unwrap();
+
+    models.push_str(&format!(
+        MODEL_TEMPLATE!(),
+        name = name.to_uppercase(),
+        verts_path = verts_path,
+        uvs_path = uvs_path,
+        colors_path = colors_path,
+        indices_path = indices_path,
+        model_width = model.size.x,
+        model_height = model.size.y,
+    ));
 }

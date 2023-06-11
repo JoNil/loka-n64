@@ -40,7 +40,7 @@ pub(crate) fn load_png(
     }
 
     if let Some((width, height)) = size {
-        if info.width != width.assert_into() || info.height != height.assert_into() {
+        if info.width != width as u32 || info.height != height as u32 {
             let buf = image.into_raw();
 
             let mut color_in = Vec::with_capacity((3 * info.width * info.height).assert_into());
