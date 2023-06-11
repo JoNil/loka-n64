@@ -12,6 +12,7 @@ use n64::{
 };
 use n64_math::Vec2;
 
+#[derive(Copy, Clone)]
 pub struct StaticObject {
     pub x: f32,
     pub y: f32,

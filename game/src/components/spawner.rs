@@ -8,6 +8,7 @@ use game_derive::SparseComponent;
 use n64::gfx::{StaticTexture, Texture};
 use n64_math::{vec2, Aabb2};
 
+#[derive(Copy, Clone)]
 pub enum SpawnerData {
     SpawnerWithModel {
         spawner_func: SpawnerWithModelFunc,

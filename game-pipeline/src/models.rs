@@ -41,15 +41,12 @@ struct Model {
 }
 
 fn parse_model(mesh: Instance) -> Option<Model> {
-    eprintln!("{:#?}", &mesh);
-
     if !mesh.is_valid("mpoly")
         || !mesh.is_valid("mloop")
         || !mesh.is_valid("mvert")
         || !mesh.is_valid("mloopuv")
         || !mesh.is_valid("mloopcol")
     {
-        panic!("BUU");
         return None;
     }
 
@@ -172,8 +169,6 @@ pub(crate) fn parse() {
 
                     let name = format!("{}", file_name);
                     let out_base_path = path.canonicalize().unwrap().with_file_name(&name);
-
-                    eprintln!("{name}");
 
                     if let Some(model) = parse_model(data) {
                         let verts_path = out_base_path.with_extension("nvert");
