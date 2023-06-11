@@ -14,7 +14,7 @@ use std::{
     path::Path,
     path::PathBuf,
 };
-use tiled::{LayerData, Map, ObjectTemplate, Tileset};
+use tiled::{LayerData, Map, ObjectTemplate, PropertyValue, Tileset};
 
 #[rustfmt::skip]
 macro_rules! TILE_TEMPLATE { () => {
@@ -200,10 +200,25 @@ macro_rules! OBJECT_TEMPLATE { () => {
 r##"    StaticObject {{
         x: {x}_f32,
         y: {y}_f32,
-        texture: &{object_texture_ident},
-        spawner: crate::components::enemy::spawn_{spawner},
+        spawner_data: {spawner_data},
     }},
 "##
+}; }
+
+#[rustfmt::skip]
+macro_rules! SPAWNER_WITH_MODEL_TEMPLATE { () => {
+r##"crate::components::spawner::SpawnerData::SpawnerWithModel {{
+            spawner_func: crate::components::enemy::spawn_{spawner},
+            model: &crate::models::{object_model_ident},
+        }}"##
+}; }
+
+#[rustfmt::skip]
+macro_rules! SPAWNER_WITH_TEXTURE_TEMPLATE { () => {
+r##"crate::components::spawner::SpawnerData::SpawnerWithTexture {{
+            spawner_func: crate::components::enemy::spawn_{spawner},
+            texture: &{object_texture_ident},
+        }}"##
 }; }
 
 fn parse_map_objects(
@@ -218,63 +233,98 @@ fn parse_map_objects(
 
     for object_group in &map.object_groups {
         for object in &object_group.objects {
-            if let Some(ObjectTemplate {
-                object: Some(template_object),
-                tileset: Some(tileset),
-            }) = &object.template.as_deref()
-            {
-                let object_texture_ident = format!(
-                    "OBJECT_TEXTURE_{}_{}{}_{}X{}",
-                    tileset.name.to_uppercase(),
-                    template_object.gid,
-                    if template_object.rotation as i32 == 180 {
-                        "_ROT_180"
-                    } else {
-                        ""
-                    },
-                    template_object.width,
-                    template_object.height,
-                );
-
-                objects.push(format!(
-                    OBJECT_TEMPLATE!(),
-                    x = object.x - template_object.width / 2.0,
-                    y = object.y - template_object.height / 2.0,
-                    object_texture_ident = object_texture_ident,
-                    spawner = template_object.obj_type,
-                ));
-
-                if !emitted_object_texture.contains(&object_texture_ident) {
-                    let object_texture_path = out_dir
-                        .join(format!("object_{}_{}", tileset.name, template_object.gid))
-                        .with_extension("ntex");
-
-                    let texture_image = load_tile_image(
+            match object.template.as_deref() {
+                Some(ObjectTemplate {
+                    object: Some(template_object),
+                    tileset: Some(tileset),
+                }) => {
+                    let object_texture_ident = format!(
+                        "OBJECT_TEXTURE_{}_{}{}_{}X{}",
+                        tileset.name.to_uppercase(),
                         template_object.gid,
-                        map_path,
-                        tileset,
-                        tileset_image_cache,
-                        template_object.width as i32,
-                        template_object.height as i32,
-                        template_object.rotation as i32 == 180,
-                    )?;
-
-                    assert!(
-                        texture_image.len()
-                            == 2 * template_object.width as usize * template_object.height as usize
+                        if template_object.rotation as i32 == 180 {
+                            "_ROT_180"
+                        } else {
+                            ""
+                        },
+                        template_object.width,
+                        template_object.height,
                     );
 
-                    write_binary_file_if_changed(&object_texture_path, &texture_image)?;
-
-                    object_textures.push(format!(
-                        OBJECT_TEXTURE_TEMPLATE!(),
+                    let spawner_data = format!(
+                        SPAWNER_WITH_TEXTURE_TEMPLATE!(),
+                        spawner = template_object.obj_type,
                         object_texture_ident = object_texture_ident,
-                        width = template_object.width as i32,
-                        height = template_object.height as i32,
-                        object_texture_path = object_texture_path,
+                    );
+
+                    objects.push(format!(
+                        OBJECT_TEMPLATE!(),
+                        x = object.x - template_object.width / 2.0,
+                        y = object.y - template_object.height / 2.0,
+                        spawner_data = spawner_data,
                     ));
 
-                    emitted_object_texture.insert(object_texture_ident);
+                    if !emitted_object_texture.contains(&object_texture_ident) {
+                        let object_texture_path = out_dir
+                            .join(format!("object_{}_{}", tileset.name, template_object.gid))
+                            .with_extension("ntex");
+
+                        let texture_image = load_tile_image(
+                            template_object.gid,
+                            map_path,
+                            tileset,
+                            tileset_image_cache,
+                            template_object.width as i32,
+                            template_object.height as i32,
+                            template_object.rotation as i32 == 180,
+                        )?;
+
+                        assert!(
+                            texture_image.len()
+                                == 2 * template_object.width as usize
+                                    * template_object.height as usize
+                        );
+
+                        write_binary_file_if_changed(&object_texture_path, &texture_image)?;
+
+                        object_textures.push(format!(
+                            OBJECT_TEXTURE_TEMPLATE!(),
+                            object_texture_ident = object_texture_ident,
+                            width = template_object.width as i32,
+                            height = template_object.height as i32,
+                            object_texture_path = object_texture_path,
+                        ));
+
+                        emitted_object_texture.insert(object_texture_ident);
+                    }
+                }
+                Some(ObjectTemplate {
+                    object: Some(template_object),
+                    tileset: None,
+                }) => {
+                    let object_model_ident = if let PropertyValue::StringValue(model) =
+                        template_object.properties.get("model").unwrap()
+                    {
+                        model.to_ascii_uppercase()
+                    } else {
+                        panic!("Expected string");
+                    };
+
+                    let spawner_data = format!(
+                        SPAWNER_WITH_MODEL_TEMPLATE!(),
+                        spawner = template_object.obj_type,
+                        object_model_ident = object_model_ident,
+                    );
+
+                    objects.push(format!(
+                        OBJECT_TEMPLATE!(),
+                        x = object.x - template_object.width / 2.0,
+                        y = object.y - template_object.height / 2.0,
+                        spawner_data = spawner_data,
+                    ));
+                }
+                _ => {
+                    panic!("Unsupported");
                 }
             }
         }

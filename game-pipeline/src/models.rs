@@ -41,12 +41,15 @@ struct Model {
 }
 
 fn parse_model(mesh: Instance) -> Option<Model> {
+    eprintln!("{:#?}", &mesh);
+
     if !mesh.is_valid("mpoly")
         || !mesh.is_valid("mloop")
         || !mesh.is_valid("mvert")
         || !mesh.is_valid("mloopuv")
         || !mesh.is_valid("mloopcol")
     {
+        panic!("BUU");
         return None;
     }
 
@@ -161,14 +164,16 @@ pub(crate) fn parse() {
         println!("rerun-if-changed={:?}", &path);
 
         if let Some(file_name) = path.file_stem().map(|n| n.to_string_lossy()) {
-            let blend = Blend::from_path(&path);
+            let blend = Blend::from_path(&path).unwrap();
 
-            for obj in blend.get_by_code(*b"OB") {
+            for obj in blend.instances_with_code(*b"OB") {
                 if obj.is_valid("data") && obj.get("data").code()[0..=1] == *b"ME" {
                     let data = obj.get("data");
 
                     let name = format!("{}", file_name);
                     let out_base_path = path.canonicalize().unwrap().with_file_name(&name);
+
+                    eprintln!("{name}");
 
                     if let Some(model) = parse_model(data) {
                         let verts_path = out_base_path.with_extension("nvert");

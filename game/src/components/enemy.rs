@@ -1,11 +1,13 @@
 use super::{
     diver_ai::DiverAi,
     health::{self, Health},
+    mesh_drawable::MeshDrawable,
     movable::Movable,
     player::{self, Player},
     remove_when_below::RemoveWhenBelow,
+    shadow::Shadow,
     size::Size,
-    spawner::{Spawner, SpawnerFunc},
+    spawner::{Spawner, SpawnerData},
     sprite_drawable::SpriteDrawable,
     trap::{Trap, TrapType},
     waypoint_ai::WaypointAi,
@@ -13,36 +15,27 @@ use super::{
 };
 use crate::{
     ecs::{entity::EntitySystem, storage::Storage, world::World},
+    model::ModelData,
     sound_mixer::SoundMixer,
     sounds::EXPLOSION_0,
 };
 use core::f32::consts::PI;
 use game_derive::SparseComponent;
 use n64::gfx::Texture;
-use n64_math::{vec2, Vec2};
+use n64_math::{Quat, Vec2};
 
 #[derive(SparseComponent)]
 pub struct Enemy {}
 
-pub fn add_enemy_spawner(
-    entities: &mut EntitySystem,
-    pos: Vec2,
-    texture: Texture<'static>,
-    spawner_func: SpawnerFunc,
-) {
+pub fn add_enemy_spawner(entities: &mut EntitySystem, pos: Vec2, spawner_data: SpawnerData) {
     entities
         .spawn()
         .add(Movable {
             pos,
             speed: Vec2::ZERO,
         })
-        .add(Size {
-            size: vec2(texture.width as f32 / 320.0, texture.height as f32 / 240.0),
-        })
-        .add(Spawner {
-            texture,
-            spawner_func,
-        });
+        .add(spawner_data.size())
+        .add(Spawner { data: spawner_data });
 }
 
 pub fn spawn_enemy_aircraft(
@@ -106,6 +99,38 @@ pub fn spawn_enemy_diver(
             direction: PI,
         })
         .add(DiverAi {})
+        .add(Enemy {})
+        .add(RemoveWhenBelow);
+}
+
+pub fn spawn_boss(
+    entities: &mut EntitySystem,
+    movable: Movable,
+    size: Size,
+    model: ModelData<'static>,
+) {
+    entities
+        .spawn()
+        .add(movable)
+        .add(size)
+        .add(MeshDrawable {
+            model,
+            rot: Quat::IDENTITY,
+        })
+        .add(Shadow)
+        .add(Health {
+            health: 1000,
+            damaged_this_frame: false,
+        })
+        .add(Weapon {
+            weapon_type: WeaponType::Laser,
+            last_shoot_time: 0,
+            direction: PI,
+        })
+        .add(WaypointAi {
+            waypoint: 0,
+            waypoint_step: 1.0,
+        })
         .add(Enemy {})
         .add(RemoveWhenBelow);
 }

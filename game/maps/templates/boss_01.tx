@@ -2,9 +2,7 @@
 <template>
  <object type="boss" width="128" height="128">
   <properties>
-   <property name="enemy" type="string" value=""/>
-   <property name="mesh_drawable" value="boss_01"/>
-   <property name="health" type="float" value="1000"/>
+   <property name="model" value="boss_01"/>
   </properties>
  </object>
 </template>
