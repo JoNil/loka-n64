@@ -421,11 +421,11 @@
 </data>
  </layer>
  <objectgroup id="7" name="Objects">
-  <object id="7" template="templates/enemy_1.tx" x="226" y="2938"/>
+  <object id="7" template="templates/enemy_1.tx" x="216" y="2950"/>
   <object id="9" template="templates/enemy_1.tx" x="286.667" y="2922"/>
   <object id="10" template="templates/enemy_1.tx" x="336.667" y="2898.67"/>
-  <object id="11" template="templates/enemy_1.tx" x="166.667" y="2921.17"/>
-  <object id="12" template="templates/enemy_1.tx" x="112.333" y="2898.5"/>
+  <object id="11" template="templates/enemy_1.tx" x="138" y="2939.84"/>
+  <object id="12" template="templates/enemy_1.tx" x="72.333" y="2919.83"/>
   <object id="13" template="templates/enemy_1.tx" x="218" y="2689.25"/>
   <object id="14" template="templates/enemy_1.tx" x="278.667" y="2673.25"/>
   <object id="15" template="templates/enemy_1.tx" x="328.667" y="2649.92"/>
@@ -457,6 +457,6 @@
   <object id="50" template="templates/enemy_2.tx" x="204.5" y="2180.5"/>
   <object id="51" template="templates/enemy_2.tx" x="205" y="2145"/>
   <object id="52" template="templates/enemy_2.tx" x="205.5" y="2111.5"/>
-  <object id="54" template="templates/boss_01.tx" x="135.167" y="2830.67"/>
+  <object id="54" template="templates/boss_01.tx" x="192.5" y="2986" width="12" height="10.6667"/>
  </objectgroup>
 </map>

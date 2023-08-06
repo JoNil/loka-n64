@@ -318,8 +318,8 @@ fn parse_map_objects(
 
                     objects.push(format!(
                         OBJECT_TEMPLATE!(),
-                        x = object.x - template_object.width / 2.0,
-                        y = object.y - template_object.height / 2.0,
+                        x = object.x,
+                        y = object.y,
                         spawner_data = spawner_data,
                     ));
                 }

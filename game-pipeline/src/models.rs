@@ -187,7 +187,7 @@ fn parse_gltf_model(mesh: &gltf::Mesh, buffers: &[gltf::buffer::Data]) -> Option
                 uvs,
                 colors,
                 indices,
-                size: Vec2::new(size.max[0] - size.min[0], size.max[2] - size.min[2]),
+                size: Vec2::new(size.max[0] - size.min[0], size.max[1] - size.min[1]),
             });
         }
     }
