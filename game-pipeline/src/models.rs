@@ -2,7 +2,7 @@ use crate::utils::{write_binary_file_if_changed, write_file_if_changed};
 use assert_into::AssertInto;
 use blend::{Blend, Instance};
 use meshopt::{generate_vertex_remap, remap_index_buffer, remap_vertex_buffer};
-use n64_math::{vec2, Vec2};
+use n64_math::{vec2, Vec2, Vec3};
 use std::{env, ffi::OsStr, fs, path::Path};
 use zerocopy::AsBytes;
 
@@ -116,8 +116,12 @@ fn parse_model(mesh: Instance) -> Option<Model> {
         }
     }
 
+    if index_count > 255 {
+        panic!("Only 255 indices per model are supported");
+    }
+
     let vertex_remap = generate_vertex_remap(&verts, None);
-    let verts = remap_vertex_buffer(&verts, vertex_remap.0, &vertex_remap.1);
+    let mut verts = remap_vertex_buffer(&verts, vertex_remap.0, &vertex_remap.1);
     let uvs = remap_vertex_buffer(&uvs, vertex_remap.0, &vertex_remap.1);
     let colors = remap_vertex_buffer(&colors, vertex_remap.0, &vertex_remap.1);
 
@@ -126,6 +130,14 @@ fn parse_model(mesh: Instance) -> Option<Model> {
         .copied()
         .map(|i| i.assert_into())
         .collect::<Vec<u8>>();
+
+    let offset = (Vec3::new(max_x, max_y, 0.0) + Vec3::new(min_x, min_y, 0.0)) / 2.0;
+
+    for vert in &mut verts {
+        vert[0] -= offset.x;
+        vert[1] -= offset.y;
+        vert[2] -= offset.z;
+    }
 
     Some(Model {
         verts,
@@ -150,10 +162,14 @@ fn byteswap_u32_slice(data: &[u8]) -> Vec<u8> {
 }
 
 fn parse_gltf_model(mesh: &gltf::Mesh, buffers: &[gltf::buffer::Data]) -> Option<Model> {
-    for primitive in mesh.primitives() {
+    if mesh.primitives().count() > 1 {
+        panic!("Only one primitive per gltf file is supported");
+    }
+
+    if let Some(primitive) = mesh.primitives().next() {
         let reader = primitive.reader(|buffer| Some(&buffers[buffer.index()]));
 
-        let verts = reader.read_positions().unwrap().collect::<Vec<_>>();
+        let mut verts = reader.read_positions().unwrap().collect::<Vec<_>>();
         let uvs = reader
             .read_tex_coords(0)
             .unwrap()
@@ -173,7 +189,7 @@ fn parse_gltf_model(mesh: &gltf::Mesh, buffers: &[gltf::buffer::Data]) -> Option
             .into_u32()
             .map(|i| {
                 if i > 255 {
-                    panic!("Bad model...");
+                    panic!("Only 255 indices per model are supported");
                 }
                 i as u8
             })
@@ -181,15 +197,21 @@ fn parse_gltf_model(mesh: &gltf::Mesh, buffers: &[gltf::buffer::Data]) -> Option
 
         let size = primitive.bounding_box();
 
-        if true {
-            return Some(Model {
-                verts,
-                uvs,
-                colors,
-                indices,
-                size: Vec2::new(size.max[0] - size.min[0], size.max[1] - size.min[1]),
-            });
+        let offset = (Vec3::from_slice(&size.max) + Vec3::from_slice(&size.min)) / 2.0;
+
+        for vert in &mut verts {
+            vert[0] -= offset.x;
+            vert[1] -= offset.y;
+            vert[2] -= offset.z;
         }
+
+        return Some(Model {
+            verts,
+            uvs,
+            colors,
+            indices,
+            size: Vec2::new(size.max[0] - size.min[0], size.max[1] - size.min[1]),
+        });
     }
 
     None

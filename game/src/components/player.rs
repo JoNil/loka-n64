@@ -62,7 +62,7 @@ pub fn spawn_player(entities: &mut EntitySystem, start_pos: Vec2) -> Entity {
 }
 
 pub fn add_score(player: &mut <Player as Component>::Storage, score: i32) {
-    for mut player in player.components_mut() {
+    for player in player.components_mut() {
         player.score += score;
     }
 }
