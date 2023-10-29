@@ -1,0 +1,3 @@
+[submodule "n64-sys/F3DEX3"]
+	path = n64-sys/F3DEX3
+	url = git@github.com:JoNil/F3DEX3.git
