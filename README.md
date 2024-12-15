@@ -3,13 +3,7 @@
 ## Build Environment Setup
 
 ```bash
-rustup install nightly
-
-cargo install -f --git https://github.com/JoNil/cargo-n64.git --branch master cargo-n64
-
-rustup default nightly
-rustup component add rust-src
-rustup default stable
+cargo +nightly-2023-03-08 install -f --git https://github.com/JoNil/cargo-n64.git --branch master cargo-n64 --locked
 ```
 
 ## Extract bootcode
